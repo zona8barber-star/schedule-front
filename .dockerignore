@@ -1,0 +1,17 @@
+node_modules/
+dist/
+.angular/
+coverage/
+
+.git/
+.gitignore
+
+.vscode/
+.idea/
+
+npm-debug.log*
+yarn-error.log*
+*.log
+
+Dockerfile*
+.dockerignore

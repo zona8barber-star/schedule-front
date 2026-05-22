@@ -1,0 +1,7 @@
+{
+  "apiBaseUrl": "https://qa-api.example.com/api/v1",
+  "appName": "Barbershop QA",
+  "appUrl": "https://qa.example.com",
+  "assetsBaseUrl": "https://qa.example.com/assets",
+  "environmentName": "QA"
+}

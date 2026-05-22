@@ -1,0 +1,88 @@
+<section class="admin-content-page">
+  <header class="admin-content-page__hero">
+    <div>
+      <p class="admin-content-page__eyebrow">Gestion</p>
+      <h1>Marca</h1>
+      <p>Configura nombre y colores principales para la experiencia publica.</p>
+    </div>
+  </header>
+
+  <article class="admin-content-page__panel">
+    <app-api-feedback severity="error" [message]="errorMessage()" />
+    <app-api-feedback severity="info" [message]="successMessage()" />
+
+    @if (isLoading()) {
+      <app-page-state kind="loading" message="Cargando configuracion de marca..." />
+    } @else {
+      <form [formGroup]="brandingForm" (ngSubmit)="submit()" novalidate>
+        <fieldset [disabled]="isBusy()">
+          <div class="admin-content-page__grid">
+            <div class="admin-content-page__field admin-content-page__field--wide">
+              <label for="appName">Nombre visible</label>
+              <input id="appName" type="text" formControlName="appName" />
+              @if (showError('appName', 'required')) {
+                <p class="admin-content-page__error">El nombre de la app es obligatorio.</p>
+              }
+            </div>
+
+            <div class="admin-content-page__field">
+              <label for="primaryColor">Color principal</label>
+              <input
+                id="primaryColor"
+                type="text"
+                formControlName="primaryColor"
+                placeholder="#8d4a2f"
+              />
+              @if (showError('primaryColor', 'required')) {
+                <p class="admin-content-page__error">El color primario es obligatorio.</p>
+              }
+              @if (showError('primaryColor', 'hexColor')) {
+                <p class="admin-content-page__error">Usa un color HEX valido (#RRGGBB).</p>
+              }
+            </div>
+
+            <div class="admin-content-page__field">
+              <label for="secondaryColor">Color secundario</label>
+              <input
+                id="secondaryColor"
+                type="text"
+                formControlName="secondaryColor"
+                placeholder="#d7a46a"
+              />
+              @if (showError('secondaryColor', 'required')) {
+                <p class="admin-content-page__error">El color secundario es obligatorio.</p>
+              }
+              @if (showError('secondaryColor', 'hexColor')) {
+                <p class="admin-content-page__error">Usa un color HEX valido (#RRGGBB).</p>
+              }
+            </div>
+
+            <div class="admin-content-page__field">
+              <label for="logoMediaAssetId">ID de logo (opcional)</label>
+              <input id="logoMediaAssetId" type="text" formControlName="logoMediaAssetId" />
+              @if (showError('logoMediaAssetId', 'uuid')) {
+                <p class="admin-content-page__error">Ingresa un UUID valido o deja vacio.</p>
+              }
+            </div>
+
+            <div class="admin-content-page__field">
+              <label for="appIconMediaAssetId">ID de icono (opcional)</label>
+              <input
+                id="appIconMediaAssetId"
+                type="text"
+                formControlName="appIconMediaAssetId"
+              />
+              @if (showError('appIconMediaAssetId', 'uuid')) {
+                <p class="admin-content-page__error">Ingresa un UUID valido o deja vacio.</p>
+              }
+            </div>
+          </div>
+        </fieldset>
+
+        <div class="admin-content-page__actions">
+          <button type="submit" [disabled]="isBusy()">{{ submitLabel() }}</button>
+        </div>
+      </form>
+    }
+  </article>
+</section>

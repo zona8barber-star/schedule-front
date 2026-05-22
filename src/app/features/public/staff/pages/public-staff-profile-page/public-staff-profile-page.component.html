@@ -1,0 +1,220 @@
+<section class="psp">
+  <app-api-feedback severity="error" [message]="errorMessage()" />
+
+  @if (isLoading()) {
+    <app-page-state kind="loading" message="Cargando perfil..." />
+  } @else if (!staffProfile()) {
+    <app-page-state kind="empty" message="No encontramos este perfil profesional." />
+  } @else {
+    <!-- ── Header: foto pequeña + info ─────────────────────── -->
+    <div class="psp__header">
+      <div class="psp__photo">
+        @if (staffProfile()!.photoUrl) {
+          <img
+            [src]="staffProfile()!.photoUrl!"
+            [alt]="staffProfile()!.displayName"
+            [title]="staffProfile()!.displayName"
+          />
+        } @else {
+          <span class="psp__initials">{{
+            staffProfile()!.displayName.charAt(0).toUpperCase()
+          }}</span>
+        }
+      </div>
+
+      <div class="psp__info">
+        <h1 class="psp__name">{{ staffProfile()!.displayName }}</h1>
+
+        @if (staffProfile()!.bio) {
+          <p class="psp__bio">{{ staffProfile()!.bio }}</p>
+        }
+
+        <div class="psp__meta">
+          <span class="psp__star">★</span>
+          <span>{{ formatRating(displayAverageRating()) }}</span>
+          <span class="psp__sep">·</span>
+          <span>{{ displayReviewCount() }} reseñas</span>
+          <span class="psp__sep">·</span>
+          <span>{{ staffProfile()!.defaultAppointmentDurationMinutes }} min por cita</span>
+        </div>
+
+        @if (staffProfile()!.phoneNumber && whatsappHref()) {
+          <a
+            [href]="whatsappHref()!"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="psp__whatsapp"
+          >
+            <img src="assets/social/wapp.svg" alt="" aria-hidden="true" class="psp__social-icon" />
+            {{ staffProfile()!.phoneNumber }}
+          </a>
+        }
+
+        <div class="psp__socials">
+          @if (staffProfile()!.instagramUrl) {
+            <a
+              [href]="staffProfile()!.instagramUrl!"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Instagram"
+              class="psp__social"
+            >
+              <img src="assets/social/IG.svg" alt="Instagram" />
+            </a>
+          }
+          @if (staffProfile()!.facebookUrl) {
+            <a
+              [href]="staffProfile()!.facebookUrl!"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Facebook"
+              class="psp__social"
+            >
+              <img src="assets/social/face.svg" alt="Facebook" />
+            </a>
+          }
+          @if (staffProfile()!.tikTokUrl) {
+            <a
+              [href]="staffProfile()!.tikTokUrl!"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="TikTok"
+              class="psp__social"
+            >
+              <img src="assets/social/tt.svg" alt="TikTok" />
+            </a>
+          }
+          @if (staffProfile()!.youtubeUrl) {
+            <a
+              [href]="staffProfile()!.youtubeUrl!"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="YouTube"
+              class="psp__social"
+            >
+              <img src="assets/social/yt.svg" alt="YouTube" />
+            </a>
+          }
+          @if (staffProfile()!.xUrl) {
+            <a
+              [href]="staffProfile()!.xUrl!"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="X"
+              class="psp__social"
+            >
+              <img src="assets/social/x.svg" alt="X" />
+            </a>
+          }
+        </div>
+
+        <button class="psp__book-btn" type="button" (click)="openBookingModal()">
+          Agendar cita
+        </button>
+      </div>
+    </div>
+
+    <!-- ── Reseñas ──────────────────────────────────────────── -->
+    <article class="psp__panel">
+      <h2 class="psp__section-title">Opiniones</h2>
+      <app-api-feedback severity="error" [message]="reviewsErrorMessage()" />
+
+      @if (reviewsLoading()) {
+        <app-page-state kind="loading" message="Cargando reseñas..." />
+      } @else if (!reviews().length) {
+        <app-page-state kind="empty" message="Aún no hay reseñas para este profesional." />
+      } @else {
+        <div class="psp__reviews">
+          @for (review of reviews().slice(0, 5); track review.appointmentId + review.createdAtUtc) {
+            <article class="psp__review-card">
+              <span class="psp__review-stars" [attr.aria-label]="review.stars + ' de 5 estrellas'">
+                <span [class.active]="review.stars >= 1">★</span>
+                <span [class.active]="review.stars >= 2">★</span>
+                <span [class.active]="review.stars >= 3">★</span>
+                <span [class.active]="review.stars >= 4">★</span>
+                <span [class.active]="review.stars >= 5">★</span>
+              </span>
+              @if (review.comment) {
+                <p>{{ review.comment }}</p>
+              }
+              <small>{{ formatDate(review.createdAtUtc) }}</small>
+            </article>
+          }
+        </div>
+      }
+    </article>
+
+    <!-- ── QR de propinas (siempre al final) ──────────────── -->
+    @if (staffProfile()!.tipsQrUrl) {
+      <article class="psp__panel psp__tips">
+        <h2 class="psp__section-title">Propinas</h2>
+        <p class="psp__tips-desc">
+          Si mi trabajo te gustó, podés dejarme una propina escaneando el código.
+        </p>
+        <img
+          class="psp__tips-qr"
+          [src]="staffProfile()!.tipsQrUrl!"
+          [alt]="'QR de propinas de ' + staffProfile()!.displayName"
+          [title]="'QR de propinas de ' + staffProfile()!.displayName"
+        />
+      </article>
+    }
+
+    <!-- ── Volver al listado (al final) ───────────────────── -->
+    <a class="psp__back" routerLink="/staff">← Volver al listado</a>
+  }
+
+  <!-- ── Modal de citas ─────────────────────────────────────── -->
+  @if (showBookingModal()) {
+    <div class="psp__overlay" (click)="closeBookingModal()" (keydown.escape)="closeBookingModal()">
+      <dialog
+        class="psp__modal"
+        open
+        aria-label="Agendar cita"
+        (click)="$event.stopPropagation()"
+        (keydown)="$event.stopPropagation()"
+      >
+        <div class="psp__modal-head">
+          <h2>Agendar cita</h2>
+          <button
+            class="psp__modal-close"
+            type="button"
+            (click)="closeBookingModal()"
+            aria-label="Cerrar"
+          >
+            ✕
+          </button>
+        </div>
+
+        <p class="psp__modal-sub">Elegí el día y seleccioná el horario que más te convenga.</p>
+
+        <label class="psp__date-label" for="booking-date">Fecha</label>
+        <input
+          id="booking-date"
+          class="psp__date-input"
+          type="date"
+          [value]="selectedDate()"
+          [min]="todayDate()"
+          (change)="onDateChange($event)"
+        />
+
+        <app-api-feedback severity="error" [message]="slotsError()" />
+
+        @if (slotsLoading()) {
+          <p class="psp__slots-msg">Buscando horarios disponibles...</p>
+        } @else if (!slots().length) {
+          <p class="psp__slots-msg">No hay horarios disponibles para este día.</p>
+        } @else {
+          <p class="psp__slots-hint">Seleccioná un horario para continuar</p>
+          <div class="psp__slots">
+            @for (slot of slots(); track slot.startAtUtc) {
+              <button class="psp__slot" type="button" (click)="selectSlot(slot)">
+                {{ formatSlotTime(slot.startAtUtc) }}
+              </button>
+            }
+          </div>
+        }
+      </dialog>
+    </div>
+  }
+</section>

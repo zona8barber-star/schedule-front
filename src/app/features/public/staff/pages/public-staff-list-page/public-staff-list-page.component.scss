@@ -1,0 +1,473 @@
+.public-staff-list-page {
+  display: grid;
+  gap: 1.25rem;
+}
+
+.public-staff-list-page__hero,
+.public-staff-list-page__panel,
+.public-staff-list-page__state {
+  padding: clamp(1.1rem, 2vw, 1.55rem);
+  border: 1px solid var(--border-soft);
+  border-radius: 1.5rem;
+  background: var(--surface-panel);
+  box-shadow: var(--shadow-soft);
+}
+
+.public-staff-list-page__eyebrow {
+  margin: 0;
+  color: var(--brand-primary);
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.public-staff-list-page h1,
+.public-staff-list-page h2,
+.public-staff-list-page p,
+.public-staff-list-page ul {
+  margin: 0;
+}
+
+.public-staff-list-page p,
+.public-staff-list-page__state {
+  color: var(--text-muted);
+  line-height: 1.6;
+}
+
+.public-staff-list-page__search {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.public-staff-list-page__search label {
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+.public-staff-list-page__search input {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--border-soft);
+  border-radius: 0.85rem;
+  background: var(--surface-panel);
+  color: var(--color-text);
+  font: inherit;
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
+
+  &:focus {
+    outline: none;
+    border-color: var(--brand-primary);
+    box-shadow: 0 0 0 3px rgba(176, 138, 74, 0.15);
+  }
+
+  &::placeholder {
+    color: var(--color-text-muted);
+    opacity: 0.7;
+  }
+}
+
+.public-staff-list-page__actions,
+.public-staff-list-page__card-actions,
+.public-staff-list-page__meta {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.public-staff-list-page__actions {
+  flex-wrap: wrap;
+}
+
+.public-staff-list-page__actions button,
+.public-staff-list-page__card-actions a,
+.public-staff-list-page__card-actions button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.4rem;
+  padding: 0.55rem 0.85rem;
+  border-radius: 999px;
+  font: inherit;
+  font-size: 0.84rem;
+  font-weight: 700;
+  text-decoration: none;
+  flex: 1;
+  cursor: pointer;
+}
+
+.public-staff-list-page__actions button {
+  border: 1px solid transparent;
+  cursor: pointer;
+  background: var(--color-secondary-hover);
+  color: var(--color-primary-hover);
+  transition:
+    background-color 140ms ease,
+    color 140ms ease,
+    border-color 140ms ease,
+    transform 140ms ease;
+
+  &:hover {
+    background: var(--color-primary-hover);
+    color: var(--color-secondary-hover);
+    border-color: var(--color-secondary-hover);
+    transform: translateY(-1px);
+  }
+}
+
+.public-staff-list-page__actions button[disabled] {
+  cursor: wait;
+  opacity: 0.72;
+}
+
+.public-staff-list-page__actions .public-staff-list-page__secondary,
+.public-staff-list-page__card-actions a {
+  background: rgba(141, 74, 47, 0.1);
+  color: var(--brand-primary);
+  border: 1px solid rgba(141, 74, 47, 0.2);
+}
+
+/* Ver → stretched link con texto blanco */
+.public-staff-list-page__card-actions a:first-child {
+  background: rgba(141, 74, 47, 0.1);
+  color: #fff;
+  border: 1px solid rgba(141, 74, 47, 0.2);
+  opacity: 1;
+  text-decoration: none;
+  flex: 1;
+
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+  }
+}
+
+/* Disponibilidad → botón principal */
+.public-staff-list-page__card-actions button {
+  background: var(--color-secondary-hover);
+  color: var(--color-primary-hover);
+  border: 1px solid transparent;
+  position: relative;
+  z-index: 2;
+  transition:
+    background-color 140ms ease,
+    color 140ms ease,
+    border-color 140ms ease,
+    transform 140ms ease;
+
+  &:hover {
+    background: var(--color-primary-hover);
+    color: var(--color-secondary-hover);
+    border-color: var(--color-secondary-hover);
+    transform: translateY(-1px);
+  }
+}
+
+/* ── Modal de disponibilidad ────────────────────────────────── */
+
+.psl-modal__overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background: rgba(0, 0, 0, 0.55);
+  -webkit-backdrop-filter: blur(3px);
+  backdrop-filter: blur(3px);
+}
+
+.psl-modal {
+  width: min(28rem, 100%);
+  max-height: 90dvh;
+  overflow-y: auto;
+  border: 1px solid var(--border-soft);
+  border-radius: 1.5rem;
+  background: var(--surface-panel);
+  box-shadow: var(--shadow-soft);
+  padding: 1.5rem;
+  display: grid;
+  gap: 1rem;
+}
+
+.psl-modal__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.psl-modal__staff {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.psl-modal__photo {
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 50%;
+  overflow: hidden;
+  background: rgba(176, 138, 74, 0.12);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+}
+
+.psl-modal__initials {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--brand-primary);
+}
+
+.psl-modal__name {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.psl-modal__close {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1.1rem;
+  line-height: 1;
+  color: var(--text-muted);
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.5rem;
+  transition: color 120ms ease;
+
+  &:hover {
+    color: var(--color-text);
+  }
+}
+
+.psl-modal__sub {
+  margin: 0;
+  font-size: 0.88rem;
+  color: var(--text-muted);
+}
+
+.psl-modal__date-label {
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+.psl-modal__date-input {
+  width: 100%;
+  padding: 0.65rem 0.9rem;
+  border: 1px solid var(--border-soft);
+  border-radius: 0.85rem;
+  background: var(--surface-panel);
+  color: var(--color-text);
+  font: inherit;
+  font-size: 0.9rem;
+
+  &:focus {
+    outline: none;
+    border-color: var(--brand-primary);
+    box-shadow: 0 0 0 3px rgba(176, 138, 74, 0.15);
+  }
+}
+
+.psl-modal__msg {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  text-align: center;
+  padding: 0.5rem 0;
+}
+
+.psl-modal__hint {
+  margin: 0;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+}
+
+.psl-modal__slots {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.psl-modal__slot {
+  padding: 0.45rem 0.9rem;
+  border: 1px solid var(--border-soft);
+  border-radius: 999px;
+  background: var(--surface-panel);
+  color: var(--color-text);
+  font: inherit;
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background-color 120ms ease,
+    border-color 120ms ease,
+    transform 120ms ease;
+
+  &:hover {
+    background: var(--brand-primary);
+    border-color: var(--brand-primary);
+    color: #fff;
+    transform: translateY(-1px);
+  }
+}
+
+.public-staff-list-page__grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(16rem, 20rem));
+  justify-content: center;
+}
+
+.public-staff-list-page__card {
+  display: grid;
+  gap: 0;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid var(--border-soft);
+  border-radius: 1.5rem;
+  background: var(--surface-panel);
+  box-shadow: var(--shadow-soft);
+  position: relative;
+  cursor: pointer;
+}
+
+/* ── Foto cuadrada top ──────────────────────────────────────── */
+
+.public-staff-list-page__photo {
+  width: 100%;
+  aspect-ratio: 1;
+  background: rgba(176, 138, 74, 0.1);
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+}
+
+.public-staff-list-page__initials {
+  font-size: 3rem;
+  font-weight: 700;
+  color: var(--brand-primary);
+  opacity: 0.6;
+}
+
+/* ── Card body ──────────────────────────────────────────────── */
+
+.public-staff-list-page__card-body {
+  padding: 0.9rem;
+  display: grid;
+  gap: 0.65rem;
+  align-content: space-between;
+  text-align: center;
+  justify-items: center;
+}
+
+.public-staff-list-page__card-identity {
+  display: grid;
+  gap: 0.2rem;
+  justify-items: center;
+
+  h2 {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--color-text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+  }
+}
+
+.public-staff-list-page__rating {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.public-staff-list-page__star {
+  color: #c9a227;
+}
+
+.public-staff-list-page__review-count {
+  color: var(--text-muted);
+  font-weight: 400;
+  font-size: 0.78rem;
+}
+
+/* ── Bio ──────────────────────────────────────────────────── */
+
+.public-staff-list-page__bio {
+  margin: 0;
+  font-size: 0.88rem;
+  color: var(--text-muted);
+  line-height: 1.55;
+  text-align: left;
+  width: 100%;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.public-staff-list-page__services {
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 0.3rem;
+  border-top: 1px solid var(--border-soft);
+  padding-top: 0.6rem;
+  text-align: left;
+  width: 100%;
+
+  li {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.45rem;
+    font-size: 0.85rem;
+    color: var(--color-text);
+  }
+
+  small {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    flex-shrink: 0;
+  }
+}
+
+@media (max-width: 700px) {
+  .public-staff-list-page__grid {
+    grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr));
+  }
+}

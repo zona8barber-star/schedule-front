@@ -1,0 +1,380 @@
+/* ── Page layout ──────────────────────────────────────────────── */
+
+.staff-list {
+  display: grid;
+  gap: 1.25rem;
+}
+
+/* ── Header ───────────────────────────────────────────────────── */
+
+.staff-list__header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: clamp(1.1rem, 2vw, 1.5rem);
+  border: 1px solid var(--border-soft);
+  border-radius: 1.5rem;
+  background: var(--surface-panel);
+  box-shadow: var(--shadow-soft);
+}
+
+.staff-list__title-group {
+  display: grid;
+  gap: 0.3rem;
+}
+
+.staff-list__eyebrow {
+  margin: 0;
+  color: var(--brand-primary);
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.staff-list__header h1 {
+  margin: 0;
+  font-size: 1.45rem;
+  color: var(--color-text);
+}
+
+/* ── Create button ────────────────────────────────────────────── */
+
+.staff-list__create-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.75rem 1.25rem;
+  border: 0;
+  border-radius: 999px;
+  background: linear-gradient(135deg, var(--brand-primary), var(--brand-accent));
+  color: white;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity 130ms ease;
+}
+
+.staff-list__create-btn:hover {
+  opacity: 0.88;
+}
+
+/* ── State (loading / empty) ──────────────────────────────────── */
+
+.staff-list__state {
+  display: grid;
+  gap: 0.75rem;
+  justify-items: center;
+  text-align: center;
+  padding: clamp(2rem, 5vw, 3.5rem) 1.5rem;
+  border: 1px solid var(--border-soft);
+  border-radius: 1.5rem;
+  background: var(--surface-panel);
+  box-shadow: var(--shadow-soft);
+}
+
+.staff-list__empty-icon {
+  width: 4rem;
+  height: 4rem;
+  color: var(--color-text-muted);
+}
+
+.staff-list__state h2 {
+  margin: 0;
+  font-size: 1.1rem;
+  color: var(--color-text);
+}
+
+.staff-list__state p {
+  margin: 0;
+  color: var(--text-muted);
+  max-width: 30rem;
+}
+
+/* ── Table wrapper ────────────────────────────────────────────── */
+
+.staff-list__table-wrap {
+  border: 1px solid var(--border-soft);
+  border-radius: 1.5rem;
+  background: var(--surface-panel);
+  box-shadow: var(--shadow-soft);
+  overflow: hidden;
+}
+
+/* ── Table ────────────────────────────────────────────────────── */
+
+.staff-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.staff-table thead th {
+  padding: 0.75rem 1rem;
+  text-align: left;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+  border-bottom: 1px solid var(--border-soft);
+}
+
+.staff-table__col-avatar {
+  width: 3.5rem;
+}
+
+.staff-table__col-contact {
+  min-width: 11rem;
+}
+
+.staff-table__col-social {
+  min-width: 9rem;
+  white-space: nowrap;
+}
+
+.staff-table__col-actions {
+  width: 14rem;
+  text-align: right !important;
+}
+
+.staff-table__row {
+  transition: background-color 120ms ease;
+}
+
+.staff-table__row:hover {
+  background: rgba(176, 138, 74, 0.06);
+}
+
+.staff-table__row:not(:last-child) td {
+  border-bottom: 1px solid rgba(110, 96, 74, 0.2);
+}
+
+.staff-table__row--inactive {
+  opacity: 0.65;
+}
+
+/* ── Avatar ───────────────────────────────────────────────────── */
+
+.staff-table__cell-avatar {
+  padding: 0.85rem 0.5rem 0.85rem 1rem;
+  width: 3.5rem;
+}
+
+.staff-table__avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.4rem;
+  height: 2.4rem;
+  border-radius: 999px;
+  border: 1px solid var(--border-soft);
+  object-fit: cover;
+  background: var(--color-surface);
+  font-weight: 700;
+  font-size: 1rem;
+  color: var(--color-secondary-hover);
+}
+
+.staff-table__avatar--initials {
+  background: rgba(176, 138, 74, 0.15);
+  border-color: rgba(176, 138, 74, 0.4);
+}
+
+/* ── Name cell ────────────────────────────────────────────────── */
+
+.staff-table__cell-name {
+  padding: 0.85rem 1rem;
+}
+
+.staff-table__name {
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.staff-table__inactive-badge {
+  display: inline-block;
+  margin-left: 0.6rem;
+  padding: 0.15rem 0.55rem;
+  border-radius: 999px;
+  background: rgba(110, 96, 74, 0.2);
+  border: 1px solid rgba(110, 96, 74, 0.4);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  color: var(--color-text-muted);
+  vertical-align: middle;
+}
+
+/* ── Actions cell ─────────────────────────────────────────────── */
+
+.staff-table__cell-actions {
+  padding: 0.7rem 1rem;
+  text-align: right;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.45rem;
+}
+
+.staff-table__confirm-text {
+  font-size: 0.84rem;
+  color: var(--color-text-secondary);
+  margin-right: 0.25rem;
+}
+
+.staff-table__action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.45rem 0.85rem;
+  border-radius: 999px;
+  border: 1px solid rgba(110, 96, 74, 0.35);
+  background: rgba(110, 96, 74, 0.1);
+  color: var(--color-text);
+  font: inherit;
+  font-size: 0.84rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background-color 120ms ease,
+    border-color 120ms ease,
+    color 120ms ease;
+}
+
+.staff-table__action-btn svg {
+  width: 0.9rem;
+  height: 0.9rem;
+  flex-shrink: 0;
+}
+
+.staff-table__action-btn--edit {
+  border-color: rgba(176, 138, 74, 0.4);
+  background: rgba(176, 138, 74, 0.1);
+  color: var(--color-secondary-hover);
+}
+
+.staff-table__action-btn--edit:hover {
+  background: rgba(176, 138, 74, 0.2);
+  border-color: rgba(176, 138, 74, 0.6);
+}
+
+.staff-table__action-btn--delete {
+  border-color: rgba(180, 83, 60, 0.35);
+  background: rgba(180, 83, 60, 0.08);
+  color: var(--color-error);
+}
+
+.staff-table__action-btn--delete:hover {
+  background: rgba(180, 83, 60, 0.18);
+  border-color: rgba(180, 83, 60, 0.5);
+}
+
+.staff-table__action-btn--danger {
+  border-color: rgba(180, 83, 60, 0.5);
+  background: rgba(180, 83, 60, 0.15);
+  color: var(--color-error);
+}
+
+.staff-table__action-btn[disabled] {
+  cursor: wait;
+  opacity: 0.6;
+}
+
+@media (max-width: 640px) {
+  .staff-table__cell-actions {
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+}
+
+/* ── Contact cell ─────────────────────────────────────────────── */
+
+.staff-table__cell-contact {
+  padding: 0.85rem 1rem;
+  vertical-align: middle;
+}
+
+.staff-table__contact-email {
+  display: block;
+  font-size: 0.84rem;
+  color: var(--color-text-secondary);
+  word-break: break-all;
+}
+
+.staff-table__contact-phone {
+  display: block;
+  margin-top: 0.2rem;
+  font-size: 0.76rem;
+  color: var(--color-text-muted);
+}
+
+/* ── Social indicators ────────────────────────────────────────── */
+
+.staff-table__cell-social {
+  padding: 0.85rem 1rem;
+  vertical-align: middle;
+}
+
+.staff-table__socials {
+  display: flex;
+  gap: 0.35rem;
+  flex-wrap: nowrap;
+  align-items: center;
+}
+
+.staff-table__social-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.7rem;
+  height: 1.7rem;
+  border-radius: 0.4rem;
+  background: rgba(110, 96, 74, 0.06);
+  border: 1px solid rgba(110, 96, 74, 0.14);
+  opacity: 0.22;
+  filter: grayscale(1);
+  cursor: default;
+  transition:
+    opacity 0.15s ease,
+    filter 0.15s ease,
+    transform 0.12s ease,
+    background 0.15s ease,
+    border-color 0.15s ease;
+
+  img {
+    width: 1rem;
+    height: 1rem;
+    display: block;
+    pointer-events: none;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+}
+
+.staff-table__social-icon--active {
+  opacity: 1;
+  filter: none;
+  border-color: rgba(176, 138, 74, 0.3);
+  background: rgba(176, 138, 74, 0.08);
+  cursor: pointer;
+  text-decoration: none;
+
+  &:hover {
+    opacity: 0.82;
+    transform: scale(1.13);
+    background: rgba(176, 138, 74, 0.18);
+    border-color: rgba(176, 138, 74, 0.52);
+  }
+}
+
+@media (max-width: 900px) {
+  .staff-table__col-contact,
+  .staff-table__col-social,
+  .staff-table__cell-contact,
+  .staff-table__cell-social {
+    display: none;
+  }
+}

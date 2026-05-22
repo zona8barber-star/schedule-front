@@ -1,0 +1,55 @@
+<section class="customer-reviews-page">
+  <header class="customer-reviews-page__hero">
+    <div>
+      <p class="customer-reviews-page__eyebrow">Cuenta</p>
+      <h1>Mis resenas</h1>
+      <p>Revisa el historial de resenas enviadas desde tus citas completadas.</p>
+    </div>
+  </header>
+
+  <article class="customer-reviews-page__panel">
+    <app-api-feedback severity="error" [message]="errorMessage()" />
+
+    @if (isLoading()) {
+      <app-page-state kind="loading" message="Cargando resenas..." />
+    } @else if (!reviews().length) {
+      <app-page-state
+        kind="empty"
+        title="Aun no tienes resenas"
+        message="Cuando completes una cita podras calificarla desde Mis citas."
+      >
+        <a class="customer-reviews-page__link" routerLink="/customer/appointments"
+          >Ir a mis citas</a
+        >
+      </app-page-state>
+    } @else {
+      <div class="customer-reviews-page__list">
+        @for (review of reviews(); track review.id) {
+          <article class="customer-reviews-page__card">
+            <div class="customer-reviews-page__card-header">
+              <div>
+                <p class="customer-reviews-page__eyebrow">Cita {{ review.appointmentId }}</p>
+                <h2>{{ renderStars(review.stars) }}</h2>
+              </div>
+
+              <span class="customer-reviews-page__date">{{
+                formatDateTime(review.createdAtUtc)
+              }}</span>
+            </div>
+
+            <dl class="customer-reviews-page__details">
+              <div>
+                <dt>Profesional</dt>
+                <dd>{{ review.staffProfileId }}</dd>
+              </div>
+              <div>
+                <dt>Comentario</dt>
+                <dd>{{ review.comment || 'Sin comentario' }}</dd>
+              </div>
+            </dl>
+          </article>
+        }
+      </div>
+    }
+  </article>
+</section>

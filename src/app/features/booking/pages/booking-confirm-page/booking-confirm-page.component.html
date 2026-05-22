@@ -1,0 +1,71 @@
+<section class="booking-confirm-page">
+  <header class="booking-confirm-page__hero">
+    <div>
+      <p class="booking-confirm-page__eyebrow">Reserva</p>
+      <h1>Confirmar reserva</h1>
+      <p>
+        Revisa el horario seleccionado y confirma la reserva para guardarla en tu historial.
+      </p>
+    </div>
+  </header>
+
+  <article class="booking-confirm-page__panel">
+    <app-api-feedback severity="error" [message]="errorMessage()" />
+
+    @if (!canSubmit()) {
+      <app-page-state
+        kind="empty"
+        title="Faltan datos para reservar"
+        message="Selecciona un horario desde la disponibilidad publica para continuar."
+      >
+        <a routerLink="/staff" class="booking-confirm-page__link">Ver profesionales y disponibilidad</a>
+      </app-page-state>
+    } @else if (successAppointment()) {
+      <section class="booking-confirm-page__success">
+        <p class="booking-confirm-page__eyebrow">Reserva confirmada</p>
+        <h2>Tu cita fue creada correctamente</h2>
+        <p>Fecha: {{ formatDateTime(successAppointment()!.startsAtUtc) }}</p>
+        <div class="booking-confirm-page__actions">
+          @if (whatsappUrl()) {
+            <a
+              [href]="whatsappUrl()"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="booking-confirm-page__button"
+            >
+              Confirmar por WhatsApp
+            </a>
+          }
+          <a routerLink="/customer/appointments" class="booking-confirm-page__link">
+            Ver mis citas
+          </a>
+        </div>
+      </section>
+    } @else {
+      <section class="booking-confirm-page__summary">
+        <div>
+          <span>Profesional</span>
+          <strong>{{ staffProfile()?.displayName ?? staffProfileId() }}</strong>
+        </div>
+        <div>
+          <span>Horario</span>
+          <strong>{{ formatDateTime(startsAtUtc()!) }}</strong>
+        </div>
+      </section>
+
+      <div class="booking-confirm-page__actions">
+        <button
+          class="booking-confirm-page__button"
+          type="button"
+          [disabled]="isSubmitting()"
+          (click)="confirmBooking()"
+        >
+          {{ submitLabel() }}
+        </button>
+        <a routerLink="/customer/appointments" class="booking-confirm-page__link"
+          >Ir a mis citas</a
+        >
+      </div>
+    }
+  </article>
+</section>

@@ -1,0 +1,36 @@
+:root {
+  --color-primary: #161817;
+  --color-primary-hover: #0b0d0c;
+
+  --color-secondary: #9a7a45;
+  --color-secondary-hover: #b08a4a;
+
+  --color-accent: #2f5e59;
+  --color-accent-soft: #5f8b83;
+
+  --color-background: #23231f;
+  --color-background-alt: #2e241c;
+
+  --color-surface: #2b2d2a;
+  --color-surface-premium: #3a2c22;
+
+  --color-text: #f2eee6;
+  --color-text-secondary: #b8b0a4;
+  --color-text-muted: #7d786f;
+
+  --color-border: #6e604a;
+
+  --color-error: #b4533c;
+  --color-success: #4f7a5f;
+
+  /* Legacy aliases used across existing feature styles. */
+  --brand-primary: var(--color-secondary);
+  --brand-accent: var(--color-secondary-hover);
+  --surface-canvas: var(--color-background);
+  --surface-muted: var(--color-background-alt);
+  --surface-panel: rgba(43, 45, 42, 0.9);
+  --text-primary: var(--color-text);
+  --text-muted: var(--color-text-secondary);
+  --border-soft: rgba(110, 96, 74, 0.62);
+  --shadow-soft: 0 18px 40px rgba(11, 13, 12, 0.28);
+}

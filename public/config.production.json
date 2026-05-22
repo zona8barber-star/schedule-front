@@ -1,0 +1,7 @@
+{
+  "apiBaseUrl": "https://api.example.com/api/v1",
+  "appName": "Barbershop",
+  "appUrl": "https://app.example.com",
+  "assetsBaseUrl": "https://app.example.com/assets",
+  "environmentName": "Production"
+}

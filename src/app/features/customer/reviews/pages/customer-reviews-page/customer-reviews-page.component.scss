@@ -1,0 +1,95 @@
+.customer-reviews-page {
+  display: grid;
+  gap: 1.25rem;
+}
+
+.customer-reviews-page__hero,
+.customer-reviews-page__panel,
+.customer-reviews-page__state,
+.customer-reviews-page__card {
+  padding: clamp(1.15rem, 2vw, 1.6rem);
+  border: 1px solid var(--border-soft);
+  border-radius: 1.5rem;
+  background: var(--surface-panel);
+  box-shadow: var(--shadow-soft);
+}
+
+.customer-reviews-page__eyebrow {
+  margin: 0;
+  color: var(--brand-primary);
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.customer-reviews-page h1,
+.customer-reviews-page h2,
+.customer-reviews-page p,
+.customer-reviews-page dd {
+  margin: 0;
+}
+
+.customer-reviews-page p,
+.customer-reviews-page dd,
+.customer-reviews-page__state,
+.customer-reviews-page__date {
+  color: var(--text-muted);
+  line-height: 1.6;
+}
+
+.customer-reviews-page__panel,
+.customer-reviews-page__list,
+.customer-reviews-page__card,
+.customer-reviews-page__details {
+  display: grid;
+  gap: 1rem;
+}
+
+.customer-reviews-page__card-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.customer-reviews-page__details {
+  grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+  margin: 0;
+}
+
+.customer-reviews-page__details div {
+  display: grid;
+  gap: 0.35rem;
+  padding: 0.9rem;
+  border: 1px solid var(--border-soft);
+  border-radius: 1rem;
+  background: rgba(255, 255, 255, 0.62);
+  min-width: 0;
+}
+
+.customer-reviews-page__details dt {
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.customer-reviews-page__details dd {
+  overflow-wrap: anywhere;
+}
+
+.customer-reviews-page__link {
+  display: inline-flex;
+  width: fit-content;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.6rem;
+  padding: 0.7rem 1rem;
+  border-radius: 999px;
+  text-decoration: none;
+  font-weight: 700;
+  background: rgba(141, 74, 47, 0.1);
+  color: var(--brand-primary);
+}

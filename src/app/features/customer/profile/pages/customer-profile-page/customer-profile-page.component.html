@@ -1,0 +1,260 @@
+<div class="cp">
+
+  <!-- Header -->
+  <header class="cp__hero">
+    <h1>Mi perfil</h1>
+    <p class="cp__subtitle">Actualiza tu información personal y gestiona tu contraseña.</p>
+  </header>
+
+  @if (isLoading()) {
+    <div class="cp__panel">
+      <app-page-state kind="loading" message="Cargando tu perfil..." />
+    </div>
+  } @else {
+
+    <!-- Tabs -->
+    <nav class="cp__tabs" aria-label="Secciones del perfil">
+      <button
+        class="cp__tab"
+        [class.cp__tab--active]="activeTab() === 'info'"
+        type="button"
+        (click)="setTab('info')"
+      >
+        Información personal
+      </button>
+      <button
+        class="cp__tab"
+        [class.cp__tab--active]="activeTab() === 'password'"
+        type="button"
+        (click)="setTab('password')"
+      >
+        Contraseña
+      </button>
+    </nav>
+
+    <!-- ── Tab: Información personal ──────────────────────────────── -->
+    @if (activeTab() === 'info') {
+      <div class="cp__panel">
+
+        <app-api-feedback severity="error" [message]="infoError()" />
+        <app-api-feedback severity="info" [message]="infoSuccess()" />
+
+        <!-- Foto de perfil -->
+        <div class="cp__photo-section">
+          <div class="cp__avatar-wrap">
+            @if (photoPreviewUrl() || profile()?.photoUrl) {
+              <img
+                class="cp__avatar"
+                [src]="photoPreviewUrl() ?? profile()!.photoUrl!"
+                alt="Tu foto de perfil"
+              />
+            } @else {
+              <div class="cp__avatar cp__avatar--empty">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+                  <circle cx="12" cy="8" r="4"/>
+                  <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
+                </svg>
+              </div>
+            }
+          </div>
+
+          <div class="cp__photo-info">
+            <p class="cp__photo-label">Foto de perfil</p>
+            <p class="cp__photo-hint">JPG, PNG o WebP · máx. 1 MB</p>
+
+            @if (photoError()) {
+              <p class="cp__field-error">{{ photoError() }}</p>
+            }
+
+            <div class="cp__photo-actions">
+              <button
+                class="cp__btn cp__btn--outline"
+                type="button"
+                [disabled]="photoUploading()"
+                (click)="triggerPhotoInput()"
+              >
+                {{ photoUploading() ? 'Subiendo...' : (profile()?.photoUrl ? 'Cambiar foto' : 'Subir foto') }}
+              </button>
+
+              @if (profile()?.photoUrl) {
+                <button
+                  class="cp__btn cp__btn--danger"
+                  type="button"
+                  [disabled]="photoUploading()"
+                  (click)="removePhoto()"
+                >
+                  Eliminar
+                </button>
+              }
+            </div>
+          </div>
+        </div>
+
+        <input
+          #photoInput
+          type="file"
+          accept="image/jpeg,image/png,image/webp"
+          class="cp__file-hidden"
+          (change)="onPhotoSelected($event)"
+        />
+
+        <!-- Datos básicos -->
+        <form [formGroup]="infoForm" (ngSubmit)="saveInfo()" novalidate>
+          <div class="cp__form-grid">
+
+            <!-- Nombre completo -->
+            <div class="cp__field">
+              <label for="cp-name">
+                Nombre completo <span class="cp__required">*</span>
+              </label>
+              <input
+                id="cp-name"
+                type="text"
+                formControlName="fullName"
+                placeholder="Tu nombre completo"
+                autocomplete="name"
+              />
+              @if (showInfoError('fullName', 'required')) {
+                <p class="cp__field-error">El nombre es requerido.</p>
+              }
+              @if (showInfoError('fullName', 'minlength')) {
+                <p class="cp__field-error">El nombre debe tener al menos 2 caracteres.</p>
+              }
+              @if (showInfoError('fullName', 'maxlength')) {
+                <p class="cp__field-error">El nombre no puede tener más de 120 caracteres.</p>
+              }
+            </div>
+
+            <!-- Correo (read-only) -->
+            <div class="cp__field">
+              <label>Correo electrónico</label>
+              <input
+                type="email"
+                [value]="profile()?.email ?? ''"
+                readonly
+                class="cp__input--readonly"
+                autocomplete="email"
+              />
+            </div>
+
+            <!-- Teléfono -->
+            <div class="cp__field">
+              <label for="cp-phone">Teléfono</label>
+              <input
+                id="cp-phone"
+                type="tel"
+                formControlName="phoneNumber"
+                placeholder="+57 300 000 0000"
+                autocomplete="tel"
+              />
+              @if (showInfoError('phoneNumber', 'maxlength')) {
+                <p class="cp__field-error">Máximo 40 caracteres.</p>
+              }
+            </div>
+
+            <!-- Fecha de nacimiento -->
+            <div class="cp__field">
+              <label for="cp-dob">Fecha de nacimiento</label>
+              <input
+                id="cp-dob"
+                type="date"
+                formControlName="dateOfBirth"
+              />
+            </div>
+          </div>
+
+          <div class="cp__actions">
+            <button
+              class="cp__btn cp__btn--primary"
+              type="submit"
+              [disabled]="isInfoSaving()"
+            >
+              {{ isInfoSaving() ? 'Guardando...' : 'Guardar cambios' }}
+            </button>
+          </div>
+        </form>
+      </div>
+    }
+
+    <!-- ── Tab: Contraseña ──────────────────────────────────────────── -->
+    @if (activeTab() === 'password') {
+      <div class="cp__panel">
+
+        <app-api-feedback severity="error" [message]="pwdError()" />
+        <app-api-feedback severity="info" [message]="pwdSuccess()" />
+
+        <form [formGroup]="pwdForm" (ngSubmit)="changePassword()" novalidate>
+          <div class="cp__form-grid cp__form-grid--single">
+
+            <!-- Contraseña actual -->
+            <div class="cp__field">
+              <label for="cp-cur-pwd">
+                Contraseña actual <span class="cp__required">*</span>
+              </label>
+              <input
+                id="cp-cur-pwd"
+                type="password"
+                formControlName="currentPassword"
+                placeholder="Tu contraseña actual"
+                autocomplete="current-password"
+              />
+              @if (showPwdError('currentPassword', 'required')) {
+                <p class="cp__field-error">La contraseña actual es requerida.</p>
+              }
+            </div>
+
+            <!-- Nueva contraseña -->
+            <div class="cp__field">
+              <label for="cp-new-pwd">
+                Nueva contraseña <span class="cp__required">*</span>
+              </label>
+              <input
+                id="cp-new-pwd"
+                type="password"
+                formControlName="newPassword"
+                placeholder="Mínimo 8 caracteres"
+                autocomplete="new-password"
+              />
+              @if (showPwdError('newPassword', 'required')) {
+                <p class="cp__field-error">La nueva contraseña es requerida.</p>
+              }
+              @if (showPwdError('newPassword', 'minlength')) {
+                <p class="cp__field-error">La contraseña debe tener al menos 8 caracteres.</p>
+              }
+            </div>
+
+            <!-- Confirmar contraseña -->
+            <div class="cp__field">
+              <label for="cp-conf-pwd">
+                Confirmar contraseña <span class="cp__required">*</span>
+              </label>
+              <input
+                id="cp-conf-pwd"
+                type="password"
+                formControlName="confirmPassword"
+                placeholder="Repite la nueva contraseña"
+                autocomplete="new-password"
+              />
+              @if (showPwdError('confirmPassword', 'required')) {
+                <p class="cp__field-error">Por favor confirma tu nueva contraseña.</p>
+              }
+            </div>
+
+          </div>
+
+          <div class="cp__actions">
+            <button
+              class="cp__btn cp__btn--primary"
+              type="submit"
+              [disabled]="isPwdSaving()"
+            >
+              {{ isPwdSaving() ? 'Actualizando...' : 'Cambiar contraseña' }}
+            </button>
+          </div>
+        </form>
+
+      </div>
+    }
+
+  }
+</div>

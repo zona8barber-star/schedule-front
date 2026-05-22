@@ -1,0 +1,7 @@
+{
+  "apiBaseUrl": "http://localhost:5000/api/v1",
+  "appName": "Barbershop",
+  "appUrl": "http://localhost:4200",
+  "assetsBaseUrl": "http://localhost:4200/assets",
+  "environmentName": "Development"
+}

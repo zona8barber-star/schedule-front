@@ -1,0 +1,54 @@
+<section class="file-upload">
+  <div class="file-upload__head">
+    <h3>{{ title }}</h3>
+    @if (description) {
+      <p>{{ description }}</p>
+    }
+  </div>
+
+  <div class="file-upload__field">
+    <label [for]="purposeSelectId">Categoria</label>
+    <select
+      #purposeSelect
+      [id]="purposeSelectId"
+      [disabled]="isDisabled"
+      [value]="selectedPurpose() ?? ''"
+      (change)="onPurposeChanged(purposeSelect.value)"
+    >
+      <option value="">Selecciona una categoria</option>
+      @for (purposeOption of purposes; track purposeOption.value) {
+        <option [value]="purposeOption.value">{{ purposeOption.label }}</option>
+      }
+    </select>
+    @if (selectedPurposeHint()) {
+      <p class="file-upload__hint">{{ selectedPurposeHint() }}</p>
+    }
+  </div>
+
+  <div class="file-upload__field">
+    <label [for]="fileInputId">Archivo</label>
+    <input
+      [id]="fileInputId"
+      type="file"
+      [accept]="accept"
+      [disabled]="isDisabled"
+      (change)="onFileChanged($event)"
+    />
+    @if (selectedFile()) {
+      <p class="file-upload__hint">{{ selectedFile()!.name }} · {{ fileSizeLabel() }}</p>
+    }
+  </div>
+
+  @if (errorMessage()) {
+    <p class="file-upload__error">{{ errorMessage() }}</p>
+  }
+
+  <button
+    class="file-upload__button"
+    type="button"
+    [disabled]="isSubmitDisabled()"
+    (click)="submit()"
+  >
+    {{ isSubmitting ? 'Subiendo...' : buttonLabel }}
+  </button>
+</section>

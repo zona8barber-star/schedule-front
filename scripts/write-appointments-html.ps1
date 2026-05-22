@@ -1,0 +1,318 @@
+$dest = "d:\Proyects\barbershop\app\front\barbershop-pwa\src\app\features\staff\appointments\pages\staff-appointments-page\staff-appointments-page.component.html"
+
+$content = @'
+<section class="agenda-page">
+
+  <!-- ── Header ──────────────────────────────────────────────────────── -->
+  <div class="agenda-page__header">
+    <div>
+      <p class="agenda-page__eyebrow">Mi cuenta</p>
+      <h1>Mi agenda</h1>
+      <p class="agenda-page__subtitle">
+        Gestiona tus citas, registra turnos manuales y actualiza el estado de cada atencion.
+      </p>
+    </div>
+    <button class="agenda-page__btn-primary" type="button" (click)="openCreateModal()">
+      + Nueva cita
+    </button>
+  </div>
+
+  <app-api-feedback severity="error" [message]="errorMessage()" />
+  <app-api-feedback severity="info" [message]="successMessage()" />
+
+  <!-- ── Loading ─────────────────────────────────────────────────────── -->
+  @if (isLoading()) {
+    <app-page-state kind="loading" message="Cargando agenda..." />
+  } @else {
+
+    <!-- ── Tabs ──────────────────────────────────────────────────────── -->
+    <div class="agenda-page__tabs" role="tablist">
+      <button
+        class="agenda-page__tab"
+        role="tab"
+        type="button"
+        [class.agenda-page__tab--active]="activeTab() === 'today'"
+        (click)="activeTab.set('today')"
+      >
+        Hoy
+        @if (todayAppointments().length > 0) {
+          <span class="agenda-page__tab-badge">{{ todayAppointments().length }}</span>
+        }
+      </button>
+      <button
+        class="agenda-page__tab"
+        role="tab"
+        type="button"
+        [class.agenda-page__tab--active]="activeTab() === 'upcoming'"
+        (click)="activeTab.set('upcoming')"
+      >
+        Proximas
+        @if (upcomingAppointments().length > 0) {
+          <span class="agenda-page__tab-badge">{{ upcomingAppointments().length }}</span>
+        }
+      </button>
+    </div>
+
+    <!-- ── Appointments panel ─────────────────────────────────────────── -->
+    <div class="agenda-page__panel">
+      @if (activeAppointments().length === 0) {
+        <div class="agenda-page__empty">
+          @if (activeTab() === 'today') {
+            No hay citas programadas para hoy.
+          } @else {
+            No hay citas futuras registradas.
+          }
+        </div>
+      } @else {
+        <div class="agenda-page__list">
+          @for (appointment of activeAppointments(); track appointment.id) {
+            <div class="appt-card" [class.appt-card--cancelled]="appointment.status === 'Cancelled' || appointment.status === 'Completed' || appointment.status === 'NoShow'">
+
+              <!-- Card header -->
+              <div class="appt-card__header">
+                <div class="appt-card__time">
+                  <span class="appt-card__time-range">
+                    {{ formatDateTime(appointment.startsAtUtc) }} &ndash; {{ formatTime(appointment.endsAtUtc) }}
+                  </span>
+                  <span class="appt-card__source">{{ sourceLabel(appointment.source) }}</span>
+                </div>
+                <span class="appt-card__status" [ngClass]="statusClass(appointment.status)">
+                  {{ statusLabel(appointment.status) }}
+                </span>
+              </div>
+
+              <!-- Customer info -->
+              <div class="appt-card__info">
+                <div class="appt-card__info-item">
+                  <span class="appt-card__info-label">Cliente</span>
+                  <span class="appt-card__info-value">{{ appointment.customerName }}</span>
+                </div>
+                @if (appointment.customerPhone) {
+                  <div class="appt-card__info-item">
+                    <span class="appt-card__info-label">Telefono</span>
+                    <span class="appt-card__info-value">{{ appointment.customerPhone }}</span>
+                  </div>
+                }
+                @if (appointment.customerEmail) {
+                  <div class="appt-card__info-item">
+                    <span class="appt-card__info-label">Email</span>
+                    <span class="appt-card__info-value">{{ appointment.customerEmail }}</span>
+                  </div>
+                }
+                @if (appointment.notes) {
+                  <div class="appt-card__info-item appt-card__info-item--wide">
+                    <span class="appt-card__info-label">Notas</span>
+                    <span class="appt-card__info-value">{{ appointment.notes }}</span>
+                  </div>
+                }
+              </div>
+
+              <!-- Actions -->
+              @if (canTransition(appointment)) {
+                <div class="appt-card__actions">
+                  <button
+                    class="appt-card__btn appt-card__btn--edit"
+                    type="button"
+                    [disabled]="isAnythingBusy()"
+                    (click)="startEdit(appointment)"
+                  >
+                    Editar
+                  </button>
+                  <button
+                    class="appt-card__btn appt-card__btn--complete"
+                    type="button"
+                    [disabled]="isAnythingBusy()"
+                    (click)="markCompleted(appointment)"
+                  >
+                    {{ isBusyFor(appointment.id, 'complete') ? 'Procesando...' : 'Completar' }}
+                  </button>
+                  <button
+                    class="appt-card__btn appt-card__btn--noshow"
+                    type="button"
+                    [disabled]="isAnythingBusy()"
+                    (click)="markNoShow(appointment)"
+                  >
+                    {{ isBusyFor(appointment.id, 'no-show') ? 'Procesando...' : 'No-show' }}
+                  </button>
+                  <button
+                    class="appt-card__btn appt-card__btn--delete"
+                    type="button"
+                    [disabled]="isAnythingBusy()"
+                    (click)="deleteAppointment(appointment)"
+                  >
+                    {{ isBusyFor(appointment.id, 'delete') ? 'Eliminando...' : 'Eliminar' }}
+                  </button>
+                </div>
+              }
+
+              <!-- Inline edit form -->
+              @if (editingAppointmentId() === appointment.id) {
+                <div class="appt-card__edit-form">
+                  <p class="appt-card__edit-title">Editar cita</p>
+                  <form [formGroup]="editForm" (ngSubmit)="submitEdit()" novalidate>
+                    <fieldset [disabled]="isSavingEdit()">
+                      <div class="agenda-page__form-grid">
+                        <div class="agenda-page__field">
+                          <label for="editStartsAt">
+                            Inicio <span class="agenda-page__required">*</span>
+                          </label>
+                          <input id="editStartsAt" type="datetime-local" formControlName="startsAt" />
+                          @if (showEditError('startsAt', 'required')) {
+                            <p class="agenda-page__error">Selecciona fecha y hora de inicio.</p>
+                          }
+                        </div>
+                        <div class="agenda-page__field">
+                          <label for="editEndsAt">
+                            Fin <span class="agenda-page__required">*</span>
+                          </label>
+                          <input id="editEndsAt" type="datetime-local" formControlName="endsAt" />
+                          @if (showEditError('endsAt', 'required')) {
+                            <p class="agenda-page__error">Selecciona fecha y hora de fin.</p>
+                          }
+                        </div>
+                        <div class="agenda-page__field">
+                          <label for="editCustomerName">
+                            Nombre cliente <span class="agenda-page__required">*</span>
+                          </label>
+                          <input id="editCustomerName" type="text" formControlName="customerName" />
+                          @if (showEditError('customerName', 'required')) {
+                            <p class="agenda-page__error">Ingresa el nombre del cliente.</p>
+                          }
+                        </div>
+                        <div class="agenda-page__field">
+                          <label for="editCustomerEmail">Email (opcional)</label>
+                          <input id="editCustomerEmail" type="email" formControlName="customerEmail" />
+                          @if (showEditError('customerEmail', 'email')) {
+                            <p class="agenda-page__error">Ingresa un correo valido.</p>
+                          }
+                        </div>
+                        <div class="agenda-page__field">
+                          <label for="editCustomerPhone">Telefono (opcional)</label>
+                          <input id="editCustomerPhone" type="tel" formControlName="customerPhone" />
+                        </div>
+                        <div class="agenda-page__field agenda-page__field--wide">
+                          <label for="editNotes">Notas (opcional)</label>
+                          <textarea id="editNotes" rows="3" formControlName="notes"></textarea>
+                        </div>
+                      </div>
+                    </fieldset>
+                    <div class="agenda-page__form-actions">
+                      <button
+                        class="agenda-page__btn-ghost"
+                        type="button"
+                        [disabled]="isSavingEdit()"
+                        (click)="cancelEdit()"
+                      >
+                        Cancelar
+                      </button>
+                      <button
+                        class="agenda-page__btn-primary"
+                        type="submit"
+                        [disabled]="isSavingEdit()"
+                      >
+                        {{ isSavingEdit() ? 'Guardando...' : 'Guardar cambios' }}
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              }
+
+            </div>
+          }
+        </div>
+      }
+    </div>
+
+  }
+
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════════════
+     MODAL: Nueva cita manual
+═══════════════════════════════════════════════════════════════════════ -->
+@if (showCreateModal()) {
+  <div class="modal-overlay" role="dialog" aria-modal="true" aria-label="Nueva cita" (click)="closeCreateModal()">
+    <div class="agenda-modal" (click)="$event.stopPropagation()">
+
+      <div class="agenda-modal__header">
+        <div>
+          <h2>Nueva cita manual</h2>
+          <p class="agenda-modal__hint">
+            El horario sera validado contra tu disponibilidad y las citas existentes.
+          </p>
+        </div>
+        <button class="agenda-modal__close" type="button" aria-label="Cerrar" (click)="closeCreateModal()">
+          &times;
+        </button>
+      </div>
+
+      <app-api-feedback severity="error" [message]="errorMessage()" />
+
+      <form class="agenda-modal__form" [formGroup]="createForm" (ngSubmit)="submitCreate()" novalidate>
+        <fieldset [disabled]="isCreating()">
+          <div class="agenda-page__form-grid">
+            <div class="agenda-page__field agenda-page__field--wide">
+              <label for="createStartsAt">
+                Fecha y hora de inicio <span class="agenda-page__required">*</span>
+              </label>
+              <input id="createStartsAt" type="datetime-local" formControlName="startsAt" />
+              @if (showCreateError('startsAt', 'required')) {
+                <p class="agenda-page__error">Selecciona fecha y hora de inicio.</p>
+              }
+            </div>
+            <div class="agenda-page__field">
+              <label for="createCustomerName">
+                Nombre del cliente <span class="agenda-page__required">*</span>
+              </label>
+              <input id="createCustomerName" type="text" formControlName="customerName" placeholder="Ej: Juan Perez" />
+              @if (showCreateError('customerName', 'required')) {
+                <p class="agenda-page__error">Ingresa el nombre del cliente.</p>
+              }
+              @if (showCreateError('customerName', 'minlength')) {
+                <p class="agenda-page__error">El nombre debe tener al menos 2 caracteres.</p>
+              }
+            </div>
+            <div class="agenda-page__field">
+              <label for="createCustomerPhone">Telefono (opcional)</label>
+              <input id="createCustomerPhone" type="tel" formControlName="customerPhone" placeholder="+54 9 11 ..." />
+            </div>
+            <div class="agenda-page__field agenda-page__field--wide">
+              <label for="createCustomerEmail">Email (opcional)</label>
+              <input id="createCustomerEmail" type="email" formControlName="customerEmail" placeholder="cliente@email.com" />
+              @if (showCreateError('customerEmail', 'email')) {
+                <p class="agenda-page__error">Ingresa un correo valido.</p>
+              }
+            </div>
+            <div class="agenda-page__field agenda-page__field--wide">
+              <label for="createNotes">Notas (opcional)</label>
+              <textarea id="createNotes" rows="3" formControlName="notes" placeholder="Ej: corte + barba, primer turno del dia..."></textarea>
+            </div>
+          </div>
+        </fieldset>
+
+        <div class="agenda-page__form-actions">
+          <button
+            class="agenda-page__btn-ghost"
+            type="button"
+            [disabled]="isCreating()"
+            (click)="closeCreateModal()"
+          >
+            Cancelar
+          </button>
+          <button
+            class="agenda-page__btn-primary"
+            type="submit"
+            [disabled]="isCreating()"
+          >
+            {{ isCreating() ? 'Creando cita...' : 'Crear cita' }}
+          </button>
+        </div>
+      </form>
+
+    </div>
+  </div>
+}
+'@
+
+[System.IO.File]::WriteAllText($dest, $content, [System.Text.UTF8Encoding]::new($false))
+Write-Host "HTML OK"

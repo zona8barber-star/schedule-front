@@ -1,0 +1,181 @@
+<section class="public-staff-list-page">
+  <header class="public-staff-list-page__hero">
+    <div>
+      <p class="public-staff-list-page__eyebrow">Publico</p>
+      <h1>Profesionales</h1>
+      <p>Descubre perfiles y disponibilidad sin iniciar sesion.</p>
+    </div>
+  </header>
+
+  <article class="public-staff-list-page__panel">
+    <form class="public-staff-list-page__search" (ngSubmit)="submitSearch()" novalidate>
+      <label for="staffSearch">Buscar por nombre</label>
+      <input
+        id="staffSearch"
+        type="search"
+        [formControl]="searchControl"
+        placeholder="Ejemplo: fade"
+      />
+
+      <div class="public-staff-list-page__actions">
+        <button type="submit" [disabled]="isLoading()">{{ searchButtonLabel() }}</button>
+        <button
+          type="button"
+          class="public-staff-list-page__secondary"
+          [disabled]="isLoading()"
+          (click)="clearSearch()"
+        >
+          Limpiar
+        </button>
+      </div>
+    </form>
+  </article>
+
+  <app-api-feedback severity="error" [message]="errorMessage()" />
+
+  @if (isLoading()) {
+    <app-page-state kind="loading" message="Cargando profesionales..." />
+  } @else if (!staffMembers().length) {
+    <app-page-state kind="empty" message="No encontramos profesionales para el filtro actual." />
+  } @else {
+    <div class="public-staff-list-page__grid">
+      @for (staffMember of staffMembers(); track staffMember.staffProfileId) {
+        <article class="public-staff-list-page__card">
+          <div class="public-staff-list-page__photo">
+            @if (staffMember.photoUrl) {
+              <img
+                [src]="staffMember.photoUrl"
+                [alt]="staffMember.displayName"
+                [title]="staffMember.displayName"
+              />
+            } @else {
+              <span class="public-staff-list-page__initials" aria-hidden="true">
+                {{ staffMember.displayName.charAt(0).toUpperCase() }}
+              </span>
+            }
+          </div>
+
+          <div class="public-staff-list-page__card-body">
+            <div class="public-staff-list-page__card-identity">
+              <h2>{{ staffMember.displayName }}</h2>
+              <span class="public-staff-list-page__rating">
+                <span class="public-staff-list-page__star" aria-hidden="true">&#9733;</span>
+                {{ formatRating(staffMember.averageRating) }}
+                <span class="public-staff-list-page__review-count">
+                  ({{ staffMember.reviewCount }} reseñas)
+                </span>
+              </span>
+            </div>
+
+            @if (staffMember.services.length) {
+              <ul class="public-staff-list-page__services">
+                @for (service of visibleServices(staffMember); track service.id) {
+                  <li>
+                    <span>{{ service.name }}</span>
+                    <small>{{ service.durationMinutes }} min</small>
+                  </li>
+                }
+              </ul>
+            }
+
+            <div class="public-staff-list-page__card-actions">
+              <a [routerLink]="['/staff', staffMember.staffProfileId]">Ver</a>
+              <button
+                type="button"
+                class="public-staff-list-page__secondary"
+                (click)="openAvailabilityModal(staffMember)"
+              >
+                Disponibilidad
+              </button>
+            </div>
+          </div>
+        </article>
+      }
+    </div>
+  }
+</section>
+
+@if (activeStaff()) {
+  <div
+    class="psl-modal__overlay"
+    (click)="closeAvailabilityModal()"
+    (keydown.escape)="closeAvailabilityModal()"
+  >
+    <dialog
+      class="psl-modal"
+      open
+      aria-label="Disponibilidad"
+      (click)="$event.stopPropagation()"
+      (keydown)="$event.stopPropagation()"
+    >
+      <div class="psl-modal__head">
+        <div class="psl-modal__staff">
+          <div class="psl-modal__photo">
+            @if (activeStaff()!.photoUrl) {
+              <img
+                [src]="activeStaff()!.photoUrl!"
+                [alt]="activeStaff()!.displayName"
+              />
+            } @else {
+              <span class="psl-modal__initials" aria-hidden="true">
+                {{ activeStaff()!.displayName.charAt(0).toUpperCase() }}
+              </span>
+            }
+          </div>
+          <span class="psl-modal__name">{{ activeStaff()!.displayName }}</span>
+        </div>
+        <button
+          class="psl-modal__close"
+          type="button"
+          (click)="closeAvailabilityModal()"
+          aria-label="Cerrar"
+        >
+          ✕
+        </button>
+      </div>
+
+      <p class="psl-modal__sub">Elegí el día y seleccioná el horario que más te convenga.</p>
+
+      <label class="psl-modal__date-label" for="avail-date">Fecha</label>
+      <input
+        id="avail-date"
+        class="psl-modal__date-input"
+        type="date"
+        [value]="selectedDate()"
+        [min]="todayDate()"
+        (change)="onDateChange($event)"
+      />
+
+      <app-api-feedback severity="error" [message]="slotsError()" />
+
+      @if (slotsLoading()) {
+        <p class="psl-modal__msg">Buscando horarios disponibles...</p>
+      } @else if (!slots().length) {
+        <p class="psl-modal__msg">No hay horarios disponibles para este día.</p>
+      } @else {
+        <p class="psl-modal__hint">Seleccioná un horario para continuar</p>
+        <div class="psl-modal__slots">
+          @for (slot of slots(); track slot.startAtUtc) {
+            <button class="psl-modal__slot" type="button" (click)="selectSlot(slot)">
+              {{ formatSlotTime(slot.startAtUtc) }}
+            </button>
+          }
+        </div>
+      }
+    </dialog>
+  </div>
+}
+
+@if (whatsappUrl()) {
+  <a
+    class="wa-fab"
+    [href]="whatsappUrl()!"
+    target="_blank"
+    rel="noopener noreferrer"
+    aria-label="Contactar por WhatsApp"
+  >
+    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+      <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+    </svg>
+  </a>
+}

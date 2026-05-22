@@ -1,0 +1,170 @@
+<section class="staff-form-page">
+  <header class="staff-form-page__hero">
+    <a class="staff-form-page__back" routerLink="/admin/staff">Volver al listado</a>
+
+    <div class="staff-form-page__hero-copy">
+      <p class="staff-form-page__eyebrow">Gestion</p>
+      <h1>{{ pageTitle() }}</h1>
+      <p>
+        {{
+          isEditMode()
+            ? 'Actualiza los datos operativos del perfil y define si queda activo en la agenda.'
+            : 'Crea un nuevo profesional con su contrasena inicial y datos de perfil.'
+        }}
+      </p>
+    </div>
+  </header>
+
+  <div class="staff-form-page__layout">
+    <article class="staff-form-page__panel">
+      <app-api-feedback severity="error" [message]="errorMessage()" />
+      <app-api-feedback severity="info" [message]="successMessage()" />
+
+      @if (isLoading()) {
+        <section class="staff-form-page__state">Cargando formulario...</section>
+      } @else if (isEditMode() && !hasRecord()) {
+        <section class="staff-form-page__state">No se pudo cargar el perfil solicitado.</section>
+      } @else {
+        <form [formGroup]="staffForm" (ngSubmit)="submit()" novalidate>
+          <fieldset [disabled]="isBusy()">
+            <div class="staff-form-page__grid">
+              <div class="staff-form-page__field staff-form-page__field--wide">
+                <label for="fullName">Nombre completo</label>
+                <input id="fullName" type="text" formControlName="fullName" autocomplete="name" />
+                @if (showError('fullName', 'required')) {
+                  <p class="staff-form-page__error">Ingresa el nombre completo.</p>
+                }
+                @if (showError('fullName', 'minlength')) {
+                  <p class="staff-form-page__error">El nombre debe tener al menos 2 caracteres.</p>
+                }
+              </div>
+
+              <div class="staff-form-page__field">
+                <label for="email">Correo electronico</label>
+                <input id="email" type="email" formControlName="email" autocomplete="email" />
+                @if (showError('email', 'required')) {
+                  <p class="staff-form-page__error">Ingresa el correo electronico.</p>
+                }
+                @if (showError('email', 'email')) {
+                  <p class="staff-form-page__error">Ingresa un correo valido.</p>
+                }
+              </div>
+
+              @if (!isEditMode()) {
+                <div class="staff-form-page__field">
+                  <label for="initialPassword">Contrasena inicial</label>
+                  <input
+                    id="initialPassword"
+                    type="password"
+                    formControlName="initialPassword"
+                    autocomplete="new-password"
+                  />
+                  @if (showError('initialPassword', 'required')) {
+                    <p class="staff-form-page__error">Ingresa una contrasena inicial.</p>
+                  }
+                  @if (showError('initialPassword', 'minlength')) {
+                    <p class="staff-form-page__error">
+                      La contrasena debe tener al menos 8 caracteres.
+                    </p>
+                  }
+                </div>
+              }
+
+              <div class="staff-form-page__field">
+                <label for="displayName">Nombre visible</label>
+                <input id="displayName" type="text" formControlName="displayName" />
+                @if (showError('displayName', 'required')) {
+                  <p class="staff-form-page__error">Ingresa el nombre visible.</p>
+                }
+                @if (showError('displayName', 'minlength')) {
+                  <p class="staff-form-page__error">
+                    El nombre visible debe tener al menos 2 caracteres.
+                  </p>
+                }
+              </div>
+
+              <div class="staff-form-page__field">
+                <label for="phoneNumber">Telefono</label>
+                <input
+                  id="phoneNumber"
+                  type="tel"
+                  formControlName="phoneNumber"
+                  autocomplete="tel"
+                />
+                @if (showError('phoneNumber', 'maxlength')) {
+                  <p class="staff-form-page__error">
+                    El telefono debe tener 40 caracteres o menos.
+                  </p>
+                }
+              </div>
+
+              <div class="staff-form-page__field">
+                <label for="defaultAppointmentDurationMinutes">Duracion base</label>
+                <input
+                  id="defaultAppointmentDurationMinutes"
+                  type="number"
+                  formControlName="defaultAppointmentDurationMinutes"
+                  [min]="durationRange.min"
+                  [max]="durationRange.max"
+                />
+                @if (showError('defaultAppointmentDurationMinutes', 'required')) {
+                  <p class="staff-form-page__error">Ingresa la duracion base.</p>
+                }
+                @if (showError('defaultAppointmentDurationMinutes', 'min')) {
+                  <p class="staff-form-page__error">
+                    La duracion minima es {{ durationRange.min }} minutos.
+                  </p>
+                }
+                @if (showError('defaultAppointmentDurationMinutes', 'max')) {
+                  <p class="staff-form-page__error">
+                    La duracion maxima es {{ durationRange.max }} minutos.
+                  </p>
+                }
+              </div>
+
+              <div class="staff-form-page__field staff-form-page__field--wide">
+                <label for="bio">Bio</label>
+                <textarea id="bio" rows="4" formControlName="bio"></textarea>
+                @if (showError('bio', 'maxlength')) {
+                  <p class="staff-form-page__error">La bio debe tener 2000 caracteres o menos.</p>
+                }
+              </div>
+
+              <div class="staff-form-page__field">
+                <label for="photoMediaAssetId">ID de foto (opcional)</label>
+                <input id="photoMediaAssetId" type="text" formControlName="photoMediaAssetId" />
+                @if (showError('photoMediaAssetId', 'uuid')) {
+                  <p class="staff-form-page__error">
+                    Ingresa un UUID valido o deja el campo vacio.
+                  </p>
+                }
+              </div>
+
+              <div class="staff-form-page__field">
+                <label for="tipsQrMediaAssetId">ID de QR de propinas (opcional)</label>
+                <input id="tipsQrMediaAssetId" type="text" formControlName="tipsQrMediaAssetId" />
+                @if (showError('tipsQrMediaAssetId', 'uuid')) {
+                  <p class="staff-form-page__error">
+                    Ingresa un UUID valido o deja el campo vacio.
+                  </p>
+                }
+              </div>
+
+              <label class="staff-form-page__checkbox">
+                <input type="checkbox" formControlName="isActive" />
+                <span>Perfil activo</span>
+              </label>
+            </div>
+          </fieldset>
+
+          <div class="staff-form-page__actions">
+            <button class="staff-form-page__submit" type="submit" [disabled]="isBusy()">
+              {{ submitLabel() }}
+            </button>
+            <a class="staff-form-page__secondary" routerLink="/admin/staff">Cancelar</a>
+          </div>
+        </form>
+      }
+    </article>
+  </div>
+</section>

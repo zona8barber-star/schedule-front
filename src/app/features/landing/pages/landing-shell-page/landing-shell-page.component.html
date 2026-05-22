@@ -1,0 +1,254 @@
+<section class="landing-page">
+  <header class="landing-page__hero">
+    <div class="landing-page__hero-copy">
+      <p class="landing-page__eyebrow">Inicio</p>
+      @if (branding()?.logoUrl) {
+        <img
+          class="landing-page__logo"
+          [src]="branding()!.logoUrl!"
+          [alt]="branding()!.appName + ' logo'"
+          [title]="branding()!.appName"
+        />
+      }
+      <h1>{{ landingContent()?.heroTitle || 'Reserva tu proximo turno en minutos' }}</h1>
+      <p>
+        {{
+          landingContent()?.heroSubtitle ||
+            'Explora profesionales disponibles y reserva cuando encuentres el horario ideal.'
+        }}
+      </p>
+
+      <div class="landing-page__actions">
+        <a class="landing-page__button" routerLink="/staff">Ver profesionales</a>
+      </div>
+    </div>
+  </header>
+
+  <app-api-feedback severity="error" [message]="errorMessage()" />
+  <app-api-feedback severity="info" [message]="infoMessage()" />
+
+  @if (isLoading()) {
+    <app-page-state kind="loading" message="Cargando contenido publico..." />
+  } @else {
+    @if (activeBanners().length) {
+      <div class="landing-page__banner-grid">
+        @for (banner of activeBanners(); track banner.id) {
+          <article class="landing-page__banner-card">
+            @if (banner.imageUrl) {
+              <img [src]="banner.imageUrl" [alt]="banner.title" [title]="banner.title" />
+            }
+            <div>
+              <h3>{{ banner.title }}</h3>
+              @if (banner.subtitle) {
+                <p>{{ banner.subtitle }}</p>
+              }
+              @if (banner.linkUrl) {
+                <a [href]="banner.linkUrl" target="_blank" rel="noreferrer">Abrir enlace</a>
+              }
+            </div>
+          </article>
+        }
+      </div>
+    }
+
+    <div class="landing-page__content-grid">
+      <section class="landing-page__panel">
+        <div class="landing-page__section-header">
+          <p class="landing-page__eyebrow">Sobre nosotros</p>
+          <h2>{{ landingContent()?.aboutTitle || 'Quienes somos' }}</h2>
+        </div>
+        <p>
+          {{
+            landingContent()?.aboutText ||
+              'Estamos preparando el contenido publico. Mientras tanto puedes revisar profesionales y disponibilidad.'
+          }}
+        </p>
+      </section>
+
+      <section class="landing-page__panel">
+        <div class="landing-page__section-header">
+          <p class="landing-page__eyebrow">Contacto</p>
+          <h2>Canales disponibles</h2>
+        </div>
+        <dl class="landing-page__contact-list">
+          <div>
+            <dt>Telefono</dt>
+            <dd>
+              @if (whatsappUrl()) {
+                <a class="landing-page__wa-phone" [href]="whatsappUrl()!" target="_blank" rel="noopener noreferrer">
+                  {{ landingContent()?.contactPhone }}
+                </a>
+              } @else {
+                {{ landingContent()?.contactPhone || 'No informado' }}
+              }
+            </dd>
+          </div>
+          @if (landingContent()?.mapsUrl) {
+            <div>
+              <dt>Ubicacion</dt>
+              <dd>
+                @if (mapEmbedUrl()) {
+                  <div class="landing-page__map-embed">
+                    <iframe
+                      [src]="mapEmbedUrl()!"
+                      title="Ubicacion en Google Maps"
+                      allowfullscreen
+                    ></iframe>
+                  </div>
+                }
+                <a
+                  class="landing-page__maps-link"
+                  [href]="landingContent()!.mapsUrl!"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  📍 Abrir en Google Maps
+                </a>
+              </dd>
+            </div>
+          }
+          <div>
+            <dt>Direccion</dt>
+            <dd>{{ landingContent()?.address || 'No informada' }}</dd>
+          </div>
+        </dl>
+      </section>
+    </div>
+
+    <section class="landing-page__panel">
+      <div class="landing-page__section-header">
+        <p class="landing-page__eyebrow">Profesionales</p>
+        <h2>Equipo disponible</h2>
+      </div>
+
+      @if (!staffMembers().length) {
+        <app-page-state kind="empty" message="No hay profesionales visibles por ahora." />
+      } @else {
+        <div class="landing-page__staff-grid">
+          @for (staffMember of staffMembers(); track staffMember.staffProfileId) {
+            <article class="landing-page__staff-card">
+              <div class="landing-page__staff-photo">
+                @if (staffMember.photoUrl) {
+                  <img
+                    [src]="staffMember.photoUrl"
+                    [alt]="staffMember.displayName"
+                    [title]="staffMember.displayName"
+                  />
+                } @else {
+                  <span class="landing-page__staff-initials" aria-hidden="true">
+                    {{ staffMember.displayName.charAt(0).toUpperCase() }}
+                  </span>
+                }
+              </div>
+
+              <div class="landing-page__staff-body">
+                <div class="landing-page__staff-info">
+                  <h3>{{ staffMember.displayName }}</h3>
+                  <span class="landing-page__staff-rating">
+                    <span class="landing-page__star" aria-hidden="true">&#9733;</span>
+                    {{ formatRating(staffMember.averageRating) }}
+                    <span class="landing-page__staff-reviews">({{ staffMember.reviewCount }})</span>
+                  </span>
+                </div>
+
+                @if (staffMember.services.length) {
+                  <ul class="landing-page__staff-services">
+                    @for (service of visibleServices(staffMember); track service.id) {
+                      <li>
+                        <span>{{ service.name }}</span>
+                        <small>{{ service.durationMinutes }} min</small>
+                      </li>
+                    }
+                  </ul>
+                }
+
+                <div class="landing-page__staff-actions">
+                  <a [routerLink]="['/staff', staffMember.staffProfileId]">Ver</a>
+                  <button
+                    type="button"
+                    (click)="openAvailabilityModal(staffMember)"
+                  >Agendar</button>
+                </div>
+              </div>
+            </article>
+          }
+        </div>
+      }
+    </section>
+  }
+</section>
+
+@if (activeStaff()) {
+  <div
+    class="lp-modal__overlay"
+    (click)="closeAvailabilityModal()"
+    (keydown.escape)="closeAvailabilityModal()"
+  >
+    <dialog
+      class="lp-modal"
+      open
+      aria-label="Disponibilidad"
+      (click)="$event.stopPropagation()"
+      (keydown)="$event.stopPropagation()"
+    >
+      <div class="lp-modal__head">
+        <div class="lp-modal__staff">
+          <div class="lp-modal__photo">
+            @if (activeStaff()!.photoUrl) {
+              <img [src]="activeStaff()!.photoUrl!" [alt]="activeStaff()!.displayName" [title]="activeStaff()!.displayName" />
+            } @else {
+              <span class="lp-modal__initials" aria-hidden="true">
+                {{ activeStaff()!.displayName.charAt(0).toUpperCase() }}
+              </span>
+            }
+          </div>
+          <span class="lp-modal__name">{{ activeStaff()!.displayName }}</span>
+        </div>
+        <button class="lp-modal__close" type="button" (click)="closeAvailabilityModal()" aria-label="Cerrar">✕</button>
+      </div>
+
+      <p class="lp-modal__sub">Elegí el día y seleccioná el horario que más te convenga.</p>
+
+      <label class="lp-modal__date-label" for="lp-avail-date">Fecha</label>
+      <input
+        id="lp-avail-date"
+        class="lp-modal__date-input"
+        type="date"
+        [value]="selectedDate()"
+        [min]="todayDate()"
+        (change)="onDateChange($event)"
+      />
+
+      <app-api-feedback severity="error" [message]="slotsError()" />
+
+      @if (slotsLoading()) {
+        <p class="lp-modal__msg">Buscando horarios disponibles...</p>
+      } @else if (!slots().length) {
+        <p class="lp-modal__msg">No hay horarios disponibles para este día.</p>
+      } @else {
+        <p class="lp-modal__hint">Seleccioná un horario para continuar</p>
+        <div class="lp-modal__slots">
+          @for (slot of slots(); track slot.startAtUtc) {
+            <button class="lp-modal__slot" type="button" (click)="selectSlot(slot)">
+              {{ formatSlotTime(slot.startAtUtc) }}
+            </button>
+          }
+        </div>
+      }
+    </dialog>
+  </div>
+}
+
+@if (whatsappUrl()) {
+  <a
+    class="wa-fab"
+    [href]="whatsappUrl()!"
+    target="_blank"
+    rel="noopener noreferrer"
+    aria-label="Contactar por WhatsApp"
+  >
+    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+      <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+    </svg>
+  </a>
+}

@@ -1,0 +1,14 @@
+@if (message()) {
+  <section
+    class="api-feedback"
+    [class.api-feedback--error]="severity() === 'error'"
+    role="status"
+    [attr.aria-live]="severity() === 'error' ? 'assertive' : 'polite'"
+  >
+    <strong>{{ severity() === 'error' ? 'Atencion' : 'Listo' }}</strong>
+    <p>{{ message() }}</p>
+    @if (details()) {
+      <small>{{ details() }}</small>
+    }
+  </section>
+}

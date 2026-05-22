@@ -1,0 +1,138 @@
+<div class="staff-modal__backdrop" (click)="cancel()" aria-hidden="true"></div>
+
+<div class="staff-modal__panel" role="dialog" aria-modal="true" [attr.aria-label]="pageTitle()">
+  <div class="staff-modal__header">
+    <div>
+      <p class="staff-modal__eyebrow">Gestion</p>
+      <h2>{{ pageTitle() }}</h2>
+    </div>
+    <button
+      class="staff-modal__close"
+      type="button"
+      aria-label="Cerrar"
+      [disabled]="isBusy()"
+      (click)="cancel()"
+    >
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 24 24"
+        fill="currentColor"
+        aria-hidden="true"
+      >
+        <path
+          d="M18 6 6 18M6 6l12 12"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          fill="none"
+        />
+      </svg>
+    </button>
+  </div>
+
+  <div class="staff-modal__body">
+    <app-api-feedback severity="error" [message]="errorMessage()" />
+
+    @if (isLoading()) {
+      <p class="staff-modal__state">Cargando datos del profesional...</p>
+    } @else if (isEditMode() && !hasRecord()) {
+      <p class="staff-modal__state">No se pudo cargar el perfil solicitado.</p>
+    } @else {
+      <form [formGroup]="staffForm" (ngSubmit)="submit()" novalidate>
+        <fieldset [disabled]="isBusy()">
+          <div class="staff-modal__grid">
+            <div class="staff-modal__field staff-modal__field--wide">
+              <label for="modal-fullName">Nombre completo</label>
+              <input
+                id="modal-fullName"
+                type="text"
+                formControlName="fullName"
+                autocomplete="name"
+              />
+              @if (showError('fullName', 'required')) {
+                <p class="staff-modal__error">Ingresa el nombre completo.</p>
+              }
+              @if (showError('fullName', 'minlength')) {
+                <p class="staff-modal__error">El nombre debe tener al menos 2 caracteres.</p>
+              }
+            </div>
+
+            <div class="staff-modal__field">
+              <label for="modal-email">Correo electronico</label>
+              <input id="modal-email" type="email" formControlName="email" autocomplete="email" />
+              @if (showError('email', 'required')) {
+                <p class="staff-modal__error">Ingresa el correo electronico.</p>
+              }
+              @if (showError('email', 'email')) {
+                <p class="staff-modal__error">Ingresa un correo valido.</p>
+              }
+            </div>
+
+            @if (!isEditMode()) {
+              <div class="staff-modal__field">
+                <label for="modal-initialPassword">Contrasena inicial</label>
+                <input
+                  id="modal-initialPassword"
+                  type="password"
+                  formControlName="initialPassword"
+                  autocomplete="new-password"
+                />
+                @if (showError('initialPassword', 'required')) {
+                  <p class="staff-modal__error">Ingresa una contrasena inicial.</p>
+                }
+                @if (showError('initialPassword', 'minlength')) {
+                  <p class="staff-modal__error">La contrasena debe tener al menos 8 caracteres.</p>
+                }
+              </div>
+            }
+
+            <div class="staff-modal__field">
+              <label for="modal-displayName">Nombre visible</label>
+              <input id="modal-displayName" type="text" formControlName="displayName" />
+              @if (showError('displayName', 'required')) {
+                <p class="staff-modal__error">Ingresa el nombre visible.</p>
+              }
+              @if (showError('displayName', 'minlength')) {
+                <p class="staff-modal__error">
+                  El nombre visible debe tener al menos 2 caracteres.
+                </p>
+              }
+            </div>
+
+            <div class="staff-modal__field">
+              <label for="modal-phoneNumber">Telefono (opcional)</label>
+              <input
+                id="modal-phoneNumber"
+                type="tel"
+                formControlName="phoneNumber"
+                autocomplete="tel"
+              />
+              @if (showError('phoneNumber', 'maxlength')) {
+                <p class="staff-modal__error">El telefono debe tener 40 caracteres o menos.</p>
+              }
+            </div>
+
+            <label class="staff-modal__checkbox staff-modal__field--wide">
+              <input type="checkbox" formControlName="isActive" />
+              <span>Perfil activo</span>
+            </label>
+          </div>
+        </fieldset>
+
+        <div class="staff-modal__actions">
+          <button class="staff-modal__submit" type="submit" [disabled]="isBusy()">
+            {{ submitLabel() }}
+          </button>
+          <button
+            class="staff-modal__cancel"
+            type="button"
+            [disabled]="isBusy()"
+            (click)="cancel()"
+          >
+            Cancelar
+          </button>
+        </div>
+      </form>
+    }
+  </div>
+</div>

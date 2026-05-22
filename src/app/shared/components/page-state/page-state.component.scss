@@ -1,0 +1,16 @@
+.page-state {
+  display: grid;
+  gap: 0.5rem;
+  padding: 0.75rem 0;
+}
+
+.page-state h2,
+.page-state p {
+  margin: 0;
+}
+
+.page-state p {
+  color: var(--text-muted);
+  line-height: 1.6;
+  font-size: 0.92rem;
+}

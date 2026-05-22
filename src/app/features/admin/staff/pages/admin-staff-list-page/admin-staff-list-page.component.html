@@ -1,0 +1,242 @@
+<section class="staff-list">
+  <header class="staff-list__header">
+    <div class="staff-list__title-group">
+      <p class="staff-list__eyebrow">Gestion</p>
+      <h1>Profesionales</h1>
+    </div>
+    <button class="staff-list__create-btn" type="button" (click)="openCreate()">
+      + Nuevo profesional
+    </button>
+  </header>
+
+  <app-api-feedback severity="error" [message]="errorMessage()" />
+
+  @if (isLoading()) {
+    <div class="staff-list__state">
+      <p>Cargando profesionales...</p>
+    </div>
+  } @else if (!staffMembers().length) {
+    <div class="staff-list__state">
+      <svg
+        class="staff-list__empty-icon"
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 64 64"
+        fill="none"
+        aria-hidden="true"
+      >
+        <circle cx="32" cy="22" r="12" stroke="currentColor" stroke-width="2.5" />
+        <path
+          d="M8 54c0-13.25 10.745-24 24-24s24 10.75 24 24"
+          stroke="currentColor"
+          stroke-width="2.5"
+          stroke-linecap="round"
+        />
+      </svg>
+      <h2>Sin profesionales aun</h2>
+      <p>Crea el primer miembro del equipo para comenzar.</p>
+      <button class="staff-list__create-btn" type="button" (click)="openCreate()">
+        + Nuevo profesional
+      </button>
+    </div>
+  } @else {
+    <div class="staff-list__table-wrap">
+      <table class="staff-table">
+        <thead>
+          <tr>
+            <th class="staff-table__col-avatar" aria-label="Foto"></th>
+            <th class="staff-table__col-name">Nombre visible</th>
+            <th class="staff-table__col-contact">Contacto</th>
+            <th class="staff-table__col-social">Redes</th>
+            <th class="staff-table__col-actions" aria-label="Acciones"></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (member of staffMembers(); track member.staffProfileId) {
+            <tr class="staff-table__row" [class.staff-table__row--inactive]="!member.isActive">
+              <td class="staff-table__cell-avatar">
+                @if (member.photoUrl) {
+                  <img
+                    class="staff-table__avatar"
+                    [src]="member.photoUrl"
+                    [alt]="member.displayName"
+                    [title]="member.displayName"
+                  />
+                } @else {
+                  <span
+                    class="staff-table__avatar staff-table__avatar--initials"
+                    aria-hidden="true"
+                  >
+                    {{ member.displayName.charAt(0).toUpperCase() }}
+                  </span>
+                }
+              </td>
+
+              <td class="staff-table__cell-name">
+                <span class="staff-table__name">{{ member.displayName }}</span>
+                @if (!member.isActive) {
+                  <span class="staff-table__inactive-badge">Inactivo</span>
+                }
+              </td>
+
+              <td class="staff-table__cell-contact">
+                <span class="staff-table__contact-email">{{ member.email }}</span>
+                @if (member.phoneNumber) {
+                  <span class="staff-table__contact-phone">{{ member.phoneNumber }}</span>
+                }
+              </td>
+
+              <td class="staff-table__cell-social">
+                <div class="staff-table__socials">
+                  @if (member.phoneNumber) {
+                    <a
+                      class="staff-table__social-icon staff-table__social-icon--active"
+                      [title]="'Teléfono: ' + member.phoneNumber"
+                      aria-label="WhatsApp"
+                    >
+                      <img src="assets/social/wapp.svg" alt="WhatsApp" />
+                    </a>
+                  } @else {
+                    <span class="staff-table__social-icon" title="WhatsApp (no configurado)">
+                      <img src="assets/social/wapp.svg" alt="WhatsApp" />
+                    </span>
+                  }
+
+                  @if (member.instagramUrl) {
+                    <a
+                      class="staff-table__social-icon staff-table__social-icon--active"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      [title]="'Instagram: ' + member.instagramUrl"
+                      aria-label="Instagram"
+                    >
+                      <img src="assets/social/IG.svg" alt="Instagram" />
+                    </a>
+                  } @else {
+                    <span class="staff-table__social-icon" title="Instagram (no configurado)">
+                      <img src="assets/social/IG.svg" alt="Instagram" />
+                    </span>
+                  }
+
+                  @if (member.facebookUrl) {
+                    <a
+                      class="staff-table__social-icon staff-table__social-icon--active"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      [title]="'Facebook: ' + member.facebookUrl"
+                      aria-label="Facebook"
+                    >
+                      <img src="assets/social/face.svg" alt="Facebook" />
+                    </a>
+                  } @else {
+                    <span class="staff-table__social-icon" title="Facebook (no configurado)">
+                      <img src="assets/social/face.svg" alt="Facebook" />
+                    </span>
+                  }
+
+                  @if (member.tikTokUrl) {
+                    <a
+                      class="staff-table__social-icon staff-table__social-icon--active"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      [title]="'TikTok: ' + member.tikTokUrl"
+                      aria-label="TikTok"
+                    >
+                      <img src="assets/social/tt.svg" alt="TikTok" />
+                    </a>
+                  } @else {
+                    <span class="staff-table__social-icon" title="TikTok (no configurado)">
+                      <img src="assets/social/tt.svg" alt="TikTok" />
+                    </span>
+                  }
+
+                  @if (member.youtubeUrl) {
+                    <a
+                      class="staff-table__social-icon staff-table__social-icon--active"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      [title]="'YouTube: ' + member.youtubeUrl"
+                      aria-label="YouTube"
+                    >
+                      <img src="assets/social/yt.svg" alt="YouTube" />
+                    </a>
+                  } @else {
+                    <span class="staff-table__social-icon" title="YouTube (no configurado)">
+                      <img src="assets/social/yt.svg" alt="YouTube" />
+                    </span>
+                  }
+
+                  @if (member.xUrl) {
+                    <a
+                      class="staff-table__social-icon staff-table__social-icon--active"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      [title]="'X: ' + member.xUrl"
+                      aria-label="X"
+                    >
+                      <img src="assets/social/x.svg" alt="X" />
+                    </a>
+                  } @else {
+                    <span class="staff-table__social-icon" title="X (no configurado)">
+                      <img src="assets/social/x.svg" alt="X" />
+                    </span>
+                  }
+                </div>
+              </td>
+
+              <td class="staff-table__cell-actions">
+                <button
+                  class="staff-table__action-btn staff-table__action-btn--edit"
+                  type="button"
+                  [attr.aria-label]="'Editar ' + member.displayName"
+                  [disabled]="deletingStaffId() === member.staffProfileId"
+                  (click)="openEdit(member.staffProfileId)"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                    aria-hidden="true"
+                  >
+                    <path
+                      d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z"
+                    />
+                  </svg>
+                  Editar
+                </button>
+                <button
+                  class="staff-table__action-btn staff-table__action-btn--delete"
+                  type="button"
+                  [attr.aria-label]="'Eliminar ' + member.displayName"
+                  [disabled]="deletingStaffId() === member.staffProfileId"
+                  (click)="deleteStaff(member)"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                    aria-hidden="true"
+                  >
+                    <path
+                      fill-rule="evenodd"
+                      d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z"
+                      clip-rule="evenodd"
+                    />
+                  </svg>
+                  {{ deletingStaffId() === member.staffProfileId ? 'Eliminando...' : 'Eliminar' }}
+                </button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</section>
+
+@if (isModalOpen()) {
+  <app-admin-staff-form-modal
+    [staffId]="editingStaffId()"
+    (saved)="onSaved($event)"
+    (cancelled)="closeModal()"
+  />
+}

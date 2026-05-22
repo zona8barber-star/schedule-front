@@ -1,0 +1,90 @@
+<section class="admin-content-page">
+  <header class="admin-content-page__hero">
+    <div>
+      <p class="admin-content-page__eyebrow">Gestion</p>
+      <h1>Landing</h1>
+      <p>Edita el contenido publico principal del inicio.</p>
+    </div>
+  </header>
+
+  <article class="admin-content-page__panel">
+    <app-api-feedback severity="error" [message]="errorMessage()" />
+    <app-api-feedback severity="info" [message]="successMessage()" />
+
+    @if (isLoading()) {
+      <app-page-state kind="loading" message="Cargando contenido de landing..." />
+    } @else {
+      <form [formGroup]="landingForm" (ngSubmit)="submit()" novalidate>
+        <fieldset [disabled]="isBusy()">
+          <div class="admin-content-page__grid">
+            <div class="admin-content-page__field admin-content-page__field--wide">
+              <label for="heroTitle"
+                >Titulo principal <span class="admin-content-page__required">*</span></label
+              >
+              <input id="heroTitle" type="text" formControlName="heroTitle" />
+              @if (showError('heroTitle', 'required')) {
+                <p class="admin-content-page__error">El titulo principal es obligatorio.</p>
+              }
+            </div>
+
+            <div class="admin-content-page__field admin-content-page__field--wide">
+              <label for="heroSubtitle">Subtitulo principal</label>
+              <textarea id="heroSubtitle" rows="3" formControlName="heroSubtitle"></textarea>
+            </div>
+
+            <div class="admin-content-page__field">
+              <label for="aboutTitle">Titulo sobre nosotros</label>
+              <input id="aboutTitle" type="text" formControlName="aboutTitle" />
+            </div>
+
+            <div class="admin-content-page__field admin-content-page__field--wide">
+              <label for="aboutText">Texto sobre nosotros</label>
+              <textarea id="aboutText" rows="4" formControlName="aboutText"></textarea>
+            </div>
+
+            <div class="admin-content-page__field">
+              <label for="contactPhone">Telefono de contacto</label>
+              <input
+                id="contactPhone"
+                type="text"
+                formControlName="contactPhone"
+                placeholder="+57 300 000 0000"
+              />
+            </div>
+
+            <div class="admin-content-page__field">
+              <label for="mapsUrl">URL de ubicacion (Google Maps)</label>
+              <input
+                id="mapsUrl"
+                type="url"
+                formControlName="mapsUrl"
+                placeholder="https://maps.google.com/?q=..."
+              />
+              <p class="admin-content-page__hint">
+                Pega el enlace <strong>completo</strong> de Google Maps (no el link corto
+                <em>maps.app.goo.gl</em>). Si usas link corto, el mapa se mostrara usando la
+                direccion de texto.
+              </p>
+            </div>
+
+            <div class="admin-content-page__field admin-content-page__field--wide">
+              <label for="address">Direccion (texto)</label>
+              <input
+                id="address"
+                type="text"
+                formControlName="address"
+                placeholder="Calle 123 #45-67, Ciudad"
+              />
+            </div>
+          </div>
+        </fieldset>
+
+        <div class="admin-content-page__actions">
+          <button type="submit" [disabled]="isBusy()">
+            {{ submitLabel() }}
+          </button>
+        </div>
+      </form>
+    }
+  </article>
+</section>

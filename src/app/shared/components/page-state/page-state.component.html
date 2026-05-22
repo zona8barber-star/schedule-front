@@ -1,0 +1,7 @@
+<section class="page-state" [class.page-state--loading]="kind() === 'loading'">
+  @if (title()) {
+    <h2>{{ title() }}</h2>
+  }
+  <p>{{ message() }}</p>
+  <ng-content></ng-content>
+</section>

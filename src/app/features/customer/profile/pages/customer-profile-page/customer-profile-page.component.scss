@@ -1,0 +1,273 @@
+// ─── Layout ───────────────────────────────────────────────────────────────────
+
+.cp {
+  display: grid;
+  gap: 1.5rem;
+  padding-bottom: 4rem;
+}
+
+// ─── Hero ─────────────────────────────────────────────────────────────────────
+
+.cp__hero {
+  padding: clamp(1.25rem, 3vw, 2rem);
+  border: 1px solid var(--border-soft);
+  border-radius: 1.5rem;
+  background: var(--surface-panel);
+  box-shadow: var(--shadow-soft);
+
+  h1 { margin: 0 0 0.5rem; font-size: clamp(1.6rem, 4vw, 2.2rem); }
+}
+
+.cp__subtitle {
+  margin: 0;
+  color: var(--color-text-muted);
+  line-height: 1.6;
+}
+
+// ─── Tabs ─────────────────────────────────────────────────────────────────────
+
+.cp__tabs {
+  display: flex;
+  gap: 0.35rem;
+  padding: 0.3rem;
+  border: 1px solid var(--border-soft);
+  border-radius: 1rem;
+  background: var(--surface-panel);
+  box-shadow: var(--shadow-soft);
+}
+
+.cp__tab {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.55rem 0.75rem;
+  border: 0;
+  border-radius: 0.75rem;
+  background: transparent;
+  color: var(--color-text-muted);
+  font: inherit;
+  font-size: 0.84rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 120ms ease, color 120ms ease;
+
+  &:hover:not(.cp__tab--active) {
+    background: rgba(176, 138, 74, 0.07);
+    color: var(--color-text);
+  }
+}
+
+.cp__tab--active {
+  background: var(--color-secondary-hover);
+  color: var(--color-primary-hover);
+  font-weight: 700;
+}
+
+// ─── Panel ────────────────────────────────────────────────────────────────────
+
+.cp__panel {
+  display: grid;
+  gap: 1.5rem;
+  padding: clamp(1.25rem, 3vw, 2rem);
+  border: 1px solid var(--border-soft);
+  border-radius: 1.5rem;
+  background: var(--surface-panel);
+  box-shadow: var(--shadow-soft);
+}
+
+// ─── Foto ─────────────────────────────────────────────────────────────────────
+
+.cp__photo-section {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid var(--border-soft);
+  flex-wrap: wrap;
+}
+
+.cp__avatar-wrap {
+  flex-shrink: 0;
+}
+
+.cp__avatar {
+  width: 5rem;
+  height: 5rem;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid rgba(176, 138, 74, 0.4);
+
+  &--empty {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(176, 138, 74, 0.08);
+
+    svg {
+      width: 2.2rem;
+      height: 2.2rem;
+      color: var(--color-text-muted);
+      opacity: 0.6;
+    }
+  }
+}
+
+.cp__photo-info {
+  display: grid;
+  gap: 0.25rem;
+}
+
+.cp__photo-label {
+  margin: 0;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.cp__photo-hint {
+  margin: 0;
+  font-size: 0.76rem;
+  color: var(--color-text-muted);
+}
+
+.cp__photo-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.35rem;
+  flex-wrap: wrap;
+}
+
+// ─── Form grid ────────────────────────────────────────────────────────────────
+
+.cp__form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1.1rem;
+
+  &--single {
+    grid-template-columns: 1fr;
+    max-width: 26rem;
+  }
+}
+
+.cp__field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+
+  label {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--color-text-muted);
+    letter-spacing: 0.02em;
+  }
+
+  input {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 0.65rem 0.9rem;
+    border: 1.5px solid rgba(110, 96, 74, 0.45);
+    border-radius: 0.75rem;
+    background: transparent;
+    color: var(--color-text);
+    font: inherit;
+    font-size: 0.92rem;
+    transition: border-color 120ms ease, box-shadow 120ms ease;
+
+    &::placeholder { color: var(--color-text-muted); opacity: 0.55; }
+
+    &:focus {
+      outline: none;
+      border-color: rgba(176, 138, 74, 0.65);
+      box-shadow: 0 0 0 3px rgba(176, 138, 74, 0.12);
+    }
+
+    &.ng-invalid.ng-touched {
+      border-color: rgba(180, 83, 60, 0.65);
+    }
+  }
+}
+
+.cp__input--readonly {
+  opacity: 0.6;
+  cursor: default;
+
+  &:focus {
+    border-color: rgba(110, 96, 74, 0.45) !important;
+    box-shadow: none !important;
+  }
+}
+
+.cp__required {
+  color: #b05050;
+}
+
+.cp__field-error {
+  margin: 0;
+  font-size: 0.78rem;
+  color: #b05050;
+}
+
+.cp__file-hidden {
+  display: none;
+}
+
+// ─── Actions ──────────────────────────────────────────────────────────────────
+
+.cp__actions {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--border-soft);
+  margin-top: 0.25rem;
+}
+
+// ─── Buttons ──────────────────────────────────────────────────────────────────
+
+.cp__btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  padding: 0.6rem 1.3rem;
+  border: 0;
+  border-radius: 999px;
+  font: inherit;
+  font-size: 0.88rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity 120ms ease, transform 120ms ease;
+
+  &:disabled {
+    cursor: wait;
+    opacity: 0.6;
+  }
+
+  &:not(:disabled):hover {
+    opacity: 0.88;
+    transform: translateY(-1px);
+  }
+}
+
+.cp__btn--primary {
+  background: var(--color-secondary-hover);
+  color: var(--color-primary-hover);
+}
+
+.cp__btn--outline {
+  background: transparent;
+  border: 1.5px solid rgba(110, 96, 74, 0.55);
+  color: var(--color-text);
+
+  &:hover:not(:disabled) {
+    border-color: rgba(176, 138, 74, 0.7);
+    background: rgba(176, 138, 74, 0.06);
+  }
+}
+
+.cp__btn--danger {
+  background: rgba(146, 56, 45, 0.1);
+  color: #92382d;
+  border: 1.5px solid rgba(146, 56, 45, 0.2);
+}

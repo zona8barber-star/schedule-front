@@ -1,0 +1,25 @@
+@if (toastService.toasts().length) {
+  <section class="toast-outlet" aria-live="polite" aria-label="Notificaciones">
+    @for (toast of toastService.toasts(); track toast.id) {
+      <article
+        class="toast-outlet__item"
+        [class.toast-outlet__item--error]="toast.tone === 'error'"
+        [class.toast-outlet__item--success]="toast.tone === 'success'"
+        role="status"
+      >
+        <div class="toast-outlet__copy">
+          <strong>{{ toneLabel(toast.tone) }}</strong>
+          <p>{{ toast.message }}</p>
+        </div>
+        <button
+          class="toast-outlet__close"
+          type="button"
+          (click)="dismiss(toast.id)"
+          aria-label="Cerrar notificacion"
+        >
+          Cerrar
+        </button>
+      </article>
+    }
+  </section>
+}

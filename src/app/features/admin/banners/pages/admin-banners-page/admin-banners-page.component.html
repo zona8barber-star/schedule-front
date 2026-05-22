@@ -1,0 +1,170 @@
+<section class="admin-banners-page">
+  <header class="admin-banners-page__hero">
+    <div>
+      <p class="admin-banners-page__eyebrow">Gestion</p>
+      <h1>Banners</h1>
+      <p>Gestiona banners publicos con activacion y ventanas de vigencia.</p>
+    </div>
+  </header>
+
+  <app-api-feedback severity="error" [message]="errorMessage()" />
+  <app-api-feedback severity="info" [message]="successMessage()" />
+
+  <article class="admin-banners-page__panel">
+    <div class="admin-banners-page__section-heading">
+      <div>
+        <p class="admin-banners-page__eyebrow">Formulario</p>
+        <h2>{{ editingBannerId() ? 'Editar banner' : 'Crear banner' }}</h2>
+      </div>
+    </div>
+
+    <form [formGroup]="bannerForm" (ngSubmit)="submit()" novalidate>
+      <fieldset [disabled]="isBusy()">
+        <div class="admin-banners-page__grid">
+          <div class="admin-banners-page__field">
+            <label for="title">Titulo</label>
+            <input id="title" type="text" formControlName="title" />
+            @if (showError('title', 'required')) {
+              <p class="admin-banners-page__error">El titulo es obligatorio.</p>
+            }
+          </div>
+
+          <div class="admin-banners-page__field">
+            <label for="sortOrder">Orden</label>
+            <input id="sortOrder" type="number" formControlName="sortOrder" />
+            @if (showError('sortOrder', 'required')) {
+              <p class="admin-banners-page__error">El orden es obligatorio.</p>
+            }
+          </div>
+
+          <div class="admin-banners-page__field admin-banners-page__field--wide">
+            <label for="subtitle">Subtitulo</label>
+            <textarea id="subtitle" rows="3" formControlName="subtitle"></textarea>
+          </div>
+
+          <div class="admin-banners-page__field">
+            <label for="imageMediaAssetId">ID de imagen</label>
+            <input id="imageMediaAssetId" type="text" formControlName="imageMediaAssetId" />
+            @if (showError('imageMediaAssetId', 'uuid')) {
+              <p class="admin-banners-page__error">Ingresa un UUID valido o deja vacio.</p>
+            }
+          </div>
+
+          <div class="admin-banners-page__field">
+            <label for="linkUrl">Enlace (URL)</label>
+            <input id="linkUrl" type="url" formControlName="linkUrl" />
+            @if (showError('linkUrl', 'url')) {
+              <p class="admin-banners-page__error">Ingresa una URL valida (http/https).</p>
+            }
+          </div>
+
+          <div class="admin-banners-page__field">
+            <label for="startsAtUtc">Inicio (fecha y hora)</label>
+            <input id="startsAtUtc" type="datetime-local" formControlName="startsAtUtc" />
+          </div>
+
+          <div class="admin-banners-page__field">
+            <label for="endsAtUtc">Fin (fecha y hora)</label>
+            <input id="endsAtUtc" type="datetime-local" formControlName="endsAtUtc" />
+          </div>
+
+          <label class="admin-banners-page__checkbox">
+            <input type="checkbox" formControlName="isActive" />
+            <span>Banner activo</span>
+          </label>
+        </div>
+
+        @if (showFormError('dateRange')) {
+          <p class="admin-banners-page__error">
+            La fecha fin debe ser posterior a la fecha inicio.
+          </p>
+        }
+      </fieldset>
+
+      <div class="admin-banners-page__actions">
+        <button type="submit" [disabled]="isBusy()">{{ submitLabel() }}</button>
+        @if (editingBannerId()) {
+          <button
+            type="button"
+            class="admin-banners-page__secondary"
+            [disabled]="isBusy()"
+            (click)="resetForm()"
+          >
+            Cancelar edicion
+          </button>
+        }
+      </div>
+    </form>
+  </article>
+
+  <article class="admin-banners-page__panel">
+    <div class="admin-banners-page__section-heading">
+      <div>
+        <p class="admin-banners-page__eyebrow">Listado</p>
+        <h2>Banners registrados</h2>
+      </div>
+    </div>
+
+    @if (isLoading()) {
+      <app-page-state kind="loading" message="Cargando banners..." />
+    } @else if (!banners().length) {
+      <app-page-state kind="empty" message="No hay banners registrados." />
+    } @else {
+      <div class="admin-banners-page__list">
+        @for (banner of banners(); track banner.id) {
+          <article class="admin-banners-page__card">
+            <header>
+              <div>
+                <p class="admin-banners-page__eyebrow">Orden {{ banner.sortOrder }}</p>
+                <h3>{{ banner.title }}</h3>
+              </div>
+              <span [class.admin-banners-page__badge--inactive]="!banner.isActive">
+                {{ banner.isActive ? 'Activo' : 'Inactivo' }}
+              </span>
+            </header>
+
+            <p>{{ banner.subtitle || 'Sin subtitulo' }}</p>
+
+            <dl>
+              <div>
+                <dt>Media ID</dt>
+                <dd>{{ banner.imageMediaAssetId || 'No definido' }}</dd>
+              </div>
+              <div>
+                <dt>Link</dt>
+                <dd>{{ banner.linkUrl || 'No definido' }}</dd>
+              </div>
+              <div>
+                <dt>Inicio</dt>
+                <dd>{{ formatDateTime(banner.startsAtUtc) }}</dd>
+              </div>
+              <div>
+                <dt>Fin</dt>
+                <dd>{{ formatDateTime(banner.endsAtUtc) }}</dd>
+              </div>
+            </dl>
+
+            <div class="admin-banners-page__card-actions">
+              <button
+                type="button"
+                class="admin-banners-page__secondary"
+                [disabled]="isBusy()"
+                (click)="startEdit(banner)"
+              >
+                Editar
+              </button>
+              <button
+                type="button"
+                class="admin-banners-page__danger"
+                [disabled]="deletingBannerId() === banner.id || isBusy()"
+                (click)="deleteBanner(banner)"
+              >
+                {{ deletingBannerId() === banner.id ? 'Eliminando...' : 'Eliminar' }}
+              </button>
+            </div>
+          </article>
+        }
+      </div>
+    }
+  </article>
+</section>

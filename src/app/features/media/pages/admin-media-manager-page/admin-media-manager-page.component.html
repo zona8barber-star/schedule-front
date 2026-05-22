@@ -1,0 +1,157 @@
+<section class="media-manager-page">
+  <header class="media-manager-page__hero">
+    <div>
+      <p class="media-manager-page__eyebrow">Gestion</p>
+      <h1>Biblioteca de archivos</h1>
+      <p>Gestiona archivos y subidas por categoria para profesionales y banners.</p>
+    </div>
+  </header>
+
+  <app-api-feedback severity="error" [message]="errorMessage()" />
+  <app-api-feedback severity="info" [message]="successMessage()" />
+
+  <article class="media-manager-page__panel">
+    <div class="media-manager-page__section-heading">
+      <div>
+        <p class="media-manager-page__eyebrow">Subida</p>
+        <h2>Nuevo archivo</h2>
+      </div>
+    </div>
+
+    <app-file-upload
+      [title]="'Subir archivo'"
+      [description]="'Selecciona archivo y categoria para agregarlo a la biblioteca.'"
+      [accept]="allowedFileAccept"
+      [maxSizeBytes]="maxUploadSizeBytes"
+      [isSubmitting]="isUploading()"
+      [isDisabled]="isLoading()"
+      [purposes]="mediaPurposeOptions"
+      [buttonLabel]="'Subir a biblioteca'"
+      (uploadRequested)="uploadAsset($event)"
+    />
+  </article>
+
+  <article class="media-manager-page__panel">
+    <div class="media-manager-page__section-heading">
+      <div>
+        <p class="media-manager-page__eyebrow">Biblioteca</p>
+        <h2>Archivos</h2>
+      </div>
+    </div>
+
+    <div class="media-manager-page__filters">
+      <label class="media-manager-page__field">
+        <span>Categoria</span>
+        <select
+          #purposeFilterSelect
+          [value]="purposeFilter()"
+          [disabled]="isLoading()"
+          (change)="setPurposeFilter(purposeFilterSelect.value)"
+        >
+          <option value="ALL">Todas</option>
+          @for (purposeOption of mediaPurposeOptions; track purposeOption.value) {
+            <option [value]="purposeOption.value">{{ purposeOption.label }}</option>
+          }
+        </select>
+      </label>
+
+      <label class="media-manager-page__field">
+        <span>Estado</span>
+        <select
+          #statusFilterSelect
+          [value]="statusFilter()"
+          [disabled]="isLoading()"
+          (change)="setStatusFilter(statusFilterSelect.value)"
+        >
+          <option value="ALL">Todos</option>
+          @for (statusOption of mediaStatusOptions; track statusOption.value) {
+            <option [value]="statusOption.value">{{ statusOption.label }}</option>
+          }
+        </select>
+      </label>
+    </div>
+
+    @if (isLoading()) {
+      <app-page-state kind="loading" message="Cargando biblioteca de archivos..." />
+    } @else if (!assets().length) {
+      <app-page-state kind="empty" message="No hay archivos cargados aun." />
+    } @else if (!filteredAssets().length) {
+      <app-page-state kind="empty" message="No hay archivos para los filtros seleccionados." />
+    } @else {
+      <div class="media-manager-page__list">
+        @for (asset of filteredAssets(); track asset.id) {
+          <article class="media-asset-card">
+            <header class="media-asset-card__header">
+              <div>
+                <p class="media-manager-page__eyebrow">{{ purposeLabel(asset.purpose) }}</p>
+                <h3>{{ asset.fileName }}</h3>
+              </div>
+
+              <span
+                class="media-asset-card__status"
+                [class.media-asset-card__status--archived]="asset.status === mediaStatus.archived"
+                [class.media-asset-card__status--failed]="asset.status === mediaStatus.failed"
+              >
+                {{ statusLabel(asset.status) }}
+              </span>
+            </header>
+
+            <dl class="media-asset-card__details">
+              <div>
+                <dt>ID</dt>
+                <dd>{{ asset.id }}</dd>
+              </div>
+              <div>
+                <dt>Tipo</dt>
+                <dd>{{ asset.contentType }}</dd>
+              </div>
+              <div>
+                <dt>Tamano</dt>
+                <dd>{{ formatBytes(asset.sizeBytes) }}</dd>
+              </div>
+              <div>
+                <dt>Subido</dt>
+                <dd>{{ formatDateTime(asset.createdAtUtc) }}</dd>
+              </div>
+              <div>
+                <dt>Referencia interna</dt>
+                <dd>{{ asset.storageKey }}</dd>
+              </div>
+              <div>
+                <dt>Enlace publico</dt>
+                <dd>
+                  @if (asset.publicUrl) {
+                    <a [href]="asset.publicUrl" target="_blank" rel="noreferrer">Abrir archivo</a>
+                  } @else {
+                    Sin URL publica
+                  }
+                </dd>
+              </div>
+            </dl>
+
+            @if (asset.failureReason) {
+              <p class="media-asset-card__error">
+                Fallo de procesamiento: {{ asset.failureReason }}
+              </p>
+            }
+
+            <div class="media-asset-card__actions">
+              <button
+                class="media-asset-card__button media-asset-card__button--warn"
+                type="button"
+                [disabled]="asset.status === mediaStatus.archived || deletingAssetId() === asset.id"
+                (click)="archiveAsset(asset)"
+              >
+                {{ deletingAssetId() === asset.id ? 'Archivando...' : 'Archivar archivo' }}
+              </button>
+
+              <a class="media-asset-card__link" routerLink="/staff/profile">
+                Usar en perfil profesional
+              </a>
+            </div>
+          </article>
+        }
+      </div>
+    }
+  </article>
+</section>

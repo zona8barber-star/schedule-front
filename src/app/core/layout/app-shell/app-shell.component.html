@@ -1,0 +1,290 @@
+<div class="app-shell" [class.app-shell--menu-open]="isMobileMenuOpen()">
+  <header class="app-shell__header">
+    <a class="app-shell__brand" data-testid="brand" routerLink="/">
+      <img class="app-shell__brand-logo" src="assets/images/logo.png" alt="Logo de la barberia" />
+    </a>
+
+    <nav class="app-shell__nav app-shell__nav--desktop" aria-label="Navegacion principal">
+      @for (link of navigationLinks(); track link.route) {
+        <a
+          [routerLink]="link.route"
+          routerLinkActive="is-active"
+          [routerLinkActiveOptions]="{ exact: link.exact ?? false }"
+        >
+          {{ link.label }}
+        </a>
+      }
+    </nav>
+
+    <div class="app-shell__auth app-shell__auth--desktop">
+      @if (authService.status() === 'restoring') {
+        <span class="app-shell__status">Preparando tu cuenta...</span>
+      } @else if (authService.isAuthenticated()) {
+        <div class="app-shell__user-menu">
+          <button
+            class="app-shell__user-btn"
+            type="button"
+            [attr.aria-expanded]="isUserMenuOpen()"
+            aria-haspopup="true"
+            aria-label="Abrir menu de usuario"
+            (click)="toggleUserMenu()"
+          >
+            <svg
+              class="app-shell__user-icon"
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="currentColor"
+              aria-hidden="true"
+            >
+              <path
+                d="M12 12a5 5 0 1 0 0-10 5 5 0 0 0 0 10zm0 2c-5.33 0-8 2.67-8 4v1h16v-1c0-1.33-2.67-4-8-4z"
+              />
+            </svg>
+          </button>
+
+          @if (isUserMenuOpen()) {
+            <div class="app-shell__user-dropdown" role="menu">
+              <div class="app-shell__user-dropdown-header">
+                <strong>{{ authService.currentUser()?.fullName }}</strong>
+                <small>{{ identitySubtitle() }}</small>
+              </div>
+
+              @if (userDropdownCustomerLinks().length || userDropdownStaffLinks().length) {
+                <div class="app-shell__user-dropdown-section">
+                  @for (link of userDropdownCustomerLinks(); track link.route) {
+                    <a
+                      class="app-shell__user-dropdown-item"
+                      [routerLink]="link.route"
+                      routerLinkActive="is-active"
+                      [routerLinkActiveOptions]="{ exact: link.exact ?? false }"
+                      role="menuitem"
+                    >
+                      {{ link.label }}
+                    </a>
+                  }
+                  @for (link of userDropdownStaffLinks(); track link.route) {
+                    <a
+                      class="app-shell__user-dropdown-item"
+                      [routerLink]="link.route"
+                      routerLinkActive="is-active"
+                      [routerLinkActiveOptions]="{ exact: link.exact ?? false }"
+                      role="menuitem"
+                    >
+                      {{ link.label }}
+                    </a>
+                  }
+                </div>
+              }
+
+              @if (userDropdownAdminLinks().length) {
+                <div class="app-shell__user-dropdown-section">
+                  <p class="app-shell__user-dropdown-label">Administracion</p>
+                  @for (link of userDropdownAdminLinks(); track link.route) {
+                    <a
+                      class="app-shell__user-dropdown-item"
+                      [routerLink]="link.route"
+                      routerLinkActive="is-active"
+                      [routerLinkActiveOptions]="{ exact: link.exact ?? false }"
+                      role="menuitem"
+                    >
+                      {{ link.label }}
+                    </a>
+                  }
+                </div>
+              }
+
+              <div class="app-shell__user-dropdown-footer">
+                <button
+                  class="app-shell__user-dropdown-logout"
+                  type="button"
+                  [disabled]="isSigningOut()"
+                  role="menuitem"
+                  (click)="logout()"
+                >
+                  {{ isSigningOut() ? 'Cerrando...' : 'Cerrar sesion' }}
+                </button>
+              </div>
+            </div>
+          }
+        </div>
+      } @else {
+        <a class="app-shell__button app-shell__button--entry" routerLink="/auth/login"
+          >Iniciar sesion</a
+        >
+      }
+    </div>
+
+    <button
+      class="app-shell__menu-toggle"
+      type="button"
+      [attr.aria-expanded]="isMobileMenuOpen()"
+      aria-controls="mobile-menu"
+      [attr.aria-label]="isMobileMenuOpen() ? 'Cerrar menu' : 'Abrir menu'"
+      (click)="toggleMobileMenu()"
+    >
+      <span class="app-shell__menu-icon" aria-hidden="true"></span>
+      <span class="app-shell__sr-only">{{
+        isMobileMenuOpen() ? 'Cerrar menu' : 'Abrir menu'
+      }}</span>
+    </button>
+  </header>
+
+  @if (httpActivityService.isLoading()) {
+    <div class="app-shell__loader-overlay" role="status" aria-live="polite" aria-label="Cargando">
+      <div class="app-shell__loader-card">
+        <img
+          class="app-shell__loader-logo"
+          src="assets/images/logo.png"
+          alt="Logo de la barberia"
+        />
+        <span class="app-shell__loader-text">Cargando</span>
+      </div>
+    </div>
+  }
+
+  @if (installPromptService.shouldShowPrompt()) {
+    <section class="app-shell__install" role="status" aria-live="polite">
+      <div class="app-shell__install-copy">
+        <strong>Lleva la barberia en tu celular</strong>
+        <p>Instala la app para reservar mas rapido y volver con un solo toque.</p>
+      </div>
+
+      <div class="app-shell__install-actions">
+        <button
+          class="app-shell__button"
+          type="button"
+          [disabled]="isInstallPrompting()"
+          (click)="installApp()"
+        >
+          {{ isInstallPrompting() ? 'Abriendo...' : 'Instalar app' }}
+        </button>
+        <button
+          class="app-shell__button app-shell__button--ghost"
+          type="button"
+          (click)="dismissInstallPrompt()"
+        >
+          Ahora no
+        </button>
+      </div>
+    </section>
+  }
+
+  @if (isMobileMenuOpen()) {
+    <button
+      class="app-shell__backdrop"
+      type="button"
+      (click)="closeMobileMenu()"
+      aria-label="Cerrar menu"
+    ></button>
+  }
+
+  <nav
+    id="mobile-menu"
+    class="app-shell__drawer"
+    [class.app-shell__drawer--open]="isMobileMenuOpen()"
+    aria-label="Menu principal movil"
+  >
+    <div class="app-shell__drawer-content">
+      <a class="app-shell__drawer-brand" routerLink="/" (click)="closeMobileMenu()">
+        <img
+          class="app-shell__drawer-logo"
+          src="assets/images/logo.png"
+          alt="Logo de la barberia"
+        />
+        <span>{{ configService.config().appName }}</span>
+      </a>
+
+      <div class="app-shell__drawer-group">
+        @for (link of primaryMobileLinks(); track link.route) {
+          <a
+            [routerLink]="link.route"
+            routerLinkActive="is-active"
+            [routerLinkActiveOptions]="{ exact: link.exact ?? false }"
+            (click)="closeMobileMenu()"
+          >
+            {{ link.label }}
+          </a>
+        }
+      </div>
+
+      @if (adminMobileLinks().length) {
+        <div class="app-shell__drawer-group">
+          <p class="app-shell__drawer-title">Administracion</p>
+          @for (link of adminMobileLinks(); track link.route) {
+            <a
+              [routerLink]="link.route"
+              routerLinkActive="is-active"
+              [routerLinkActiveOptions]="{ exact: link.exact ?? false }"
+              (click)="closeMobileMenu()"
+            >
+              {{ link.label }}
+            </a>
+          }
+        </div>
+      }
+
+      <div class="app-shell__drawer-auth">
+        @if (authService.status() === 'restoring') {
+          <span class="app-shell__status">Preparando tu cuenta...</span>
+        } @else if (authService.isAuthenticated()) {
+          <div class="app-shell__identity">
+            <strong>{{ authService.currentUser()?.fullName }}</strong>
+            <small>{{ identitySubtitle() }}</small>
+          </div>
+          <button
+            class="app-shell__button app-shell__button--ghost"
+            type="button"
+            [disabled]="isSigningOut()"
+            (click)="logout()"
+          >
+            {{ isSigningOut() ? 'Cerrando...' : 'Cerrar sesion' }}
+          </button>
+        } @else {
+          <a
+            class="app-shell__button app-shell__button--entry"
+            routerLink="/auth/login"
+            (click)="closeMobileMenu()"
+            >Iniciar sesion</a
+          >
+        }
+      </div>
+    </div>
+  </nav>
+
+  <app-toast-outlet />
+  <app-confirm-modal />
+
+  <main class="app-shell__content">
+    <router-outlet></router-outlet>
+  </main>
+
+  <footer class="app-shell__footer">
+    <div class="app-shell__footer-line">
+      <img class="app-shell__footer-logo" src="assets/images/logo.png" alt="Logo de la barberia" />
+      <strong>{{ configService.config().appName }}</strong>
+      <span class="app-shell__footer-dot">•</span>
+      <span> © Copyright {{ currentYear }} . Todos los derechos reservados.</span>
+      @if (contactDetails.length) {
+        <span class="app-shell__footer-dot">•</span>
+        <span>{{ contactDetails.join(' | ') }}</span>
+      }
+    </div>
+
+    @if (socialLinks.length) {
+      <nav class="app-shell__footer-social" aria-label="Redes sociales">
+        @for (link of socialLinks; track link.href) {
+          <a
+            class="app-shell__footer-social-link"
+            [href]="link.href"
+            target="_blank"
+            rel="noreferrer"
+            [attr.aria-label]="link.label"
+            [title]="link.label"
+          >
+            <span aria-hidden="true">{{ link.icon }}</span>
+          </a>
+        }
+      </nav>
+    }
+  </footer>
+</div>

@@ -1,0 +1,312 @@
+<div class="my-appts">
+
+  <!-- Header -->
+  <header class="my-appts__hero">
+    <h1>Mis citas</h1>
+    <p class="my-appts__subtitle">
+      Revisa tus próximas reservas, cancela o agenda cuando quieras.
+    </p>
+  </header>
+
+  <!-- Feedback global -->
+  <app-api-feedback severity="error" [message]="errorMessage()" />
+  <app-api-feedback severity="info" [message]="successMessage()" />
+
+  <!-- Estado de carga -->
+  @if (isLoading()) {
+    <div class="my-appts__panel">
+      <app-page-state kind="loading" message="Cargando tus citas..." />
+    </div>
+
+  <!-- Sin citas -->
+  } @else if (!appointments().length) {
+    <div class="my-appts__panel my-appts__panel--empty">
+      <app-page-state
+        kind="empty"
+        title="Aún no tienes citas"
+        message="Cuando reserves un horario, aparecerá aquí."
+      />
+      <div class="my-appts__empty-action">
+        <a class="my-appts__btn my-appts__btn--primary" routerLink="/staff">
+          Agendar mi primera cita
+        </a>
+      </div>
+    </div>
+
+  } @else {
+
+    <!-- ── Tabs ──────────────────────────────────────────────────── -->
+    <nav class="my-appts__tabs" aria-label="Filtro de citas">
+      <button
+        class="my-appts__tab"
+        [class.my-appts__tab--active]="activeTab() === 'upcoming'"
+        type="button"
+        (click)="setTab('upcoming')"
+      >
+        Próximas
+        @if (upcomingAppointments().length) {
+          <span class="my-appts__tab-badge">{{ upcomingAppointments().length }}</span>
+        }
+      </button>
+
+      <button
+        class="my-appts__tab"
+        [class.my-appts__tab--active]="activeTab() === 'pending-review'"
+        type="button"
+        (click)="setTab('pending-review')"
+      >
+        Por calificar
+        @if (pendingReviewCount()) {
+          <span class="my-appts__tab-badge my-appts__tab-badge--accent">{{ pendingReviewCount() }}</span>
+        }
+      </button>
+
+      <button
+        class="my-appts__tab"
+        [class.my-appts__tab--active]="activeTab() === 'history'"
+        type="button"
+        (click)="setTab('history')"
+      >
+        Historial
+      </button>
+    </nav>
+
+    <!-- ── Contenido del tab activo ──────────────────────────────── -->
+
+    @if (activeTab() === 'upcoming') {
+      @if (!upcomingAppointments().length) {
+        <div class="my-appts__panel">
+          <app-page-state kind="empty" message="No tienes citas próximas." />
+          <div class="my-appts__empty-action">
+            <a class="my-appts__btn my-appts__btn--primary" routerLink="/staff">Agendar una cita</a>
+          </div>
+        </div>
+      } @else {
+        <div class="my-appts__list">
+          @for (appt of upcomingAppointments(); track appt.id) {
+            <article class="my-appts__card my-appts__card--upcoming">
+              <ng-container *ngTemplateOutlet="cardContent; context: { appt }"></ng-container>
+            </article>
+          }
+        </div>
+      }
+    }
+
+    @if (activeTab() === 'pending-review') {
+      @if (!pendingReviewAppointments().length) {
+        <div class="my-appts__panel">
+          <app-page-state kind="empty" message="No tienes citas pendientes de calificar." />
+        </div>
+      } @else {
+        <div class="my-appts__list">
+          @for (appt of pendingReviewAppointments(); track appt.id) {
+            <article class="my-appts__card my-appts__card--review">
+              <ng-container *ngTemplateOutlet="cardContent; context: { appt }"></ng-container>
+            </article>
+          }
+        </div>
+      }
+    }
+
+    @if (activeTab() === 'history') {
+      @if (!historyAppointments().length) {
+        <div class="my-appts__panel">
+          <app-page-state kind="empty" message="Tu historial está vacío." />
+        </div>
+      } @else {
+        <div class="my-appts__list">
+          @for (appt of historyAppointments(); track appt.id) {
+            <article class="my-appts__card">
+              <ng-container *ngTemplateOutlet="cardContent; context: { appt }"></ng-container>
+            </article>
+          }
+        </div>
+      }
+    }
+
+  }
+</div>
+
+<!-- ── Template de tarjeta ──────────────────────────────────────────────── -->
+<ng-template #cardContent let-appt="appt">
+
+  <!-- Cabecera: estado -->
+  <div class="my-appts__card-top">
+    <span
+      class="my-appts__status"
+      [class.my-appts__status--pending]="appt.status === APPOINTMENT_STATUS.pending"
+      [class.my-appts__status--confirmed]="appt.status === APPOINTMENT_STATUS.confirmed"
+      [class.my-appts__status--completed]="appt.status === APPOINTMENT_STATUS.completed"
+      [class.my-appts__status--cancelled]="appt.status === APPOINTMENT_STATUS.cancelled"
+      [class.my-appts__status--noshow]="appt.status === APPOINTMENT_STATUS.noShow"
+    >
+      {{ statusLabel(appt.status) }}
+    </span>
+  </div>
+
+  <!-- Cuerpo: hora + fecha + barbero -->
+  <div class="my-appts__card-body">
+    <div class="my-appts__time-block">
+      <span class="my-appts__time">{{ formatTime(appt.startsAtUtc) }}</span>
+      <span class="my-appts__date">{{ formatDate(appt.startsAtUtc) }}</span>
+    </div>
+
+    <div class="my-appts__barber-block">
+      <svg class="my-appts__barber-icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M6 2v6c0 2.2 1.8 4 4 4s4-1.8 4-4V2"/>
+        <path d="M8 2h8"/>
+        <path d="M6 8H4"/>
+        <path d="M18 8h-2"/>
+        <path d="M4 22 8.5 12"/>
+        <path d="M20 22 15.5 12"/>
+        <path d="M12 12v10"/>
+        <circle cx="8.5" cy="22" r="1"/>
+        <circle cx="15.5" cy="22" r="1"/>
+      </svg>
+      <span class="my-appts__barber-name">{{ appt.staffName ?? 'Profesional' }}</span>
+    </div>
+
+    <!-- Reseña ya enviada -->
+    @if (isReviewed(appt)) {
+      <p class="my-appts__reviewed-badge">
+        {{ renderStars(getAppointmentReview(appt)!.stars) }}
+        Reseña enviada
+      </p>
+    }
+  </div>
+
+  <!-- Acciones -->
+  <div class="my-appts__card-actions">
+    @if (canCancel(appt)) {
+      <button
+        class="my-appts__btn my-appts__btn--cancel"
+        type="button"
+        [disabled]="pendingCancelId() === appt.id"
+        (click)="cancelAppointment(appt)"
+      >
+        @if (pendingCancelId() === appt.id) { Cancelando... } @else { Cancelar cita }
+      </button>
+    }
+
+    <a class="my-appts__btn my-appts__btn--outline" routerLink="/staff">
+      Agendar otra cita
+    </a>
+
+    @if (canReview(appt)) {
+      <button
+        class="my-appts__btn my-appts__btn--review"
+        type="button"
+        [disabled]="pendingReviewId() !== null"
+        (click)="openReviewModal(appt)"
+      >
+        ★ Calificar
+      </button>
+    }
+  </div>
+
+</ng-template>
+
+<!-- ── Modal de calificación ────────────────────────────────────────────── -->
+@if (reviewModalAppointment()) {
+  <div
+    class="my-appts__overlay"
+    (click)="closeReviewModal()"
+    (keydown.escape)="closeReviewModal()"
+    tabindex="-1"
+  >
+    <dialog
+      class="my-appts__modal"
+      open
+      aria-labelledby="review-modal-title"
+      (click)="$event.stopPropagation()"
+      (keydown)="$event.stopPropagation()"
+    >
+
+      <!-- Botón cerrar -->
+      <button
+        class="my-appts__modal-close"
+        type="button"
+        aria-label="Cerrar"
+        (click)="closeReviewModal()"
+      >
+        <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+
+      <!-- Encabezado modal -->
+      <div class="my-appts__modal-header">
+        <h2 id="review-modal-title">¿Cómo fue tu experiencia?</h2>
+
+        <!-- Info de la cita -->
+        <div class="my-appts__modal-appt-info">
+          <strong>{{ reviewModalAppointment()!.staffName ?? 'Profesional' }}</strong>
+          &nbsp;·&nbsp;
+          {{ formatDate(reviewModalAppointment()!.startsAtUtc) }}
+          &nbsp;a las&nbsp;
+          {{ formatTime(reviewModalAppointment()!.startsAtUtc) }}
+        </div>
+
+        <!-- Aviso de anonimato -->
+        <div class="my-appts__anon-notice">
+          <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+          </svg>
+          Tu reseña es completamente anónima. El profesional no sabrá quién la escribió.
+        </div>
+      </div>
+
+      <!-- Formulario -->
+      <form [formGroup]="reviewForm" (ngSubmit)="submitReview()" novalidate>
+
+        <!-- Estrellas -->
+        <fieldset class="my-appts__stars">
+          <legend class="my-appts__label">Puntuación <span class="my-appts__required">*</span></legend>
+          @for (s of reviewStarsValues; track s) {
+            <button
+              class="my-appts__star"
+              type="button"
+              [class.my-appts__star--lit]="
+                reviewForm.controls.stars.value !== null &&
+                reviewForm.controls.stars.value >= s
+              "
+              [disabled]="pendingReviewId() !== null"
+              [attr.aria-label]="s + ' de 5 estrellas'"
+              (click)="setReviewStars(s)"
+            >★</button>
+          }
+        </fieldset>
+        @if (showStarsError()) {
+          <p class="my-appts__field-error">Selecciona una puntuación del 1 al 5.</p>
+        }
+
+        <!-- Comentario -->
+        <label class="my-appts__label" for="review-comment">
+          Comentario <span class="my-appts__optional">(opcional)</span>
+        </label>
+        <textarea
+          id="review-comment"
+          formControlName="comment"
+          rows="4"
+          maxlength="2000"
+          placeholder="Cuéntanos sobre tu experiencia..."
+        ></textarea>
+        <div class="my-appts__char-count">{{ reviewCommentLength() }}/2000</div>
+        @if (showCommentError()) {
+          <p class="my-appts__field-error">Máximo 2000 caracteres.</p>
+        }
+
+        <!-- Enviar -->
+        <button
+          class="my-appts__btn my-appts__btn--primary my-appts__btn--full"
+          type="submit"
+          [disabled]="pendingReviewId() !== null"
+        >
+          {{ pendingReviewId() !== null ? 'Enviando...' : 'Enviar reseña' }}
+        </button>
+
+      </form>
+    </dialog>
+  </div>
+}

@@ -1,0 +1,285 @@
+import { DOCUMENT } from '@angular/common';
+import { Component, ElementRef, HostListener, computed, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { filter } from 'rxjs';
+
+import { ConfirmModalComponent } from '../../../shared/components/confirm-modal/confirm-modal.component';
+import { ToastOutletComponent } from '../../../shared/components/toast-outlet/toast-outlet.component';
+import { BUSINESS_CONTACT } from '../../config/business-contact.config';
+import {
+  BUSINESS_SOCIAL_PROFILES,
+  SOCIAL_PLATFORM_DEFINITIONS,
+} from '../../config/business-social-links.config';
+import { RuntimeConfigService } from '../../config/runtime-config.service';
+import { ROLE_NAMES } from '../../models/auth.models';
+import { AuthService } from '../../services/auth.service';
+import { HttpActivityService } from '../../services/http-activity.service';
+import { InstallPromptService } from '../../services/install-prompt.service';
+
+interface NavLink {
+  label: string;
+  route: string;
+  exact?: boolean;
+  group: 'public' | 'customer' | 'staff' | 'admin';
+}
+
+interface FooterSocialLink {
+  label: string;
+  href: string;
+  icon: string;
+}
+
+@Component({
+  selector: 'app-shell',
+  imports: [
+    RouterLink,
+    RouterLinkActive,
+    RouterOutlet,
+    ToastOutletComponent,
+    ConfirmModalComponent,
+  ],
+  templateUrl: './app-shell.component.html',
+  styleUrl: './app-shell.component.scss',
+})
+export class AppShellComponent {
+  readonly configService = inject(RuntimeConfigService);
+  readonly authService = inject(AuthService);
+  readonly httpActivityService = inject(HttpActivityService);
+  readonly installPromptService = inject(InstallPromptService);
+
+  readonly roleNames = ROLE_NAMES;
+  readonly isSigningOut = signal(false);
+  readonly isInstallPrompting = signal(false);
+  readonly isMobileMenuOpen = signal(false);
+  readonly isUserMenuOpen = signal(false);
+
+  private readonly router = inject(Router);
+  private readonly document = inject(DOCUMENT);
+  private readonly elementRef = inject(ElementRef);
+
+  readonly navigationLinks = computed<NavLink[]>(() => {
+    const links: NavLink[] = [
+      {
+        label: 'Inicio',
+        route: '/',
+        exact: true,
+        group: 'public',
+      },
+      {
+        label: 'Profesionales',
+        route: '/staff',
+        exact: true,
+        group: 'public',
+      },
+    ];
+
+    if (this.authService.hasRole(this.roleNames.customer)) {
+      links.push(
+        {
+          label: 'Mis citas',
+          route: '/customer/appointments',
+          group: 'customer',
+        },
+        {
+          label: 'Mi perfil',
+          route: '/customer/profile',
+          group: 'customer',
+        },
+      );
+    }
+
+    if (this.authService.hasRole(this.roleNames.staff)) {
+      links.push(
+        {
+          label: 'Mi perfil',
+          route: '/staff/profile',
+          group: 'staff',
+        },
+        {
+          label: 'Mi disponibilidad',
+          route: '/staff/availability',
+          group: 'staff',
+        },
+        {
+          label: 'Mi agenda',
+          route: '/staff/appointments',
+          group: 'staff',
+        },
+      );
+    }
+
+    if (this.authService.hasRole(this.roleNames.admin)) {
+      links.push(
+        {
+          label: 'Gestion de profesionales',
+          route: '/admin/staff',
+          group: 'admin',
+        },
+        {
+          label: 'Citas',
+          route: '/admin/appointments',
+          group: 'admin',
+        },
+        // {
+        //   label: 'Archivos',
+        //   route: '/admin/media',
+        //   group: 'admin',
+        // },
+        {
+          label: 'Landing',
+          route: '/admin/content/landing',
+          group: 'admin',
+        },
+        // {
+        //   label: 'Marca',
+        //   route: '/admin/content/branding',
+        //   group: 'admin',
+        // },
+        {
+          label: 'Banners',
+          route: '/admin/content/banners',
+          group: 'admin',
+        },
+      );
+    }
+
+    return links;
+  });
+
+  readonly primaryMobileLinks = computed(() =>
+    this.navigationLinks().filter((link) => link.group !== 'admin'),
+  );
+
+  readonly adminMobileLinks = computed(() =>
+    this.navigationLinks().filter((link) => link.group === 'admin'),
+  );
+
+  readonly userDropdownCustomerLinks = computed(() =>
+    this.navigationLinks().filter((link) => link.group === 'customer'),
+  );
+
+  readonly userDropdownStaffLinks = computed(() =>
+    this.navigationLinks().filter((link) => link.group === 'staff'),
+  );
+
+  readonly userDropdownAdminLinks = computed(() =>
+    this.navigationLinks().filter((link) => link.group === 'admin'),
+  );
+
+  readonly identitySubtitle = computed(
+    () => this.authService.currentUser()?.email ?? 'Cuenta activa',
+  );
+
+  readonly contactDetails = [
+    BUSINESS_CONTACT.phone,
+    BUSINESS_CONTACT.email,
+    BUSINESS_CONTACT.address,
+  ].filter((value): value is string => (value?.trim()?.length ?? 0) > 0);
+
+  readonly socialLinks: FooterSocialLink[] = SOCIAL_PLATFORM_DEFINITIONS.map((definition) => ({
+    label: definition.label,
+    icon: definition.icon,
+    href: BUSINESS_SOCIAL_PROFILES[definition.key]?.trim() ?? '',
+  })).filter((link) => link.href.length > 0);
+
+  readonly currentYear = new Date().getFullYear();
+
+  constructor() {
+    this.router.events
+      .pipe(
+        filter((event): event is NavigationEnd => event instanceof NavigationEnd),
+        takeUntilDestroyed(),
+      )
+      .subscribe(() => {
+        this.closeMobileMenu();
+        this.closeUserMenu();
+      });
+  }
+
+  @HostListener('document:keydown.escape')
+  handleEscapeKey(): void {
+    this.closeMobileMenu();
+    this.closeUserMenu();
+  }
+
+  @HostListener('document:click', ['$event'])
+  handleDocumentClick(event: Event): void {
+    const userMenuEl = this.elementRef.nativeElement.querySelector('.app-shell__user-menu');
+    if (userMenuEl && !userMenuEl.contains(event.target)) {
+      this.closeUserMenu();
+    }
+  }
+
+  @HostListener('window:resize')
+  handleWindowResize(): void {
+    if (globalThis.innerWidth > 980) {
+      this.closeMobileMenu();
+    }
+  }
+
+  toggleMobileMenu(): void {
+    if (this.isMobileMenuOpen()) {
+      this.closeMobileMenu();
+      return;
+    }
+
+    this.isMobileMenuOpen.set(true);
+    this.setScrollLock(true);
+  }
+
+  closeMobileMenu(): void {
+    if (!this.isMobileMenuOpen()) {
+      return;
+    }
+
+    this.isMobileMenuOpen.set(false);
+    this.setScrollLock(false);
+  }
+
+  toggleUserMenu(): void {
+    this.isUserMenuOpen.update((open) => !open);
+  }
+
+  closeUserMenu(): void {
+    this.isUserMenuOpen.set(false);
+  }
+
+  async installApp(): Promise<void> {
+    if (this.isInstallPrompting()) {
+      return;
+    }
+
+    this.isInstallPrompting.set(true);
+
+    try {
+      await this.installPromptService.promptInstall();
+    } finally {
+      this.isInstallPrompting.set(false);
+    }
+  }
+
+  dismissInstallPrompt(): void {
+    this.installPromptService.dismissPrompt();
+  }
+
+  async logout(): Promise<void> {
+    this.isSigningOut.set(true);
+
+    try {
+      this.closeMobileMenu();
+      await this.authService.logout();
+      await this.router.navigateByUrl('/auth/login', { replaceUrl: true });
+    } finally {
+      this.isSigningOut.set(false);
+    }
+  }
+
+  private setScrollLock(isLocked: boolean): void {
+    if (!this.document?.body) {
+      return;
+    }
+
+    this.document.body.style.overflow = isLocked ? 'hidden' : '';
+  }
+}

@@ -1,0 +1,192 @@
+$dest = "d:\Proyects\barbershop\app\front\barbershop-pwa\src\app\features\staff\profile\pages\staff-profile-page\staff-profile-page.component.html"
+
+$content = @"
+<section class="profile-page">
+  <div class="profile-page__header">
+    <p class="profile-page__eyebrow">Mi cuenta</p>
+    <h1>Mi perfil</h1>
+    <p class="profile-page__subtitle">Actualiza tu informacion de presentacion y tus redes sociales.</p>
+  </div>
+
+  <app-api-feedback severity="error" [message]="errorMessage()" />
+  <app-api-feedback severity="info" [message]="successMessage()" />
+
+  @if (isLoading()) {
+    <app-page-state kind="loading" message="Cargando tu perfil..." />
+  } @else if (!profile()) {
+    <app-page-state kind="empty" message="No se pudo cargar tu perfil." />
+  } @else {
+    <div class="profile-page__identity">
+      <div class="profile-page__identity-item">
+        <span>Nombre completo</span>
+        <strong>{{ profile()?.fullName }}</strong>
+      </div>
+      <div class="profile-page__identity-item">
+        <span>Correo</span>
+        <strong>{{ profile()?.email }}</strong>
+      </div>
+      <div class="profile-page__identity-item">
+        <span>Estado</span>
+        <strong [class.profile-page__status--active]="profile()?.isActive">
+          {{ profile()?.isActive ? 'Activo' : 'Inactivo' }}
+        </strong>
+      </div>
+    </div>
+
+    <div class="profile-page__media">
+      <div class="profile-page__media-card">
+        <p class="profile-page__media-label">Foto de perfil</p>
+        <p class="profile-page__media-hint">Imagen JPG, PNG o WebP. Max. 1 MB. Si subes una nueva reemplaza la actual.</p>
+
+        @if (profile()?.photoUrl) {
+          <div class="profile-page__thumbnail-wrap">
+            <img [src]="profile()!.photoUrl" alt="Tu foto de perfil" class="profile-page__thumbnail" />
+          </div>
+        } @else {
+          <div class="profile-page__thumbnail-wrap profile-page__thumbnail-wrap--empty">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+              <circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
+            </svg>
+          </div>
+        }
+
+        <app-api-feedback severity="error" [message]="photoError()" />
+
+        <div class="profile-page__media-actions">
+          <button class="profile-page__btn-upload" type="button" [disabled]="photoUploading()" (click)="triggerPhotoInput()">
+            {{ photoUploading() ? 'Subiendo...' : (profile()?.photoUrl ? 'Cambiar foto' : 'Subir foto') }}
+          </button>
+          @if (profile()?.photoUrl) {
+            <button class="profile-page__btn-remove" type="button" [disabled]="photoUploading()" (click)="removePhoto()">
+              Eliminar foto
+            </button>
+          }
+        </div>
+        <input #photoInput type="file" accept="image/jpeg,image/png,image/webp" class="profile-page__file-hidden" (change)="onPhotoSelected($event)" />
+      </div>
+
+      <div class="profile-page__media-card">
+        <p class="profile-page__media-label">QR de propinas</p>
+        <p class="profile-page__media-hint">Imagen o PDF. Max. 1 MB. Si subes uno nuevo reemplaza el actual.</p>
+
+        @if (profile()?.tipsQrUrl) {
+          <div class="profile-page__thumbnail-wrap">
+            <img [src]="profile()!.tipsQrUrl" alt="Tu QR de propinas" class="profile-page__thumbnail" />
+          </div>
+        } @else {
+          <div class="profile-page__thumbnail-wrap profile-page__thumbnail-wrap--empty">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+              <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/>
+              <rect x="3" y="14" width="7" height="7" rx="1"/>
+            </svg>
+          </div>
+        }
+
+        <app-api-feedback severity="error" [message]="qrError()" />
+
+        <div class="profile-page__media-actions">
+          <button class="profile-page__btn-upload" type="button" [disabled]="qrUploading()" (click)="triggerQrInput()">
+            {{ qrUploading() ? 'Subiendo...' : (profile()?.tipsQrUrl ? 'Cambiar QR' : 'Subir QR') }}
+          </button>
+          @if (profile()?.tipsQrUrl) {
+            <button class="profile-page__btn-remove" type="button" [disabled]="qrUploading()" (click)="removeQr()">
+              Eliminar QR
+            </button>
+          }
+        </div>
+        <input #qrInput type="file" accept="image/jpeg,image/png,image/webp,application/pdf" class="profile-page__file-hidden" (change)="onQrSelected($event)" />
+      </div>
+    </div>
+
+    <form class="profile-page__form" [formGroup]="profileForm" (ngSubmit)="submit()" novalidate>
+      <fieldset [disabled]="isBusy()">
+        <p class="profile-page__section-title">Informacion de presentacion</p>
+        <div class="profile-page__grid">
+
+          <div class="profile-page__field profile-page__field--wide">
+            <label for="displayName">Nombre visible <span class="profile-page__required">*</span></label>
+            <input id="displayName" type="text" formControlName="displayName" placeholder="Como te veran tus clientes" autocomplete="nickname" />
+            @if (showError('displayName', 'required')) {
+              <p class="profile-page__error">El nombre visible es obligatorio.</p>
+            }
+            @if (showError('displayName', 'minlength')) {
+              <p class="profile-page__error">Debe tener al menos 2 caracteres.</p>
+            }
+          </div>
+
+          <div class="profile-page__field">
+            <label for="phoneNumber">Telefono</label>
+            <input id="phoneNumber" type="tel" formControlName="phoneNumber" placeholder="Opcional" autocomplete="tel" />
+            @if (showError('phoneNumber', 'maxlength')) {
+              <p class="profile-page__error">Max. 40 caracteres.</p>
+            }
+          </div>
+
+          <div class="profile-page__field profile-page__field--wide">
+            <label for="bio">Bio</label>
+            <textarea id="bio" rows="4" formControlName="bio" placeholder="Cuentales algo sobre ti (opcional)"></textarea>
+            @if (showError('bio', 'maxlength')) {
+              <p class="profile-page__error">La bio debe tener 2000 caracteres o menos.</p>
+            }
+          </div>
+
+        </div>
+
+        <p class="profile-page__section-title">Redes sociales</p>
+        <div class="profile-page__grid">
+
+          <div class="profile-page__field">
+            <label for="instagramUrl">Instagram</label>
+            <input id="instagramUrl" type="url" formControlName="instagramUrl" placeholder="https://instagram.com/tu_usuario" />
+            @if (showError('instagramUrl', 'maxlength')) {
+              <p class="profile-page__error">URL demasiado larga.</p>
+            }
+          </div>
+
+          <div class="profile-page__field">
+            <label for="facebookUrl">Facebook</label>
+            <input id="facebookUrl" type="url" formControlName="facebookUrl" placeholder="https://facebook.com/tu_pagina" />
+            @if (showError('facebookUrl', 'maxlength')) {
+              <p class="profile-page__error">URL demasiado larga.</p>
+            }
+          </div>
+
+          <div class="profile-page__field">
+            <label for="tikTokUrl">TikTok</label>
+            <input id="tikTokUrl" type="url" formControlName="tikTokUrl" placeholder="https://tiktok.com/@tu_usuario" />
+            @if (showError('tikTokUrl', 'maxlength')) {
+              <p class="profile-page__error">URL demasiado larga.</p>
+            }
+          </div>
+
+          <div class="profile-page__field">
+            <label for="youtubeUrl">YouTube</label>
+            <input id="youtubeUrl" type="url" formControlName="youtubeUrl" placeholder="https://youtube.com/@tu_canal" />
+            @if (showError('youtubeUrl', 'maxlength')) {
+              <p class="profile-page__error">URL demasiado larga.</p>
+            }
+          </div>
+
+          <div class="profile-page__field">
+            <label for="xUrl">X (Twitter)</label>
+            <input id="xUrl" type="url" formControlName="xUrl" placeholder="https://x.com/tu_usuario" />
+            @if (showError('xUrl', 'maxlength')) {
+              <p class="profile-page__error">URL demasiado larga.</p>
+            }
+          </div>
+
+        </div>
+      </fieldset>
+
+      <div class="profile-page__actions">
+        <button class="profile-page__submit" type="submit" [disabled]="isBusy() || profileForm.invalid">
+          {{ submitLabel() }}
+        </button>
+      </div>
+    </form>
+  }
+</section>
+"@
+
+[System.IO.File]::WriteAllText($dest, $content, [System.Text.UTF8Encoding]::new($false))
+Write-Host "Written OK"

@@ -1,0 +1,189 @@
+.admin-banners-page {
+  display: grid;
+  gap: 1.25rem;
+}
+
+.admin-banners-page__hero,
+.admin-banners-page__panel,
+.admin-banners-page__state,
+.admin-banners-page__card {
+  padding: clamp(1.1rem, 2vw, 1.55rem);
+  border: 1px solid var(--border-soft);
+  border-radius: 1.5rem;
+  background: var(--surface-panel);
+  box-shadow: var(--shadow-soft);
+}
+
+.admin-banners-page__eyebrow {
+  margin: 0;
+  color: var(--brand-primary);
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.admin-banners-page h1,
+.admin-banners-page h2,
+.admin-banners-page h3,
+.admin-banners-page p,
+.admin-banners-page dl,
+.admin-banners-page dt,
+.admin-banners-page dd {
+  margin: 0;
+}
+
+.admin-banners-page p,
+.admin-banners-page dd,
+.admin-banners-page__state {
+  color: var(--text-muted);
+  line-height: 1.6;
+}
+
+.admin-banners-page__panel,
+form,
+fieldset,
+.admin-banners-page__list,
+.admin-banners-page__card {
+  display: grid;
+  gap: 1rem;
+}
+
+fieldset {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  min-width: 0;
+}
+
+.admin-banners-page__section-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.admin-banners-page__grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.admin-banners-page__field {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.admin-banners-page__field--wide {
+  grid-column: 1 / -1;
+}
+
+.admin-banners-page__field label,
+.admin-banners-page dt {
+  font-weight: 600;
+}
+
+.admin-banners-page input,
+.admin-banners-page textarea {
+  width: 100%;
+  padding: 0.8rem 1rem;
+  border: 1px solid rgba(35, 23, 18, 0.14);
+  border-radius: 1rem;
+  background: rgba(255, 255, 255, 0.72);
+  color: var(--text-primary);
+  font: inherit;
+}
+
+.admin-banners-page textarea {
+  resize: vertical;
+  min-height: 6.5rem;
+}
+
+.admin-banners-page__checkbox {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.75rem;
+  align-items: center;
+  padding-top: 0.35rem;
+  font-weight: 600;
+}
+
+.admin-banners-page__checkbox input {
+  width: 1rem;
+  height: 1rem;
+  margin: 0;
+  padding: 0;
+}
+
+.admin-banners-page__error {
+  margin: 0;
+  color: #92382d;
+  font-size: 0.84rem;
+}
+
+.admin-banners-page__actions,
+.admin-banners-page__card-actions {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.admin-banners-page__actions button,
+.admin-banners-page__card-actions button {
+  min-height: 2.6rem;
+  padding: 0.7rem 1rem;
+  border: 0;
+  border-radius: 999px;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.admin-banners-page__actions button,
+.admin-banners-page__secondary {
+  background: rgba(141, 74, 47, 0.1);
+  color: var(--brand-primary);
+}
+
+.admin-banners-page__actions button:first-child {
+  background: linear-gradient(135deg, var(--brand-primary), var(--brand-accent));
+  color: #fff;
+}
+
+.admin-banners-page__danger {
+  background: rgba(146, 56, 45, 0.12);
+  color: #92382d;
+}
+
+.admin-banners-page__badge--inactive {
+  color: #92382d;
+}
+
+.admin-banners-page__card header {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+
+.admin-banners-page__card dl {
+  display: grid;
+  gap: 0.8rem;
+  grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+}
+
+.admin-banners-page__card dl div {
+  display: grid;
+  gap: 0.35rem;
+  padding: 0.85rem;
+  border: 1px solid var(--border-soft);
+  border-radius: 1rem;
+  background: rgba(255, 255, 255, 0.62);
+}
+
+@media (max-width: 820px) {
+  .admin-banners-page__grid {
+    grid-template-columns: 1fr;
+  }
+}

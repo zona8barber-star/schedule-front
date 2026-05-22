@@ -1,0 +1,117 @@
+@use './styles/theme';
+
+html,
+body {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  background:
+    radial-gradient(circle at 14% -8%, rgba(176, 138, 74, 0.24), transparent 36%),
+    radial-gradient(circle at 84% 10%, rgba(47, 94, 89, 0.18), transparent 34%),
+    linear-gradient(180deg, var(--surface-canvas) 0%, var(--surface-muted) 100%);
+  color: var(--color-text);
+  font-family: 'Space Grotesk', 'Segoe UI', sans-serif;
+  overflow-x: hidden;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+a {
+  color: inherit;
+}
+
+img,
+svg,
+video,
+canvas {
+  max-width: 100%;
+  height: auto;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+/* ── Global form input baseline ─────────────────────────────────────────── */
+/* Component-level styles can override these; this ensures a consistent
+   dark-themed base even when component SCSS fails to apply. */
+
+input:not([type='checkbox']):not([type='radio']):not([type='range']),
+textarea,
+select {
+  padding: 0.85rem 1rem;
+  border: 1px solid rgba(110, 96, 74, 0.55);
+  border-radius: 1rem;
+  background: rgba(22, 24, 23, 0.74);
+  color: var(--color-text);
+}
+
+input:not([type='checkbox']):not([type='radio']):not([type='range']):focus,
+textarea:focus,
+select:focus {
+  outline: 2px solid rgba(176, 138, 74, 0.3);
+  outline-offset: 2px;
+  border-color: rgba(176, 138, 74, 0.64);
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: var(--color-text-muted);
+}
+
+/* ── WhatsApp floating action button ────────────────────────────────────── */
+
+.wa-fab {
+  position: fixed;
+  bottom: 1.5rem;
+  right: 1.5rem;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 3.25rem;
+  height: 3.25rem;
+  border-radius: 50%;
+  background: #25d366;
+  box-shadow:
+    0 4px 16px rgba(37, 211, 102, 0.45),
+    0 2px 6px rgba(0, 0, 0, 0.25);
+  color: #fff;
+  text-decoration: none;
+  transition:
+    transform 140ms ease,
+    box-shadow 140ms ease;
+}
+
+.wa-fab:hover {
+  transform: scale(1.08);
+  box-shadow:
+    0 6px 22px rgba(37, 211, 102, 0.55),
+    0 3px 8px rgba(0, 0, 0, 0.28);
+}
+
+.wa-fab svg {
+  width: 1.75rem;
+  height: 1.75rem;
+  fill: currentColor;
+}
+
+.landing-page__wa-phone {
+  color: #25d366;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.landing-page__wa-phone:hover {
+  text-decoration: underline;
+}
+

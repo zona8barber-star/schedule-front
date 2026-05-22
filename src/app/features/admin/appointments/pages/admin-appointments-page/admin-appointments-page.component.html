@@ -1,0 +1,309 @@
+<section class="admin-appointments-page">
+  <header class="admin-appointments-page__hero">
+    <div>
+      <p class="admin-appointments-page__eyebrow">Gestion</p>
+      <h1>Citas</h1>
+      <p>
+        Supervisa todas las citas, crea turnos manuales y actualiza estado cuando haga falta
+        soporte operativo.
+      </p>
+    </div>
+  </header>
+
+  <app-api-feedback severity="error" [message]="errorMessage()" />
+  <app-api-feedback severity="info" [message]="successMessage()" />
+
+  <article class="admin-appointments-page__panel">
+    <div class="admin-appointments-page__section-heading">
+      <div>
+        <p class="admin-appointments-page__eyebrow">Filtro</p>
+        <h2>Filtrar por profesional</h2>
+      </div>
+    </div>
+
+    <form [formGroup]="filterForm" (ngSubmit)="applyFilter()" novalidate>
+      <fieldset [disabled]="isLoading()">
+        <div class="admin-appointments-page__filter-row">
+          <div class="admin-appointments-page__field">
+            <label for="filterStaff">Profesional</label>
+            <select id="filterStaff" formControlName="staffProfileId">
+              <option value="">Todos</option>
+              @for (staffMember of staffMembers(); track staffMember.staffProfileId) {
+                <option [value]="staffMember.staffProfileId">
+                  {{ staffDisplayLabel(staffMember) }}
+                </option>
+              }
+            </select>
+          </div>
+
+          <div class="admin-appointments-page__actions">
+            <button
+              class="admin-appointments-page__button"
+              type="submit"
+              [disabled]="isLoading()"
+            >
+              Aplicar
+            </button>
+          </div>
+        </div>
+      </fieldset>
+    </form>
+  </article>
+
+  <article class="admin-appointments-page__panel">
+    <div class="admin-appointments-page__section-heading">
+      <div>
+        <p class="admin-appointments-page__eyebrow">Turno manual</p>
+        <h2>Crear cita</h2>
+      </div>
+    </div>
+
+    <form [formGroup]="createForm" (ngSubmit)="submitCreate()" novalidate>
+      <fieldset [disabled]="isCreating() || !staffMembers().length">
+        <div class="admin-appointments-page__grid">
+          <div class="admin-appointments-page__field">
+            <label for="createStaffProfileId">Profesional</label>
+            <select id="createStaffProfileId" formControlName="staffProfileId">
+              <option value="">Selecciona</option>
+              @for (staffMember of staffMembers(); track staffMember.staffProfileId) {
+                <option [value]="staffMember.staffProfileId">
+                  {{ staffDisplayLabel(staffMember) }}
+                </option>
+              }
+            </select>
+            @if (showCreateError('staffProfileId', 'required')) {
+              <p class="admin-appointments-page__error">Selecciona un profesional.</p>
+            }
+          </div>
+
+          <div class="admin-appointments-page__field">
+            <label for="createStartsAt">Inicio</label>
+            <input id="createStartsAt" type="datetime-local" formControlName="startsAt" />
+            @if (showCreateError('startsAt', 'required')) {
+              <p class="admin-appointments-page__error">Selecciona fecha y hora de inicio.</p>
+            }
+          </div>
+
+          <div class="admin-appointments-page__field">
+            <label for="createCustomerName">Nombre cliente</label>
+            <input id="createCustomerName" type="text" formControlName="customerName" />
+            @if (showCreateError('customerName', 'required')) {
+              <p class="admin-appointments-page__error">Ingresa el nombre del cliente.</p>
+            }
+          </div>
+
+          <div class="admin-appointments-page__field">
+            <label for="createCustomerEmail">Email (opcional)</label>
+            <input id="createCustomerEmail" type="email" formControlName="customerEmail" />
+            @if (showCreateError('customerEmail', 'email')) {
+              <p class="admin-appointments-page__error">Ingresa un correo valido.</p>
+            }
+          </div>
+
+          <div class="admin-appointments-page__field">
+            <label for="createCustomerPhone">Telefono (opcional)</label>
+            <input id="createCustomerPhone" type="text" formControlName="customerPhone" />
+          </div>
+
+          <div class="admin-appointments-page__field admin-appointments-page__field--wide">
+            <label for="createNotes">Notas (opcional)</label>
+            <textarea id="createNotes" rows="3" formControlName="notes"></textarea>
+          </div>
+        </div>
+      </fieldset>
+
+      <div class="admin-appointments-page__actions">
+        <button
+          class="admin-appointments-page__button"
+          type="submit"
+          [disabled]="isCreating() || !staffMembers().length"
+        >
+          {{ isCreating() ? 'Guardando...' : 'Crear cita manual' }}
+        </button>
+      </div>
+    </form>
+  </article>
+
+  <article class="admin-appointments-page__panel">
+    <div class="admin-appointments-page__section-heading">
+      <div>
+        <p class="admin-appointments-page__eyebrow">Listado</p>
+        <h2>Todas las citas</h2>
+      </div>
+    </div>
+
+    @if (isLoading()) {
+      <app-page-state kind="loading" message="Cargando citas..." />
+    } @else if (!appointments().length) {
+      <app-page-state kind="empty" message="No hay citas para el filtro actual." />
+    } @else {
+      <div class="admin-appointments-page__list">
+        @for (appointment of appointments(); track appointment.id) {
+          <article class="admin-appointments-page__card">
+            <div class="admin-appointments-page__card-header">
+              <div>
+                <p class="admin-appointments-page__eyebrow">
+                  {{ sourceLabel(appointment.source) }}
+                </p>
+                <h3>
+                  {{ formatDateTimeRange(appointment.startsAtUtc, appointment.endsAtUtc) }}
+                </h3>
+              </div>
+              <span class="admin-appointments-page__status">{{
+                statusLabel(appointment.status)
+              }}</span>
+            </div>
+
+            <dl class="admin-appointments-page__details">
+              <div>
+                <dt>Profesional</dt>
+                <dd>{{ staffName(appointment.staffProfileId) }}</dd>
+              </div>
+              <div>
+                <dt>Cliente</dt>
+                <dd>{{ appointment.customerName }}</dd>
+              </div>
+              <div>
+                <dt>Email</dt>
+                <dd>{{ appointment.customerEmail || 'No informado' }}</dd>
+              </div>
+              <div>
+                <dt>Telefono</dt>
+                <dd>{{ appointment.customerPhone || 'No informado' }}</dd>
+              </div>
+              <div>
+                <dt>Notas</dt>
+                <dd>{{ appointment.notes || 'Sin notas' }}</dd>
+              </div>
+            </dl>
+
+            <div class="admin-appointments-page__actions">
+              <button
+                class="admin-appointments-page__button admin-appointments-page__button--secondary"
+                type="button"
+                [disabled]="isBusyFor(appointment.id, 'edit')"
+                (click)="startEdit(appointment)"
+              >
+                Editar
+              </button>
+              <button
+                class="admin-appointments-page__button"
+                type="button"
+                [disabled]="
+                  !canTransition(appointment) || isBusyFor(appointment.id, 'complete')
+                "
+                (click)="markCompleted(appointment)"
+              >
+                Completar
+              </button>
+              <button
+                class="admin-appointments-page__button admin-appointments-page__button--warn"
+                type="button"
+                [disabled]="!canTransition(appointment) || isBusyFor(appointment.id, 'cancel')"
+                (click)="cancelAppointment(appointment)"
+              >
+                Cancelar
+              </button>
+              <button
+                class="admin-appointments-page__button admin-appointments-page__button--warn"
+                type="button"
+                [disabled]="!canTransition(appointment) || isBusyFor(appointment.id, 'no-show')"
+                (click)="markNoShow(appointment)"
+              >
+                No-show
+              </button>
+            </div>
+
+            @if (editingAppointmentId() === appointment.id) {
+              <form [formGroup]="editForm" (ngSubmit)="submitEdit()" novalidate>
+                <fieldset [disabled]="isSavingEdit()">
+                  <div class="admin-appointments-page__grid">
+                    <div class="admin-appointments-page__field">
+                      <label for="editStartsAt">Inicio</label>
+                      <input
+                        id="editStartsAt"
+                        type="datetime-local"
+                        formControlName="startsAt"
+                      />
+                      @if (showEditError('startsAt', 'required')) {
+                        <p class="admin-appointments-page__error">
+                          Selecciona fecha y hora de inicio.
+                        </p>
+                      }
+                    </div>
+
+                    <div class="admin-appointments-page__field">
+                      <label for="editEndsAt">Fin</label>
+                      <input id="editEndsAt" type="datetime-local" formControlName="endsAt" />
+                      @if (showEditError('endsAt', 'required')) {
+                        <p class="admin-appointments-page__error">
+                          Selecciona fecha y hora de fin.
+                        </p>
+                      }
+                    </div>
+
+                    <div class="admin-appointments-page__field">
+                      <label for="editCustomerName">Nombre cliente</label>
+                      <input id="editCustomerName" type="text" formControlName="customerName" />
+                      @if (showEditError('customerName', 'required')) {
+                        <p class="admin-appointments-page__error">
+                          Ingresa el nombre del cliente.
+                        </p>
+                      }
+                    </div>
+
+                    <div class="admin-appointments-page__field">
+                      <label for="editCustomerEmail">Email (opcional)</label>
+                      <input
+                        id="editCustomerEmail"
+                        type="email"
+                        formControlName="customerEmail"
+                      />
+                      @if (showEditError('customerEmail', 'email')) {
+                        <p class="admin-appointments-page__error">Ingresa un correo valido.</p>
+                      }
+                    </div>
+
+                    <div class="admin-appointments-page__field">
+                      <label for="editCustomerPhone">Telefono (opcional)</label>
+                      <input
+                        id="editCustomerPhone"
+                        type="text"
+                        formControlName="customerPhone"
+                      />
+                    </div>
+
+                    <div
+                      class="admin-appointments-page__field admin-appointments-page__field--wide"
+                    >
+                      <label for="editNotes">Notas (opcional)</label>
+                      <textarea id="editNotes" rows="3" formControlName="notes"></textarea>
+                    </div>
+                  </div>
+                </fieldset>
+
+                <div class="admin-appointments-page__actions">
+                  <button
+                    class="admin-appointments-page__button"
+                    type="submit"
+                    [disabled]="isSavingEdit()"
+                  >
+                    {{ isSavingEdit() ? 'Guardando...' : 'Guardar cambios' }}
+                  </button>
+                  <button
+                    class="admin-appointments-page__button admin-appointments-page__button--secondary"
+                    type="button"
+                    [disabled]="isSavingEdit()"
+                    (click)="cancelEdit()"
+                  >
+                    Cerrar
+                  </button>
+                </div>
+              </form>
+            }
+          </article>
+        }
+      </div>
+    }
+  </article>
+</section>
