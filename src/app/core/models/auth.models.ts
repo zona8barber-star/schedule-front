@@ -47,6 +47,15 @@ export interface TokenResponse {
 
 export type AuthResponse = TokenResponse;
 
+export interface ForgotPasswordRequest {
+  email: string;
+}
+
+export interface ResetPasswordRequest {
+  token: string;
+  newPassword: string;
+}
+
 export interface ApiProblemDetails {
   status?: number;
   title?: string;

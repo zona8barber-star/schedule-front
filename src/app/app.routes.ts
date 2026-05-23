@@ -45,6 +45,11 @@ const loadPublicStaffProfilePage = () =>
     (module) => module.PublicStaffProfilePageComponent,
   );
 
+const loadResetPasswordPage = () =>
+  import('./features/auth/pages/reset-password-page/reset-password-page.component').then(
+    (module) => module.ResetPasswordPageComponent,
+  );
+
 const loadBookingConfirmPage = () =>
   import('./features/booking/pages/booking-confirm-page/booking-confirm-page.component').then(
     (module) => module.BookingConfirmPageComponent,
@@ -132,6 +137,11 @@ export const routes: Routes = [
             (module) => module.LoginPageComponent,
           ),
         title: 'Acceso',
+      },
+      {
+        path: 'reset-password',
+        loadComponent: loadResetPasswordPage,
+        title: 'Restablecer contraseña',
       },
     ],
   },
