@@ -7,9 +7,11 @@ import {
   ValidatorFn,
   Validators,
 } from '@angular/forms';
+import { firstValueFrom } from 'rxjs';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 
 import { AuthService } from '../../../../core/services/auth.service';
+import { AuthApiService } from '../../../../core/services/auth-api.service';
 import { ApiFeedbackComponent } from '../../../../shared/components/api-feedback/api-feedback.component';
 
 @Component({
@@ -22,6 +24,7 @@ export class LoginPageComponent {
   private readonly formBuilder = inject(FormBuilder);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
+  private readonly authApiService = inject(AuthApiService);
 
   readonly authService = inject(AuthService);
 
@@ -37,6 +40,18 @@ export class LoginPageComponent {
   readonly isLoginPasswordVisible = signal(false);
   readonly isRegisterPasswordVisible = signal(false);
   readonly isConfirmPasswordVisible = signal(false);
+
+  // ── Forgot password ──────────────────────────────────────────────────────────
+  readonly showForgotPanel = signal(false);
+  readonly forgotSubmitted = signal(false);
+  readonly forgotLoading = signal(false);
+  readonly forgotError = signal('');
+  readonly forgotSent = signal(false);
+
+  readonly forgotForm = this.formBuilder.nonNullable.group({
+    email: ['', [Validators.required, Validators.email]],
+  });
+  // ─────────────────────────────────────────────────────────────────────────────
 
   readonly loginForm = this.formBuilder.nonNullable.group({
     email: ['', [Validators.required, Validators.email]],
@@ -115,6 +130,38 @@ export class LoginPageComponent {
     }
   }
 
+  openForgotPanel(): void {
+    this.forgotForm.reset();
+    this.forgotSubmitted.set(false);
+    this.forgotError.set('');
+    this.forgotSent.set(false);
+    this.showForgotPanel.set(true);
+  }
+
+  closeForgotPanel(): void {
+    this.showForgotPanel.set(false);
+  }
+
+  async submitForgot(): Promise<void> {
+    this.forgotSubmitted.set(true);
+    this.forgotError.set('');
+
+    if (this.forgotForm.invalid) {
+      this.forgotForm.markAllAsTouched();
+      return;
+    }
+
+    this.forgotLoading.set(true);
+    try {
+      await firstValueFrom(this.authApiService.forgotPassword(this.forgotForm.getRawValue()));
+      this.forgotSent.set(true);
+    } catch {
+      this.forgotError.set('Ocurrió un error al enviar el correo. Intenta de nuevo.');
+    } finally {
+      this.forgotLoading.set(false);
+    }
+  }
+
   showLoginError(controlName: 'email' | 'password', errorName: string): boolean {
     const control = this.loginForm.controls[controlName];
     return control.hasError(errorName) && (control.touched || this.loginSubmitted());
@@ -126,6 +173,11 @@ export class LoginPageComponent {
   ): boolean {
     const control = this.registerForm.controls[controlName];
     return control.hasError(errorName) && (control.touched || this.registerSubmitted());
+  }
+
+  showForgotError(errorName: string): boolean {
+    const control = this.forgotForm.controls.email;
+    return control.hasError(errorName) && (control.touched || this.forgotSubmitted());
   }
 
   showRegisterPasswordMismatchError(): boolean {

@@ -2,7 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 
 import { RuntimeConfigService } from '../config/runtime-config.service';
-import { AuthResponse, CurrentUserResponse, LoginRequest, RegisterRequest } from '../models/auth.models';
+import { AuthResponse, CurrentUserResponse, ForgotPasswordRequest, LoginRequest, RegisterRequest, ResetPasswordRequest } from '../models/auth.models';
 
 @Injectable({
   providedIn: 'root',
@@ -39,6 +39,14 @@ export class AuthApiService {
 
   me() {
     return this.httpClient.get<CurrentUserResponse>(this.buildUrl('/auth/me'));
+  }
+
+  forgotPassword(request: ForgotPasswordRequest) {
+    return this.httpClient.post<void>(this.buildUrl('/auth/forgot-password'), request);
+  }
+
+  resetPassword(request: ResetPasswordRequest) {
+    return this.httpClient.post<void>(this.buildUrl('/auth/reset-password'), request);
   }
 
   private buildUrl(path: string): string {

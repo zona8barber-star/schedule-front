@@ -252,10 +252,42 @@
     text-decoration: underline;
   }
 
+  .auth-link--btn {
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    font: inherit;
+    font-size: 0.88rem;
+  }
+
+  .auth-sent {
+    display: grid;
+    gap: 0.75rem;
+    padding: 1.25rem;
+    border: 1px solid rgba(110, 96, 74, 0.35);
+    border-radius: 1rem;
+    background: rgba(176, 138, 74, 0.06);
+  }
+
+  .auth-sent__title {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--color-text);
+  }
+
+  .auth-sent__body {
+    margin: 0;
+    font-size: 0.9rem;
+    color: var(--color-text-secondary);
+    line-height: 1.6;
+  }
+
   @media (max-width: 900px) {
     .auth-page {
       align-content: start;
-      min-height: auto;
+      min-height: 0;
       padding-block: 0;
     }
 
