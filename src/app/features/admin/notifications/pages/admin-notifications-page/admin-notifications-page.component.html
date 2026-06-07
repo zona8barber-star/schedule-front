@@ -1,0 +1,204 @@
+<section class="admin-notifications-page">
+  <header class="admin-notifications-page__hero">
+    <div>
+      <p class="admin-notifications-page__eyebrow">Gestion</p>
+      <h1>Notificaciones</h1>
+      <p>Envia avisos push a tus clientes, de forma general o a grupos especificos.</p>
+    </div>
+  </header>
+
+  <app-api-feedback severity="error" [message]="errorMessage()" />
+  <app-api-feedback severity="info" [message]="successMessage()" />
+
+  <article class="admin-notifications-page__panel">
+    <div class="admin-notifications-page__section-heading">
+      <div>
+        <p class="admin-notifications-page__eyebrow">Formulario</p>
+        <h2>Componer notificacion</h2>
+      </div>
+    </div>
+
+    <form [formGroup]="broadcastForm" (ngSubmit)="submit()" novalidate>
+      <fieldset [disabled]="isBusy()">
+        <div class="admin-notifications-page__grid">
+          <div class="admin-notifications-page__field">
+            <label for="title">Titulo</label>
+            <input id="title" type="text" formControlName="title" maxlength="160" />
+            @if (showError('title', 'required')) {
+              <p class="admin-notifications-page__error">El titulo es obligatorio.</p>
+            }
+            @if (showError('title', 'maxlength')) {
+              <p class="admin-notifications-page__error">El titulo no puede superar 160 caracteres.</p>
+            }
+          </div>
+
+          <div class="admin-notifications-page__field admin-notifications-page__field--wide">
+            <label for="body">Mensaje</label>
+            <textarea id="body" rows="4" formControlName="body" maxlength="1000"></textarea>
+            @if (showError('body', 'required')) {
+              <p class="admin-notifications-page__error">El mensaje es obligatorio.</p>
+            }
+            @if (showError('body', 'maxlength')) {
+              <p class="admin-notifications-page__error">El mensaje no puede superar 1000 caracteres.</p>
+            }
+          </div>
+        </div>
+
+        <div class="admin-notifications-page__targets">
+          <p class="admin-notifications-page__field-label">Destinatarios</p>
+
+          <div class="admin-notifications-page__target-options">
+            <button
+              type="button"
+              class="admin-notifications-page__target-option"
+              [class.is-active]="targetType === 'all'"
+              (click)="selectTargetType('all')"
+            >
+              Todos los clientes
+            </button>
+            <button
+              type="button"
+              class="admin-notifications-page__target-option"
+              [class.is-active]="targetType === 'selected'"
+              (click)="selectTargetType('selected')"
+            >
+              Clientes seleccionados
+            </button>
+            <button
+              type="button"
+              class="admin-notifications-page__target-option"
+              [class.is-active]="targetType === 'filter'"
+              (click)="selectTargetType('filter')"
+            >
+              Clientes de un profesional
+            </button>
+          </div>
+
+          @if (targetType === 'selected') {
+            <div class="admin-notifications-page__customer-picker">
+              <label for="customerSearch">Buscar clientes</label>
+              <input
+                id="customerSearch"
+                type="text"
+                placeholder="Nombre, correo o telefono..."
+                [value]="searchTerm()"
+                (input)="onSearchInput($any($event.target).value)"
+              />
+
+              @if (isSearchingCustomers()) {
+                <p class="admin-notifications-page__hint">Buscando...</p>
+              } @else if (searchTerm().trim() && !searchResults().length) {
+                <p class="admin-notifications-page__hint">No se encontraron clientes.</p>
+              }
+
+              @if (searchResults().length) {
+                <ul class="admin-notifications-page__customer-list">
+                  @for (customer of searchResults(); track customer.id) {
+                    <li>
+                      <div>
+                        <strong>{{ customer.fullName }}</strong>
+                        <small>{{ customer.email }}</small>
+                      </div>
+                      <button type="button" (click)="addCustomer(customer)">Agregar</button>
+                    </li>
+                  }
+                </ul>
+              }
+
+              @if (selectedCustomers().length) {
+                <div class="admin-notifications-page__selected-customers">
+                  <p class="admin-notifications-page__hint">
+                    {{ selectedCustomers().length }} cliente(s) seleccionado(s)
+                  </p>
+                  <ul class="admin-notifications-page__customer-list">
+                    @for (customer of selectedCustomers(); track customer.id) {
+                      <li>
+                        <div>
+                          <strong>{{ customer.fullName }}</strong>
+                          <small>{{ customer.email }}</small>
+                        </div>
+                        <button
+                          type="button"
+                          class="admin-notifications-page__remove-btn"
+                          (click)="removeCustomer(customer)"
+                        >
+                          Quitar
+                        </button>
+                      </li>
+                    }
+                  </ul>
+                </div>
+              } @else {
+                <p class="admin-notifications-page__hint">Aun no has seleccionado clientes.</p>
+              }
+            </div>
+          }
+
+          @if (targetType === 'filter') {
+            <div class="admin-notifications-page__field">
+              <label for="staffProfileId">Profesional</label>
+              @if (isLoadingStaff()) {
+                <p class="admin-notifications-page__hint">Cargando profesionales...</p>
+              } @else {
+                <select id="staffProfileId" formControlName="staffProfileId">
+                  <option value="">Selecciona un profesional</option>
+                  @for (staff of staffOptions(); track staff.staffProfileId) {
+                    <option [value]="staff.staffProfileId">{{ staff.displayName }}</option>
+                  }
+                </select>
+              }
+            </div>
+          }
+        </div>
+      </fieldset>
+
+      <div class="admin-notifications-page__actions">
+        <button type="submit" [disabled]="isBusy()">
+          {{ isSubmitting() ? 'Enviando...' : 'Enviar notificacion' }}
+        </button>
+      </div>
+    </form>
+  </article>
+
+  <article class="admin-notifications-page__panel">
+    <div class="admin-notifications-page__section-heading">
+      <div>
+        <p class="admin-notifications-page__eyebrow">Historial</p>
+        <h2>Campanas enviadas</h2>
+      </div>
+    </div>
+
+    @if (isLoadingCampaigns()) {
+      <app-page-state kind="loading" message="Cargando campanas..." />
+    } @else if (!campaigns().length) {
+      <app-page-state kind="empty" message="Aun no se han enviado notificaciones." />
+    } @else {
+      <div class="admin-notifications-page__list">
+        @for (campaign of campaigns(); track campaign.id) {
+          <article class="admin-notifications-page__card">
+            <header>
+              <div>
+                <p class="admin-notifications-page__eyebrow">{{ formatDateTime(campaign.createdAtUtc) }}</p>
+                <h3>{{ campaign.title }}</h3>
+              </div>
+              <span class="admin-notifications-page__badge">{{ campaign.recipientCount }} destinatario(s)</span>
+            </header>
+
+            <p>{{ campaign.body }}</p>
+
+            <dl>
+              <div>
+                <dt>Destinatarios</dt>
+                <dd>{{ campaign.targetSummary }}</dd>
+              </div>
+              <div>
+                <dt>Enviado por</dt>
+                <dd>{{ campaign.sentByName }}</dd>
+              </div>
+            </dl>
+          </article>
+        }
+      </div>
+    }
+  </article>
+</section>

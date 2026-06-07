@@ -105,6 +105,46 @@ textarea::placeholder {
   fill: currentColor;
 }
 
+@media (max-width: 720px) {
+  /* Clear the mobile bottom tab bar (~4.75rem incl. safe area) so the FAB stays reachable. */
+  .wa-fab {
+    bottom: calc(4.75rem + env(safe-area-inset-bottom) + 0.75rem);
+  }
+}
+
+/* ── Route transitions (native View Transitions API, see app.config.ts) ─── */
+
+@media (prefers-reduced-motion: no-preference) {
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation-duration: 220ms;
+    animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    animation-fill-mode: both;
+  }
+
+  ::view-transition-old(root) {
+    animation-name: app-route-fade-out;
+  }
+
+  ::view-transition-new(root) {
+    animation-name: app-route-fade-in;
+  }
+}
+
+@keyframes app-route-fade-out {
+  to {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+}
+
+@keyframes app-route-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+}
+
 .landing-page__wa-phone {
   color: #25d366;
   font-weight: 600;

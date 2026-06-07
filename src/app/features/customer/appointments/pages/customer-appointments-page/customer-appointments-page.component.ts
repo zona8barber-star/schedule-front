@@ -18,6 +18,7 @@ import { CustomerReviewsApiService } from '../../../../../core/services/customer
 import { getApiErrorMessage } from '../../../../../core/utils/api-error.utils';
 import { ApiFeedbackComponent } from '../../../../../shared/components/api-feedback/api-feedback.component';
 import { PageStateComponent } from '../../../../../shared/components/page-state/page-state.component';
+import { PullToRefreshDirective } from '../../../../../shared/directives/pull-to-refresh.directive';
 
 /** Ventana de calificación desde que terminó la cita: 7 días en ms */
 const REVIEW_WINDOW_MS = 7 * 24 * 60 * 60 * 1000;
@@ -31,7 +32,14 @@ type ReviewFormGroup = FormGroup<{
 
 @Component({
   selector: 'app-customer-appointments-page',
-  imports: [ReactiveFormsModule, ApiFeedbackComponent, PageStateComponent, RouterLink, NgTemplateOutlet],
+  imports: [
+    ReactiveFormsModule,
+    ApiFeedbackComponent,
+    PageStateComponent,
+    RouterLink,
+    NgTemplateOutlet,
+    PullToRefreshDirective,
+  ],
   templateUrl: './customer-appointments-page.component.html',
   styleUrl: './customer-appointments-page.component.scss',
 })
@@ -266,7 +274,7 @@ export class CustomerAppointmentsPageComponent implements OnInit {
 
   // ── Carga ─────────────────────────────────────────────────────────────────
 
-  private async loadAppointments(): Promise<void> {
+  async loadAppointments(): Promise<void> {
     this.isLoading.set(true);
     this.errorMessage.set(null);
 

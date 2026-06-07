@@ -95,6 +95,11 @@ const loadAdminBannersPage = () =>
     (module) => module.AdminBannersPageComponent,
   );
 
+const loadAdminNotificationsPage = () =>
+  import(
+    './features/admin/notifications/pages/admin-notifications-page/admin-notifications-page.component'
+  ).then((module) => module.AdminNotificationsPageComponent);
+
 export const routes: Routes = [
   {
     path: '',
@@ -305,6 +310,15 @@ export const routes: Routes = [
       roles: [ROLE_NAMES.admin],
     },
     title: 'Banners',
+  },
+  {
+    path: 'admin/notifications',
+    canActivate: [authGuard, roleGuard],
+    loadComponent: loadAdminNotificationsPage,
+    data: {
+      roles: [ROLE_NAMES.admin],
+    },
+    title: 'Notificaciones',
   },
   {
     path: 'media',

@@ -19,10 +19,17 @@ import {
 } from '../../../../../core/utils/appointment-labels.utils';
 import { ApiFeedbackComponent } from '../../../../../shared/components/api-feedback/api-feedback.component';
 import { PageStateComponent } from '../../../../../shared/components/page-state/page-state.component';
+import { PullToRefreshDirective } from '../../../../../shared/directives/pull-to-refresh.directive';
 
 @Component({
   selector: 'app-staff-appointments-page',
-  imports: [NgClass, ReactiveFormsModule, ApiFeedbackComponent, PageStateComponent],
+  imports: [
+    NgClass,
+    ReactiveFormsModule,
+    ApiFeedbackComponent,
+    PageStateComponent,
+    PullToRefreshDirective,
+  ],
   templateUrl: './staff-appointments-page.component.html',
   styleUrl: './staff-appointments-page.component.scss',
 })
@@ -347,7 +354,7 @@ export class StaffAppointmentsPageComponent implements OnInit {
   }
 
   // ── Private ────────────────────────────────────────────────────────────
-  private async loadAppointments(): Promise<void> {
+  async loadAppointments(): Promise<void> {
     this.isLoading.set(true);
     try {
       const appointments = await firstValueFrom(this.staffAppointmentsApiService.list());

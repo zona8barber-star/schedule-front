@@ -4,4 +4,5 @@ export interface RuntimeConfig {
   appUrl: string;
   assetsBaseUrl: string;
   environmentName: string;
+  vapidPublicKey?: string;
 }

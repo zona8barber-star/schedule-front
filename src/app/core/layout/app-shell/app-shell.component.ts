@@ -1,5 +1,5 @@
 import { DOCUMENT } from '@angular/common';
-import { Component, ElementRef, HostListener, computed, inject, signal } from '@angular/core';
+import { Component, ElementRef, HostListener, computed, effect, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { filter } from 'rxjs';
@@ -14,14 +14,26 @@ import {
 import { RuntimeConfigService } from '../../config/runtime-config.service';
 import { ROLE_NAMES } from '../../models/auth.models';
 import { AuthService } from '../../services/auth.service';
+import { ConnectivityService } from '../../services/connectivity.service';
 import { HttpActivityService } from '../../services/http-activity.service';
 import { InstallPromptService } from '../../services/install-prompt.service';
+import { PushNotificationService } from '../../services/push-notification.service';
+import { ToastService } from '../../services/toast.service';
 
 interface NavLink {
   label: string;
   route: string;
   exact?: boolean;
   group: 'public' | 'customer' | 'staff' | 'admin';
+}
+
+type BottomNavIcon = 'home' | 'staff' | 'appointments' | 'profile';
+
+interface BottomNavLink {
+  label: string;
+  route: string;
+  exact?: boolean;
+  icon: BottomNavIcon;
 }
 
 interface FooterSocialLink {
@@ -47,6 +59,10 @@ export class AppShellComponent {
   readonly authService = inject(AuthService);
   readonly httpActivityService = inject(HttpActivityService);
   readonly installPromptService = inject(InstallPromptService);
+  readonly pushNotificationService = inject(PushNotificationService);
+  readonly connectivityService = inject(ConnectivityService);
+
+  private readonly toastService = inject(ToastService);
 
   readonly roleNames = ROLE_NAMES;
   readonly isSigningOut = signal(false);
@@ -141,6 +157,11 @@ export class AppShellComponent {
           route: '/admin/content/banners',
           group: 'admin',
         },
+        {
+          label: 'Notificaciones',
+          route: '/admin/notifications',
+          group: 'admin',
+        },
       );
     }
 
@@ -154,6 +175,29 @@ export class AppShellComponent {
   readonly adminMobileLinks = computed(() =>
     this.navigationLinks().filter((link) => link.group === 'admin'),
   );
+
+  // Curated set for the mobile bottom tab bar: a stable, role-aware shortlist of the
+  // sections people reach for constantly. Anything else stays in the "Menu" drawer.
+  readonly bottomNavLinks = computed<BottomNavLink[]>(() => {
+    const links: BottomNavLink[] = [
+      { label: 'Inicio', route: '/', exact: true, icon: 'home' },
+      { label: 'Profesionales', route: '/staff', exact: true, icon: 'staff' },
+    ];
+
+    if (this.authService.hasRole(this.roleNames.customer)) {
+      links.push(
+        { label: 'Mis citas', route: '/customer/appointments', icon: 'appointments' },
+        { label: 'Mi perfil', route: '/customer/profile', icon: 'profile' },
+      );
+    } else if (this.authService.hasRole(this.roleNames.staff)) {
+      links.push(
+        { label: 'Mi agenda', route: '/staff/appointments', icon: 'appointments' },
+        { label: 'Mi perfil', route: '/staff/profile', icon: 'profile' },
+      );
+    }
+
+    return links.slice(0, 3);
+  });
 
   readonly userDropdownCustomerLinks = computed(() =>
     this.navigationLinks().filter((link) => link.group === 'customer'),
@@ -195,6 +239,13 @@ export class AppShellComponent {
         this.closeMobileMenu();
         this.closeUserMenu();
       });
+
+    effect(() => {
+      if (this.connectivityService.justReconnected()) {
+        this.toastService.success('Conexion recuperada');
+        this.connectivityService.acknowledgeReconnect();
+      }
+    });
   }
 
   @HostListener('document:keydown.escape')
@@ -261,6 +312,20 @@ export class AppShellComponent {
 
   dismissInstallPrompt(): void {
     this.installPromptService.dismissPrompt();
+  }
+
+  async enablePushNotifications(): Promise<void> {
+    const enabled = await this.pushNotificationService.enable();
+
+    if (enabled) {
+      this.toastService.success('Notificaciones activadas');
+    } else {
+      this.toastService.error('No se pudieron activar las notificaciones');
+    }
+  }
+
+  dismissPushPrompt(): void {
+    this.pushNotificationService.dismissPrompt();
   }
 
   async logout(): Promise<void> {
