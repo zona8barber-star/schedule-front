@@ -40,6 +40,25 @@
   line-height: 1.5;
 }
 
+.agenda-page__pull-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 0.5rem;
+  padding: 0.5rem 1rem;
+  border-radius: 999px;
+  background: var(--surface-panel, rgba(43, 45, 42, 0.9));
+  border: 1px solid var(--border-soft, rgba(110, 96, 74, 0.62));
+  color: var(--color-text-muted, #7d786f);
+  font-size: 0.85rem;
+  text-align: center;
+
+  &.is-ready {
+    color: var(--color-secondary, #9a7a45);
+    border-color: var(--color-secondary, #9a7a45);
+  }
+}
+
 /* Tabs */
 .agenda-page__tabs {
   display: flex;

@@ -3,5 +3,6 @@
   "appName": "<app-name-placeholder>",
   "appUrl": "https://<app-host-placeholder>",
   "assetsBaseUrl": "https://<assets-host-placeholder>/assets",
-  "environmentName": "<environment-name-placeholder>"
+  "environmentName": "<environment-name-placeholder>",
+  "vapidPublicKey": "<vapid-public-key-placeholder>"
 }

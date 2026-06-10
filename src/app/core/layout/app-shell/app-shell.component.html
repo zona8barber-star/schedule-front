@@ -142,6 +142,22 @@
     </div>
   }
 
+  @if (connectivityService.isOffline()) {
+    <section class="app-shell__offline-banner" role="status" aria-live="polite">
+      <span class="app-shell__offline-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            d="M8.288 15.038a5.25 5.25 0 017.424 0M5.106 11.856c3.807-3.808 9.98-3.808 13.788 0M1.924 8.674c5.565-5.565 14.587-5.565 20.152 0M12 18.75h.008v.008H12v-.008z"
+          />
+          <path stroke-linecap="round" stroke-linejoin="round" d="M3 3l18 18" />
+        </svg>
+      </span>
+      <span>Sin conexion. Mostrando la informacion guardada en tu dispositivo.</span>
+    </section>
+  }
+
   @if (installPromptService.shouldShowPrompt()) {
     <section class="app-shell__install" role="status" aria-live="polite">
       <div class="app-shell__install-copy">
@@ -162,6 +178,33 @@
           class="app-shell__button app-shell__button--ghost"
           type="button"
           (click)="dismissInstallPrompt()"
+        >
+          Ahora no
+        </button>
+      </div>
+    </section>
+  }
+
+  @if (pushNotificationService.shouldShowPrompt()) {
+    <section class="app-shell__install" role="status" aria-live="polite">
+      <div class="app-shell__install-copy">
+        <strong>Activa las notificaciones</strong>
+        <p>Entérate al instante cuando tengas una cita nueva, cancelada o modificada.</p>
+      </div>
+
+      <div class="app-shell__install-actions">
+        <button
+          class="app-shell__button"
+          type="button"
+          [disabled]="pushNotificationService.isEnabling()"
+          (click)="enablePushNotifications()"
+        >
+          {{ pushNotificationService.isEnabling() ? 'Activando...' : 'Activar notificaciones' }}
+        </button>
+        <button
+          class="app-shell__button app-shell__button--ghost"
+          type="button"
+          (click)="dismissPushPrompt()"
         >
           Ahora no
         </button>
@@ -249,6 +292,75 @@
         }
       </div>
     </div>
+  </nav>
+
+  <nav class="app-shell__bottom-nav" aria-label="Navegacion principal movil">
+    @for (link of bottomNavLinks(); track link.route) {
+      <a
+        class="app-shell__bottom-nav-item"
+        [routerLink]="link.route"
+        routerLinkActive="is-active"
+        [routerLinkActiveOptions]="{ exact: link.exact ?? false }"
+      >
+        <span class="app-shell__bottom-nav-icon" aria-hidden="true">
+          @switch (link.icon) {
+            @case ('home') {
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75"
+                />
+              </svg>
+            }
+            @case ('staff') {
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.106A12.318 12.318 0 008.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z"
+                />
+              </svg>
+            }
+            @case ('appointments') {
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5"
+                />
+              </svg>
+            }
+            @case ('profile') {
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M17.982 18.725A7.488 7.488 0 0012 15.75a7.488 7.488 0 00-5.982 2.975m11.963 0a9 9 0 10-11.963 0m11.963 0A8.966 8.966 0 0112 21a8.966 8.966 0 01-5.982-2.275M15 9.75a3 3 0 11-6 0 3 3 0 016 0z"
+                />
+              </svg>
+            }
+          }
+        </span>
+        <span class="app-shell__bottom-nav-label">{{ link.label }}</span>
+      </a>
+    }
+
+    <button
+      class="app-shell__bottom-nav-item app-shell__bottom-nav-item--button"
+      type="button"
+      [class.is-active]="isMobileMenuOpen()"
+      [attr.aria-expanded]="isMobileMenuOpen()"
+      aria-controls="mobile-menu"
+      (click)="toggleMobileMenu()"
+    >
+      <span class="app-shell__bottom-nav-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5M3.75 17.25h16.5" />
+        </svg>
+      </span>
+      <span class="app-shell__bottom-nav-label">Menu</span>
+    </button>
   </nav>
 
   <app-toast-outlet />
