@@ -1,0 +1,258 @@
+.admin-notifications-page {
+  display: grid;
+  gap: 1.25rem;
+}
+
+.admin-notifications-page__hero,
+.admin-notifications-page__panel,
+.admin-notifications-page__state,
+.admin-notifications-page__card {
+  padding: clamp(1.1rem, 2vw, 1.55rem);
+  border: 1px solid var(--border-soft);
+  border-radius: 1.5rem;
+  background: var(--surface-panel);
+  box-shadow: var(--shadow-soft);
+}
+
+.admin-notifications-page__eyebrow {
+  margin: 0;
+  color: var(--brand-primary);
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.admin-notifications-page h1,
+.admin-notifications-page h2,
+.admin-notifications-page h3,
+.admin-notifications-page p,
+.admin-notifications-page dl,
+.admin-notifications-page dt,
+.admin-notifications-page dd {
+  margin: 0;
+}
+
+.admin-notifications-page p,
+.admin-notifications-page dd,
+.admin-notifications-page__state,
+.admin-notifications-page__hint {
+  color: var(--text-muted);
+  line-height: 1.6;
+}
+
+.admin-notifications-page__hint {
+  margin: 0;
+  font-size: 0.85rem;
+}
+
+.admin-notifications-page__panel,
+form,
+fieldset,
+.admin-notifications-page__list,
+.admin-notifications-page__card,
+.admin-notifications-page__customer-picker,
+.admin-notifications-page__selected-customers {
+  display: grid;
+  gap: 1rem;
+}
+
+fieldset {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  min-width: 0;
+}
+
+.admin-notifications-page__section-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.admin-notifications-page__grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.admin-notifications-page__field {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.admin-notifications-page__field--wide {
+  grid-column: 1 / -1;
+}
+
+.admin-notifications-page__field label,
+.admin-notifications-page__field-label,
+.admin-notifications-page dt {
+  font-weight: 600;
+}
+
+.admin-notifications-page__field-label {
+  margin: 0;
+}
+
+.admin-notifications-page input,
+.admin-notifications-page textarea,
+.admin-notifications-page select {
+  width: 100%;
+  padding: 0.8rem 1rem;
+  border: 1px solid rgba(35, 23, 18, 0.14);
+  border-radius: 1rem;
+  background: rgba(255, 255, 255, 0.72);
+  color: var(--text-primary);
+  font: inherit;
+}
+
+.admin-notifications-page textarea {
+  resize: vertical;
+  min-height: 6.5rem;
+}
+
+.admin-notifications-page__error {
+  margin: 0;
+  color: #92382d;
+  font-size: 0.84rem;
+}
+
+.admin-notifications-page__targets {
+  display: grid;
+  gap: 0.75rem;
+  margin-top: 1.25rem;
+}
+
+.admin-notifications-page__target-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+.admin-notifications-page__target-option {
+  padding: 0.65rem 1.1rem;
+  border: 1px solid var(--border-soft);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.72);
+  color: var(--text-primary);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.admin-notifications-page__target-option.is-active {
+  border-color: transparent;
+  background: linear-gradient(135deg, var(--brand-primary), var(--brand-accent));
+  color: #fff;
+}
+
+.admin-notifications-page__customer-picker {
+  padding: 1rem;
+  border: 1px solid var(--border-soft);
+  border-radius: 1.1rem;
+  background: rgba(255, 255, 255, 0.5);
+}
+
+.admin-notifications-page__customer-list {
+  display: grid;
+  gap: 0.6rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.admin-notifications-page__customer-list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.65rem 0.9rem;
+  border: 1px solid var(--border-soft);
+  border-radius: 1rem;
+  background: rgba(255, 255, 255, 0.72);
+}
+
+.admin-notifications-page__customer-list li > div {
+  display: grid;
+  gap: 0.15rem;
+}
+
+.admin-notifications-page__customer-list li small {
+  color: var(--text-muted);
+}
+
+.admin-notifications-page__customer-list button {
+  min-height: 2.2rem;
+  padding: 0.5rem 0.9rem;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(141, 74, 47, 0.1);
+  color: var(--brand-primary);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.admin-notifications-page__remove-btn {
+  background: rgba(146, 56, 45, 0.12) !important;
+  color: #92382d !important;
+}
+
+.admin-notifications-page__actions {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.admin-notifications-page__actions button {
+  min-height: 2.6rem;
+  padding: 0.7rem 1.4rem;
+  border: 0;
+  border-radius: 999px;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  background: linear-gradient(135deg, var(--brand-primary), var(--brand-accent));
+  color: #fff;
+}
+
+.admin-notifications-page__badge {
+  padding: 0.4rem 0.9rem;
+  border-radius: 999px;
+  background: rgba(141, 74, 47, 0.1);
+  color: var(--brand-primary);
+  font-size: 0.8rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.admin-notifications-page__card header {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+
+.admin-notifications-page__card dl {
+  display: grid;
+  gap: 0.8rem;
+  grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+}
+
+.admin-notifications-page__card dl div {
+  display: grid;
+  gap: 0.35rem;
+  padding: 0.85rem;
+  border: 1px solid var(--border-soft);
+  border-radius: 1rem;
+  background: rgba(255, 255, 255, 0.62);
+}
+
+@media (max-width: 820px) {
+  .admin-notifications-page__grid {
+    grid-template-columns: 1fr;
+  }
+}

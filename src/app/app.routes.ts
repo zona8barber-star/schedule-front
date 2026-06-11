@@ -45,6 +45,11 @@ const loadPublicStaffProfilePage = () =>
     (module) => module.PublicStaffProfilePageComponent,
   );
 
+const loadResetPasswordPage = () =>
+  import('./features/auth/pages/reset-password-page/reset-password-page.component').then(
+    (module) => module.ResetPasswordPageComponent,
+  );
+
 const loadBookingConfirmPage = () =>
   import('./features/booking/pages/booking-confirm-page/booking-confirm-page.component').then(
     (module) => module.BookingConfirmPageComponent,
@@ -90,6 +95,11 @@ const loadAdminBannersPage = () =>
     (module) => module.AdminBannersPageComponent,
   );
 
+const loadAdminNotificationsPage = () =>
+  import(
+    './features/admin/notifications/pages/admin-notifications-page/admin-notifications-page.component'
+  ).then((module) => module.AdminNotificationsPageComponent);
+
 export const routes: Routes = [
   {
     path: '',
@@ -132,6 +142,11 @@ export const routes: Routes = [
             (module) => module.LoginPageComponent,
           ),
         title: 'Acceso',
+      },
+      {
+        path: 'reset-password',
+        loadComponent: loadResetPasswordPage,
+        title: 'Restablecer contraseña',
       },
     ],
   },
@@ -295,6 +310,15 @@ export const routes: Routes = [
       roles: [ROLE_NAMES.admin],
     },
     title: 'Banners',
+  },
+  {
+    path: 'admin/notifications',
+    canActivate: [authGuard, roleGuard],
+    loadComponent: loadAdminNotificationsPage,
+    data: {
+      roles: [ROLE_NAMES.admin],
+    },
+    title: 'Notificaciones',
   },
   {
     path: 'media',

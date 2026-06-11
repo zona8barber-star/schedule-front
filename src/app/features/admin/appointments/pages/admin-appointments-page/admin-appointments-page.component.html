@@ -1,309 +1,426 @@
-<section class="admin-appointments-page">
-  <header class="admin-appointments-page__hero">
-    <div>
-      <p class="admin-appointments-page__eyebrow">Gestion</p>
-      <h1>Citas</h1>
-      <p>
-        Supervisa todas las citas, crea turnos manuales y actualiza estado cuando haga falta
-        soporte operativo.
-      </p>
-    </div>
+<section class="ap-page">
+
+  <header class="ap-panel ap-page__hero">
+    <p class="ap-eyebrow">Gestión</p>
+    <h1>Citas</h1>
+    <p>Supervisa todas las citas, crea turnos manuales y actualiza estado cuando haga falta soporte operativo.</p>
   </header>
 
   <app-api-feedback severity="error" [message]="errorMessage()" />
   <app-api-feedback severity="info" [message]="successMessage()" />
 
-  <article class="admin-appointments-page__panel">
-    <div class="admin-appointments-page__section-heading">
-      <div>
-        <p class="admin-appointments-page__eyebrow">Filtro</p>
-        <h2>Filtrar por profesional</h2>
-      </div>
-    </div>
-
-    <form [formGroup]="filterForm" (ngSubmit)="applyFilter()" novalidate>
-      <fieldset [disabled]="isLoading()">
-        <div class="admin-appointments-page__filter-row">
-          <div class="admin-appointments-page__field">
-            <label for="filterStaff">Profesional</label>
-            <select id="filterStaff" formControlName="staffProfileId">
-              <option value="">Todos</option>
-              @for (staffMember of staffMembers(); track staffMember.staffProfileId) {
-                <option [value]="staffMember.staffProfileId">
-                  {{ staffDisplayLabel(staffMember) }}
-                </option>
-              }
-            </select>
-          </div>
-
-          <div class="admin-appointments-page__actions">
-            <button
-              class="admin-appointments-page__button"
-              type="submit"
-              [disabled]="isLoading()"
-            >
-              Aplicar
-            </button>
-          </div>
-        </div>
-      </fieldset>
-    </form>
-  </article>
-
-  <article class="admin-appointments-page__panel">
-    <div class="admin-appointments-page__section-heading">
-      <div>
-        <p class="admin-appointments-page__eyebrow">Turno manual</p>
-        <h2>Crear cita</h2>
-      </div>
-    </div>
-
-    <form [formGroup]="createForm" (ngSubmit)="submitCreate()" novalidate>
-      <fieldset [disabled]="isCreating() || !staffMembers().length">
-        <div class="admin-appointments-page__grid">
-          <div class="admin-appointments-page__field">
-            <label for="createStaffProfileId">Profesional</label>
-            <select id="createStaffProfileId" formControlName="staffProfileId">
-              <option value="">Selecciona</option>
-              @for (staffMember of staffMembers(); track staffMember.staffProfileId) {
-                <option [value]="staffMember.staffProfileId">
-                  {{ staffDisplayLabel(staffMember) }}
-                </option>
-              }
-            </select>
-            @if (showCreateError('staffProfileId', 'required')) {
-              <p class="admin-appointments-page__error">Selecciona un profesional.</p>
-            }
-          </div>
-
-          <div class="admin-appointments-page__field">
-            <label for="createStartsAt">Inicio</label>
-            <input id="createStartsAt" type="datetime-local" formControlName="startsAt" />
-            @if (showCreateError('startsAt', 'required')) {
-              <p class="admin-appointments-page__error">Selecciona fecha y hora de inicio.</p>
-            }
-          </div>
-
-          <div class="admin-appointments-page__field">
-            <label for="createCustomerName">Nombre cliente</label>
-            <input id="createCustomerName" type="text" formControlName="customerName" />
-            @if (showCreateError('customerName', 'required')) {
-              <p class="admin-appointments-page__error">Ingresa el nombre del cliente.</p>
-            }
-          </div>
-
-          <div class="admin-appointments-page__field">
-            <label for="createCustomerEmail">Email (opcional)</label>
-            <input id="createCustomerEmail" type="email" formControlName="customerEmail" />
-            @if (showCreateError('customerEmail', 'email')) {
-              <p class="admin-appointments-page__error">Ingresa un correo valido.</p>
-            }
-          </div>
-
-          <div class="admin-appointments-page__field">
-            <label for="createCustomerPhone">Telefono (opcional)</label>
-            <input id="createCustomerPhone" type="text" formControlName="customerPhone" />
-          </div>
-
-          <div class="admin-appointments-page__field admin-appointments-page__field--wide">
-            <label for="createNotes">Notas (opcional)</label>
-            <textarea id="createNotes" rows="3" formControlName="notes"></textarea>
-          </div>
-        </div>
-      </fieldset>
-
-      <div class="admin-appointments-page__actions">
-        <button
-          class="admin-appointments-page__button"
-          type="submit"
-          [disabled]="isCreating() || !staffMembers().length"
+  <!-- Toolbar: professional filter + create button -->
+  <div class="ap-panel ap-toolbar">
+    <div class="ap-toolbar__row">
+      <div class="ap-field">
+        <label for="filterStaff">Profesional</label>
+        <select
+          id="filterStaff"
+          [formControl]="filterForm.controls.staffProfileId"
+          (change)="applyFilter()"
         >
-          {{ isCreating() ? 'Guardando...' : 'Crear cita manual' }}
-        </button>
+          <option value="">Todos los profesionales</option>
+          @for (s of staffMembers(); track s.staffProfileId) {
+            <option [value]="s.staffProfileId">{{ staffDisplayLabel(s) }}</option>
+          }
+        </select>
       </div>
-    </form>
-  </article>
 
-  <article class="admin-appointments-page__panel">
-    <div class="admin-appointments-page__section-heading">
-      <div>
-        <p class="admin-appointments-page__eyebrow">Listado</p>
-        <h2>Todas las citas</h2>
-      </div>
+      <button
+        class="ap-btn ap-btn--primary ap-toolbar__create-btn"
+        type="button"
+        (click)="openCreateForm()"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Crear cita
+      </button>
+    </div>
+  </div>
+
+  <!-- Tabs panel with table -->
+  <div class="ap-panel ap-appointments-panel">
+
+    <!-- Tab bar -->
+    <div class="ap-tabs" role="tablist">
+      <button
+        class="ap-tab"
+        type="button"
+        role="tab"
+        [class.is-active]="activeTab() === 'today'"
+        (click)="setTab('today')"
+      >
+        Hoy
+        <span class="ap-tab__count">{{ todayAppointments().length }}</span>
+      </button>
+      <button
+        class="ap-tab"
+        type="button"
+        role="tab"
+        [class.is-active]="activeTab() === 'upcoming'"
+        (click)="setTab('upcoming')"
+      >
+        Próximas
+        <span class="ap-tab__count">{{ upcomingAppointments().length }}</span>
+      </button>
+      <button
+        class="ap-tab"
+        type="button"
+        role="tab"
+        [class.is-active]="activeTab() === 'past'"
+        (click)="setTab('past')"
+      >
+        Pasadas
+        <span class="ap-tab__count">{{ pastAppointments().length }}</span>
+      </button>
     </div>
 
-    @if (isLoading()) {
-      <app-page-state kind="loading" message="Cargando citas..." />
-    } @else if (!appointments().length) {
-      <app-page-state kind="empty" message="No hay citas para el filtro actual." />
-    } @else {
-      <div class="admin-appointments-page__list">
-        @for (appointment of appointments(); track appointment.id) {
-          <article class="admin-appointments-page__card">
-            <div class="admin-appointments-page__card-header">
-              <div>
-                <p class="admin-appointments-page__eyebrow">
-                  {{ sourceLabel(appointment.source) }}
-                </p>
-                <h3>
-                  {{ formatDateTimeRange(appointment.startsAtUtc, appointment.endsAtUtc) }}
-                </h3>
-              </div>
-              <span class="admin-appointments-page__status">{{
-                statusLabel(appointment.status)
-              }}</span>
-            </div>
-
-            <dl class="admin-appointments-page__details">
-              <div>
-                <dt>Profesional</dt>
-                <dd>{{ staffName(appointment.staffProfileId) }}</dd>
-              </div>
-              <div>
-                <dt>Cliente</dt>
-                <dd>{{ appointment.customerName }}</dd>
-              </div>
-              <div>
-                <dt>Email</dt>
-                <dd>{{ appointment.customerEmail || 'No informado' }}</dd>
-              </div>
-              <div>
-                <dt>Telefono</dt>
-                <dd>{{ appointment.customerPhone || 'No informado' }}</dd>
-              </div>
-              <div>
-                <dt>Notas</dt>
-                <dd>{{ appointment.notes || 'Sin notas' }}</dd>
-              </div>
-            </dl>
-
-            <div class="admin-appointments-page__actions">
-              <button
-                class="admin-appointments-page__button admin-appointments-page__button--secondary"
-                type="button"
-                [disabled]="isBusyFor(appointment.id, 'edit')"
-                (click)="startEdit(appointment)"
-              >
-                Editar
-              </button>
-              <button
-                class="admin-appointments-page__button"
-                type="button"
-                [disabled]="
-                  !canTransition(appointment) || isBusyFor(appointment.id, 'complete')
-                "
-                (click)="markCompleted(appointment)"
-              >
-                Completar
-              </button>
-              <button
-                class="admin-appointments-page__button admin-appointments-page__button--warn"
-                type="button"
-                [disabled]="!canTransition(appointment) || isBusyFor(appointment.id, 'cancel')"
-                (click)="cancelAppointment(appointment)"
-              >
-                Cancelar
-              </button>
-              <button
-                class="admin-appointments-page__button admin-appointments-page__button--warn"
-                type="button"
-                [disabled]="!canTransition(appointment) || isBusyFor(appointment.id, 'no-show')"
-                (click)="markNoShow(appointment)"
-              >
-                No-show
-              </button>
-            </div>
-
-            @if (editingAppointmentId() === appointment.id) {
-              <form [formGroup]="editForm" (ngSubmit)="submitEdit()" novalidate>
-                <fieldset [disabled]="isSavingEdit()">
-                  <div class="admin-appointments-page__grid">
-                    <div class="admin-appointments-page__field">
-                      <label for="editStartsAt">Inicio</label>
-                      <input
-                        id="editStartsAt"
-                        type="datetime-local"
-                        formControlName="startsAt"
-                      />
-                      @if (showEditError('startsAt', 'required')) {
-                        <p class="admin-appointments-page__error">
-                          Selecciona fecha y hora de inicio.
-                        </p>
-                      }
-                    </div>
-
-                    <div class="admin-appointments-page__field">
-                      <label for="editEndsAt">Fin</label>
-                      <input id="editEndsAt" type="datetime-local" formControlName="endsAt" />
-                      @if (showEditError('endsAt', 'required')) {
-                        <p class="admin-appointments-page__error">
-                          Selecciona fecha y hora de fin.
-                        </p>
-                      }
-                    </div>
-
-                    <div class="admin-appointments-page__field">
-                      <label for="editCustomerName">Nombre cliente</label>
-                      <input id="editCustomerName" type="text" formControlName="customerName" />
-                      @if (showEditError('customerName', 'required')) {
-                        <p class="admin-appointments-page__error">
-                          Ingresa el nombre del cliente.
-                        </p>
-                      }
-                    </div>
-
-                    <div class="admin-appointments-page__field">
-                      <label for="editCustomerEmail">Email (opcional)</label>
-                      <input
-                        id="editCustomerEmail"
-                        type="email"
-                        formControlName="customerEmail"
-                      />
-                      @if (showEditError('customerEmail', 'email')) {
-                        <p class="admin-appointments-page__error">Ingresa un correo valido.</p>
-                      }
-                    </div>
-
-                    <div class="admin-appointments-page__field">
-                      <label for="editCustomerPhone">Telefono (opcional)</label>
-                      <input
-                        id="editCustomerPhone"
-                        type="text"
-                        formControlName="customerPhone"
-                      />
-                    </div>
-
-                    <div
-                      class="admin-appointments-page__field admin-appointments-page__field--wide"
-                    >
-                      <label for="editNotes">Notas (opcional)</label>
-                      <textarea id="editNotes" rows="3" formControlName="notes"></textarea>
-                    </div>
-                  </div>
-                </fieldset>
-
-                <div class="admin-appointments-page__actions">
-                  <button
-                    class="admin-appointments-page__button"
-                    type="submit"
-                    [disabled]="isSavingEdit()"
-                  >
-                    {{ isSavingEdit() ? 'Guardando...' : 'Guardar cambios' }}
-                  </button>
-                  <button
-                    class="admin-appointments-page__button admin-appointments-page__button--secondary"
-                    type="button"
-                    [disabled]="isSavingEdit()"
-                    (click)="cancelEdit()"
-                  >
-                    Cerrar
-                  </button>
-                </div>
-              </form>
-            }
-          </article>
-        }
+    <!-- Date range filter (upcoming / past only) -->
+    @if (activeTab() !== 'today') {
+      <div class="ap-date-range">
+        <div class="ap-field">
+          <label for="dateFrom">Desde</label>
+          <input
+            id="dateFrom"
+            type="date"
+            [value]="dateFrom()"
+            (input)="setDateFrom($any($event.target).value)"
+          />
+        </div>
+        <div class="ap-field">
+          <label for="dateTo">Hasta</label>
+          <input
+            id="dateTo"
+            type="date"
+            [value]="dateTo()"
+            (input)="setDateTo($any($event.target).value)"
+          />
+        </div>
       </div>
     }
-  </article>
+
+    <!-- Table -->
+    @if (isLoading()) {
+      <app-page-state kind="loading" message="Cargando citas..." />
+    } @else if (!activeAppointments().length) {
+      <app-page-state kind="empty" message="No hay citas para mostrar." />
+    } @else {
+      <div class="ap-table-wrap">
+        <table class="ap-table">
+          <thead>
+            <tr>
+              <th>Profesional</th>
+              <th>Cliente</th>
+              <th>Teléfono</th>
+              <th>Fecha</th>
+              <th>Hora</th>
+              <th>Tipo</th>
+              <th>Estado</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (apt of activeAppointments(); track apt.id) {
+              <tr [class.is-editing]="editingAppointmentId() === apt.id">
+                <td class="ap-td--staff">{{ staffName(apt.staffProfileId) }}</td>
+                <td>{{ apt.customerName }}</td>
+                <td>{{ apt.customerPhone || '—' }}</td>
+                <td class="ap-td--nowrap">{{ formatDate(apt.startsAtUtc) }}</td>
+                <td class="ap-td--nowrap">{{ formatTime(apt.startsAtUtc) }}</td>
+                <td>
+                  <span class="ap-source ap-source--{{ apt.source }}">
+                    {{ sourceLabel(apt.source) }}
+                  </span>
+                </td>
+                <td>
+                  <span class="ap-status ap-status--{{ apt.status }}">
+                    {{ statusLabel(apt.status) }}
+                  </span>
+                </td>
+                <td>
+                  <div class="ap-row-actions">
+                    <button
+                      class="ap-icon-btn"
+                      type="button"
+                      title="Editar cita"
+                      [disabled]="isBusyFor(apt.id, 'edit')"
+                      (click)="startEdit(apt)"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                    </button>
+                    @if (canTransition(apt)) {
+                      <button
+                        class="ap-icon-btn ap-icon-btn--success"
+                        type="button"
+                        title="Marcar como completada"
+                        [disabled]="isBusyFor(apt.id, 'complete')"
+                        (click)="markCompleted(apt)"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+                      </button>
+                      <button
+                        class="ap-icon-btn ap-icon-btn--danger"
+                        type="button"
+                        title="Cancelar cita"
+                        [disabled]="isBusyFor(apt.id, 'cancel')"
+                        (click)="cancelAppointment(apt)"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                      </button>
+                    }
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+
+  </div>
+
+
 </section>
+
+<!-- Create modal -->
+@if (showCreateForm()) {
+  <div
+    class="ap-modal-backdrop"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="createModalTitle"
+    (click)="closeCreateForm()"
+  >
+    <div class="ap-modal" (click)="$event.stopPropagation()">
+
+      <div class="ap-modal__header">
+        <div class="ap-modal__title-row">
+          <div>
+            <p class="ap-eyebrow">Turno manual</p>
+            <h2 id="createModalTitle">Nueva cita</h2>
+          </div>
+        </div>
+        <button
+          class="ap-modal__close"
+          type="button"
+          title="Cerrar"
+          [disabled]="isCreating()"
+          (click)="closeCreateForm()"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+
+      <div class="ap-modal__body">
+        <form [formGroup]="createForm" (ngSubmit)="submitCreate()" novalidate>
+          <fieldset [disabled]="isCreating() || !staffMembers().length">
+            <div class="ap-form-grid">
+
+              <div class="ap-field">
+                <label for="createStaffProfileId">Profesional</label>
+                <select id="createStaffProfileId" formControlName="staffProfileId">
+                  <option value="">Selecciona un profesional</option>
+                  @for (s of staffMembers(); track s.staffProfileId) {
+                    <option [value]="s.staffProfileId">{{ staffDisplayLabel(s) }}</option>
+                  }
+                </select>
+                @if (showCreateError('staffProfileId', 'required')) {
+                  <p class="ap-error">Selecciona un profesional.</p>
+                }
+              </div>
+
+              <div class="ap-field">
+                <label for="createStartsAt">Fecha y hora de inicio</label>
+                <input id="createStartsAt" type="datetime-local" formControlName="startsAt" />
+                @if (showCreateError('startsAt', 'required')) {
+                  <p class="ap-error">Selecciona fecha y hora de inicio.</p>
+                }
+              </div>
+
+              <div class="ap-field">
+                <label for="createCustomerName">Nombre del cliente</label>
+                <input id="createCustomerName" type="text" formControlName="customerName" autocomplete="off" />
+                @if (showCreateError('customerName', 'required')) {
+                  <p class="ap-error">Ingresa el nombre del cliente.</p>
+                }
+              </div>
+
+              <div class="ap-field">
+                <label for="createCustomerPhone">Teléfono (opcional)</label>
+                <input id="createCustomerPhone" type="tel" formControlName="customerPhone" autocomplete="off" />
+              </div>
+
+              <div class="ap-field">
+                <label for="createCustomerEmail">Email (opcional)</label>
+                <input id="createCustomerEmail" type="email" formControlName="customerEmail" autocomplete="off" />
+                @if (showCreateError('customerEmail', 'email')) {
+                  <p class="ap-error">Ingresa un correo válido.</p>
+                }
+              </div>
+
+              <div class="ap-field ap-field--wide">
+                <label for="createNotes">Notas (opcional)</label>
+                <textarea id="createNotes" rows="3" formControlName="notes"></textarea>
+              </div>
+
+            </div>
+          </fieldset>
+
+          <div class="ap-form-actions">
+            <button class="ap-btn ap-btn--primary" type="submit" [disabled]="isCreating() || !staffMembers().length">
+              {{ isCreating() ? 'Guardando...' : 'Crear cita manual' }}
+            </button>
+            <button class="ap-btn ap-btn--ghost" type="button" [disabled]="isCreating()" (click)="closeCreateForm()">
+              Cancelar
+            </button>
+          </div>
+        </form>
+      </div>
+
+    </div>
+  </div>
+}
+
+<!-- Edit modal (outside section to avoid stacking context issues) -->
+@if (editingAppointmentId()) {
+  <div
+    class="ap-modal-backdrop"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="editModalTitle"
+    (click)="cancelEdit()"
+    (keydown.escape)="cancelEdit()"
+  >
+    <div class="ap-modal" (click)="$event.stopPropagation()">
+
+      <!-- Modal header -->
+      <div class="ap-modal__header">
+        <div class="ap-modal__title-row">
+          <div>
+            <p class="ap-eyebrow">Editar cita</p>
+            <h2 id="editModalTitle">
+              {{ editingAppointment()?.customerName }}
+            </h2>
+          </div>
+          @if (editingAppointment(); as apt) {
+            <span class="ap-status ap-status--{{ apt.status }}">
+              {{ statusLabel(apt.status) }}
+            </span>
+          }
+        </div>
+        <button
+          class="ap-modal__close"
+          type="button"
+          title="Cerrar"
+          [disabled]="isSavingEdit()"
+          (click)="cancelEdit()"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+
+      <!-- Edit form -->
+      <div class="ap-modal__body">
+        <form [formGroup]="editForm" (ngSubmit)="submitEdit()" novalidate>
+          <fieldset [disabled]="isSavingEdit()">
+            <div class="ap-form-grid">
+
+              <div class="ap-field">
+                <label for="editStartsAt">Fecha y hora de inicio</label>
+                <input id="editStartsAt" type="datetime-local" formControlName="startsAt" />
+                @if (showEditError('startsAt', 'required')) {
+                  <p class="ap-error">Selecciona fecha y hora de inicio.</p>
+                }
+              </div>
+
+              <div class="ap-field">
+                <label for="editEndsAt">Fecha y hora de fin</label>
+                <input id="editEndsAt" type="datetime-local" formControlName="endsAt" />
+                @if (showEditError('endsAt', 'required')) {
+                  <p class="ap-error">Selecciona fecha y hora de fin.</p>
+                }
+              </div>
+
+              <div class="ap-field">
+                <label for="editCustomerName">Nombre del cliente</label>
+                <input id="editCustomerName" type="text" formControlName="customerName" />
+                @if (showEditError('customerName', 'required')) {
+                  <p class="ap-error">Ingresa el nombre del cliente.</p>
+                }
+              </div>
+
+              <div class="ap-field">
+                <label for="editCustomerPhone">Teléfono (opcional)</label>
+                <input id="editCustomerPhone" type="tel" formControlName="customerPhone" />
+              </div>
+
+              <div class="ap-field">
+                <label for="editCustomerEmail">Email (opcional)</label>
+                <input id="editCustomerEmail" type="email" formControlName="customerEmail" />
+                @if (showEditError('customerEmail', 'email')) {
+                  <p class="ap-error">Ingresa un correo válido.</p>
+                }
+              </div>
+
+              <div class="ap-field ap-field--wide">
+                <label for="editNotes">Notas (opcional)</label>
+                <textarea id="editNotes" rows="3" formControlName="notes"></textarea>
+              </div>
+
+            </div>
+          </fieldset>
+
+          <div class="ap-form-actions">
+            <button class="ap-btn ap-btn--primary" type="submit" [disabled]="isSavingEdit()">
+              {{ isSavingEdit() ? 'Guardando...' : 'Guardar cambios' }}
+            </button>
+            <button class="ap-btn ap-btn--ghost" type="button" [disabled]="isSavingEdit()" (click)="cancelEdit()">
+              Cerrar
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Status actions -->
+      @if (editingAppointment(); as apt) {
+        <div class="ap-modal__status-section">
+          <p class="ap-modal__status-label">Cambiar estado</p>
+          <div class="ap-modal__status-actions">
+            <button
+              class="ap-btn ap-btn--status-complete"
+              type="button"
+              [disabled]="!canTransition(apt) || isBusyFor(apt.id, 'complete')"
+              (click)="markCompleted(apt)"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+              Marcar completada
+            </button>
+            <button
+              class="ap-btn ap-btn--status-cancel"
+              type="button"
+              [disabled]="!canTransition(apt) || isBusyFor(apt.id, 'cancel')"
+              (click)="cancelAppointment(apt)"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              Cancelar cita
+            </button>
+            <button
+              class="ap-btn ap-btn--status-noshow"
+              type="button"
+              [disabled]="!canTransition(apt) || isBusyFor(apt.id, 'no-show')"
+              (click)="markNoShow(apt)"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>
+              No se presentó
+            </button>
+          </div>
+          @if (!canTransition(editingAppointment()!)) {
+            <p class="ap-modal__status-note">
+              Esta cita ya tiene un estado final y no puede ser modificado.
+            </p>
+          }
+        </div>
+      }
+
+    </div>
+  </div>
+}

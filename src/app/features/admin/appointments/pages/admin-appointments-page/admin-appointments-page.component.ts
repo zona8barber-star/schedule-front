@@ -1,5 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, HostListener, OnInit, computed, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { firstValueFrom } from 'rxjs';
 
@@ -21,6 +21,8 @@ import { getApiErrorMessage } from '../../../../../core/utils/api-error.utils';
 import { ApiFeedbackComponent } from '../../../../../shared/components/api-feedback/api-feedback.component';
 import { PageStateComponent } from '../../../../../shared/components/page-state/page-state.component';
 
+type AppointmentsTab = 'today' | 'upcoming' | 'past';
+
 @Component({
   selector: 'app-admin-appointments-page',
   imports: [ReactiveFormsModule, ApiFeedbackComponent, PageStateComponent],
@@ -31,10 +33,9 @@ export class AdminAppointmentsPageComponent implements OnInit {
   private readonly formBuilder = inject(FormBuilder);
   private readonly adminAppointmentsApiService = inject(AdminAppointmentsApiService);
   private readonly adminStaffApiService = inject(AdminStaffApiService);
-  private readonly dateTimeFormatter = new Intl.DateTimeFormat('es-AR', {
-    dateStyle: 'medium',
-    timeStyle: 'short',
-  });
+  private readonly dateFormatter = new Intl.DateTimeFormat('es-AR', { dateStyle: 'medium' });
+  private readonly timeFormatter = new Intl.DateTimeFormat('es-AR', { timeStyle: 'short' });
+  private readonly todayStr = toLocalDateStr(new Date());
 
   readonly appointments = signal<AppointmentResponse[]>([]);
   readonly staffMembers = signal<StaffListItem[]>([]);
@@ -47,13 +48,58 @@ export class AdminAppointmentsPageComponent implements OnInit {
   readonly successMessage = signal<string | null>(null);
   readonly createSubmitted = signal(false);
   readonly editSubmitted = signal(false);
+  readonly activeTab = signal<AppointmentsTab>('today');
+  readonly showCreateForm = signal(false);
+  readonly dateFrom = signal('');
+  readonly dateTo = signal('');
 
   readonly staffById = computed(() =>
-    this.staffMembers().reduce<Record<string, StaffListItem>>((accumulator, staffMember) => {
-      accumulator[staffMember.staffProfileId] = staffMember;
-      return accumulator;
+    this.staffMembers().reduce<Record<string, StaffListItem>>((acc, s) => {
+      acc[s.staffProfileId] = s;
+      return acc;
     }, {}),
   );
+
+  readonly todayAppointments = computed(() =>
+    this.appointments().filter(a => appointmentLocalDate(a.startsAtUtc) === this.todayStr),
+  );
+
+  readonly upcomingAppointments = computed(() => {
+    const from = this.dateFrom();
+    const to = this.dateTo();
+    return this.appointments().filter(a => {
+      const date = appointmentLocalDate(a.startsAtUtc);
+      if (date <= this.todayStr) return false;
+      if (from && date < from) return false;
+      if (to && date > to) return false;
+      return true;
+    });
+  });
+
+  readonly pastAppointments = computed(() => {
+    const from = this.dateFrom();
+    const to = this.dateTo();
+    return this.appointments().filter(a => {
+      const date = appointmentLocalDate(a.startsAtUtc);
+      if (date >= this.todayStr) return false;
+      if (from && date < from) return false;
+      if (to && date > to) return false;
+      return true;
+    });
+  });
+
+  readonly editingAppointment = computed(() => {
+    const id = this.editingAppointmentId();
+    return id ? (this.appointments().find(a => a.id === id) ?? null) : null;
+  });
+
+  readonly activeAppointments = computed(() => {
+    switch (this.activeTab()) {
+      case 'today': return this.todayAppointments();
+      case 'upcoming': return this.upcomingAppointments();
+      case 'past': return this.pastAppointments();
+    }
+  });
 
   readonly filterForm = this.formBuilder.nonNullable.group({
     staffProfileId: [''],
@@ -79,6 +125,38 @@ export class AdminAppointmentsPageComponent implements OnInit {
 
   ngOnInit(): void {
     void this.bootstrap();
+  }
+
+  @HostListener('document:keydown.escape')
+  onEscapeKey(): void {
+    if (this.editingAppointmentId() && !this.isSavingEdit()) {
+      this.cancelEdit();
+    } else if (this.showCreateForm() && !this.isCreating()) {
+      this.closeCreateForm();
+    }
+  }
+
+  setTab(tab: AppointmentsTab): void {
+    this.activeTab.set(tab);
+    this.dateFrom.set('');
+    this.dateTo.set('');
+  }
+
+  setDateFrom(value: string): void {
+    this.dateFrom.set(value);
+  }
+
+  setDateTo(value: string): void {
+    this.dateTo.set(value);
+  }
+
+  openCreateForm(): void {
+    this.showCreateForm.set(true);
+  }
+
+  closeCreateForm(): void {
+    this.showCreateForm.set(false);
+    this.resetCreateForm();
   }
 
   async applyFilter(): Promise<void> {
@@ -111,14 +189,7 @@ export class AdminAppointmentsPageComponent implements OnInit {
     try {
       await firstValueFrom(this.adminAppointmentsApiService.createManual(request));
       await this.loadAppointments();
-      this.createForm.patchValue({
-        startsAt: '',
-        customerName: '',
-        customerEmail: '',
-        customerPhone: '',
-        notes: '',
-      });
-      this.createSubmitted.set(false);
+      this.closeCreateForm();
       this.successMessage.set('La cita manual fue creada correctamente.');
     } catch (error) {
       this.errorMessage.set(getAdminAppointmentErrorMessage(error, 'create'));
@@ -145,14 +216,7 @@ export class AdminAppointmentsPageComponent implements OnInit {
   cancelEdit(): void {
     this.editingAppointmentId.set(null);
     this.editSubmitted.set(false);
-    this.editForm.reset({
-      startsAt: '',
-      endsAt: '',
-      customerName: '',
-      customerEmail: '',
-      customerPhone: '',
-      notes: '',
-    });
+    this.editForm.reset({ startsAt: '', endsAt: '', customerName: '', customerEmail: '', customerPhone: '', notes: '' });
   }
 
   async submitEdit(): Promise<void> {
@@ -161,9 +225,7 @@ export class AdminAppointmentsPageComponent implements OnInit {
     this.successMessage.set(null);
 
     const appointmentId = this.editingAppointmentId();
-    if (!appointmentId) {
-      return;
-    }
+    if (!appointmentId) return;
 
     if (this.editForm.invalid) {
       this.editForm.markAllAsTouched();
@@ -236,13 +298,7 @@ export class AdminAppointmentsPageComponent implements OnInit {
   }
 
   showCreateError(
-    controlName:
-      | 'staffProfileId'
-      | 'startsAt'
-      | 'customerName'
-      | 'customerEmail'
-      | 'customerPhone'
-      | 'notes',
+    controlName: 'staffProfileId' | 'startsAt' | 'customerName' | 'customerEmail' | 'customerPhone' | 'notes',
     errorName: string,
   ): boolean {
     const control = this.createForm.controls[controlName];
@@ -250,13 +306,7 @@ export class AdminAppointmentsPageComponent implements OnInit {
   }
 
   showEditError(
-    controlName:
-      | 'startsAt'
-      | 'endsAt'
-      | 'customerName'
-      | 'customerEmail'
-      | 'customerPhone'
-      | 'notes',
+    controlName: 'startsAt' | 'endsAt' | 'customerName' | 'customerEmail' | 'customerPhone' | 'notes',
     errorName: string,
   ): boolean {
     const control = this.editForm.controls[controlName];
@@ -272,46 +322,53 @@ export class AdminAppointmentsPageComponent implements OnInit {
   }
 
   staffName(staffProfileId: string): string {
-    const staffMember = this.staffById()[staffProfileId];
-    return staffMember ? this.staffDisplayLabel(staffMember) : staffProfileId;
+    const s = this.staffById()[staffProfileId];
+    return s ? s.displayName : staffProfileId;
   }
 
   staffDisplayLabel(staffMember: StaffListItem): string {
     return `${staffMember.displayName} (${staffMember.fullName})`;
   }
 
-  formatDateTime(value: string): string {
-    return this.dateTimeFormatter.format(new Date(value));
+  formatDate(value: string): string {
+    return this.dateFormatter.format(new Date(value));
+  }
+
+  formatTime(value: string): string {
+    return this.timeFormatter.format(new Date(value));
   }
 
   formatDateTimeRange(startsAtUtc: string, endsAtUtc: string): string {
-    return `${this.formatDateTime(startsAtUtc)} - ${this.formatDateTime(endsAtUtc)}`;
+    return `${this.formatDate(startsAtUtc)} ${this.formatTime(startsAtUtc)} – ${this.formatTime(endsAtUtc)}`;
+  }
+
+  private resetCreateForm(): void {
+    this.createSubmitted.set(false);
+    this.createForm.reset();
+    if (this.staffMembers().length > 0) {
+      this.createForm.patchValue({ staffProfileId: this.staffMembers()[0].staffProfileId });
+    }
   }
 
   private async bootstrap(): Promise<void> {
     try {
       this.staffMembers.set(await firstValueFrom(this.adminStaffApiService.list()));
-
-      if (!this.createForm.controls.staffProfileId.value && this.staffMembers().length > 0) {
-        this.createForm.patchValue({
-          staffProfileId: this.staffMembers()[0]?.staffProfileId ?? '',
-        });
+      if (this.staffMembers().length > 0) {
+        this.createForm.patchValue({ staffProfileId: this.staffMembers()[0].staffProfileId });
       }
     } catch (error) {
       this.errorMessage.set(getApiErrorMessage(error));
     }
-
     await this.loadAppointments();
   }
 
   private async loadAppointments(): Promise<void> {
     this.isLoading.set(true);
-
     try {
       const filters = this.getFilters();
       const appointments = await firstValueFrom(this.adminAppointmentsApiService.list(filters));
       this.appointments.set(
-        [...appointments].sort((left, right) => left.startsAtUtc.localeCompare(right.startsAtUtc)),
+        [...appointments].sort((a, b) => a.startsAtUtc.localeCompare(b.startsAtUtc)),
       );
     } catch (error) {
       this.errorMessage.set(getApiErrorMessage(error));
@@ -323,11 +380,7 @@ export class AdminAppointmentsPageComponent implements OnInit {
 
   private getFilters(): AdminAppointmentsListFilters | undefined {
     const staffProfileId = this.filterForm.controls.staffProfileId.value;
-    if (!staffProfileId) {
-      return undefined;
-    }
-
-    return { staffProfileId };
+    return staffProfileId ? { staffProfileId } : undefined;
   }
 
   private async executeStatusAction(
@@ -336,17 +389,14 @@ export class AdminAppointmentsPageComponent implements OnInit {
     requestFactory: () => ReturnType<AdminAppointmentsApiService['markCompleted']>,
     successMessage: string,
   ): Promise<void> {
-    if (!this.canTransition(appointment)) {
-      return;
-    }
-
+    if (!this.canTransition(appointment)) return;
     this.errorMessage.set(null);
     this.successMessage.set(null);
     this.busyActionKey.set(this.actionKey(appointment.id, action));
-
     try {
       await firstValueFrom(requestFactory());
       await this.loadAppointments();
+      this.cancelEdit();
       this.successMessage.set(successMessage);
     } catch (error) {
       this.errorMessage.set(getAdminAppointmentErrorMessage(error, 'status'));
@@ -360,40 +410,30 @@ export class AdminAppointmentsPageComponent implements OnInit {
   }
 }
 
-function normalizeOptionalText(value: string | null | undefined): string | null {
-  const normalizedValue = value?.trim() ?? '';
-  return normalizedValue || null;
+function toLocalDateStr(date: Date): string {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
 }
 
-function getAdminAppointmentErrorMessage(
-  error: unknown,
-  action: 'create' | 'update' | 'status',
-): string {
+function appointmentLocalDate(utcIso: string): string {
+  return toLocalDateStr(new Date(utcIso));
+}
+
+function normalizeOptionalText(value: string | null | undefined): string | null {
+  const v = value?.trim() ?? '';
+  return v || null;
+}
+
+function getAdminAppointmentErrorMessage(error: unknown, action: 'create' | 'update' | 'status'): string {
   if (isHttpConflict(error)) {
-    if (action === 'create') {
-      return 'No se pudo crear la cita porque el horario ya no esta disponible.';
-    }
-
-    if (action === 'update') {
-      return 'No se pudo actualizar la cita porque el horario entra en conflicto.';
-    }
-
+    if (action === 'create') return 'No se pudo crear la cita porque el horario ya no está disponible.';
+    if (action === 'update') return 'No se pudo actualizar la cita porque el horario entra en conflicto.';
     return 'No se pudo cambiar el estado por un conflicto con la cita actual.';
   }
 
-  let fallbackMessage = 'No se pudo actualizar el estado de la cita. Intenta nuevamente.';
-  switch (action) {
-    case 'create':
-      fallbackMessage = 'No se pudo crear la cita manual. Verifica los datos e intenta nuevamente.';
-      break;
-    case 'update':
-      fallbackMessage = 'No se pudo actualizar la cita. Verifica los datos e intenta nuevamente.';
-      break;
-    default:
-      break;
-  }
-
-  return getApiErrorMessage(error, fallbackMessage);
+  let fallback = 'No se pudo actualizar el estado de la cita. Intenta nuevamente.';
+  if (action === 'create') fallback = 'No se pudo crear la cita manual. Verifica los datos e intenta nuevamente.';
+  if (action === 'update') fallback = 'No se pudo actualizar la cita. Verifica los datos e intenta nuevamente.';
+  return getApiErrorMessage(error, fallback);
 }
 
 function isHttpConflict(error: unknown): boolean {

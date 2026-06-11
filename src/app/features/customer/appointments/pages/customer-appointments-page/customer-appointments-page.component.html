@@ -1,4 +1,15 @@
-<div class="my-appts">
+<div
+  class="my-appts"
+  appPullToRefresh
+  #ptr="pullToRefresh"
+  [appPullToRefreshDisabled]="isLoading()"
+  (appPullToRefresh)="loadAppointments()"
+>
+  @if (ptr.isPulling()) {
+    <div class="my-appts__pull-indicator" [class.is-ready]="ptr.isReady()">
+      {{ ptr.isReady() ? 'Suelta para actualizar' : 'Desliza para actualizar' }}
+    </div>
+  }
 
   <!-- Header -->
   <header class="my-appts__hero">

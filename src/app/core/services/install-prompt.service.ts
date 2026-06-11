@@ -22,9 +22,13 @@ export class InstallPromptService {
   private readonly deferredPromptEvent = signal<BeforeInstallPromptEvent | null>(null);
   private readonly dismissed = signal(false);
 
+  // True when the app is already running as an installed PWA (standalone display mode,
+  // or the legacy `navigator.standalone` flag on iOS Safari).
+  readonly isStandalone = signal(this.detectStandaloneMode());
+
   readonly isInstallAvailable = computed(() => this.deferredPromptEvent() !== null);
   readonly shouldShowPrompt = computed(
-    () => this.isInstallAvailable() && !this.dismissed(),
+    () => this.isInstallAvailable() && !this.dismissed() && !this.isStandalone(),
   );
 
   constructor() {
@@ -33,6 +37,10 @@ export class InstallPromptService {
     }
 
     this.dismissed.set(this.readDismissedFlag());
+
+    window
+      .matchMedia('(display-mode: standalone)')
+      .addEventListener('change', (event) => this.isStandalone.set(event.matches));
 
     window.addEventListener('beforeinstallprompt', (event: Event) => {
       event.preventDefault();
@@ -65,6 +73,17 @@ export class InstallPromptService {
     this.deferredPromptEvent.set(null);
     this.dismissed.set(accepted);
     this.persistDismissedFlag(accepted);
+  }
+
+  private detectStandaloneMode(): boolean {
+    if (!this.hasBrowserContext) {
+      return false;
+    }
+
+    return (
+      window.matchMedia('(display-mode: standalone)').matches ||
+      (window.navigator as Navigator & { standalone?: boolean }).standalone === true
+    );
   }
 
   private readDismissedFlag(): boolean {
