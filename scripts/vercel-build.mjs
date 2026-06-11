@@ -13,7 +13,7 @@
  *   RUNTIME_ENVIRONMENT_NAME → environmentName
  */
 
-import { execSync } from 'node:child_process';
+import { execFileSync } from 'node:child_process';
 import { writeFileSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -21,7 +21,22 @@ import { fileURLToPath } from 'node:url';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(__dirname, '..');
 
-const env = process.env.BUILD_ENV ?? 'production';
+const requestedEnv = (process.env.BUILD_ENV ?? 'production').trim().toLowerCase();
+const envAliases = {
+  prod: 'production',
+  production: 'production',
+  qa: 'qa',
+  dev: 'development',
+  development: 'development',
+};
+
+const env = envAliases[requestedEnv];
+
+if (!env) {
+  throw new Error(
+    `[vercel-build] Unsupported BUILD_ENV "${process.env.BUILD_ENV}". Use one of: production, prod, qa, development, dev.`,
+  );
+}
 
 const apiBaseUrl = process.env.RUNTIME_API_BASE_URL;
 if (apiBaseUrl) {
@@ -38,4 +53,8 @@ if (apiBaseUrl) {
 }
 
 console.log(`[vercel-build] Building with configuration: ${env}`);
-execSync(`npx ng build --configuration ${env}`, { stdio: 'inherit', cwd: ROOT });
+execFileSync(
+  process.execPath,
+  [resolve(ROOT, 'node_modules/@angular/cli/bin/ng.js'), 'build', '--configuration', env],
+  { stdio: 'inherit', cwd: ROOT },
+);
