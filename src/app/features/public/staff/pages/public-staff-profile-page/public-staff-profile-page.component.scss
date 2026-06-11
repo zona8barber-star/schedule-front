@@ -9,10 +9,10 @@
 
 .psp__panel {
   padding: clamp(1.1rem, 2vw, 1.5rem);
-  border: 1px solid var(--border-soft);
-  border-radius: 1.5rem;
+  border: 1px solid var(--z-hairline-light);
+  border-radius: var(--radius-sharp);
   background: var(--surface-panel);
-  box-shadow: var(--shadow-soft);
+  box-shadow: none;
 }
 
 /* ── Profile header ───────────────────────────────────────── */
@@ -23,18 +23,18 @@
   gap: 1.25rem;
   align-items: start;
   padding: clamp(1.1rem, 2vw, 1.5rem);
-  border: 1px solid var(--border-soft);
-  border-radius: 1.5rem;
-  background: var(--surface-panel);
-  box-shadow: var(--shadow-soft);
+  border: 1px solid var(--z-hairline-dark);
+  border-radius: var(--radius-sharp);
+  background: var(--z-ink);
+  color: var(--z-text-on-dark);
+  box-shadow: none;
 }
 
 .psp__photo {
   width: 6rem;
   height: 6rem;
-  border-radius: 50%;
+  border-radius: var(--radius-sharp);
   overflow: hidden;
-  background: rgba(176, 138, 74, 0.12);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -48,13 +48,6 @@
   }
 }
 
-.psp__initials {
-  font-size: 2rem;
-  font-weight: 700;
-  color: var(--brand-primary);
-  opacity: 0.7;
-}
-
 .psp__info {
   display: grid;
   gap: 0.65rem;
@@ -62,15 +55,18 @@
 
 .psp__name {
   margin: 0;
+  font-family: var(--z-font-display);
   font-size: clamp(1.25rem, 3vw, 1.6rem);
-  font-weight: 700;
-  color: var(--color-text);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  color: var(--z-text-on-dark);
   line-height: 1.2;
 }
 
 .psp__bio {
   margin: 0;
-  color: var(--text-muted);
+  color: var(--z-muted-on-dark);
   font-size: 0.92rem;
   line-height: 1.55;
 }
@@ -82,8 +78,11 @@
   flex-wrap: wrap;
   gap: 0.4rem;
   align-items: center;
-  color: var(--text-muted);
-  font-size: 0.88rem;
+  color: var(--z-muted-on-dark);
+  font-family: var(--z-font-mono);
+  font-size: 0.78rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }
 
 .psp__star {
@@ -135,7 +134,7 @@
   height: 2rem;
   border-radius: 50%;
   background: rgba(255, 255, 255, 0.06);
-  border: 1px solid var(--border-soft);
+  border: 1px solid var(--z-hairline-dark);
   transition: background 140ms ease;
 
   img {
@@ -145,7 +144,7 @@
   }
 
   &:hover {
-    background: rgba(176, 138, 74, 0.12);
+    background: rgba(255, 255, 255, 0.12);
   }
 }
 
@@ -158,8 +157,8 @@
   min-height: 2.6rem;
   padding: 0.65rem 1.4rem;
   border-radius: 999px;
-  background: var(--color-secondary-hover);
-  color: var(--color-primary-hover);
+  background: var(--btn-primary-bg);
+  color: var(--btn-primary-text);
   border: 1px solid transparent;
   font-weight: 700;
   font-size: 0.95rem;
@@ -172,9 +171,9 @@
     transform 140ms ease;
 
   &:hover {
-    background: var(--color-primary-hover);
-    color: var(--color-secondary-hover);
-    border-color: var(--color-secondary-hover);
+    background: var(--btn-primary-bg-hover);
+    color: var(--btn-primary-text);
+    border-color: var(--btn-primary-bg-hover);
     transform: translateY(-1px);
   }
 }
@@ -183,8 +182,11 @@
 
 .psp__section-title {
   margin: 0 0 0.75rem;
+  font-family: var(--z-font-display);
   font-size: 1.05rem;
-  font-weight: 700;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
   color: var(--color-text);
 }
 
@@ -199,10 +201,10 @@
   display: grid;
   gap: 0.5rem;
   padding: 0.85rem;
-  border: 1px solid var(--border-soft);
-  border-radius: 1rem;
+  border: 1px solid var(--z-hairline-light);
+  border-radius: var(--radius-sharp);
   background: var(--surface-panel);
-  box-shadow: var(--shadow-soft);
+  box-shadow: none;
 
   p {
     margin: 0;
@@ -252,10 +254,10 @@
 .psp__tips-qr {
   width: 100%;
   max-width: 14rem;
-  border-radius: 1rem;
+  border-radius: var(--radius-sharp);
   aspect-ratio: 1;
   object-fit: cover;
-  background: rgba(35, 23, 18, 0.06);
+  background: rgba(14, 14, 16, 0.06);
 }
 
 /* ── Back link ────────────────────────────────────────────── */
@@ -264,10 +266,13 @@
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
-  color: var(--brand-primary);
+  color: var(--z-brass);
   text-decoration: none;
-  font-weight: 600;
-  font-size: 0.9rem;
+  font-family: var(--z-font-mono);
+  font-weight: 700;
+  font-size: 0.82rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
   width: fit-content;
 
   &:hover {
@@ -295,8 +300,8 @@
 
 .psp__modal {
   background: var(--surface-panel);
-  border: 1px solid var(--border-soft);
-  border-radius: 1.5rem;
+  border: 1px solid var(--z-hairline-light);
+  border-radius: var(--radius-sharp);
   padding: clamp(1.25rem, 4vw, 2rem);
   width: 100%;
   max-width: 26rem;
@@ -304,7 +309,7 @@
   overflow-y: auto;
   display: grid;
   gap: 1rem;
-  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.4);
+  box-shadow: none;
   color: inherit;
 }
 
@@ -316,15 +321,18 @@
 
   h2 {
     margin: 0;
+    font-family: var(--z-font-display);
     font-size: 1.15rem;
-    font-weight: 700;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
     color: var(--color-text);
   }
 }
 
 .psp__modal-close {
   background: none;
-  border: 1px solid var(--border-soft);
+  border: 1px solid var(--z-hairline-light);
   border-radius: 50%;
   width: 2rem;
   height: 2rem;
@@ -338,7 +346,7 @@
   transition: background 140ms ease;
 
   &:hover {
-    background: rgba(176, 138, 74, 0.1);
+    background: var(--z-bone-2);
     color: var(--color-text);
   }
 }
@@ -359,16 +367,16 @@
 .psp__date-input {
   width: 100%;
   padding: 0.65rem 0.9rem;
-  border: 1px solid var(--border-soft);
+  border: 1px solid var(--z-hairline-light);
   border-radius: 0.75rem;
-  background: rgba(255, 255, 255, 0.04);
+  background: var(--color-surface);
   color: var(--color-text);
   font-size: 0.95rem;
   cursor: pointer;
   box-sizing: border-box;
 
   &:focus {
-    outline: 2px solid var(--brand-primary);
+    outline: 2px solid var(--z-brass);
     outline-offset: 2px;
   }
 }
@@ -395,9 +403,9 @@
 
 .psp__slot {
   padding: 0.5rem 1rem;
-  border: 1px solid var(--border-soft);
+  border: 1px solid var(--z-hairline-light);
   border-radius: 999px;
-  background: rgba(176, 138, 74, 0.06);
+  background: var(--color-surface);
   color: var(--color-text);
   font-size: 0.9rem;
   font-weight: 600;
@@ -407,9 +415,9 @@
     border-color 140ms ease;
 
   &:hover {
-    background: var(--color-secondary-hover);
-    color: var(--color-primary-hover);
-    border-color: var(--color-secondary-hover);
+    background: var(--btn-primary-bg);
+    color: var(--btn-primary-text);
+    border-color: var(--btn-primary-bg);
   }
 }
 

@@ -17,6 +17,10 @@
 
   h1 {
     margin: 0.25rem 0 0.5rem;
+    font-family: var(--z-font-display);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
     font-size: clamp(1.5rem, 3vw, 2rem);
     color: var(--color-text);
   }
@@ -24,10 +28,12 @@
 
 .avail-page__eyebrow {
   margin: 0;
-  font-size: 0.8rem;
-  letter-spacing: 0.1em;
+  font-family: var(--z-font-mono);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
   text-transform: uppercase;
-  color: var(--color-secondary, #b08a4a);
+  color: var(--z-brass);
 }
 
 .avail-page__subtitle {
@@ -51,9 +57,9 @@
   flex-direction: column;
   gap: 0.15rem;
   padding: 0.9rem 1.1rem;
-  border: 1px solid var(--border-soft, rgba(110, 96, 74, 0.35));
-  border-radius: 1rem;
-  background: rgba(22, 24, 23, 0.55);
+  border: 1px solid var(--z-hairline-light);
+  border-radius: var(--radius-sharp);
+  background: var(--z-bone-2);
 
   span {
     font-size: 0.72rem;
@@ -65,7 +71,7 @@
   strong {
     font-size: 1.15rem;
     font-weight: 700;
-    color: var(--color-secondary, #b08a4a);
+    color: var(--z-brass-dk);
   }
 }
 
@@ -74,7 +80,7 @@
 .avail-page__tabs {
   display: flex;
   gap: 0.25rem;
-  border-bottom: 1px solid var(--border-soft, rgba(110, 96, 74, 0.3));
+  border-bottom: 1px solid var(--z-hairline-light);
   padding-bottom: 0;
 }
 
@@ -100,8 +106,8 @@
   }
 
   &--active {
-    color: var(--color-secondary, #b08a4a);
-    border-bottom-color: var(--color-secondary, #b08a4a);
+    color: var(--z-brass);
+    border-bottom-color: var(--z-brass);
     font-weight: 600;
   }
 }
@@ -113,7 +119,7 @@
   width: 1.25rem;
   height: 1.25rem;
   border-radius: 50%;
-  background: var(--color-secondary, #b08a4a);
+  background: var(--z-brass);
   color: #fff;
   font-size: 0.7rem;
   font-weight: 700;
@@ -125,9 +131,10 @@
   display: grid;
   gap: 1.25rem;
   padding: clamp(1rem, 2vw, 1.5rem);
-  border: 1px solid var(--border-soft, rgba(110, 96, 74, 0.35));
-  border-radius: 1.25rem;
-  background: rgba(22, 24, 23, 0.5);
+  border: 1px solid var(--z-hairline-light);
+  border-radius: var(--radius-sharp);
+  background: var(--surface-panel);
+  box-shadow: none;
 }
 
 /* â”€â”€ Fieldset reset â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
@@ -153,10 +160,10 @@ fieldset {
 }
 
 .avail-page__day-card {
-  border: 1px solid var(--border-soft, rgba(110, 96, 74, 0.3));
-  border-radius: 1rem;
+  border: 1px solid var(--z-hairline-light);
+  border-radius: var(--radius-sharp);
   padding: 0.9rem 1rem;
-  background: rgba(22, 24, 23, 0.6);
+  background: var(--surface-panel);
   display: grid;
   gap: 0.75rem;
   transition:
@@ -164,8 +171,9 @@ fieldset {
     background 0.2s;
 
   &--inactive {
-    background: rgba(22, 24, 23, 0.3);
-    border-color: rgba(110, 96, 74, 0.15);
+    background: var(--z-bone-2);
+    border-color: var(--z-hairline-light);
+    opacity: 0.7;
   }
 }
 
@@ -187,8 +195,8 @@ fieldset {
     width: 2.5rem;
     height: 1.4rem;
     border-radius: 999px;
-    border: 1px solid rgba(110, 96, 74, 0.5);
-    background: rgba(22, 24, 23, 0.8);
+    border: 1px solid var(--z-hairline-light);
+    background: var(--z-bone-2);
     position: relative;
     cursor: pointer;
     transition:
@@ -205,19 +213,19 @@ fieldset {
       width: 1rem;
       height: 1rem;
       border-radius: 50%;
-      background: rgba(110, 96, 74, 0.6);
+      background: var(--z-concrete);
       transition:
         left 0.2s,
         background 0.2s;
     }
 
     &:checked {
-      background: rgba(176, 138, 74, 0.25);
-      border-color: var(--color-secondary, #b08a4a);
+      background: rgba(176, 138, 74, 0.2);
+      border-color: var(--z-brass);
 
       &::after {
         left: calc(100% - 1rem - 3px);
-        background: var(--color-secondary, #b08a4a);
+        background: var(--z-brass);
       }
     }
   }
@@ -282,10 +290,10 @@ fieldset {
 .avail-page__btn-add-block {
   align-self: start;
   padding: 0.35rem 0.85rem;
-  border: 1px dashed rgba(176, 138, 74, 0.45);
+  border: 1px dashed var(--z-hairline-light);
   border-radius: 0.65rem;
   background: transparent;
-  color: var(--color-secondary, #b08a4a);
+  color: var(--z-brass);
   font-size: 0.8rem;
   cursor: pointer;
   transition:
@@ -294,8 +302,8 @@ fieldset {
   width: fit-content;
 
   &:hover:not(:disabled) {
-    background: rgba(176, 138, 74, 0.08);
-    border-color: rgba(176, 138, 74, 0.7);
+    background: var(--z-bone-2);
+    border-color: var(--z-brass);
   }
 
   &:disabled {
@@ -323,9 +331,9 @@ fieldset {
     width: 100%;
     box-sizing: border-box;
     padding: 0.6rem 0.85rem;
-    border: 1px solid rgba(110, 96, 74, 0.55);
+    border: 1.5px solid var(--z-hairline-light);
     border-radius: 0.75rem;
-    background: rgba(22, 24, 23, 0.74);
+    background: var(--color-surface);
     color: var(--color-text);
     font-size: 0.88rem;
     font-family: inherit;
@@ -339,8 +347,8 @@ fieldset {
     }
 
     &:focus {
-      border-color: rgba(176, 138, 74, 0.7);
-      box-shadow: 0 0 0 3px rgba(176, 138, 74, 0.12);
+      border-color: var(--z-brass);
+      box-shadow: 0 0 0 3px rgba(176, 138, 74, 0.15);
     }
 
     &::-webkit-calendar-picker-indicator {
@@ -385,6 +393,10 @@ fieldset {
 
   h2 {
     margin: 0.1rem 0 0;
+    font-family: var(--z-font-display);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
     font-size: 1.1rem;
     color: var(--color-text);
   }
@@ -392,18 +404,20 @@ fieldset {
 
 .avail-page__section-label {
   margin: 0;
+  font-family: var(--z-font-mono);
   font-size: 0.72rem;
+  font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--color-secondary, #b08a4a);
+  letter-spacing: 0.18em;
+  color: var(--z-brass);
 }
 
 /* â”€â”€ Table â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
 .avail-page__table-wrap {
   overflow-x: auto;
-  border-radius: 0.75rem;
-  border: 1px solid rgba(110, 96, 74, 0.25);
+  border-radius: var(--radius-sharp);
+  border: 1px solid var(--z-hairline-light);
 }
 
 .avail-page__table {
@@ -412,7 +426,7 @@ fieldset {
   font-size: 0.88rem;
 
   thead {
-    background: rgba(22, 24, 23, 0.6);
+    background: var(--z-bone-2);
 
     th {
       padding: 0.7rem 1rem;
@@ -428,11 +442,11 @@ fieldset {
 
   tbody {
     tr {
-      border-top: 1px solid rgba(110, 96, 74, 0.18);
+      border-top: 1px solid var(--z-hairline-light);
       transition: background 0.15s;
 
       &:hover {
-        background: rgba(176, 138, 74, 0.04);
+        background: var(--z-bone-2);
       }
     }
 
@@ -466,20 +480,22 @@ fieldset {
 
 .avail-page__submit {
   padding: 0.65rem 1.5rem;
-  border: none;
-  border-radius: 0.85rem;
-  background: var(--color-secondary, #b08a4a);
-  color: #fff;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  background: var(--btn-primary-bg);
+  color: var(--btn-primary-text);
   font-size: 0.9rem;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
   transition:
     background 0.2s,
-    opacity 0.2s;
+    opacity 0.2s,
+    transform 0.2s;
   white-space: nowrap;
 
   &:hover:not(:disabled) {
-    background: var(--color-secondary-hover, #c9a060);
+    background: var(--btn-primary-bg-hover);
+    transform: translateY(-1px);
   }
 
   &:disabled {
@@ -490,16 +506,17 @@ fieldset {
 
 .avail-page__btn-secondary {
   padding: 0.4rem 0.9rem;
-  border: 1px solid rgba(176, 138, 74, 0.5);
-  border-radius: 0.65rem;
-  background: rgba(176, 138, 74, 0.08);
-  color: var(--color-secondary, #b08a4a);
+  border: 1px solid var(--z-hairline-light);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--z-brass);
   font-size: 0.82rem;
   cursor: pointer;
-  transition: background 0.2s;
+  transition: background 0.2s, border-color 0.2s;
 
   &:hover:not(:disabled) {
-    background: rgba(176, 138, 74, 0.18);
+    background: var(--z-bone-2);
+    border-color: var(--z-brass);
   }
 
   &:disabled {
@@ -511,7 +528,7 @@ fieldset {
 .avail-page__btn-danger {
   padding: 0.4rem 0.9rem;
   border: 1px solid rgba(180, 83, 60, 0.45);
-  border-radius: 0.65rem;
+  border-radius: 999px;
   background: rgba(180, 83, 60, 0.07);
   color: var(--color-error, #b4533c);
   font-size: 0.82rem;
@@ -530,16 +547,18 @@ fieldset {
 
 .avail-page__btn-ghost {
   padding: 0.65rem 1.25rem;
-  border: 1px solid rgba(110, 96, 74, 0.4);
-  border-radius: 0.85rem;
+  border: 1.5px solid var(--z-hairline-light);
+  border-radius: 999px;
   background: transparent;
-  color: var(--color-text-secondary);
+  color: var(--color-text);
+
   font-size: 0.9rem;
   cursor: pointer;
-  transition: background 0.2s;
+  transition: background 0.2s, border-color 0.2s;
 
   &:hover:not(:disabled) {
-    background: rgba(110, 96, 74, 0.1);
+    background: var(--z-bone-2);
+    border-color: var(--z-brass);
   }
 
   &:disabled {
@@ -569,13 +588,13 @@ fieldset {
   max-width: 540px;
   max-height: 90dvh;
   overflow-y: auto;
-  background: #1a1c1a;
-  border: 1px solid rgba(110, 96, 74, 0.45);
-  border-radius: 1.5rem;
+  background: var(--z-ink);
+  border: 1px solid var(--z-hairline-dark);
+  border-radius: var(--radius-sharp);
   padding: 1.5rem;
   display: grid;
   gap: 1.25rem;
-  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.6);
+  box-shadow: none;
 }
 
 .modal__header {
@@ -586,8 +605,12 @@ fieldset {
 
   h2 {
     margin: 0;
+    font-family: var(--z-font-display);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
     font-size: 1.1rem;
-    color: var(--color-text);
+    color: var(--z-text-on-dark);
   }
 }
 
@@ -596,8 +619,8 @@ fieldset {
   height: 2rem;
   border: none;
   border-radius: 50%;
-  background: rgba(110, 96, 74, 0.15);
-  color: var(--color-text-secondary);
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--z-muted-on-dark);
   font-size: 1.1rem;
   cursor: pointer;
   display: flex;
@@ -607,7 +630,7 @@ fieldset {
   flex-shrink: 0;
 
   &:hover {
-    background: rgba(110, 96, 74, 0.3);
+    background: rgba(255, 255, 255, 0.16);
   }
 }
 
@@ -666,9 +689,9 @@ fieldset {
   text-align: center;
   color: var(--color-text-muted);
   font-size: 0.9rem;
-  border: 1px dashed rgba(110, 96, 74, 0.3);
-  border-radius: 0.75rem;
-  background: rgba(22, 24, 23, 0.3);
+  border: 1px dashed var(--z-hairline-light);
+  border-radius: var(--radius-sharp);
+  background: var(--z-bone-2);
 }
 
 /* -- Past-absence row --------------------------------------- */
@@ -698,42 +721,6 @@ fieldset {
   flex-wrap: wrap;
 }
 
-.modal__allday-hint {
-  font-size: 0.78rem;
-  color: var(--color-text-muted);
-}
-
-/* -- Empty state (absences tab) */
-.avail-page__empty {
-  padding: 1.5rem;
-  text-align: center;
-  color: var(--color-text-muted);
-  font-size: 0.9rem;
-  border: 1px dashed rgba(110, 96, 74, 0.3);
-  border-radius: 0.75rem;
-  background: rgba(22, 24, 23, 0.3);
-}
-/* -- Past absence row */
-.avail-page__row--past {
-  opacity: 0.55;
-}
-/* -- Table hint */
-.avail-page__table-hint {
-  margin: 0;
-  padding: 0.4rem 0.25rem 0;
-  font-size: 0.75rem;
-  color: var(--color-text-muted);
-  font-style: italic;
-}
-/* -- Modal all-day toggle */
-.modal__allday {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  padding-bottom: 0.75rem;
-  border-bottom: 1px solid rgba(110, 96, 74, 0.2);
-  flex-wrap: wrap;
-}
 .modal__allday-hint {
   font-size: 0.78rem;
   color: var(--color-text-muted);
@@ -789,10 +776,10 @@ fieldset {
 .avail-page__duration-input {
   width: 5rem;
   padding: 0.3rem 0.5rem;
-  border: 1px solid rgba(110, 96, 74, 0.55);
+  border: 1.5px solid var(--z-hairline-light);
   border-radius: 0.55rem;
-  background: rgba(22, 24, 23, 0.74);
-  color: var(--color-text, #f2eee6);
+  background: var(--color-surface);
+  color: var(--color-text, #1f1c19);
   font: inherit;
   font-size: 0.88rem;
   outline: none;
@@ -800,8 +787,8 @@ fieldset {
   box-sizing: border-box;
 
   &:focus {
-    border-color: rgba(176, 138, 74, 0.55);
-    box-shadow: 0 0 0 3px rgba(176, 138, 74, 0.12);
+    border-color: var(--z-brass);
+    box-shadow: 0 0 0 3px rgba(176, 138, 74, 0.15);
   }
 
   &::-webkit-outer-spin-button,
@@ -856,12 +843,12 @@ fieldset {
 }
 
 .avail-page__duration-cancel {
-  background: rgba(110, 96, 74, 0.1);
-  border-color: rgba(110, 96, 74, 0.3);
-  color: var(--color-text-secondary, #b8b0a4);
+  background: var(--btn-cancel-bg);
+  border-color: var(--btn-cancel-bg);
+  color: var(--btn-cancel-text);
 
   &:hover:not(:disabled) {
-    background: rgba(110, 96, 74, 0.2);
+    background: var(--btn-cancel-bg-hover);
   }
 }
 

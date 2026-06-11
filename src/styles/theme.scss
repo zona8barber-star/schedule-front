@@ -1,36 +1,81 @@
+// Zona 8 design tokens — editorial/poster palette (ink, bone, steel, concrete, brass).
+// See specs/002-visual-refresh-zona8/plan.md for the source design system.
+
 :root {
-  --color-primary: #161817;
-  --color-primary-hover: #0b0d0c;
+  /* ── Zona 8 palette ──────────────────────────────────────────────────── */
+  --z-ink: #0e0e10;
+  --z-ink-2: #16161a;
+  --z-bone: #f4f2ec;
+  --z-bone-2: #eceadf;
+  --z-concrete: #c7c4bc;
+  --z-steel: #7e848b;
+  --z-steel-hi: #9aa0a6;
+  --z-graphite: #3a3c40;
+  --z-text-on-dark: #f4f2ec;
+  --z-text-on-light: #15140f;
+  --z-muted-on-dark: rgba(244, 242, 236, 0.55);
+  --z-muted-on-light: rgba(21, 20, 15, 0.5);
+  --z-hairline-dark: rgba(255, 255, 255, 0.12);
+  --z-hairline-light: rgba(20, 18, 16, 0.13);
+  --z-brass: #b08a4a;
+  --z-brass-dk: #8f6f38;
 
-  --color-secondary: #9a7a45;
-  --color-secondary-hover: #b08a4a;
+  /* ── Typography ──────────────────────────────────────────────────────── */
+  --z-font-display: 'Oswald', sans-serif;
+  --z-font-body: 'Archivo', sans-serif;
+  --z-font-mono: 'Space Mono', monospace;
 
-  --color-accent: #2f5e59;
-  --color-accent-soft: #5f8b83;
+  /* ── Shape ───────────────────────────────────────────────────────────── */
+  /* Structural blocks (hero, cards, panels, modals, tables, ticker) go sharp.
+     Controls (buttons, inputs, badges, tab indicator) keep their existing
+     rounded radii defined per component. */
+  --radius-sharp: 0;
 
-  --color-background: #23231f;
-  --color-background-alt: #2e241c;
+  /* ── Semantic tokens (consumed across feature stylesheets) ──────────── */
+  --color-primary: var(--z-ink);
+  --color-primary-hover: var(--z-ink-2);
 
-  --color-surface: #2b2d2a;
-  --color-surface-premium: #3a2c22;
+  --color-secondary: var(--z-brass);
+  --color-secondary-hover: var(--z-brass-dk);
 
-  --color-text: #f2eee6;
-  --color-text-secondary: #b8b0a4;
-  --color-text-muted: #7d786f;
+  --color-accent: var(--z-steel);
+  --color-accent-soft: var(--z-steel-hi);
 
-  --color-border: #6e604a;
+  --color-background: var(--z-bone);
+  --color-background-alt: var(--z-bone-2);
+
+  --color-surface: #ffffff;
+  --color-surface-premium: var(--z-bone-2);
+
+  --color-text: var(--z-text-on-light);
+  --color-text-secondary: var(--z-graphite);
+  --color-text-muted: var(--z-muted-on-light);
+
+  --color-text-inverse: var(--z-text-on-dark);
+  --color-text-inverse-secondary: var(--z-muted-on-dark);
+
+  --color-border: var(--z-concrete);
 
   --color-error: #b4533c;
   --color-success: #4f7a5f;
 
+  /* Buttons */
+  --btn-primary-bg: var(--z-ink);
+  --btn-primary-bg-hover: var(--z-ink-2);
+  --btn-primary-text: var(--z-bone);
+
+  --btn-cancel-bg: var(--z-concrete);
+  --btn-cancel-bg-hover: var(--z-steel-hi);
+  --btn-cancel-text: var(--z-text-on-light);
+
   /* Legacy aliases used across existing feature styles. */
-  --brand-primary: var(--color-secondary);
-  --brand-accent: var(--color-secondary-hover);
-  --surface-canvas: var(--color-background);
-  --surface-muted: var(--color-background-alt);
-  --surface-panel: rgba(43, 45, 42, 0.9);
+  --brand-primary: var(--z-steel);
+  --brand-accent: var(--z-brass);
+  --surface-canvas: var(--z-bone);
+  --surface-muted: var(--z-bone-2);
+  --surface-panel: #ffffff;
   --text-primary: var(--color-text);
-  --text-muted: var(--color-text-secondary);
-  --border-soft: rgba(110, 96, 74, 0.62);
-  --shadow-soft: 0 18px 40px rgba(11, 13, 12, 0.28);
+  --text-muted: var(--color-text-muted);
+  --border-soft: var(--z-hairline-light);
+  --shadow-soft: none;
 }

@@ -146,8 +146,12 @@ fieldset {
 }
 
 .admin-banners-page__actions button:first-child {
-  background: linear-gradient(135deg, var(--brand-primary), var(--brand-accent));
-  color: #fff;
+  background: var(--btn-primary-bg);
+  color: var(--btn-primary-text);
+
+  &:hover:not([disabled]) {
+    background: var(--btn-primary-bg-hover);
+  }
 }
 
 .admin-banners-page__danger {

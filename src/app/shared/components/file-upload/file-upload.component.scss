@@ -57,11 +57,16 @@
   padding: 0.7rem 1rem;
   border: 0;
   border-radius: 999px;
-  background: linear-gradient(135deg, var(--brand-primary), var(--brand-accent));
-  color: white;
+  background: var(--btn-primary-bg);
+  color: var(--btn-primary-text);
   font: inherit;
   font-weight: 700;
   cursor: pointer;
+  transition: background-color 130ms ease;
+
+  &:hover:not([disabled]) {
+    background: var(--btn-primary-bg-hover);
+  }
 }
 
 .file-upload__button[disabled] {

@@ -49,16 +49,16 @@
   padding: 0.75rem 1.25rem;
   border: 0;
   border-radius: 999px;
-  background: linear-gradient(135deg, var(--brand-primary), var(--brand-accent));
-  color: white;
+  background: var(--btn-primary-bg);
+  color: var(--btn-primary-text);
   font: inherit;
   font-weight: 700;
   cursor: pointer;
-  transition: opacity 130ms ease;
+  transition: background-color 130ms ease;
 }
 
 .staff-list__create-btn:hover {
-  opacity: 0.88;
+  background: var(--btn-primary-bg-hover);
 }
 
 /* ── State (loading / empty) ──────────────────────────────────── */

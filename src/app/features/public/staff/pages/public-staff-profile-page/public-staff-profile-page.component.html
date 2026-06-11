@@ -16,9 +16,7 @@
             [title]="staffProfile()!.displayName"
           />
         } @else {
-          <span class="psp__initials">{{
-            staffProfile()!.displayName.charAt(0).toUpperCase()
-          }}</span>
+          <app-photo-placeholder [label]="staffProfile()!.displayName" variant="dark" />
         }
       </div>
 

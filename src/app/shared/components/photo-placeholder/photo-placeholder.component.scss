@@ -1,0 +1,46 @@
+:host {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.ph {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-start;
+  padding: 0.6rem;
+  background-color: var(--z-bone-2);
+  background-image: repeating-linear-gradient(
+    -45deg,
+    var(--z-concrete) 0,
+    var(--z-concrete) 1px,
+    transparent 1px,
+    transparent 10px
+  );
+}
+
+.ph--dark {
+  background-color: var(--z-ink-2);
+  background-image: repeating-linear-gradient(
+    -45deg,
+    var(--z-hairline-dark) 0,
+    var(--z-hairline-dark) 1px,
+    transparent 1px,
+    transparent 10px
+  );
+}
+
+.ph__label {
+  font-family: var(--z-font-mono);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--z-muted-on-light);
+}
+
+.ph--dark .ph__label {
+  color: var(--z-muted-on-dark);
+}

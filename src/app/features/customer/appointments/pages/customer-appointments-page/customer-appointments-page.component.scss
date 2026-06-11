@@ -10,15 +10,24 @@
 
 .my-appts__hero {
   padding: clamp(1.25rem, 3vw, 2rem);
-  border: 1px solid var(--border-soft);
-  border-radius: 1.5rem;
-  background: var(--surface-panel);
-  box-shadow: var(--shadow-soft);
+  border: 1px solid var(--z-hairline-dark);
+  border-radius: var(--radius-sharp);
+  background: var(--z-ink);
+  color: var(--z-text-on-dark);
+  box-shadow: none;
 
   h1 {
     margin: 0 0 0.5rem;
+    font-family: var(--z-font-display);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
     font-size: clamp(1.6rem, 4vw, 2.2rem);
   }
+}
+
+.my-appts__hero .my-appts__subtitle {
+  color: var(--z-muted-on-dark);
 }
 
 .my-appts__subtitle {
@@ -37,7 +46,7 @@
   padding: 0.5rem 1rem;
   border-radius: 999px;
   background: var(--surface-panel);
-  border: 1px solid var(--border-soft);
+  border: 1px solid var(--z-hairline-light);
   color: var(--color-text-muted);
   font-size: 0.85rem;
   text-align: center;
@@ -54,10 +63,10 @@
   display: flex;
   gap: 0.35rem;
   padding: 0.3rem;
-  border: 1px solid var(--border-soft);
+  border: 1px solid var(--z-hairline-light);
   border-radius: 1rem;
   background: var(--surface-panel);
-  box-shadow: var(--shadow-soft);
+  box-shadow: none;
 }
 
 .my-appts__tab {
@@ -84,8 +93,8 @@
 }
 
 .my-appts__tab--active {
-  background: var(--color-secondary-hover);
-  color: var(--color-primary-hover);
+  background: var(--z-ink);
+  color: var(--z-text-on-dark);
   font-weight: 700;
 }
 
@@ -97,7 +106,7 @@
   height: 1.3rem;
   padding: 0 0.3rem;
   border-radius: 999px;
-  background: rgba(176, 138, 74, 0.18);
+  background: var(--z-bone-2);
   color: var(--color-text-muted);
   font-size: 0.72rem;
   font-weight: 700;
@@ -105,13 +114,13 @@
 }
 
 .my-appts__tab--active .my-appts__tab-badge {
-  background: rgba(0, 0, 0, 0.15);
+  background: rgba(255, 255, 255, 0.15);
   color: inherit;
 }
 
 .my-appts__tab-badge--accent {
-  background: rgba(176, 138, 74, 0.25);
-  color: var(--brand-primary);
+  background: var(--z-bone-2);
+  color: var(--z-brass-dk);
 }
 
 .my-appts__tab--active .my-appts__tab-badge--accent {
@@ -123,10 +132,10 @@
 
 .my-appts__panel {
   padding: clamp(1.25rem, 3vw, 2rem);
-  border: 1px solid var(--border-soft);
-  border-radius: 1.5rem;
+  border: 1px solid var(--z-hairline-light);
+  border-radius: var(--radius-sharp);
   background: var(--surface-panel);
-  box-shadow: var(--shadow-soft);
+  box-shadow: none;
 }
 
 .my-appts__empty-action {
@@ -146,20 +155,20 @@
   display: grid;
   gap: 1rem;
   padding: clamp(1rem, 2.5vw, 1.4rem);
-  border: 1px solid var(--border-soft);
-  border-radius: 1.25rem;
+  border: 1px solid var(--z-hairline-light);
+  border-radius: var(--radius-sharp);
   background: var(--surface-panel);
-  box-shadow: var(--shadow-soft);
+  box-shadow: none;
   transition: border-color 160ms ease;
 
   &:hover {
-    border-color: rgba(176, 138, 74, 0.4);
+    border-color: var(--z-brass);
   }
 }
 
 .my-appts__card--upcoming {
-  border-color: rgba(176, 138, 74, 0.3);
-  background: rgba(176, 138, 74, 0.04);
+  border-color: var(--z-brass);
+  background: var(--z-bone-2);
 }
 
 .my-appts__card--review {
@@ -209,7 +218,7 @@
 .my-appts__barber-icon {
   width: 1.1rem;
   height: 1.1rem;
-  color: var(--brand-primary);
+  color: var(--z-brass);
   flex-shrink: 0;
 }
 
@@ -236,17 +245,18 @@
   align-items: center;
   padding: 0.3rem 0.75rem;
   border-radius: 999px;
-  font-size: 0.78rem;
+  font-family: var(--z-font-mono);
+  font-size: 0.74rem;
   font-weight: 700;
   letter-spacing: 0.05em;
   text-transform: uppercase;
-  background: rgba(176, 138, 74, 0.12);
-  color: var(--brand-primary);
+  background: var(--z-bone-2);
+  color: var(--z-brass-dk);
 }
 
 .my-appts__status--pending {
   background: rgba(176, 138, 74, 0.12);
-  color: #9a7a45;
+  color: #9c8556;
 }
 
 .my-appts__status--confirmed {
@@ -273,7 +283,7 @@
   gap: 0.6rem;
   align-items: center;
   padding-top: 0.25rem;
-  border-top: 1px solid var(--border-soft);
+  border-top: 1px solid var(--z-hairline-light);
 }
 
 // ─── Botones ─────────────────────────────────────────────────────────────────
@@ -305,18 +315,18 @@
 }
 
 .my-appts__btn--primary {
-  background: var(--color-secondary-hover);
-  color: var(--color-primary-hover);
+  background: var(--btn-primary-bg);
+  color: var(--btn-primary-text);
 }
 
 .my-appts__btn--outline {
   background: transparent;
-  border: 1.5px solid rgba(110, 96, 74, 0.55);
+  border: 1.5px solid var(--z-hairline-light);
   color: var(--color-text);
 
   &:hover {
-    border-color: rgba(176, 138, 74, 0.7);
-    background: rgba(176, 138, 74, 0.06);
+    border-color: var(--z-brass);
+    background: var(--z-bone-2);
   }
 }
 
@@ -365,16 +375,20 @@
   display: grid;
   gap: 1.1rem;
   padding: clamp(1.4rem, 4vw, 2rem);
-  border: 1px solid var(--border-soft);
-  border-radius: 1.5rem;
+  border: 1px solid var(--z-hairline-light);
+  border-radius: var(--radius-sharp);
   background: var(--surface-panel);
-  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.45);
+  box-shadow: none;
   animation: modal-in 200ms cubic-bezier(0.34, 1.56, 0.64, 1);
 
   h2 {
     margin: 0.2rem 0 0;
+    font-family: var(--z-font-display);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
     font-size: 1.4rem;
-    color: #fff;
+    color: var(--color-text);
   }
 }
 
@@ -394,14 +408,14 @@
   height: 2rem;
   border: 0;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.06);
+  background: var(--z-bone-2);
   color: var(--color-text-muted);
   cursor: pointer;
   transition: background 120ms ease;
 
   svg { width: 1rem; height: 1rem; }
 
-  &:hover { background: rgba(255, 255, 255, 0.12); }
+  &:hover { background: var(--z-concrete); }
 }
 
 .my-appts__modal-header {
@@ -422,9 +436,9 @@
   gap: 0.5rem;
   padding: 0.65rem 0.85rem;
   border-radius: 0.75rem;
-  background: rgba(255, 255, 255, 0.07);
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  color: #fff;
+  background: var(--z-bone-2);
+  border: 1px solid var(--z-hairline-light);
+  color: var(--color-text);
   font-size: 0.83rem;
   line-height: 1.5;
 
@@ -471,7 +485,7 @@
   justify-content: center;
   flex: 1;
   min-height: 2.6rem;
-  border: 1.5px solid rgba(110, 96, 74, 0.4);
+  border: 1.5px solid var(--z-hairline-light);
   border-radius: 0.6rem;
   background: transparent;
   color: var(--color-text-muted);
@@ -514,7 +528,7 @@
   width: 100%;
   box-sizing: border-box;
   padding: 0.7rem 0.9rem;
-  border: 1.5px solid rgba(110, 96, 74, 0.4);
+  border: 1.5px solid var(--z-hairline-light);
   border-radius: 0.75rem;
   background: transparent;
   color: var(--color-text);
