@@ -49,21 +49,19 @@
                 [title]="staffMember.displayName"
               />
             } @else {
-              <span class="public-staff-list-page__initials" aria-hidden="true">
-                {{ staffMember.displayName.charAt(0).toUpperCase() }}
-              </span>
+              <app-photo-placeholder [label]="staffMember.displayName" />
             }
+            <span class="public-staff-list-page__badge">
+              <span class="public-staff-list-page__star" aria-hidden="true">&#9733;</span>
+              {{ formatRating(staffMember.averageRating) }}
+            </span>
           </div>
 
           <div class="public-staff-list-page__card-body">
             <div class="public-staff-list-page__card-identity">
               <h2>{{ staffMember.displayName }}</h2>
-              <span class="public-staff-list-page__rating">
-                <span class="public-staff-list-page__star" aria-hidden="true">&#9733;</span>
-                {{ formatRating(staffMember.averageRating) }}
-                <span class="public-staff-list-page__review-count">
-                  ({{ staffMember.reviewCount }} reseñas)
-                </span>
+              <span class="public-staff-list-page__review-count">
+                {{ staffMember.reviewCount }} reseñas
               </span>
             </div>
 
@@ -79,7 +77,7 @@
             }
 
             <div class="public-staff-list-page__card-actions">
-              <a [routerLink]="['/staff', staffMember.staffProfileId]">Ver</a>
+              <a [routerLink]="['/staff', staffMember.staffProfileId]">Reservar →</a>
               <button
                 type="button"
                 class="public-staff-list-page__secondary"

@@ -11,6 +11,7 @@ import { PublicStaffApiService } from '../../../../../core/services/public-staff
 import { getApiErrorMessage } from '../../../../../core/utils/api-error.utils';
 import { ApiFeedbackComponent } from '../../../../../shared/components/api-feedback/api-feedback.component';
 import { PageStateComponent } from '../../../../../shared/components/page-state/page-state.component';
+import { PhotoPlaceholderComponent } from '../../../../../shared/components/photo-placeholder/photo-placeholder.component';
 
 function todayIso(): string {
   return new Date().toISOString().slice(0, 10);
@@ -18,7 +19,13 @@ function todayIso(): string {
 
 @Component({
   selector: 'app-public-staff-list-page',
-  imports: [ReactiveFormsModule, RouterLink, ApiFeedbackComponent, PageStateComponent],
+  imports: [
+    ReactiveFormsModule,
+    RouterLink,
+    ApiFeedbackComponent,
+    PageStateComponent,
+    PhotoPlaceholderComponent,
+  ],
   templateUrl: './public-staff-list-page.component.html',
   styleUrl: './public-staff-list-page.component.scss',
 })

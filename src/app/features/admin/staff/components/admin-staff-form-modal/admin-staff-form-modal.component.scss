@@ -23,9 +23,9 @@
   overflow-y: auto;
   border: 1px solid var(--color-border);
   border-radius: 1.5rem;
-  background: linear-gradient(155deg, rgba(43, 45, 42, 0.98), rgba(46, 36, 28, 0.96));
+  background: linear-gradient(155deg, rgba(241, 243, 245, 0.98), rgba(220, 226, 231, 0.96));
   box-shadow:
-    0 2rem 4rem rgba(0, 0, 0, 0.5),
+    0 2rem 4rem rgba(26, 24, 22, 0.22),
     0 0 0 1px rgba(176, 138, 74, 0.1);
   animation: modal-in 160ms ease;
 }
@@ -147,9 +147,9 @@ input,
 textarea {
   width: 100%;
   padding: 0.8rem 1rem;
-  border: 1px solid rgba(110, 96, 74, 0.55);
+  border: 1px solid rgba(110, 96, 74, 0.3);
   border-radius: 1rem;
-  background: rgba(22, 24, 23, 0.74);
+  background: rgba(241, 243, 245, 0.74);
   color: var(--color-text);
   font: inherit;
   transition:
@@ -215,12 +215,16 @@ textarea::placeholder {
   padding: 0.8rem 1.4rem;
   border: 0;
   border-radius: 999px;
-  background: linear-gradient(135deg, var(--color-secondary), var(--color-secondary-hover));
-  color: var(--color-primary);
+  background: var(--btn-primary-bg);
+  color: var(--btn-primary-text);
   font: inherit;
   font-weight: 700;
   cursor: pointer;
-  transition: opacity 130ms ease;
+  transition: background-color 130ms ease, opacity 130ms ease;
+
+  &:hover:not([disabled]) {
+    background: var(--btn-primary-bg-hover);
+  }
 }
 
 .staff-modal__submit[disabled] {
@@ -230,10 +234,10 @@ textarea::placeholder {
 
 .staff-modal__cancel {
   padding: 0.8rem 1.2rem;
-  border: 1px solid rgba(176, 138, 74, 0.35);
+  border: 1px solid var(--btn-cancel-bg);
   border-radius: 999px;
-  background: rgba(176, 138, 74, 0.1);
-  color: var(--color-text);
+  background: var(--btn-cancel-bg);
+  color: var(--btn-cancel-text);
   font: inherit;
   font-weight: 600;
   cursor: pointer;
@@ -243,8 +247,8 @@ textarea::placeholder {
 }
 
 .staff-modal__cancel:hover {
-  background: rgba(176, 138, 74, 0.18);
-  border-color: rgba(176, 138, 74, 0.5);
+  background: var(--btn-cancel-bg-hover);
+  border-color: var(--btn-cancel-bg-hover);
 }
 
 .staff-modal__cancel[disabled] {

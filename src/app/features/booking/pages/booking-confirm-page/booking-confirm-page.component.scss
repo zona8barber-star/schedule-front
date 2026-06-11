@@ -8,23 +8,41 @@
 .booking-confirm-page__state,
 .booking-confirm-page__success {
   padding: clamp(1.15rem, 2vw, 1.6rem);
-  border: 1px solid var(--border-soft);
-  border-radius: 1.5rem;
+  border: 1px solid var(--z-hairline-light);
+  border-radius: var(--radius-sharp);
   background: var(--surface-panel);
-  box-shadow: var(--shadow-soft);
+  box-shadow: none;
+}
+
+.booking-confirm-page__hero {
+  background: var(--z-ink);
+  border-color: var(--z-hairline-dark);
+  color: var(--z-text-on-dark);
+}
+
+.booking-confirm-page__hero p {
+  color: var(--z-muted-on-dark);
 }
 
 .booking-confirm-page__eyebrow {
   margin: 0;
-  color: var(--brand-primary);
-  font-size: 0.85rem;
+  color: var(--z-brass);
+  font-family: var(--z-font-mono);
+  font-size: 0.78rem;
   font-weight: 700;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.18em;
   text-transform: uppercase;
 }
 
 .booking-confirm-page h1,
-.booking-confirm-page h2,
+.booking-confirm-page h2 {
+  margin: 0;
+  font-family: var(--z-font-display);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
 .booking-confirm-page p {
   margin: 0;
 }
@@ -52,9 +70,17 @@
   display: grid;
   gap: 0.35rem;
   padding: 1rem;
-  border: 1px solid var(--border-soft);
-  border-radius: 1rem;
-  background: rgba(255, 255, 255, 0.62);
+  border: 1px solid var(--z-hairline-light);
+  border-radius: var(--radius-sharp);
+  background: var(--z-bone-2);
+}
+
+.booking-confirm-page__summary span {
+  font-family: var(--z-font-mono);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }
 
 .booking-confirm-page__actions {
@@ -78,9 +104,13 @@
 
 .booking-confirm-page__button {
   border: 0;
-  background: linear-gradient(135deg, var(--brand-primary), var(--brand-accent));
-  color: white;
+  background: var(--btn-primary-bg);
+  color: var(--btn-primary-text);
   cursor: pointer;
+
+  &:hover:not([disabled]) {
+    background: var(--btn-primary-bg-hover);
+  }
 }
 
 .booking-confirm-page__button[disabled] {
@@ -89,6 +119,7 @@
 }
 
 .booking-confirm-page__link {
-  background: rgba(141, 74, 47, 0.09);
-  color: var(--brand-primary);
+  background: var(--z-bone-2);
+  color: var(--z-graphite);
+  border: 1px solid var(--z-hairline-light);
 }
