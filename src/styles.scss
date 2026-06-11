@@ -1,3 +1,11 @@
+// Zona 8 type system — self-hosted so the installed PWA works fully offline.
+@use '@fontsource/oswald/600.css' as *;
+@use '@fontsource/oswald/700.css' as *;
+@use '@fontsource/archivo/400.css' as *;
+@use '@fontsource/archivo/500.css' as *;
+@use '@fontsource/archivo/700.css' as *;
+@use '@fontsource/space-mono/400.css' as *;
+@use '@fontsource/space-mono/700.css' as *;
 @use './styles/theme';
 
 html,
@@ -7,12 +15,9 @@ body {
 
 body {
   margin: 0;
-  background:
-    radial-gradient(circle at 14% -8%, rgba(176, 138, 74, 0.24), transparent 36%),
-    radial-gradient(circle at 84% 10%, rgba(47, 94, 89, 0.18), transparent 34%),
-    linear-gradient(180deg, var(--surface-canvas) 0%, var(--surface-muted) 100%);
+  background: var(--surface-canvas);
   color: var(--color-text);
-  font-family: 'Space Grotesk', 'Segoe UI', sans-serif;
+  font-family: var(--z-font-body);
   overflow-x: hidden;
 }
 
@@ -49,9 +54,9 @@ input:not([type='checkbox']):not([type='radio']):not([type='range']),
 textarea,
 select {
   padding: 0.85rem 1rem;
-  border: 1px solid rgba(110, 96, 74, 0.55);
+  border: 1px solid var(--z-hairline-light);
   border-radius: 1rem;
-  background: rgba(22, 24, 23, 0.74);
+  background: var(--color-surface);
   color: var(--color-text);
 }
 
@@ -60,7 +65,7 @@ textarea:focus,
 select:focus {
   outline: 2px solid rgba(176, 138, 74, 0.3);
   outline-offset: 2px;
-  border-color: rgba(176, 138, 74, 0.64);
+  border-color: var(--z-brass);
 }
 
 input::placeholder,

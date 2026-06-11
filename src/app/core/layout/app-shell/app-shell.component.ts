@@ -27,7 +27,7 @@ interface NavLink {
   group: 'public' | 'customer' | 'staff' | 'admin';
 }
 
-type BottomNavIcon = 'home' | 'staff' | 'appointments' | 'profile';
+type BottomNavIcon = 'home' | 'staff' | 'appointments' | 'profile' | 'booking';
 
 interface BottomNavLink {
   label: string;
@@ -181,7 +181,8 @@ export class AppShellComponent {
   readonly bottomNavLinks = computed<BottomNavLink[]>(() => {
     const links: BottomNavLink[] = [
       { label: 'Inicio', route: '/', exact: true, icon: 'home' },
-      { label: 'Profesionales', route: '/staff', exact: true, icon: 'staff' },
+      { label: 'Reservar', route: '/booking', exact: true, icon: 'booking' },
+      { label: 'Equipo', route: '/staff', exact: true, icon: 'staff' },
     ];
 
     if (this.authService.hasRole(this.roleNames.customer)) {
@@ -196,7 +197,7 @@ export class AppShellComponent {
       );
     }
 
-    return links.slice(0, 3);
+    return links.slice(0, 4);
   });
 
   readonly userDropdownCustomerLinks = computed(() =>

@@ -3,8 +3,8 @@ import { Injectable, inject } from '@angular/core';
 
 import { BrandingSettingsResponse } from '../models/content.models';
 
-const defaultBrandPrimary = '#9a7a45';
-const defaultBrandAccent = '#b08a4a';
+const defaultBrandPrimary = '#9c8556';
+const defaultBrandAccent = '#b79c6c';
 const hexColorPattern = /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/;
 
 @Injectable({

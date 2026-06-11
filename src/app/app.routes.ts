@@ -55,6 +55,11 @@ const loadBookingConfirmPage = () =>
     (module) => module.BookingConfirmPageComponent,
   );
 
+const loadBookingLandingPage = () =>
+  import('./features/booking/pages/booking-landing-page/booking-landing-page.component').then(
+    (module) => module.BookingLandingPageComponent,
+  );
+
 const loadCustomerAppointmentsPage = () =>
   import('./features/customer/appointments/pages/customer-appointments-page/customer-appointments-page.component').then(
     (module) => module.CustomerAppointmentsPageComponent,
@@ -153,7 +158,8 @@ export const routes: Routes = [
   {
     path: 'booking',
     pathMatch: 'full',
-    redirectTo: 'staff',
+    loadComponent: loadBookingLandingPage,
+    title: 'Reservar',
   },
   {
     path: 'booking/confirm',

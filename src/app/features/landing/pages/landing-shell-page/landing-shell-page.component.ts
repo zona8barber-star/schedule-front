@@ -17,6 +17,7 @@ import { ThemeService } from '../../../../core/services/theme.service';
 import { getApiErrorMessage } from '../../../../core/utils/api-error.utils';
 import { ApiFeedbackComponent } from '../../../../shared/components/api-feedback/api-feedback.component';
 import { PageStateComponent } from '../../../../shared/components/page-state/page-state.component';
+import { TickerStripComponent } from '../../../../shared/components/ticker-strip/ticker-strip.component';
 
 function todayIso(): string {
   return new Date().toISOString().slice(0, 10);
@@ -24,11 +25,17 @@ function todayIso(): string {
 
 @Component({
   selector: 'app-landing-shell-page',
-  imports: [RouterLink, ApiFeedbackComponent, PageStateComponent],
+  imports: [RouterLink, ApiFeedbackComponent, PageStateComponent, TickerStripComponent],
   templateUrl: './landing-shell-page.component.html',
   styleUrl: './landing-shell-page.component.scss',
 })
 export class LandingShellPageComponent implements OnInit {
+  readonly tickerItems = [
+    'Reserva en minutos',
+    'Profesionales verificados',
+    'Cortes con estilo',
+    'Agenda 100% online',
+  ];
   private readonly router = inject(Router);
   private readonly publicContentApiService = inject(PublicContentApiService);
   private readonly publicStaffApiService = inject(PublicStaffApiService);

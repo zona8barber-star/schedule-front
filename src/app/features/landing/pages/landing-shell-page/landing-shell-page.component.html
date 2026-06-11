@@ -1,5 +1,6 @@
 <section class="landing-page">
   <header class="landing-page__hero">
+    <span class="landing-page__hero-watermark" aria-hidden="true">8</span>
     <div class="landing-page__hero-copy">
       <p class="landing-page__eyebrow">Inicio</p>
       @if (branding()?.logoUrl) {
@@ -23,6 +24,8 @@
       </div>
     </div>
   </header>
+
+  <app-ticker-strip [items]="tickerItems" />
 
   <app-api-feedback severity="error" [message]="errorMessage()" />
   <app-api-feedback severity="info" [message]="infoMessage()" />
@@ -54,8 +57,11 @@
     <div class="landing-page__content-grid">
       <section class="landing-page__panel">
         <div class="landing-page__section-header">
-          <p class="landing-page__eyebrow">Sobre nosotros</p>
-          <h2>{{ landingContent()?.aboutTitle || 'Quienes somos' }}</h2>
+          <span class="landing-page__section-num">01</span>
+          <div>
+            <p class="landing-page__eyebrow">Sobre nosotros</p>
+            <h2>{{ landingContent()?.aboutTitle || 'Quienes somos' }}</h2>
+          </div>
         </div>
         <p>
           {{
@@ -67,8 +73,11 @@
 
       <section class="landing-page__panel">
         <div class="landing-page__section-header">
-          <p class="landing-page__eyebrow">Contacto</p>
-          <h2>Canales disponibles</h2>
+          <span class="landing-page__section-num">02</span>
+          <div>
+            <p class="landing-page__eyebrow">Contacto</p>
+            <h2>Canales disponibles</h2>
+          </div>
         </div>
         <dl class="landing-page__contact-list">
           <div>
@@ -117,8 +126,11 @@
 
     <section class="landing-page__panel">
       <div class="landing-page__section-header">
-        <p class="landing-page__eyebrow">Profesionales</p>
-        <h2>Equipo disponible</h2>
+        <span class="landing-page__section-num">03</span>
+        <div>
+          <p class="landing-page__eyebrow">Equipo</p>
+          <h2>Profesionales disponibles</h2>
+        </div>
       </div>
 
       @if (!staffMembers().length) {

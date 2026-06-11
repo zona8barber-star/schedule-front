@@ -13,6 +13,10 @@
 
   h1 {
     margin: 0.25rem 0 0.5rem;
+    font-family: var(--z-font-display);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
     font-size: clamp(1.5rem, 3vw, 2rem);
     color: var(--color-text);
   }
@@ -20,10 +24,12 @@
 
 .profile-page__eyebrow {
   margin: 0;
-  font-size: 0.8rem;
-  letter-spacing: 0.1em;
+  font-family: var(--z-font-mono);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
   text-transform: uppercase;
-  color: var(--color-secondary, #b08a4a);
+  color: var(--z-brass);
 }
 
 .profile-page__subtitle {
@@ -39,9 +45,10 @@
   flex-wrap: wrap;
   gap: 0.75rem 1.5rem;
   padding: 1rem 1.25rem;
-  border: 1px solid var(--border-soft, rgba(110, 96, 74, 0.35));
-  border-radius: 1rem;
-  background: rgba(22, 24, 23, 0.55);
+  border: 1px solid var(--z-hairline-light);
+  border-radius: var(--radius-sharp);
+  background: var(--z-bone-2);
+  box-shadow: none;
 }
 
 .profile-page__identity-item {
@@ -80,9 +87,10 @@
   flex-direction: column;
   gap: 0.6rem;
   padding: 1.25rem;
-  border: 1px solid var(--border-soft, rgba(110, 96, 74, 0.35));
-  border-radius: 1.25rem;
-  background: rgba(22, 24, 23, 0.6);
+  border: 1px solid var(--z-hairline-light);
+  border-radius: var(--radius-sharp);
+  background: var(--surface-panel);
+  box-shadow: none;
 }
 
 .profile-page__media-label {
@@ -102,10 +110,10 @@
 .profile-page__thumbnail-wrap {
   width: 100%;
   height: 140px;
-  border-radius: 0.75rem;
+  border-radius: var(--radius-sharp);
   overflow: hidden;
-  border: 1px solid var(--border-soft, rgba(110, 96, 74, 0.3));
-  background: rgba(22, 24, 23, 0.4);
+  border: 1px solid var(--z-hairline-light);
+  background: var(--z-bone-2);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -135,18 +143,18 @@
 .profile-page__btn-upload {
   flex: 1;
   padding: 0.5rem 1rem;
-  border: 1px solid rgba(176, 138, 74, 0.55);
-  border-radius: 0.75rem;
-  background: rgba(176, 138, 74, 0.1);
-  color: var(--color-secondary, #b08a4a);
+  border: 1px solid var(--z-hairline-light);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--z-brass);
   font-size: 0.85rem;
   cursor: pointer;
   transition: background 0.2s, border-color 0.2s;
   white-space: nowrap;
 
   &:hover:not(:disabled) {
-    background: rgba(176, 138, 74, 0.2);
-    border-color: rgba(176, 138, 74, 0.8);
+    background: var(--z-bone-2);
+    border-color: var(--z-brass);
   }
 
   &:disabled {
@@ -158,7 +166,7 @@
 .profile-page__btn-remove {
   padding: 0.5rem 1rem;
   border: 1px solid rgba(180, 83, 60, 0.5);
-  border-radius: 0.75rem;
+  border-radius: 999px;
   background: rgba(180, 83, 60, 0.08);
   color: var(--color-error, #b4533c);
   font-size: 0.85rem;
@@ -202,13 +210,14 @@
 
 .profile-page__section-title {
   margin: 0;
+  font-family: var(--z-font-mono);
   font-size: 0.78rem;
-  font-weight: 600;
-  letter-spacing: 0.1em;
+  font-weight: 700;
+  letter-spacing: 0.18em;
   text-transform: uppercase;
-  color: var(--color-secondary, #b08a4a);
+  color: var(--z-brass);
   padding-bottom: 0.5rem;
-  border-bottom: 1px solid var(--border-soft, rgba(110, 96, 74, 0.25));
+  border-bottom: 1px solid var(--z-hairline-light);
 }
 
 .profile-page__grid {
@@ -241,9 +250,9 @@
     width: 100%;
     box-sizing: border-box;
     padding: 0.65rem 1rem;
-    border: 1px solid rgba(110, 96, 74, 0.55);
-    border-radius: 1rem;
-    background: rgba(22, 24, 23, 0.74);
+    border: 1.5px solid var(--z-hairline-light);
+    border-radius: 0.75rem;
+    background: var(--color-surface);
     color: var(--color-text);
     font-size: 0.92rem;
     outline: none;
@@ -255,7 +264,7 @@
     }
 
     &:focus {
-      border-color: rgba(176, 138, 74, 0.7);
+      border-color: var(--z-brass);
       box-shadow: 0 0 0 3px rgba(176, 138, 74, 0.15);
     }
 
@@ -303,18 +312,19 @@
 
 .profile-page__submit {
   padding: 0.7rem 2rem;
-  border: none;
-  border-radius: 1rem;
-  background: var(--color-secondary, #b08a4a);
-  color: #fff;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  background: var(--btn-primary-bg);
+  color: var(--btn-primary-text);
   font-size: 0.95rem;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
-  transition: background 0.2s, opacity 0.2s;
+  transition: background 0.2s, opacity 0.2s, transform 0.2s;
   letter-spacing: 0.02em;
 
   &:hover:not(:disabled) {
-    background: var(--color-secondary-hover, #c9a060);
+    background: var(--btn-primary-bg-hover);
+    transform: translateY(-1px);
   }
 
   &:disabled {

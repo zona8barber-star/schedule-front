@@ -27,12 +27,12 @@
 .confirm-modal {
   width: 100%;
   max-width: 400px;
-  background: #1b1d1a;
-  border: 1px solid rgba(110, 96, 74, 0.45);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
   border-radius: 1.1rem;
   box-shadow:
-    0 20px 60px rgba(0, 0, 0, 0.55),
-    0 0 0 1px rgba(110, 96, 74, 0.12);
+    0 20px 60px rgba(20, 22, 24, 0.25),
+    0 0 0 1px rgba(110, 96, 74, 0.08);
   padding: 1.75rem 1.75rem 1.5rem;
   display: flex;
   flex-direction: column;
@@ -129,12 +129,12 @@
   white-space: nowrap;
 
   &--cancel {
-    background: rgba(110, 96, 74, 0.1);
-    border-color: rgba(110, 96, 74, 0.35);
-    color: var(--color-text-secondary, #b8b0a4);
+    background: var(--btn-cancel-bg);
+    border-color: var(--btn-cancel-bg);
+    color: var(--btn-cancel-text);
 
     &:hover {
-      background: rgba(110, 96, 74, 0.2);
+      background: var(--btn-cancel-bg-hover);
     }
   }
 
@@ -149,12 +149,13 @@
   }
 
   &--primary {
-    background: rgba(176, 138, 74, 0.14);
-    border-color: rgba(176, 138, 74, 0.5);
-    color: var(--color-secondary, #b08a4a);
+    background: var(--btn-primary-bg);
+    border-color: var(--btn-primary-bg);
+    color: var(--btn-primary-text);
 
     &:hover {
-      background: rgba(176, 138, 74, 0.26);
+      background: var(--btn-primary-bg-hover);
+      border-color: var(--btn-primary-bg-hover);
     }
   }
 
