@@ -439,35 +439,5 @@
     <router-outlet></router-outlet>
   </main>
 
-  @if (!isStandalone()) {
-    <footer class="app-shell__footer">
-      <div class="app-shell__footer-line">
-        <img class="app-shell__footer-logo" src="assets/images/logo.png" alt="Logo de la barberia" />
-        <strong>{{ configService.config().appName }}</strong>
-        <span class="app-shell__footer-dot">•</span>
-        <span> © Copyright {{ currentYear }} . Todos los derechos reservados.</span>
-        @if (contactDetails.length) {
-          <span class="app-shell__footer-dot">•</span>
-          <span>{{ contactDetails.join(' | ') }}</span>
-        }
-      </div>
 
-      @if (socialLinks.length) {
-        <nav class="app-shell__footer-social" aria-label="Redes sociales">
-          @for (link of socialLinks; track link.href) {
-            <a
-              class="app-shell__footer-social-link"
-              [href]="link.href"
-              target="_blank"
-              rel="noreferrer"
-              [attr.aria-label]="link.label"
-              [title]="link.label"
-            >
-              <span aria-hidden="true">{{ link.icon }}</span>
-            </a>
-          }
-        </nav>
-      }
-    </footer>
-  }
 </div>

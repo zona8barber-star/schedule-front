@@ -5,10 +5,12 @@ import { RuntimeConfigService } from '../config/runtime-config.service';
 import {
   BannerResponse,
   BrandingSettingsResponse,
+  BusinessScheduleResponse,
   CreateBannerRequest,
   LandingContentResponse,
   UpdateBannerRequest,
   UpsertBrandingSettingsRequest,
+  UpsertBusinessScheduleRequest,
   UpsertLandingContentRequest,
 } from '../models/content.models';
 
@@ -62,6 +64,17 @@ export class AdminContentApiService {
 
   deleteBanner(bannerId: string) {
     return this.httpClient.delete<void>(this.buildUrl(`/admin/content/banners/${bannerId}`));
+  }
+
+  getBusinessSchedule() {
+    return this.httpClient.get<BusinessScheduleResponse>(this.buildUrl('/admin/content/business-hours'));
+  }
+
+  updateBusinessSchedule(request: UpsertBusinessScheduleRequest) {
+    return this.httpClient.put<BusinessScheduleResponse>(
+      this.buildUrl('/admin/content/business-hours'),
+      request,
+    );
   }
 
   private buildUrl(path: string): string {

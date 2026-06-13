@@ -9,7 +9,7 @@
         <h1 class="native-home__title">
           {{ landingContent()?.heroTitle || 'Barbería de oficio' }}
         </h1>
-        <p class="native-home__meta">Abierto · Lun–Sáb 9–20h</p>
+        <p class="native-home__meta">{{ isOpenNow() ? 'Abierto' : 'Cerrado' }} · {{ formattedSchedule() }}</p>
       </div>
     </header>
 
@@ -110,8 +110,13 @@
           }
         </div>
         <div class="lp__hero-status">
-          <span class="lp__dot" aria-hidden="true"></span>
-          <span class="lp__kicker lp__kicker--bone">Abierto ahora</span>
+          <span
+            class="lp__dot"
+            [class.lp__dot--open]="isOpenNow()"
+            [class.lp__dot--closed]="!isOpenNow()"
+            aria-hidden="true"
+          ></span>
+          <span class="lp__kicker lp__kicker--bone">{{ isOpenNow() ? 'Abierto ahora' : 'Cerrado ahora' }}</span>
           <span class="lp__dot lp__dot--sm" aria-hidden="true"></span>
           <span class="lp__kicker lp__kicker--d">{{ landingContent()?.address || 'Calle 8 · 214' }}</span>
         </div>
@@ -119,7 +124,15 @@
 
       <!-- Columna derecha: media + badge -->
       <div class="lp__hero-media">
-        @if (branding()?.logoUrl) {
+        @if (mapEmbedUrl()) {
+          <div class="lp__hero-map">
+            <iframe
+              [src]="mapEmbedUrl()!"
+              title="Ubicación en Google Maps"
+              allowfullscreen
+            ></iframe>
+          </div>
+        } @else if (branding()?.logoUrl) {
           <img
             class="lp__hero-img"
             [src]="branding()!.logoUrl!"
@@ -206,18 +219,9 @@
             }
             <div class="lp__chanl-row">
               <span class="lp__kicker">Horario</span>
-              <span class="lp__chanl-v">Lun–Sáb · 10–20h</span>
+              <span class="lp__chanl-v">{{ formattedSchedule() }}</span>
             </div>
           </div>
-          @if (mapEmbedUrl()) {
-            <div class="lp__map-embed">
-              <iframe
-                [src]="mapEmbedUrl()!"
-                title="Ubicación en Google Maps"
-                allowfullscreen
-              ></iframe>
-            </div>
-          }
           @if (landingContent()?.mapsUrl) {
             <a
               class="lp__maps-link"
@@ -334,8 +338,12 @@
   <footer class="lp__foot">
     <div class="lp__wrap lp__foot-in">
       <div class="lp__foot-brand">
-        <span class="lp__foot-mark">8</span>
-        {{ branding()?.appName || 'Zona 8' }}
+        <img
+          class="lp__foot-logo"
+          [src]="branding()?.logoUrl || 'assets/images/logo.png'"
+          [alt]="branding()?.appName || 'Logo'"
+          [title]="branding()?.appName || 'Logo'"
+        />
       </div>
       <span class="lp__foot-copy">© {{ currentYear }} · Todos los derechos reservados</span>
     </div>

@@ -105,6 +105,11 @@ const loadAdminNotificationsPage = () =>
     './features/admin/notifications/pages/admin-notifications-page/admin-notifications-page.component'
   ).then((module) => module.AdminNotificationsPageComponent);
 
+const loadAdminBusinessHoursPage = () =>
+  import(
+    './features/admin/business-hours/pages/admin-business-hours-page/admin-business-hours-page.component'
+  ).then((module) => module.AdminBusinessHoursPageComponent);
+
 export const routes: Routes = [
   {
     path: '',
@@ -316,6 +321,15 @@ export const routes: Routes = [
       roles: [ROLE_NAMES.admin],
     },
     title: 'Banners',
+  },
+  {
+    path: 'admin/content/business-hours',
+    canActivate: [authGuard, roleGuard],
+    loadComponent: loadAdminBusinessHoursPage,
+    data: {
+      roles: [ROLE_NAMES.admin],
+    },
+    title: 'Horario de atención',
   },
   {
     path: 'admin/notifications',

@@ -118,3 +118,26 @@ export interface UpdateBannerRequest {
   startsAtUtc: string | null;
   endsAtUtc: string | null;
 }
+
+/** 0 = Monday … 6 = Sunday */
+export interface BusinessScheduleDayResponse {
+  dayOfWeek: number;
+  isOpen: boolean;
+  openTime: string | null;
+  closeTime: string | null;
+}
+
+export interface BusinessScheduleResponse {
+  days: BusinessScheduleDayResponse[];
+}
+
+export interface UpsertBusinessScheduleDayRequest {
+  dayOfWeek: number;
+  isOpen: boolean;
+  openTime: string | null;
+  closeTime: string | null;
+}
+
+export interface UpsertBusinessScheduleRequest {
+  days: UpsertBusinessScheduleDayRequest[];
+}
