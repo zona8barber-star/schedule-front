@@ -11,7 +11,6 @@ import { PublicStaffApiService } from '../../../../../core/services/public-staff
 import { getApiErrorMessage } from '../../../../../core/utils/api-error.utils';
 import { ApiFeedbackComponent } from '../../../../../shared/components/api-feedback/api-feedback.component';
 import { PageStateComponent } from '../../../../../shared/components/page-state/page-state.component';
-import { PhotoPlaceholderComponent } from '../../../../../shared/components/photo-placeholder/photo-placeholder.component';
 
 function todayIso(): string {
   return new Date().toISOString().slice(0, 10);
@@ -24,7 +23,6 @@ function todayIso(): string {
     RouterLink,
     ApiFeedbackComponent,
     PageStateComponent,
-    PhotoPlaceholderComponent,
   ],
   templateUrl: './public-staff-list-page.component.html',
   styleUrl: './public-staff-list-page.component.scss',
@@ -41,6 +39,7 @@ export class PublicStaffListPageComponent implements OnInit {
     hour12: false,
   });
 
+  readonly currentYear = new Date().getFullYear();
   readonly searchControl = new FormControl('', { nonNullable: true });
   readonly isLoading = signal(true);
   readonly errorMessage = signal<string | null>(null);
@@ -80,6 +79,14 @@ export class PublicStaffListPageComponent implements OnInit {
   async clearSearch(): Promise<void> {
     this.searchControl.setValue('');
     await this.loadStaff();
+  }
+
+  staffRoleSummary(member: PublicStaffListItemResponse): string {
+    return member.services
+      .filter((s) => s.isActive)
+      .slice(0, 2)
+      .map((s) => s.name)
+      .join(' · ');
   }
 
   visibleServices(staffMember: PublicStaffListItemResponse) {

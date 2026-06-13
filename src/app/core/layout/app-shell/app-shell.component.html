@@ -454,22 +454,4 @@
         }
       </div>
 
-      @if (socialLinks.length) {
-        <nav class="app-shell__footer-social" aria-label="Redes sociales">
-          @for (link of socialLinks; track link.href) {
-            <a
-              class="app-shell__footer-social-link"
-              [href]="link.href"
-              target="_blank"
-              rel="noreferrer"
-              [attr.aria-label]="link.label"
-              [title]="link.label"
-            >
-              <span aria-hidden="true">{{ link.icon }}</span>
-            </a>
-          }
-        </nav>
-      }
-    </footer>
-  }
 </div>

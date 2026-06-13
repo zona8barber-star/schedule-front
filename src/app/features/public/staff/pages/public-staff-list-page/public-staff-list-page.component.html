@@ -1,98 +1,133 @@
-<section class="public-staff-list-page">
-  <header class="public-staff-list-page__hero">
-    <div>
-      <p class="public-staff-list-page__eyebrow">Publico</p>
-      <h1>Profesionales</h1>
-      <p>Descubre perfiles y disponibilidad sin iniciar sesion.</p>
+<div class="ps">
+
+  <!-- HERO ─────────────────────────────────────────────────────── -->
+  <section class="ps__hero">
+    <span class="ps__wm" aria-hidden="true">8</span>
+    <div class="ps__wrap ps__hero-in">
+      <span class="ps__kicker ps__kicker--brass">Público</span>
+      <h1 class="ps__disp">Profesionales</h1>
+      <p class="ps__hero-sub">Descubre perfiles y disponibilidad sin iniciar sesión. Filtra por nombre y reserva con el barbero que prefieras.</p>
     </div>
-  </header>
+  </section>
 
-  <article class="public-staff-list-page__panel">
-    <form class="public-staff-list-page__search" (ngSubmit)="submitSearch()" novalidate>
-      <label for="staffSearch">Buscar por nombre</label>
-      <input
-        id="staffSearch"
-        type="search"
-        [formControl]="searchControl"
-        placeholder="Ejemplo: fade"
-      />
-
-      <div class="public-staff-list-page__actions">
-        <button type="submit" [disabled]="isLoading()">{{ searchButtonLabel() }}</button>
+  <!-- SEARCH ───────────────────────────────────────────────────── -->
+  <div class="ps__wrap ps__search-wrap">
+    <div class="ps__search-card">
+      <span class="ps__kicker">Buscar por nombre</span>
+      <form class="ps__search-row" (ngSubmit)="submitSearch()" novalidate>
+        <input
+          class="ps__search-input"
+          id="staffSearch"
+          type="search"
+          [formControl]="searchControl"
+          placeholder="Ejemplo: fade, barba, Marco…"
+          autocomplete="off"
+        />
+        <button class="ps__btn ps__btn--brass" type="submit" [disabled]="isLoading()">
+          {{ searchButtonLabel() }}
+        </button>
         <button
+          class="ps__btn ps__btn--ghost"
           type="button"
-          class="public-staff-list-page__secondary"
           [disabled]="isLoading()"
           (click)="clearSearch()"
         >
           Limpiar
         </button>
-      </div>
-    </form>
-  </article>
-
-  <app-api-feedback severity="error" [message]="errorMessage()" />
-
-  @if (isLoading()) {
-    <app-page-state kind="loading" message="Cargando profesionales..." />
-  } @else if (!staffMembers().length) {
-    <app-page-state kind="empty" message="No encontramos profesionales para el filtro actual." />
-  } @else {
-    <div class="public-staff-list-page__grid">
-      @for (staffMember of staffMembers(); track staffMember.staffProfileId) {
-        <article class="public-staff-list-page__card">
-          <div class="public-staff-list-page__photo">
-            @if (staffMember.photoUrl) {
-              <img
-                [src]="staffMember.photoUrl"
-                [alt]="staffMember.displayName"
-                [title]="staffMember.displayName"
-              />
-            } @else {
-              <app-photo-placeholder [label]="staffMember.displayName" />
-            }
-            <span class="public-staff-list-page__badge">
-              <span class="public-staff-list-page__star" aria-hidden="true">&#9733;</span>
-              {{ formatRating(staffMember.averageRating) }}
-            </span>
-          </div>
-
-          <div class="public-staff-list-page__card-body">
-            <div class="public-staff-list-page__card-identity">
-              <h2>{{ staffMember.displayName }}</h2>
-              <span class="public-staff-list-page__review-count">
-                {{ staffMember.reviewCount }} reseñas
-              </span>
-            </div>
-
-            @if (staffMember.services.length) {
-              <ul class="public-staff-list-page__services">
-                @for (service of visibleServices(staffMember); track service.id) {
-                  <li>
-                    <span>{{ service.name }}</span>
-                    <small>{{ service.durationMinutes }} min</small>
-                  </li>
-                }
-              </ul>
-            }
-
-            <div class="public-staff-list-page__card-actions">
-              <a [routerLink]="['/staff', staffMember.staffProfileId]">Reservar →</a>
-              <button
-                type="button"
-                class="public-staff-list-page__secondary"
-                (click)="openAvailabilityModal(staffMember)"
-              >
-                Disponibilidad
-              </button>
-            </div>
-          </div>
-        </article>
-      }
+      </form>
     </div>
-  }
-</section>
+  </div>
 
+  <!-- RESULTS ──────────────────────────────────────────────────── -->
+  <section class="ps__section">
+    <div class="ps__wrap">
+
+      <div class="ps__results-bar">
+        <div class="ps__section-head">
+          <span class="ps__num">—</span>
+          <span class="ps__kicker">Resultados</span>
+        </div>
+        @if (!isLoading()) {
+          <span class="ps__kicker">
+            {{ staffMembers().length }} {{ staffMembers().length === 1 ? 'perfil' : 'perfiles' }}
+          </span>
+        }
+      </div>
+
+      <app-api-feedback severity="error" [message]="errorMessage()" />
+
+      @if (isLoading()) {
+        <app-page-state kind="loading" message="Cargando profesionales..." />
+      } @else if (!staffMembers().length) {
+        <div class="ps__empty">
+          <h3 class="ps__disp">Sin coincidencias</h3>
+          <p>No encontramos profesionales para el filtro actual. Prueba con otro nombre o especialidad.</p>
+        </div>
+      } @else {
+        <div class="ps__pro-grid">
+          @for (member of staffMembers(); track member.staffProfileId) {
+            <article class="ps__pro">
+              <div
+                class="ps__pro-ph"
+                (click)="openAvailabilityModal(member)"
+                (keydown.enter)="openAvailabilityModal(member)"
+                tabindex="0"
+                role="button"
+                [attr.aria-label]="'Ver disponibilidad de ' + member.displayName"
+              >
+                @if (member.photoUrl) {
+                  <img
+                    class="ps__pro-img"
+                    [src]="member.photoUrl"
+                    [alt]="member.displayName"
+                    [title]="member.displayName"
+                  />
+                } @else {
+                  <span class="ps__ph-cap">Foto · {{ member.displayName.split(' ')[0] }}</span>
+                }
+                @if (member.services.length) {
+                  <div class="ps__pro-tag">
+                    <span>{{ member.services[0].name }}</span>
+                  </div>
+                }
+              </div>
+              <div class="ps__pro-body">
+                <span class="ps__pro-name ps__disp">{{ member.displayName }}</span>
+                <span class="ps__pro-role">{{ staffRoleSummary(member) }}</span>
+                <div class="ps__pro-foot">
+                  <span class="ps__kicker">
+                    <span class="ps__star" aria-hidden="true">★</span>
+                    {{ formatRating(member.averageRating) }}
+                    ({{ member.reviewCount }})
+                  </span>
+                  <a class="ps__pro-rsv" [routerLink]="['/staff', member.staffProfileId]">
+                    Reservar
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
+                         stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                      <path d="M5 12h13M13 6l6 6-6 6"/>
+                    </svg>
+                  </a>
+                </div>
+              </div>
+            </article>
+          }
+        </div>
+      }
+
+    </div>
+  </section>
+
+  <!-- FOOTER ───────────────────────────────────────────────────── -->
+  <footer class="ps__foot">
+    <div class="ps__wrap ps__foot-in">
+      <img class="ps__foot-logo" src="assets/images/logo.png" alt="Logo" title="Logo" />
+      <span class="ps__foot-copy">© {{ currentYear }} · Todos los derechos reservados</span>
+    </div>
+  </footer>
+
+</div>
+
+<!-- MODAL de disponibilidad ──────────────────────────────────────── -->
 @if (activeStaff()) {
   <div
     class="psl-modal__overlay"
@@ -113,6 +148,7 @@
               <img
                 [src]="activeStaff()!.photoUrl!"
                 [alt]="activeStaff()!.displayName"
+                [title]="activeStaff()!.displayName"
               />
             } @else {
               <span class="psl-modal__initials" aria-hidden="true">
@@ -127,9 +163,7 @@
           type="button"
           (click)="closeAvailabilityModal()"
           aria-label="Cerrar"
-        >
-          ✕
-        </button>
+        >✕</button>
       </div>
 
       <p class="psl-modal__sub">Elegí el día y seleccioná el horario que más te convenga.</p>

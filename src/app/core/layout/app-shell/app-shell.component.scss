@@ -57,21 +57,27 @@
 }
 
 .app-shell__nav a {
-  padding: 0.55rem 0.85rem;
-  border-radius: 999px;
-  color: var(--color-text-inverse-secondary);
-  font-family: var(--z-font-body);
-  font-weight: 500;
+  padding: 0.35rem 0;
+  color: var(--z-steel);
+  font-family: var(--z-font-mono);
+  font-size: 0.82rem;
+  font-weight: 400;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
   text-decoration: none;
+  border-bottom: 1.5px solid transparent;
   transition:
-    background-color 140ms ease,
-    color 140ms ease;
+    color 140ms ease,
+    border-color 140ms ease;
 }
 
-.app-shell__nav a:hover,
+.app-shell__nav a:hover {
+  color: var(--z-bone);
+}
+
 .app-shell__nav a.is-active {
-  background: rgba(176, 138, 74, 0.16);
-  color: var(--color-text-inverse);
+  color: var(--z-bone);
+  border-bottom-color: var(--z-brass);
 }
 
 .app-shell__content {
@@ -149,6 +155,27 @@
   background: rgba(176, 138, 74, 0.22);
   color: var(--color-text-inverse);
   border-color: rgba(176, 138, 74, 0.45);
+}
+
+.app-shell__button--entry {
+  background: transparent;
+  color: var(--z-bone);
+  border: 1px solid var(--z-hairline-dark);
+  border-radius: 0;
+  font-family: var(--z-font-display);
+  font-size: 0.88rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  min-height: 2.2rem;
+  padding: 0.5rem 1.1rem;
+}
+
+.app-shell__button--entry:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--z-bone);
+  border-color: rgba(255, 255, 255, 0.22);
+  transform: none;
 }
 
 .app-shell__menu-toggle {
@@ -369,10 +396,9 @@
 .app-shell__drawer-logo {
   width: 1.9rem;
   height: 1.9rem;
-  border-radius: 0.5rem;
-  border: 1px solid var(--z-hairline-light);
-  object-fit: cover;
-  background: var(--color-background-alt);
+  border-radius: 0;
+  border: none;
+  object-fit: contain;
 }
 
 .app-shell__drawer-group,
