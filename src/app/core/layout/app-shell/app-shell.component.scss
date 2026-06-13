@@ -57,21 +57,27 @@
 }
 
 .app-shell__nav a {
-  padding: 0.55rem 0.85rem;
-  border-radius: 999px;
-  color: var(--color-text-inverse-secondary);
-  font-family: var(--z-font-body);
-  font-weight: 500;
+  padding: 0.35rem 0;
+  color: var(--z-steel);
+  font-family: var(--z-font-mono);
+  font-size: 0.82rem;
+  font-weight: 400;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
   text-decoration: none;
+  border-bottom: 1.5px solid transparent;
   transition:
-    background-color 140ms ease,
-    color 140ms ease;
+    color 140ms ease,
+    border-color 140ms ease;
 }
 
-.app-shell__nav a:hover,
+.app-shell__nav a:hover {
+  color: var(--z-bone);
+}
+
 .app-shell__nav a.is-active {
-  background: rgba(176, 138, 74, 0.16);
-  color: var(--color-text-inverse);
+  color: var(--z-bone);
+  border-bottom-color: var(--z-brass);
 }
 
 .app-shell__content {
