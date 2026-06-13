@@ -232,7 +232,7 @@
   align-items: center;
   gap: 1.25rem;
   padding: 2.5rem 3rem;
-  background: var(--color-surface);
+  background: var(--z-ink);
   border: 1px solid rgba(176, 138, 74, 0.3);
   border-radius: var(--radius-sharp);
   min-width: 11rem;
@@ -252,7 +252,7 @@
   font-weight: 600;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--color-text-secondary);
+  color: var(--z-bone);
   animation: loader-fade 1.6s ease-in-out infinite;
 }
 
