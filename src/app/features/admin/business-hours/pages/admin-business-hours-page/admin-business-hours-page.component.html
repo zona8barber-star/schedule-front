@@ -1,0 +1,57 @@
+<section class="admin-content-page">
+  <header class="admin-content-page__hero">
+    <div>
+      <p class="admin-content-page__eyebrow">Gestion</p>
+      <h1>Horario de atención</h1>
+      <p>Define por día en qué horario atiende la barbería. Los días cerrados no se muestran en el horario público.</p>
+    </div>
+  </header>
+
+  <article class="admin-content-page__panel">
+    <app-api-feedback severity="error" [message]="errorMessage()" />
+    <app-api-feedback severity="info" [message]="successMessage()" />
+
+    @if (isLoading()) {
+      <app-page-state kind="loading" message="Cargando horario..." />
+    } @else {
+      <form [formGroup]="scheduleForm" (ngSubmit)="submit()" novalidate>
+        <fieldset [disabled]="isBusy()">
+          <div formArrayName="days" class="bh-schedule">
+            @for (_ of daysArray.controls; track $index) {
+              <div class="bh-schedule__row" [formGroupName]="$index">
+
+                <span class="bh-schedule__day">{{ dayLabels[$index] }}</span>
+
+                <label class="bh-schedule__toggle">
+                  <input type="checkbox" formControlName="isOpen" />
+                  <span class="bh-schedule__toggle-label">
+                    {{ isOpenAt($index) ? 'Abierto' : 'Cerrado' }}
+                  </span>
+                </label>
+
+                @if (isOpenAt($index)) {
+                  <div class="bh-schedule__times">
+                    <label class="bh-schedule__time-field">
+                      <span>Apertura</span>
+                      <input type="time" formControlName="openTime" />
+                    </label>
+                    <span class="bh-schedule__dash" aria-hidden="true">–</span>
+                    <label class="bh-schedule__time-field">
+                      <span>Cierre</span>
+                      <input type="time" formControlName="closeTime" />
+                    </label>
+                  </div>
+                }
+
+              </div>
+            }
+          </div>
+        </fieldset>
+
+        <div class="admin-content-page__actions">
+          <button type="submit" [disabled]="isBusy()">{{ submitLabel() }}</button>
+        </div>
+      </form>
+    }
+  </article>
+</section>

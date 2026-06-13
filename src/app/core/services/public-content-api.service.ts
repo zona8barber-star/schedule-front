@@ -5,6 +5,7 @@ import { RuntimeConfigService } from '../config/runtime-config.service';
 import {
   BannerResponse,
   BrandingSettingsResponse,
+  BusinessScheduleResponse,
   LandingContentResponse,
 } from '../models/content.models';
 
@@ -25,6 +26,10 @@ export class PublicContentApiService {
 
   getBranding() {
     return this.httpClient.get<BrandingSettingsResponse>(this.buildUrl('/public/content/branding'));
+  }
+
+  getBusinessSchedule() {
+    return this.httpClient.get<BusinessScheduleResponse>(this.buildUrl('/public/content/business-hours'));
   }
 
   private buildUrl(path: string): string {

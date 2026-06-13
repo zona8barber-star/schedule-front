@@ -1,235 +1,252 @@
-<section class="auth-page">
-  <article class="auth-card auth-stack">
+<div class="auth">
 
-    @if (showForgotPanel()) {
-
-      <!-- ── Vista: Recuperar contraseña ──────────────────────────────── -->
-      <div class="auth-stack">
-        <p class="auth-eyebrow">Acceso</p>
-        <h1>Recuperar contraseña</h1>
-      </div>
-
-      @if (forgotSent()) {
-        <div class="auth-sent">
-          <p class="auth-sent__title">Revisa tu correo</p>
-          <p class="auth-sent__body">
-            Si existe una cuenta con ese correo, recibirás un enlace para
-            restablecer tu contraseña en los próximos minutos.
-          </p>
-          <button class="auth-link auth-link--btn" type="button" (click)="closeForgotPanel()">
-            Volver al inicio de sesión
-          </button>
-        </div>
+  <!-- HERO ─────────────────────────────────────────────────────── -->
+  <section class="auth__hero">
+    <span class="auth__wm" aria-hidden="true">8</span>
+    <div class="auth__wrap auth__hero-in">
+      <span class="auth__kicker auth__kicker--brass">Acceso</span>
+      @if (showForgotPanel()) {
+        <h1 class="auth__disp">Recuperar contraseña</h1>
       } @else {
-        <app-api-feedback severity="error" [message]="forgotError()" />
+        <h1 class="auth__disp">Inicia sesión o<br>crea tu cuenta</h1>
+      }
+    </div>
+  </section>
 
-        <form [formGroup]="forgotForm" (ngSubmit)="submitForgot()" novalidate>
-          <div class="auth-field">
-            <label for="forgotEmail">Correo electrónico</label>
-            <input
-              id="forgotEmail"
-              type="email"
-              formControlName="email"
-              autocomplete="email"
-              placeholder="tu@correo.com"
-            />
-            @if (showForgotError('required')) {
-              <p class="auth-field__error">Ingresa tu correo electrónico.</p>
-            }
-            @if (showForgotError('email')) {
-              <p class="auth-field__error">Ingresa un correo válido.</p>
-            }
-          </div>
+  <!-- CARD ─────────────────────────────────────────────────────── -->
+  <div class="auth__wrap auth__card-wrap">
+    <article class="auth-card auth-stack">
 
-          <div class="auth-actions">
-            <button class="auth-submit" type="submit" [disabled]="forgotLoading()">
-              {{ forgotLoading() ? 'Enviando...' : 'Enviar enlace' }}
-            </button>
+      @if (showForgotPanel()) {
+
+        <!-- ── Recuperar contraseña ────────────────────────────── -->
+        @if (forgotSent()) {
+          <div class="auth-sent">
+            <p class="auth-sent__title">Revisa tu correo</p>
+            <p class="auth-sent__body">
+              Si existe una cuenta con ese correo, recibirás un enlace para
+              restablecer tu contraseña en los próximos minutos.
+            </p>
             <button class="auth-link auth-link--btn" type="button" (click)="closeForgotPanel()">
-              Cancelar
+              Volver al inicio de sesión
             </button>
           </div>
-        </form>
-      }
+        } @else {
+          <app-api-feedback severity="error" [message]="forgotError()" />
 
-    } @else {
-
-      <!-- ── Vista: Login / Registro ──────────────────────────────────── -->
-      <div class="auth-stack">
-        <p class="auth-eyebrow">Acceso</p>
-        <h1>Inicia sesion o crea tu cuenta</h1>
-      </div>
-
-      <nav class="auth-tabs" aria-label="Opciones de acceso">
-        <a
-          class="auth-tab"
-          [class.is-active]="!isRegisterTab"
-          routerLink="/auth/login"
-          [queryParams]="tabQueryParams"
-          >Iniciar sesion</a
-        >
-        <a
-          class="auth-tab"
-          [class.is-active]="isRegisterTab"
-          routerLink="/auth/register"
-          [queryParams]="tabQueryParams"
-          >Crear cuenta</a
-        >
-      </nav>
-
-      <app-api-feedback severity="error" [message]="authService.error()" />
-
-      @if (!isRegisterTab) {
-        <form [formGroup]="loginForm" (ngSubmit)="submitLogin()" novalidate>
-          <div class="auth-field">
-            <label for="loginEmail">Correo electronico</label>
-            <input id="loginEmail" type="email" formControlName="email" autocomplete="email" />
-            @if (showLoginError('email', 'required')) {
-              <p class="auth-field__error">Ingresa tu correo electronico.</p>
-            }
-            @if (showLoginError('email', 'email')) {
-              <p class="auth-field__error">Ingresa un correo valido.</p>
-            }
-          </div>
-
-          <div class="auth-field">
-            <label for="loginPassword">Contrasena</label>
-            <div class="auth-input-with-action">
+          <form [formGroup]="forgotForm" (ngSubmit)="submitForgot()" novalidate>
+            <div class="auth-field">
+              <label for="forgotEmail">Correo electrónico</label>
               <input
-                id="loginPassword"
-                [type]="isLoginPasswordVisible() ? 'text' : 'password'"
-                formControlName="password"
-                autocomplete="current-password"
+                id="forgotEmail"
+                type="email"
+                formControlName="email"
+                autocomplete="email"
+                placeholder="tu@correo.com"
               />
-              <button
-                class="auth-input-action"
-                type="button"
-                [attr.aria-label]="isLoginPasswordVisible() ? 'Ocultar contrasena' : 'Mostrar contrasena'"
-                [title]="isLoginPasswordVisible() ? 'Ocultar contrasena' : 'Mostrar contrasena'"
-                (click)="toggleLoginPasswordVisibility()"
-              >
-                <span aria-hidden="true">{{ isLoginPasswordVisible() ? '🙈' : '👁️' }}</span>
+              @if (showForgotError('required')) {
+                <p class="auth-field__error">Ingresa tu correo electrónico.</p>
+              }
+              @if (showForgotError('email')) {
+                <p class="auth-field__error">Ingresa un correo válido.</p>
+              }
+            </div>
+
+            <div class="auth-actions">
+              <button class="auth-submit" type="submit" [disabled]="forgotLoading()">
+                {{ forgotLoading() ? 'Enviando...' : 'Enviar enlace' }}
+              </button>
+              <button class="auth-link auth-link--btn" type="button" (click)="closeForgotPanel()">
+                Cancelar
               </button>
             </div>
-            @if (showLoginError('password', 'required')) {
-              <p class="auth-field__error">Ingresa tu contrasena.</p>
-            }
-          </div>
+          </form>
+        }
 
-          <div class="auth-actions">
-            <button class="auth-submit" type="submit" [disabled]="authService.isLoading()">
-              {{ authService.isLoading() ? 'Ingresando...' : 'Iniciar sesion' }}
-            </button>
-            <button class="auth-link auth-link--btn" type="button" (click)="openForgotPanel()">
-              ¿Olvidaste tu contraseña?
-            </button>
-          </div>
-        </form>
       } @else {
-        <form [formGroup]="registerForm" (ngSubmit)="submitRegister()" novalidate>
-          <div class="auth-field">
-            <label for="fullName">Nombre completo</label>
-            <input id="fullName" type="text" formControlName="fullName" autocomplete="name" />
-            @if (showRegisterError('fullName', 'required')) {
-              <p class="auth-field__error">Ingresa tu nombre completo.</p>
-            }
-            @if (showRegisterError('fullName', 'minlength')) {
-              <p class="auth-field__error">El nombre debe tener al menos 2 caracteres.</p>
-            }
-          </div>
 
-          <div class="auth-field">
-            <label for="registerEmail">Correo electronico</label>
-            <input id="registerEmail" type="email" formControlName="email" autocomplete="email" />
-            @if (showRegisterError('email', 'required')) {
-              <p class="auth-field__error">Ingresa tu correo electronico.</p>
-            }
-            @if (showRegisterError('email', 'email')) {
-              <p class="auth-field__error">Ingresa un correo valido.</p>
-            }
-          </div>
+        <!-- ── Login / Registro ────────────────────────────────── -->
+        <nav class="auth-tabs" aria-label="Opciones de acceso">
+          <a
+            class="auth-tab"
+            [class.is-active]="!isRegisterTab"
+            routerLink="/auth/login"
+            [queryParams]="tabQueryParams"
+          >Iniciar sesión</a>
+          <a
+            class="auth-tab"
+            [class.is-active]="isRegisterTab"
+            routerLink="/auth/register"
+            [queryParams]="tabQueryParams"
+          >Crear cuenta</a>
+        </nav>
 
-          <div class="auth-field">
-            <label for="phoneNumber">Telefono (opcional)</label>
-            <input id="phoneNumber" type="tel" formControlName="phoneNumber" autocomplete="tel" />
-            @if (showRegisterError('phoneNumber', 'maxlength')) {
-              <p class="auth-field__error">El telefono debe tener 40 caracteres o menos.</p>
-            }
-          </div>
+        <app-api-feedback severity="error" [message]="authService.error()" />
 
-          <div class="auth-field">
-            <label for="registerPassword">Contrasena</label>
-            <div class="auth-input-with-action">
-              <input
-                id="registerPassword"
-                [type]="isRegisterPasswordVisible() ? 'text' : 'password'"
-                formControlName="password"
-                autocomplete="new-password"
-              />
-              <button
-                class="auth-input-action"
-                type="button"
-                [attr.aria-label]="isRegisterPasswordVisible() ? 'Ocultar contrasena' : 'Mostrar contrasena'"
-                [title]="isRegisterPasswordVisible() ? 'Ocultar contrasena' : 'Mostrar contrasena'"
-                (click)="toggleRegisterPasswordVisibility()"
-              >
-                <span aria-hidden="true">{{ isRegisterPasswordVisible() ? '🙈' : '👁️' }}</span>
+        @if (!isRegisterTab) {
+          <form [formGroup]="loginForm" (ngSubmit)="submitLogin()" novalidate>
+            <div class="auth-field">
+              <label for="loginEmail">Correo electrónico</label>
+              <input id="loginEmail" type="email" formControlName="email" autocomplete="email" />
+              @if (showLoginError('email', 'required')) {
+                <p class="auth-field__error">Ingresa tu correo electrónico.</p>
+              }
+              @if (showLoginError('email', 'email')) {
+                <p class="auth-field__error">Ingresa un correo válido.</p>
+              }
+            </div>
+
+            <div class="auth-field">
+              <label for="loginPassword">Contraseña</label>
+              <div class="auth-input-with-action">
+                <input
+                  id="loginPassword"
+                  [type]="isLoginPasswordVisible() ? 'text' : 'password'"
+                  formControlName="password"
+                  autocomplete="current-password"
+                />
+                <button
+                  class="auth-input-action"
+                  type="button"
+                  title="Mostrar/ocultar contraseña"
+                  [attr.aria-label]="isLoginPasswordVisible() ? 'Ocultar contraseña' : 'Mostrar contraseña'"
+                  [title]="isLoginPasswordVisible() ? 'Ocultar contraseña' : 'Mostrar contraseña'"
+                  (click)="toggleLoginPasswordVisibility()"
+                >
+                  <span aria-hidden="true">{{ isLoginPasswordVisible() ? '🙈' : '👁️' }}</span>
+                </button>
+              </div>
+              @if (showLoginError('password', 'required')) {
+                <p class="auth-field__error">Ingresa tu contraseña.</p>
+              }
+            </div>
+
+            <div class="auth-actions">
+              <button class="auth-submit" type="submit" [disabled]="authService.isLoading()">
+                {{ authService.isLoading() ? 'Ingresando...' : 'Iniciar sesión' }}
+              </button>
+              <button class="auth-link auth-link--btn" type="button" (click)="openForgotPanel()">
+                ¿Olvidaste tu contraseña?
               </button>
             </div>
-            @if (showRegisterError('password', 'required')) {
-              <p class="auth-field__error">Ingresa una contrasena.</p>
-            }
-            @if (showRegisterError('password', 'minlength')) {
-              <p class="auth-field__error">La contrasena debe tener al menos 8 caracteres.</p>
-            }
-            @if (showRegisterError('password', 'maxlength')) {
-              <p class="auth-field__error">La contrasena debe tener como maximo 128 caracteres.</p>
-            }
-
-            <div class="auth-password-hints" aria-live="polite">
-              <p class="auth-password-hints__title">Validacion del backend:</p>
-              <ul>
-                <li [class.is-met]="isMinPasswordLengthMet()">Minimo 8 caracteres</li>
-                <li [class.is-met]="isMaxPasswordLengthMet()">Maximo 128 caracteres</li>
-              </ul>
+          </form>
+        } @else {
+          <form [formGroup]="registerForm" (ngSubmit)="submitRegister()" novalidate>
+            <div class="auth-field">
+              <label for="fullName">Nombre completo</label>
+              <input id="fullName" type="text" formControlName="fullName" autocomplete="name" />
+              @if (showRegisterError('fullName', 'required')) {
+                <p class="auth-field__error">Ingresa tu nombre completo.</p>
+              }
+              @if (showRegisterError('fullName', 'minlength')) {
+                <p class="auth-field__error">El nombre debe tener al menos 2 caracteres.</p>
+              }
             </div>
-          </div>
 
-          <div class="auth-field">
-            <label for="confirmPassword">Confirmar contrasena</label>
-            <div class="auth-input-with-action">
-              <input
-                id="confirmPassword"
-                [type]="isConfirmPasswordVisible() ? 'text' : 'password'"
-                formControlName="confirmPassword"
-                autocomplete="new-password"
-              />
-              <button
-                class="auth-input-action"
-                type="button"
-                [attr.aria-label]="isConfirmPasswordVisible() ? 'Ocultar contrasena' : 'Mostrar contrasena'"
-                [title]="isConfirmPasswordVisible() ? 'Ocultar contrasena' : 'Mostrar contrasena'"
-                (click)="toggleConfirmPasswordVisibility()"
-              >
-                <span aria-hidden="true">{{ isConfirmPasswordVisible() ? '🙈' : '👁️' }}</span>
+            <div class="auth-field">
+              <label for="registerEmail">Correo electrónico</label>
+              <input id="registerEmail" type="email" formControlName="email" autocomplete="email" />
+              @if (showRegisterError('email', 'required')) {
+                <p class="auth-field__error">Ingresa tu correo electrónico.</p>
+              }
+              @if (showRegisterError('email', 'email')) {
+                <p class="auth-field__error">Ingresa un correo válido.</p>
+              }
+            </div>
+
+            <div class="auth-field">
+              <label for="phoneNumber">Teléfono (opcional)</label>
+              <input id="phoneNumber" type="tel" formControlName="phoneNumber" autocomplete="tel" />
+              @if (showRegisterError('phoneNumber', 'maxlength')) {
+                <p class="auth-field__error">El teléfono debe tener 40 caracteres o menos.</p>
+              }
+            </div>
+
+            <div class="auth-field">
+              <label for="registerPassword">Contraseña</label>
+              <div class="auth-input-with-action">
+                <input
+                  id="registerPassword"
+                  [type]="isRegisterPasswordVisible() ? 'text' : 'password'"
+                  formControlName="password"
+                  autocomplete="new-password"
+                />
+                <button
+                  class="auth-input-action"
+                  type="button"
+                  title="Mostrar/ocultar contraseña"
+                  [attr.aria-label]="isRegisterPasswordVisible() ? 'Ocultar contraseña' : 'Mostrar contraseña'"
+                  [title]="isRegisterPasswordVisible() ? 'Ocultar contraseña' : 'Mostrar contraseña'"
+                  (click)="toggleRegisterPasswordVisibility()"
+                >
+                  <span aria-hidden="true">{{ isRegisterPasswordVisible() ? '🙈' : '👁️' }}</span>
+                </button>
+              </div>
+              @if (showRegisterError('password', 'required')) {
+                <p class="auth-field__error">Ingresa una contraseña.</p>
+              }
+              @if (showRegisterError('password', 'minlength')) {
+                <p class="auth-field__error">La contraseña debe tener al menos 8 caracteres.</p>
+              }
+              @if (showRegisterError('password', 'maxlength')) {
+                <p class="auth-field__error">La contraseña debe tener como máximo 128 caracteres.</p>
+              }
+
+              <div class="auth-password-hints" aria-live="polite">
+                <ul>
+                  <li [class.is-met]="isMinPasswordLengthMet()">Mínimo 8 caracteres</li>
+                  <li [class.is-met]="isMaxPasswordLengthMet()">Máximo 128 caracteres</li>
+                </ul>
+              </div>
+            </div>
+
+            <div class="auth-field">
+              <label for="confirmPassword">Confirmar contraseña</label>
+              <div class="auth-input-with-action">
+                <input
+                  id="confirmPassword"
+                  [type]="isConfirmPasswordVisible() ? 'text' : 'password'"
+                  formControlName="confirmPassword"
+                  autocomplete="new-password"
+                />
+                <button
+                  class="auth-input-action"
+                  type="button"
+                  title="Mostrar/ocultar contraseña"
+                  [attr.aria-label]="isConfirmPasswordVisible() ? 'Ocultar contraseña' : 'Mostrar contraseña'"
+                  [title]="isConfirmPasswordVisible() ? 'Ocultar contraseña' : 'Mostrar contraseña'"
+                  (click)="toggleConfirmPasswordVisibility()"
+                >
+                  <span aria-hidden="true">{{ isConfirmPasswordVisible() ? '🙈' : '👁️' }}</span>
+                </button>
+              </div>
+              @if (showRegisterError('confirmPassword', 'required')) {
+                <p class="auth-field__error">Confirma tu contraseña.</p>
+              }
+              @if (showRegisterPasswordMismatchError()) {
+                <p class="auth-field__error">Las contraseñas no coinciden.</p>
+              }
+            </div>
+
+            <div class="auth-actions">
+              <button class="auth-submit" type="submit" [disabled]="authService.isLoading()">
+                {{ authService.isLoading() ? 'Creando cuenta...' : 'Crear cuenta' }}
               </button>
             </div>
-            @if (showRegisterError('confirmPassword', 'required')) {
-              <p class="auth-field__error">Confirma tu contrasena.</p>
-            }
-            @if (showRegisterPasswordMismatchError()) {
-              <p class="auth-field__error">Las contrasenas no coinciden.</p>
-            }
-          </div>
+          </form>
+        }
 
-          <div class="auth-actions">
-            <button class="auth-submit" type="submit" [disabled]="authService.isLoading()">
-              {{ authService.isLoading() ? 'Creando cuenta...' : 'Crear cuenta' }}
-            </button>
-          </div>
-        </form>
       }
 
-    }
-  </article>
-</section>
+    </article>
+  </div>
+
+  <!-- FOOTER ───────────────────────────────────────────────────────── -->
+  <footer class="auth__foot">
+    <div class="auth__wrap auth__foot-in">
+      <img class="auth__foot-logo" src="assets/images/logo.png" alt="Logo" title="Logo" />
+      <span class="auth__foot-copy">© {{ currentYear }} · Todos los derechos reservados</span>
+    </div>
+  </footer>
+
+</div>

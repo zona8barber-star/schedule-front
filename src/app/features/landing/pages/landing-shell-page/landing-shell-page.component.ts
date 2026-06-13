@@ -7,6 +7,8 @@ import { PublicAvailabilitySlotResponse } from '../../../../core/models/availabi
 import {
   BannerResponse,
   BrandingSettingsResponse,
+  BusinessScheduleDayResponse,
+  BusinessScheduleResponse,
   LandingContentResponse,
   PublicStaffListItemResponse,
 } from '../../../../core/models/content.models';
@@ -18,7 +20,6 @@ import { ThemeService } from '../../../../core/services/theme.service';
 import { getApiErrorMessage } from '../../../../core/utils/api-error.utils';
 import { ApiFeedbackComponent } from '../../../../shared/components/api-feedback/api-feedback.component';
 import { PageStateComponent } from '../../../../shared/components/page-state/page-state.component';
-import { TickerStripComponent } from '../../../../shared/components/ticker-strip/ticker-strip.component';
 
 function todayIso(): string {
   return new Date().toISOString().slice(0, 10);
@@ -26,7 +27,7 @@ function todayIso(): string {
 
 @Component({
   selector: 'app-landing-shell-page',
-  imports: [RouterLink, ApiFeedbackComponent, PageStateComponent, TickerStripComponent],
+  imports: [RouterLink, ApiFeedbackComponent, PageStateComponent],
   templateUrl: './landing-shell-page.component.html',
   styleUrl: './landing-shell-page.component.scss',
 })
@@ -60,13 +61,32 @@ export class LandingShellPageComponent implements OnInit {
     return user?.fullName?.split(' ')[0] ?? null;
   });
 
+  readonly isAuthenticated = computed(() => this.authService.isAuthenticated());
+  readonly currentYear = new Date().getFullYear();
+
   readonly landingContent = signal<LandingContentResponse | null>(null);
   readonly branding = signal<BrandingSettingsResponse | null>(null);
   readonly banners = signal<BannerResponse[]>([]);
   readonly staffMembers = signal<PublicStaffListItemResponse[]>([]);
+  readonly businessSchedule = signal<BusinessScheduleResponse | null>(null);
   readonly isLoading = signal(true);
   readonly errorMessage = signal<string | null>(null);
   readonly infoMessage = signal<string | null>(null);
+
+  readonly isOpenNow = computed<boolean>(() => {
+    const schedule = this.businessSchedule();
+    if (!schedule) return false;
+    const { dayOfWeek, minutesSinceMidnight } = getBogotaDayAndMinutes();
+    const today = schedule.days.find((d) => d.dayOfWeek === dayOfWeek);
+    if (!today?.isOpen || !today.openTime || !today.closeTime) return false;
+    return minutesSinceMidnight >= timeToMinutes(today.openTime) && minutesSinceMidnight < timeToMinutes(today.closeTime);
+  });
+
+  readonly formattedSchedule = computed<string>(() => {
+    const schedule = this.businessSchedule();
+    if (!schedule) return 'Lun–Sáb · 10–20h';
+    return formatSchedule(schedule.days);
+  });
 
   // Availability modal
   readonly activeStaff = signal<PublicStaffListItemResponse | null>(null);
@@ -114,6 +134,14 @@ export class LandingShellPageComponent implements OnInit {
 
   visibleServices(staffMember: PublicStaffListItemResponse) {
     return staffMember.services.filter((service) => service.isActive).slice(0, 3);
+  }
+
+  staffRoleSummary(member: PublicStaffListItemResponse): string {
+    return member.services
+      .filter((s) => s.isActive)
+      .slice(0, 2)
+      .map((s) => s.name)
+      .join(' · ');
   }
 
   formatRating(value: number): string {
@@ -184,12 +212,14 @@ export class LandingShellPageComponent implements OnInit {
 
     this.themeService.applyBranding(null);
 
-    const [landingResult, brandingResult, bannersResult, staffResult] = await Promise.allSettled([
-      firstValueFrom(this.publicContentApiService.getLanding()),
-      firstValueFrom(this.publicContentApiService.getBranding()),
-      firstValueFrom(this.publicContentApiService.getBanners()),
-      firstValueFrom(this.publicStaffApiService.list()),
-    ]);
+    const [landingResult, brandingResult, bannersResult, staffResult, scheduleResult] =
+      await Promise.allSettled([
+        firstValueFrom(this.publicContentApiService.getLanding()),
+        firstValueFrom(this.publicContentApiService.getBranding()),
+        firstValueFrom(this.publicContentApiService.getBanners()),
+        firstValueFrom(this.publicStaffApiService.list()),
+        firstValueFrom(this.publicContentApiService.getBusinessSchedule()),
+      ]);
 
     const failedSections: string[] = [];
 
@@ -220,6 +250,12 @@ export class LandingShellPageComponent implements OnInit {
     } else {
       this.staffMembers.set([]);
       failedSections.push('profesionales');
+    }
+
+    if (scheduleResult.status === 'fulfilled') {
+      this.businessSchedule.set(scheduleResult.value);
+    } else {
+      this.businessSchedule.set(null);
     }
 
     const hasAnyContent =
@@ -294,4 +330,83 @@ function toMapsEmbedUrl(raw: string): string | null {
   } catch {
     return null;
   }
+}
+
+// ── Business schedule helpers ────────────────────────────
+
+const DAY_LABELS_SHORT = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
+
+function getBogotaDayAndMinutes(): { dayOfWeek: number; minutesSinceMidnight: number } {
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'America/Bogota',
+    weekday: 'short',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  }).formatToParts(new Date());
+
+  const weekdayMap: Record<string, number> = {
+    Mon: 0, Tue: 1, Wed: 2, Thu: 3, Fri: 4, Sat: 5, Sun: 6,
+  };
+  const weekday = parts.find((p) => p.type === 'weekday')?.value ?? 'Mon';
+  const hour = parseInt(parts.find((p) => p.type === 'hour')?.value ?? '0', 10);
+  const minute = parseInt(parts.find((p) => p.type === 'minute')?.value ?? '0', 10);
+
+  return {
+    dayOfWeek: weekdayMap[weekday] ?? 0,
+    minutesSinceMidnight: (hour % 24) * 60 + minute,
+  };
+}
+
+function timeToMinutes(time: string): number {
+  const [h, m] = time.split(':').map(Number);
+  return h * 60 + (m ?? 0);
+}
+
+function formatHour(time: string): string {
+  const [h, m] = time.split(':').map(Number);
+  return m === 0 ? String(h) : `${String(h)}:${String(m).padStart(2, '0')}`;
+}
+
+function toConsecutiveRanges(sortedDays: number[]): string[] {
+  const ranges: string[] = [];
+  let i = 0;
+  while (i < sortedDays.length) {
+    let j = i;
+    while (j + 1 < sortedDays.length && sortedDays[j + 1] === sortedDays[j] + 1) j++;
+    ranges.push(
+      j > i
+        ? `${DAY_LABELS_SHORT[sortedDays[i]]}–${DAY_LABELS_SHORT[sortedDays[j]]}`
+        : DAY_LABELS_SHORT[sortedDays[i]],
+    );
+    i = j + 1;
+  }
+  return ranges;
+}
+
+function formatSchedule(days: BusinessScheduleDayResponse[]): string {
+  const openDays = days
+    .filter((d) => d.isOpen && d.openTime && d.closeTime)
+    .sort((a, b) => a.dayOfWeek - b.dayOfWeek);
+
+  if (!openDays.length) return 'Cerrado';
+
+  const groupMap = new Map<string, { days: number[]; open: string; close: string }>();
+  for (const day of openDays) {
+    const key = `${day.openTime}|${day.closeTime}`;
+    if (!groupMap.has(key)) {
+      groupMap.set(key, { days: [], open: day.openTime!, close: day.closeTime! });
+    }
+    groupMap.get(key)!.days.push(day.dayOfWeek);
+  }
+
+  const groups = [...groupMap.values()].sort((a, b) => a.days[0] - b.days[0]);
+  const parts: string[] = [];
+  for (const group of groups) {
+    const timeStr = `${formatHour(group.open)}–${formatHour(group.close)}h`;
+    for (const range of toConsecutiveRanges(group.days)) {
+      parts.push(`${range} ${timeStr}`);
+    }
+  }
+  return parts.join(' · ');
 }

@@ -171,6 +171,11 @@ export class AppShellComponent {
           route: '/admin/notifications',
           group: 'admin',
         },
+        {
+          label: 'Usuarios',
+          route: '/admin/users',
+          group: 'admin',
+        },
       );
     }
 

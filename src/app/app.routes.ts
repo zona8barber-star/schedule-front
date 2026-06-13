@@ -105,6 +105,16 @@ const loadAdminNotificationsPage = () =>
     './features/admin/notifications/pages/admin-notifications-page/admin-notifications-page.component'
   ).then((module) => module.AdminNotificationsPageComponent);
 
+const loadAdminBusinessHoursPage = () =>
+  import(
+    './features/admin/business-hours/pages/admin-business-hours-page/admin-business-hours-page.component'
+  ).then((module) => module.AdminBusinessHoursPageComponent);
+
+const loadAdminUsersListPage = () =>
+  import('./features/admin/users/pages/admin-users-list-page/admin-users-list-page.component').then(
+    (module) => module.AdminUsersListPageComponent,
+  );
+
 export const routes: Routes = [
   {
     path: '',
@@ -318,6 +328,15 @@ export const routes: Routes = [
     title: 'Banners',
   },
   {
+    path: 'admin/content/business-hours',
+    canActivate: [authGuard, roleGuard],
+    loadComponent: loadAdminBusinessHoursPage,
+    data: {
+      roles: [ROLE_NAMES.admin],
+    },
+    title: 'Horario de atención',
+  },
+  {
     path: 'admin/notifications',
     canActivate: [authGuard, roleGuard],
     loadComponent: loadAdminNotificationsPage,
@@ -325,6 +344,15 @@ export const routes: Routes = [
       roles: [ROLE_NAMES.admin],
     },
     title: 'Notificaciones',
+  },
+  {
+    path: 'admin/users',
+    canActivate: [authGuard, roleGuard],
+    loadComponent: loadAdminUsersListPage,
+    data: {
+      roles: [ROLE_NAMES.admin],
+    },
+    title: 'Usuarios',
   },
   {
     path: 'media',
