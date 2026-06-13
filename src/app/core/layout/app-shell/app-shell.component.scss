@@ -39,11 +39,11 @@
 }
 
 .app-shell__brand-logo {
-  width: 7.4rem;
+  width: 8.9rem;
   height: 4.3rem;
-  border-radius: 0;
-  border: none;
+  border-radius: 0.5rem;
   object-fit: contain;
+  background: #0e0e10;
 }
 
 .app-shell__nav {
@@ -232,18 +232,18 @@
   align-items: center;
   gap: 1.25rem;
   padding: 2.5rem 3rem;
-  background: var(--z-ink);
+  background: #0e0e10;
   border: 1px solid rgba(176, 138, 74, 0.3);
   border-radius: var(--radius-sharp);
   min-width: 11rem;
 }
 
 .app-shell__loader-logo {
-  width: 5rem;
+  width: 6rem;
   height: 5rem;
-  border-radius: 0;
-  border: none;
+  border-radius: 1rem;
   object-fit: contain;
+  background: #0e0e10;
   animation: loader-pulse 1.6s ease-in-out infinite;
 }
 
@@ -252,7 +252,7 @@
   font-weight: 600;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--z-bone);
+  color: rgba(255, 255, 255, 0.65);
   animation: loader-fade 1.6s ease-in-out infinite;
 }
 
@@ -446,10 +446,9 @@
   gap: 0.65rem;
   justify-items: center;
   padding: 1rem 1.5rem max(1.4rem, env(safe-area-inset-bottom));
-  color: var(--color-text-secondary);
+  color: rgba(255, 255, 255, 0.65);
   font-size: 0.9rem;
-  border-top: 1px solid var(--z-hairline-light);
-  background: var(--color-background-alt);
+  background: #0e0e10;
   text-align: center;
 }
 
@@ -459,23 +458,23 @@
   align-items: center;
   justify-content: center;
   gap: 0.45rem;
-  color: var(--color-text-secondary);
+  color: rgba(255, 255, 255, 0.65);
 }
 
 .app-shell__footer-logo {
-  width: 1.35rem;
-  height: 1.35rem;
-  border-radius: 0;
-  border: none;
+  width: 2.65rem;
+  height: 2.2rem;
+  border-radius: 0.35rem;
   object-fit: contain;
+  background: #0e0e10;
 }
 
 .app-shell__footer-line strong {
-  color: var(--color-text);
+  color: #fff;
 }
 
 .app-shell__footer-dot {
-  color: var(--color-text-muted);
+  color: rgba(255, 255, 255, 0.35);
 }
 
 .app-shell__footer-social {
@@ -676,8 +675,8 @@
   }
 
   .app-shell__brand-logo {
-    width: 6rem;
-    height: 3.4rem;
+    width: 7.4rem;
+    height: 3.6rem;
   }
 
   .app-shell__install {
