@@ -1,4 +1,10 @@
-<div class="app-shell" [class.app-shell--menu-open]="isMobileMenuOpen()">
+<div
+  class="app-shell"
+  [class.app-shell--menu-open]="isMobileMenuOpen()"
+  [class.app-shell--standalone]="isStandalone()"
+  [class.app-shell--standalone-tablet]="isStandalone() && isTablet()"
+>
+  @if (!isStandalone()) {
   <header class="app-shell__header">
     <a class="app-shell__brand" data-testid="brand" routerLink="/">
       <img class="app-shell__brand-logo" src="assets/images/logo.png" alt="Logo de la barberia" />
@@ -128,6 +134,7 @@
       }}</span>
     </button>
   </header>
+  }
 
   @if (httpActivityService.isLoading()) {
     <div class="app-shell__loader-overlay" role="status" aria-live="polite" aria-label="Cargando">
@@ -377,6 +384,54 @@
     </button>
   </nav>
 
+  @if (isStandalone() && isTablet()) {
+    <nav class="app-shell__side-rail" aria-label="Navegacion principal">
+      <a class="app-shell__side-rail-brand" routerLink="/">
+        <img class="app-shell__side-rail-logo" src="assets/images/logo.png" alt="Logo" />
+      </a>
+
+      <div class="app-shell__side-rail-links">
+        @for (link of bottomNavLinks(); track link.route) {
+          <a
+            class="app-shell__side-rail-item"
+            [routerLink]="link.route"
+            routerLinkActive="is-active"
+            [routerLinkActiveOptions]="{ exact: link.exact ?? false }"
+          >
+            {{ link.label }}
+          </a>
+        }
+        @if (adminMobileLinks().length) {
+          <hr class="app-shell__side-rail-divider" />
+          @for (link of adminMobileLinks(); track link.route) {
+            <a
+              class="app-shell__side-rail-item"
+              [routerLink]="link.route"
+              routerLinkActive="is-active"
+            >
+              {{ link.label }}
+            </a>
+          }
+        }
+      </div>
+
+      <div class="app-shell__side-rail-footer">
+        @if (authService.isAuthenticated()) {
+          <button
+            class="app-shell__side-rail-logout"
+            type="button"
+            [disabled]="isSigningOut()"
+            (click)="logout()"
+          >
+            {{ isSigningOut() ? 'Cerrando...' : 'Salir' }}
+          </button>
+        } @else {
+          <a class="app-shell__side-rail-logout" routerLink="/auth/login">Iniciar sesion</a>
+        }
+      </div>
+    </nav>
+  }
+
   <app-toast-outlet />
   <app-confirm-modal />
 
@@ -384,33 +439,35 @@
     <router-outlet></router-outlet>
   </main>
 
-  <footer class="app-shell__footer">
-    <div class="app-shell__footer-line">
-      <img class="app-shell__footer-logo" src="assets/images/logo.png" alt="Logo de la barberia" />
-      <strong>{{ configService.config().appName }}</strong>
-      <span class="app-shell__footer-dot">•</span>
-      <span> © Copyright {{ currentYear }} . Todos los derechos reservados.</span>
-      @if (contactDetails.length) {
+  @if (!isStandalone()) {
+    <footer class="app-shell__footer">
+      <div class="app-shell__footer-line">
+        <img class="app-shell__footer-logo" src="assets/images/logo.png" alt="Logo de la barberia" />
+        <strong>{{ configService.config().appName }}</strong>
         <span class="app-shell__footer-dot">•</span>
-        <span>{{ contactDetails.join(' | ') }}</span>
-      }
-    </div>
-
-    @if (socialLinks.length) {
-      <nav class="app-shell__footer-social" aria-label="Redes sociales">
-        @for (link of socialLinks; track link.href) {
-          <a
-            class="app-shell__footer-social-link"
-            [href]="link.href"
-            target="_blank"
-            rel="noreferrer"
-            [attr.aria-label]="link.label"
-            [title]="link.label"
-          >
-            <span aria-hidden="true">{{ link.icon }}</span>
-          </a>
+        <span> © Copyright {{ currentYear }} . Todos los derechos reservados.</span>
+        @if (contactDetails.length) {
+          <span class="app-shell__footer-dot">•</span>
+          <span>{{ contactDetails.join(' | ') }}</span>
         }
-      </nav>
-    }
-  </footer>
+      </div>
+
+      @if (socialLinks.length) {
+        <nav class="app-shell__footer-social" aria-label="Redes sociales">
+          @for (link of socialLinks; track link.href) {
+            <a
+              class="app-shell__footer-social-link"
+              [href]="link.href"
+              target="_blank"
+              rel="noreferrer"
+              [attr.aria-label]="link.label"
+              [title]="link.label"
+            >
+              <span aria-hidden="true">{{ link.icon }}</span>
+            </a>
+          }
+        </nav>
+      }
+    </footer>
+  }
 </div>
