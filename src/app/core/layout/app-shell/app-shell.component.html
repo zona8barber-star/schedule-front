@@ -439,19 +439,4 @@
     <router-outlet></router-outlet>
   </main>
 
-  <footer class="app-shell__footer">
-    <div class="app-shell__footer-line">
-      <img class="app-shell__footer-logo" src="assets/images/logo_black.jpeg" alt="Logo de la barberia" />
-      <strong>{{ configService.config().appName }}</strong>
-      <span class="app-shell__footer-dot">•</span>
-      <span> © Copyright {{ currentYear }} . Todos los derechos reservados.</span>
-      @if (contactDetails.length) {
-        <span class="app-shell__footer-dot">•</span>
-        <span> © Copyright {{ currentYear }} . Todos los derechos reservados.</span>
-        @if (contactDetails.length) {
-          <span class="app-shell__footer-dot">•</span>
-          <span>{{ contactDetails.join(' | ') }}</span>
-        }
-      </div>
-
 </div>

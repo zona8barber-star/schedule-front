@@ -110,6 +110,11 @@ const loadAdminBusinessHoursPage = () =>
     './features/admin/business-hours/pages/admin-business-hours-page/admin-business-hours-page.component'
   ).then((module) => module.AdminBusinessHoursPageComponent);
 
+const loadAdminUsersListPage = () =>
+  import('./features/admin/users/pages/admin-users-list-page/admin-users-list-page.component').then(
+    (module) => module.AdminUsersListPageComponent,
+  );
+
 export const routes: Routes = [
   {
     path: '',
@@ -339,6 +344,15 @@ export const routes: Routes = [
       roles: [ROLE_NAMES.admin],
     },
     title: 'Notificaciones',
+  },
+  {
+    path: 'admin/users',
+    canActivate: [authGuard, roleGuard],
+    loadComponent: loadAdminUsersListPage,
+    data: {
+      roles: [ROLE_NAMES.admin],
+    },
+    title: 'Usuarios',
   },
   {
     path: 'media',
