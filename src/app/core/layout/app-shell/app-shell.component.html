@@ -1,7 +1,7 @@
 <div class="app-shell" [class.app-shell--menu-open]="isMobileMenuOpen()">
   <header class="app-shell__header">
     <a class="app-shell__brand" data-testid="brand" routerLink="/">
-      <img class="app-shell__brand-logo" src="assets/images/logo.png" alt="Logo de la barberia" />
+      <img class="app-shell__brand-logo" src="assets/images/logo_black.jpeg" alt="Logo de la barberia" />
     </a>
 
     <nav class="app-shell__nav app-shell__nav--desktop" aria-label="Navegacion principal">
@@ -134,7 +134,7 @@
       <div class="app-shell__loader-card">
         <img
           class="app-shell__loader-logo"
-          src="assets/images/logo.png"
+          src="assets/images/logo_black.jpeg"
           alt="Logo de la barberia"
         />
         <span class="app-shell__loader-text">Cargando</span>
@@ -231,7 +231,7 @@
       <a class="app-shell__drawer-brand" routerLink="/" (click)="closeMobileMenu()">
         <img
           class="app-shell__drawer-logo"
-          src="assets/images/logo.png"
+          src="assets/images/logo_black.jpeg"
           alt="Logo de la barberia"
         />
         <span>{{ configService.config().appName }}</span>
@@ -386,7 +386,7 @@
 
   <footer class="app-shell__footer">
     <div class="app-shell__footer-line">
-      <img class="app-shell__footer-logo" src="assets/images/logo.png" alt="Logo de la barberia" />
+      <img class="app-shell__footer-logo" src="assets/images/logo_black.jpeg" alt="Logo de la barberia" />
       <strong>{{ configService.config().appName }}</strong>
       <span class="app-shell__footer-dot">•</span>
       <span> © Copyright {{ currentYear }} . Todos los derechos reservados.</span>
