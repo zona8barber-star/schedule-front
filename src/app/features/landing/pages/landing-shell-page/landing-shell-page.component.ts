@@ -10,6 +10,7 @@ import {
   LandingContentResponse,
   PublicStaffListItemResponse,
 } from '../../../../core/models/content.models';
+import { AuthService } from '../../../../core/services/auth.service';
 import { PublicAvailabilityApiService } from '../../../../core/services/public-availability-api.service';
 import { PublicContentApiService } from '../../../../core/services/public-content-api.service';
 import { PublicStaffApiService } from '../../../../core/services/public-staff-api.service';
@@ -37,6 +38,7 @@ export class LandingShellPageComponent implements OnInit {
     'Agenda 100% online',
   ];
   private readonly router = inject(Router);
+  private readonly authService = inject(AuthService);
   private readonly publicContentApiService = inject(PublicContentApiService);
   private readonly publicStaffApiService = inject(PublicStaffApiService);
   private readonly publicAvailabilityApiService = inject(PublicAvailabilityApiService);
@@ -47,6 +49,15 @@ export class LandingShellPageComponent implements OnInit {
     hour: '2-digit',
     minute: '2-digit',
     hour12: false,
+  });
+
+  readonly isStandalone = signal(
+    globalThis.window !== undefined && globalThis.window.matchMedia('(display-mode: standalone)').matches,
+  );
+
+  readonly greetingName = computed(() => {
+    const user = this.authService.currentUser();
+    return user?.fullName?.split(' ')[0] ?? null;
   });
 
   readonly landingContent = signal<LandingContentResponse | null>(null);

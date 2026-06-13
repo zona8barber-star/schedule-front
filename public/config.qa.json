@@ -3,5 +3,6 @@
   "appName": "Barbershop QA",
   "appUrl": "https://qa.example.com",
   "assetsBaseUrl": "https://qa.example.com/assets",
-  "environmentName": "QA"
+  "environmentName": "QA",
+  "vapidPublicKey": "BLYA9jx58Za9DiwTTc2RZ8RxbdyY0xQOjYhmB9GYU_GtHeRYJYxh-Y7PuswdSdiBv4yIX2slpCpmE2iN-LLH718"
 }
