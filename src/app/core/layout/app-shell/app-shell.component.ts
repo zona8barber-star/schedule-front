@@ -66,6 +66,15 @@ export class AppShellComponent {
 
   readonly roleNames = ROLE_NAMES;
   readonly isSigningOut = signal(false);
+
+  readonly isStandalone = signal(
+    globalThis.window !== undefined && globalThis.window.matchMedia('(display-mode: standalone)').matches,
+  );
+
+  readonly isTablet = signal(
+    globalThis.window !== undefined && globalThis.window.matchMedia('(min-width: 769px)').matches,
+  );
+
   readonly isInstallPrompting = signal(false);
   readonly isMobileMenuOpen = signal(false);
   readonly isUserMenuOpen = signal(false);
