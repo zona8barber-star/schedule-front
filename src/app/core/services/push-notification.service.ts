@@ -54,10 +54,15 @@ export class PushNotificationService {
     this.swPush.subscription.pipe(takeUntilDestroyed()).subscribe((subscription) => {
       this.subscription.set(subscription);
       this.permission.set(this.readPermission());
+
+      if (!subscription && this.readPermission() === 'granted') {
+        void this.resubscribeSilently();
+      }
     });
 
-    this.swPush.notificationClicks.pipe(takeUntilDestroyed()).subscribe(() => {
-      void this.router.navigateByUrl('/');
+    this.swPush.notificationClicks.pipe(takeUntilDestroyed()).subscribe(({ notification }) => {
+      const url = (notification.data as { url?: string } | null)?.url ?? '/';
+      void this.router.navigateByUrl(url);
     });
 
     effect(() => {
@@ -98,7 +103,7 @@ export class PushNotificationService {
           endpoint: keys.endpoint,
           p256dhKey: keys.p256dhKey,
           authKey: keys.authKey,
-          userAgent: this.hasBrowserContext ? window.navigator.userAgent : null,
+          userAgent: this.hasBrowserContext ? globalThis.navigator.userAgent : null,
         }),
       );
 
@@ -133,6 +138,38 @@ export class PushNotificationService {
       await firstValueFrom(this.notificationsApiService.unsubscribe({ endpoint }));
     } catch {
       // Best-effort: the subscription is already removed locally even if the server call fails.
+    }
+  }
+
+  private async resubscribeSilently(): Promise<void> {
+    const vapidPublicKey = this.runtimeConfigService.config().vapidPublicKey;
+    if (!vapidPublicKey) {
+      return;
+    }
+
+    try {
+      const subscription = await this.swPush.requestSubscription({ serverPublicKey: vapidPublicKey });
+      const keys = this.extractSubscriptionKeys(subscription);
+
+      if (!keys) {
+        await subscription.unsubscribe();
+        return;
+      }
+
+      await firstValueFrom(
+        this.notificationsApiService.subscribe({
+          endpoint: keys.endpoint,
+          p256dhKey: keys.p256dhKey,
+          authKey: keys.authKey,
+          userAgent: this.hasBrowserContext ? globalThis.navigator.userAgent : null,
+        }),
+      );
+
+      this.subscription.set(subscription);
+      this.dismissed.set(true);
+      this.persistDismissedFlag(true);
+    } catch {
+      // Silent failure: the user can re-enable manually if needed.
     }
   }
 

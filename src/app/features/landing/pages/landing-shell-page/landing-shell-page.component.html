@@ -1,3 +1,82 @@
+@if (isStandalone()) {
+  <div class="native-home">
+    <header class="native-home__hero">
+      <span class="native-home__watermark" aria-hidden="true">08</span>
+      <div class="native-home__hero-copy">
+        @if (greetingName()) {
+          <p class="native-home__greeting">Hola, {{ greetingName() }}</p>
+        }
+        <h1 class="native-home__title">
+          {{ landingContent()?.heroTitle || 'Barbería de oficio' }}
+        </h1>
+        <p class="native-home__meta">Abierto · Lun–Sáb 9–20h</p>
+      </div>
+    </header>
+
+    <div class="native-home__ticker" aria-hidden="true">
+      ✦ CORTES · DISEÑO · BARBA · AFEITADO · CORTES · DISEÑO · BARBA ✦
+    </div>
+
+    <section class="native-home__booking">
+      <h2 class="native-home__section-label">Reservar</h2>
+      <a class="native-home__cta" routerLink="/booking">Reserva tu turno →</a>
+    </section>
+
+    @if (staffMembers().length) {
+      <section class="native-home__team">
+        <h2 class="native-home__section-label">El Equipo</h2>
+        <div class="native-home__team-grid">
+          @for (member of staffMembers(); track member.staffProfileId) {
+            <a class="native-home__team-card" [routerLink]="['/staff', member.staffProfileId]">
+              @if (member.photoUrl) {
+                <img
+                  class="native-home__team-photo"
+                  [src]="member.photoUrl"
+                  [alt]="member.displayName"
+                  [title]="member.displayName"
+                />
+              } @else {
+                <div class="native-home__team-initials" aria-hidden="true">
+                  {{ member.displayName.charAt(0).toUpperCase() }}
+                </div>
+              }
+              <span class="native-home__team-name">{{ member.displayName }}</span>
+            </a>
+          }
+        </div>
+      </section>
+    }
+
+    @if (staffMembers().length && staffMembers()[0].services.length) {
+      <section class="native-home__services">
+        <h2 class="native-home__section-label">Servicios</h2>
+        <ul class="native-home__services-list">
+          @for (service of visibleServices(staffMembers()[0]); track service.id) {
+            <li class="native-home__services-item">
+              <span>{{ service.name }}</span>
+              <span class="native-home__services-price">${{ service.price }}</span>
+            </li>
+          }
+        </ul>
+        <a class="native-home__services-more" routerLink="/staff">ver todos →</a>
+      </section>
+    }
+
+    @if (landingContent()?.address) {
+      <footer class="native-home__address">
+        <span>📍 {{ landingContent()!.address }}</span>
+        @if (landingContent()?.mapsUrl) {
+          <a
+            class="native-home__address-link"
+            [href]="landingContent()!.mapsUrl!"
+            target="_blank"
+            rel="noopener noreferrer"
+          >Cómo llegar →</a>
+        }
+      </footer>
+    }
+  </div>
+} @else {
 <section class="landing-page">
   <header class="landing-page__hero">
     <span class="landing-page__hero-watermark" aria-hidden="true">8</span>
@@ -189,6 +268,7 @@
     </section>
   }
 </section>
+}
 
 @if (activeStaff()) {
   <div
