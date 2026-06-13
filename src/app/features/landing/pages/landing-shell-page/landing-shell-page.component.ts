@@ -60,6 +60,9 @@ export class LandingShellPageComponent implements OnInit {
     return user?.fullName?.split(' ')[0] ?? null;
   });
 
+  readonly isAuthenticated = computed(() => this.authService.isAuthenticated());
+  readonly currentYear = new Date().getFullYear();
+
   readonly landingContent = signal<LandingContentResponse | null>(null);
   readonly branding = signal<BrandingSettingsResponse | null>(null);
   readonly banners = signal<BannerResponse[]>([]);
@@ -114,6 +117,14 @@ export class LandingShellPageComponent implements OnInit {
 
   visibleServices(staffMember: PublicStaffListItemResponse) {
     return staffMember.services.filter((service) => service.isActive).slice(0, 3);
+  }
+
+  staffRoleSummary(member: PublicStaffListItemResponse): string {
+    return member.services
+      .filter((s) => s.isActive)
+      .slice(0, 2)
+      .map((s) => s.name)
+      .join(' · ');
   }
 
   formatRating(value: number): string {
