@@ -41,10 +41,9 @@
 .app-shell__brand-logo {
   width: 7.4rem;
   height: 4.3rem;
-  border-radius: 0.5rem;
-  border: 1px solid var(--z-hairline-dark);
-  object-fit: cover;
-  background: var(--color-surface);
+  border-radius: 0;
+  border: none;
+  object-fit: contain;
 }
 
 .app-shell__nav {
@@ -152,6 +151,27 @@
   border-color: rgba(176, 138, 74, 0.45);
 }
 
+.app-shell__button--entry {
+  background: transparent;
+  color: var(--z-bone);
+  border: 1px solid var(--z-hairline-dark);
+  border-radius: 0;
+  font-family: var(--z-font-display);
+  font-size: 0.88rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  min-height: 2.2rem;
+  padding: 0.5rem 1.1rem;
+}
+
+.app-shell__button--entry:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--z-bone);
+  border-color: rgba(255, 255, 255, 0.22);
+  transform: none;
+}
+
 .app-shell__menu-toggle {
   display: none;
   align-items: center;
@@ -215,10 +235,9 @@
 .app-shell__loader-logo {
   width: 5rem;
   height: 5rem;
-  border-radius: 1rem;
-  border: 2px solid rgba(176, 138, 74, 0.45);
-  object-fit: cover;
-  background: var(--color-surface);
+  border-radius: 0;
+  border: none;
+  object-fit: contain;
   animation: loader-pulse 1.6s ease-in-out infinite;
 }
 
@@ -371,10 +390,9 @@
 .app-shell__drawer-logo {
   width: 1.9rem;
   height: 1.9rem;
-  border-radius: 0.5rem;
-  border: 1px solid var(--z-hairline-light);
-  object-fit: cover;
-  background: var(--color-background-alt);
+  border-radius: 0;
+  border: none;
+  object-fit: contain;
 }
 
 .app-shell__drawer-group,
@@ -441,10 +459,9 @@
 .app-shell__footer-logo {
   width: 1.35rem;
   height: 1.35rem;
-  border-radius: 0.35rem;
-  border: 1px solid var(--z-hairline-light);
-  object-fit: cover;
-  background: var(--color-surface);
+  border-radius: 0;
+  border: none;
+  object-fit: contain;
 }
 
 .app-shell__footer-line strong {
@@ -653,8 +670,8 @@
   }
 
   .app-shell__brand-logo {
-    width: 6.2rem;
-    height: 3.6rem;
+    width: 6rem;
+    height: 3.4rem;
   }
 
   .app-shell__install {
