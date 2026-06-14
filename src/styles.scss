@@ -19,6 +19,8 @@ body {
   color: var(--color-text);
   font-family: var(--z-font-body);
   overflow-x: hidden;
+  overscroll-behavior-y: none;
+  -webkit-tap-highlight-color: transparent;
 }
 
 *,
