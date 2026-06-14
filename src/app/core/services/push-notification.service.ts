@@ -22,6 +22,13 @@ interface SubscriptionKeys {
 export class PushNotificationService {
   private readonly hasBrowserContext = typeof window !== 'undefined';
   private readonly hasNotificationApi = this.hasBrowserContext && 'Notification' in window;
+  private readonly isIOS =
+    this.hasBrowserContext &&
+    /iPad|iPhone|iPod/.test(globalThis.navigator?.userAgent ?? '') &&
+    !(globalThis.window as unknown as { MSStream?: unknown }).MSStream;
+  private readonly isStandaloneMode =
+    this.hasBrowserContext &&
+    globalThis.window.matchMedia('(display-mode: standalone)').matches;
 
   private readonly swPush = inject(SwPush);
   private readonly runtimeConfigService = inject(RuntimeConfigService);
@@ -43,7 +50,9 @@ export class PushNotificationService {
       this.authService.isAuthenticated() &&
       this.permission() === 'default' &&
       !this.subscription() &&
-      !this.dismissed(),
+      !this.dismissed() &&
+      // iOS solo soporta push cuando la app está instalada (standalone)
+      (!this.isIOS || this.isStandaloneMode),
   );
 
   constructor() {
@@ -84,6 +93,22 @@ export class PushNotificationService {
 
     const vapidPublicKey = this.runtimeConfigService.config().vapidPublicKey;
     if (!vapidPublicKey) {
+      return false;
+    }
+
+    // iOS Safari (y algunos navegadores) requieren llamar requestPermission()
+    // explícitamente antes de crear una suscripción push.
+    // SwPush.requestSubscription() no hace este paso por su cuenta.
+    if (this.hasNotificationApi && Notification.permission === 'default') {
+      const granted = await Notification.requestPermission();
+      this.permission.set(granted);
+      if (granted !== 'granted') {
+        return false;
+      }
+    }
+
+    if (this.hasNotificationApi && Notification.permission === 'denied') {
+      this.permission.set('denied');
       return false;
     }
 

@@ -1,4 +1,6 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { fromEvent } from 'rxjs';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { Router, RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
@@ -52,9 +54,12 @@ export class LandingShellPageComponent implements OnInit {
     hour12: false,
   });
 
-  readonly isStandalone = signal(
-    globalThis.window !== undefined && globalThis.window.matchMedia('(display-mode: standalone)').matches,
-  );
+  private readonly standaloneQuery =
+    globalThis.window !== undefined
+      ? globalThis.window.matchMedia('(display-mode: standalone)')
+      : null;
+
+  readonly isStandalone = signal(this.standaloneQuery?.matches ?? false);
 
   readonly greetingName = computed(() => {
     const user = this.authService.currentUser();
@@ -127,6 +132,14 @@ export class LandingShellPageComponent implements OnInit {
     if (!phone) return null;
     return toWhatsappUrl(phone);
   });
+
+  constructor() {
+    if (this.standaloneQuery) {
+      fromEvent<MediaQueryListEvent>(this.standaloneQuery, 'change')
+        .pipe(takeUntilDestroyed())
+        .subscribe((e) => this.isStandalone.set(e.matches));
+    }
+  }
 
   async ngOnInit(): Promise<void> {
     await this.loadLanding();

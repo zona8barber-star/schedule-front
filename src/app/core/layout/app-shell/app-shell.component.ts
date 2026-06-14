@@ -2,7 +2,7 @@ import { DOCUMENT } from '@angular/common';
 import { Component, ElementRef, HostListener, computed, effect, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
-import { filter } from 'rxjs';
+import { filter, fromEvent } from 'rxjs';
 
 import { ConfirmModalComponent } from '../../../shared/components/confirm-modal/confirm-modal.component';
 import { ToastOutletComponent } from '../../../shared/components/toast-outlet/toast-outlet.component';
@@ -67,13 +67,18 @@ export class AppShellComponent {
   readonly roleNames = ROLE_NAMES;
   readonly isSigningOut = signal(false);
 
-  readonly isStandalone = signal(
-    globalThis.window !== undefined && globalThis.window.matchMedia('(display-mode: standalone)').matches,
-  );
+  private readonly standaloneQuery =
+    globalThis.window !== undefined
+      ? globalThis.window.matchMedia('(display-mode: standalone)')
+      : null;
 
-  readonly isTablet = signal(
-    globalThis.window !== undefined && globalThis.window.matchMedia('(min-width: 769px)').matches,
-  );
+  private readonly tabletQuery =
+    globalThis.window !== undefined
+      ? globalThis.window.matchMedia('(min-width: 769px)')
+      : null;
+
+  readonly isStandalone = signal(this.standaloneQuery?.matches ?? false);
+  readonly isTablet = signal(this.tabletQuery?.matches ?? false);
 
   readonly isInstallPrompting = signal(false);
   readonly isMobileMenuOpen = signal(false);
@@ -211,7 +216,7 @@ export class AppShellComponent {
       );
     }
 
-    return links.slice(0, 4);
+    return links.slice(0, 3);
   });
 
   readonly userDropdownCustomerLinks = computed(() =>
@@ -254,6 +259,18 @@ export class AppShellComponent {
         this.closeMobileMenu();
         this.closeUserMenu();
       });
+
+    if (this.standaloneQuery) {
+      fromEvent<MediaQueryListEvent>(this.standaloneQuery, 'change')
+        .pipe(takeUntilDestroyed())
+        .subscribe((e) => this.isStandalone.set(e.matches));
+    }
+
+    if (this.tabletQuery) {
+      fromEvent<MediaQueryListEvent>(this.tabletQuery, 'change')
+        .pipe(takeUntilDestroyed())
+        .subscribe((e) => this.isTablet.set(e.matches));
+    }
 
     effect(() => {
       if (this.connectivityService.justReconnected()) {
