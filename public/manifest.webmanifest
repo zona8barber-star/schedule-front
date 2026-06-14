@@ -1,9 +1,11 @@
 {
   "name": "Zona 8",
   "short_name": "Zona 8",
+  "lang": "es",
   "display": "standalone",
-  "scope": "./",
-  "start_url": "./",
+  "orientation": "portrait",
+  "scope": "/",
+  "start_url": "/",
   "theme_color": "#0e0e10",
   "background_color": "#0e0e10",
   "icons": [

@@ -69,6 +69,10 @@
   margin: 10px 0 0;
 }
 
+.auth__disp-break {
+  display: inline;
+}
+
 // ── Card wrap ──────────────────────────────────────────────────────
 .auth__card-wrap {
   margin-top: -28px;
@@ -364,12 +368,85 @@
 }
 
 // ── Responsive ─────────────────────────────────────────────────────
-@media (max-width: 520px) {
+
+// A ≤720px el app-shell cambia padding-inline de 1.5rem a 1rem.
+// El margin: -1.5rem del .auth debe ajustarse para no desbordarse.
+@media (max-width: 720px) {
+  .auth {
+    margin: -1.5rem -1rem;
+  }
+}
+
+@media (max-width: 600px) {
   .auth__wrap {
-    padding: 0 1.25rem;
+    padding: 0 1rem;
   }
 
+  // Hero compacto
+  .auth__hero-in {
+    padding-top: 1.5rem;
+    padding-bottom: 2rem;
+  }
+
+  .auth__hero-in h1 {
+    font-size: 1.9rem;
+    margin-top: 6px;
+    line-height: 1;
+  }
+
+  .auth__disp-break {
+    display: none;
+  }
+
+  .auth__wm {
+    font-size: 7rem;
+    top: -8px;
+    right: -4px;
+    opacity: 0.6;
+  }
+
+  // Card ajustada al ancho del móvil
   .auth-card {
-    padding: 22px 18px;
+    padding: 20px 16px;
+  }
+
+  .auth__card-wrap {
+    padding-bottom: 2rem;
+  }
+
+  // Campos más compactos
+  .auth-stack form {
+    gap: 12px;
+  }
+
+  .auth-field input {
+    padding: 11px 14px;
+    font-size: 1rem;
+  }
+
+  .auth-input-action {
+    width: 2.5rem;
+  }
+
+  // Submit full width con buen touch target
+  .auth-submit {
+    padding: 0.95rem 1rem;
+    font-size: 0.88rem;
+  }
+
+  // Footer compacto
+  .auth__foot {
+    padding: 20px 0;
+  }
+
+  .auth__foot-in {
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    text-align: center;
+  }
+
+  .auth__foot-logo {
+    height: 26px;
   }
 }

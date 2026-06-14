@@ -62,19 +62,6 @@
       </section>
     }
 
-    @if (landingContent()?.address) {
-      <footer class="native-home__address">
-        <span>📍 {{ landingContent()!.address }}</span>
-        @if (landingContent()?.mapsUrl) {
-          <a
-            class="native-home__address-link"
-            [href]="landingContent()!.mapsUrl!"
-            target="_blank"
-            rel="noopener noreferrer"
-          >Cómo llegar →</a>
-        }
-      </footer>
-    }
   </div>
 } @else {
 

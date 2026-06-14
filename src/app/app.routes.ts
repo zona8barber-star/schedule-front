@@ -122,7 +122,7 @@ export const routes: Routes = [
       import('./features/landing/pages/landing-shell-page/landing-shell-page.component').then(
         (module) => module.LandingShellPageComponent,
       ),
-    title: 'Barbershop',
+    title: 'Zona 8',
   },
   {
     path: 'public',
