@@ -1,17 +1,3 @@
-@if (isStandalone()) {
-  <app-native-home
-    [greetingName]="greetingName()"
-    [landingContent]="landingContent()"
-    [isOpenNow]="isOpenNow()"
-    [formattedSchedule]="formattedSchedule()"
-    [staffMembers]="staffMembers()"
-    [activeBanners]="activeBanners()"
-    [isLoading]="isLoading()"
-    [whatsappUrl]="whatsappUrl()"
-    (bookStaff)="openAvailabilityModal($event)"
-  />
-} @else {
-
 <!-- ════════════════════════════════════════════════════════════════
      WEB LANDING — rediseño editorial Zona 8 (Inicio.html)
      ════════════════════════════════════════════════════════════════ -->
@@ -284,7 +270,6 @@
   </footer>
 
 </div>
-}
 
 <!-- MODAL de disponibilidad ──────────────────────────────────── -->
 @if (activeStaff()) {
