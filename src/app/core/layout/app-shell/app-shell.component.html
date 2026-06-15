@@ -4,7 +4,6 @@
   [class.app-shell--standalone]="isStandalone()"
   [class.app-shell--standalone-tablet]="isStandalone() && isTablet()"
 >
-  @if (!isStandalone()) {
   <header class="app-shell__header">
     <a class="app-shell__brand" data-testid="brand" routerLink="/">
       <img class="app-shell__brand-logo" src="assets/images/logo_black.jpeg" alt="Logo de la barberia" />
@@ -134,7 +133,6 @@
       }}</span>
     </button>
   </header>
-  }
 
   @if (httpActivityService.isLoading()) {
     <div class="app-shell__loader-overlay" role="status" aria-live="polite" aria-label="Cargando">

@@ -13,6 +13,12 @@
   -webkit-font-smoothing: antialiased;
 }
 
+@media (display-mode: standalone) {
+  .lp__foot {
+    display: none;
+  }
+}
+
 // ── Contenedor centrado ───────────────────────────────────────────
 .lp__wrap {
   max-width: 1280px;

@@ -18,6 +18,10 @@ import { AuthApiService } from './auth-api.service';
 // Avoids a network round-trip on page load for anonymous users.
 const sessionFlagStorageKey = 'barbershop.auth.session';
 
+// Refresh token en localStorage: fallback para iOS standalone donde las cookies
+// cross-origin son bloqueadas por ITP. El backend lo acepta también desde el body.
+const refreshTokenStorageKey = 'barbershop.auth.rt';
+
 // Legacy keys — kept only for cleanup of values written by older app versions.
 const legacyAccessTokenKey = 'barbershop.auth.accessToken';
 const legacyRefreshTokenKey = 'barbershop.auth.refreshToken';
@@ -195,7 +199,8 @@ export class AuthService {
 
   private async refreshSession(): Promise<string | null> {
     try {
-      const response = await firstValueFrom(this.authApiService.refresh());
+      const storedRefreshToken = this.readStorage(refreshTokenStorageKey);
+      const response = await firstValueFrom(this.authApiService.refresh(storedRefreshToken));
       this.applySession(response);
       return response.accessToken;
     } catch {
@@ -211,6 +216,10 @@ export class AuthService {
     this.errorState.set(null);
 
     this.writeStorage(sessionFlagStorageKey, '1');
+
+    if (response.refreshToken) {
+      this.writeStorage(refreshTokenStorageKey, response.refreshToken);
+    }
   }
 
   private clearSession(clearError = false): void {
@@ -219,6 +228,7 @@ export class AuthService {
     this.statusState.set('anonymous');
 
     this.writeStorage(sessionFlagStorageKey, null);
+    this.writeStorage(refreshTokenStorageKey, null);
     // Remove any tokens written by older versions of the app.
     this.writeStorage(legacyAccessTokenKey, null);
     this.writeStorage(legacyRefreshTokenKey, null);
