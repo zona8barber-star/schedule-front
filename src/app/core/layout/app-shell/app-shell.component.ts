@@ -2,6 +2,7 @@ import { DOCUMENT } from '@angular/common';
 import { Component, ElementRef, HostListener, computed, effect, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { SwUpdate, VersionReadyEvent } from '@angular/service-worker';
 import { filter, fromEvent } from 'rxjs';
 
 import { ConfirmModalComponent } from '../../../shared/components/confirm-modal/confirm-modal.component';
@@ -15,6 +16,7 @@ import { RuntimeConfigService } from '../../config/runtime-config.service';
 import { ROLE_NAMES } from '../../models/auth.models';
 import { AuthService } from '../../services/auth.service';
 import { ConnectivityService } from '../../services/connectivity.service';
+import { ConfirmModalService } from '../../services/confirm-modal.service';
 import { HttpActivityService } from '../../services/http-activity.service';
 import { InstallPromptService } from '../../services/install-prompt.service';
 import { PushNotificationService } from '../../services/push-notification.service';
@@ -62,6 +64,8 @@ export class AppShellComponent {
   readonly pushNotificationService = inject(PushNotificationService);
   readonly connectivityService = inject(ConnectivityService);
 
+  private readonly swUpdate = inject(SwUpdate);
+  private readonly confirmModalService = inject(ConfirmModalService);
   private readonly toastService = inject(ToastService);
 
   readonly roleNames = ROLE_NAMES;
@@ -288,6 +292,24 @@ export class AppShellComponent {
         this.connectivityService.acknowledgeReconnect();
       }
     });
+
+    if (this.swUpdate.isEnabled) {
+      // Verificar actualizaciones cada vez que el usuario vuelve a la pestaña.
+      fromEvent(this.document, 'visibilitychange')
+        .pipe(
+          filter(() => !this.document.hidden),
+          takeUntilDestroyed(),
+        )
+        .subscribe(() => void this.swUpdate.checkForUpdate());
+
+      // Cuando el SW ya descargó la nueva versión, ofrecer recargar.
+      this.swUpdate.versionUpdates
+        .pipe(
+          filter((evt): evt is VersionReadyEvent => evt.type === 'VERSION_READY'),
+          takeUntilDestroyed(),
+        )
+        .subscribe(() => void this.promptSwUpdate());
+    }
   }
 
   @HostListener('document:keydown.escape')
@@ -357,12 +379,12 @@ export class AppShellComponent {
   }
 
   async enablePushNotifications(): Promise<void> {
-    const enabled = await this.pushNotificationService.enable();
+    const error = await this.pushNotificationService.enable();
 
-    if (enabled) {
+    if (error === null) {
       this.toastService.success('Notificaciones activadas');
-    } else {
-      this.toastService.error('No se pudieron activar las notificaciones');
+    } else if (error) {
+      this.toastService.error(error);
     }
   }
 
@@ -379,6 +401,20 @@ export class AppShellComponent {
       await this.router.navigateByUrl('/auth/login', { replaceUrl: true });
     } finally {
       this.isSigningOut.set(false);
+    }
+  }
+
+  private async promptSwUpdate(): Promise<void> {
+    const confirmed = await this.confirmModalService.confirm({
+      title: 'Nueva versión disponible',
+      message: '¿Querés recargar la app para aplicar la actualización?',
+      confirmLabel: 'Actualizar',
+      cancelLabel: 'Más tarde',
+    });
+
+    if (confirmed) {
+      await this.swUpdate.activateUpdate();
+      this.document.location.reload();
     }
   }
 
