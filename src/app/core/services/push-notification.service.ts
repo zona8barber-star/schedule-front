@@ -137,7 +137,8 @@ export class PushNotificationService {
       this.dismissed.set(true);
       this.persistDismissedFlag(true);
       return true;
-    } catch {
+    } catch (err) {
+      console.error('[Push] requestSubscription failed:', err);
       this.permission.set(this.readPermission());
       return false;
     } finally {

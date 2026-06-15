@@ -162,3 +162,22 @@ textarea::placeholder {
   text-decoration: underline;
 }
 
+/* ── Standalone PWA: hide page-level footers ─────────────────────────── */
+.app-shell--standalone footer {
+  display: none;
+}
+
+/* ── Standalone phone: push hero text below the iOS status bar ──────── */
+/* These pages use margin:-1.5rem to go full-bleed, so the safe area must
+   be handled inside their own hero padding. The specificity 0-3-0 here
+   beats the Angular-scoped component rule (0-2-0) without !important.   */
+.app-shell--standalone:not(.app-shell--standalone-tablet) {
+  .auth__hero-in {
+    padding-top: max(2.5rem, calc(env(safe-area-inset-top) + 0.5rem));
+  }
+
+  .ps__hero-in {
+    padding-top: max(3rem, calc(env(safe-area-inset-top) + 0.5rem));
+  }
+}
+

@@ -198,11 +198,19 @@ export class AppShellComponent {
   // Curated set for the mobile bottom tab bar: a stable, role-aware shortlist of the
   // sections people reach for constantly. Anything else stays in the "Menu" drawer.
   readonly bottomNavLinks = computed<BottomNavLink[]>(() => {
+    const standalone = this.isStandalone();
+
     const links: BottomNavLink[] = [
       { label: 'Inicio', route: '/', exact: true, icon: 'home' },
-      { label: 'Reservar', route: '/booking', exact: true, icon: 'booking' },
-      { label: 'Equipo', route: '/staff', exact: true, icon: 'staff' },
     ];
+
+    // En modo instalado "Reservar" se accede desde el home nativo; se omite
+    // para liberar espacio para los enlaces de rol del usuario.
+    if (!standalone) {
+      links.push({ label: 'Reservar', route: '/booking', exact: true, icon: 'booking' });
+    }
+
+    links.push({ label: 'Equipo', route: '/staff', exact: true, icon: 'staff' });
 
     if (this.authService.hasRole(this.roleNames.customer)) {
       links.push(
@@ -216,7 +224,9 @@ export class AppShellComponent {
       );
     }
 
-    return links.slice(0, 3);
+    // Standalone: hasta 4 ítems (sin "Reservar" hay espacio para los de rol).
+    // Browser: 3 ítems (comportamiento original).
+    return links.slice(0, standalone ? 4 : 3);
   });
 
   readonly userDropdownCustomerLinks = computed(() =>
