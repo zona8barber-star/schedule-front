@@ -15,7 +15,7 @@
  */
 
 import { execFileSync } from 'node:child_process';
-import { writeFileSync } from 'node:fs';
+import { readFileSync, writeFileSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -41,19 +41,32 @@ if (!env) {
 
 const apiBaseUrl = process.env.RUNTIME_API_BASE_URL;
 if (apiBaseUrl) {
+  const configPath = resolve(ROOT, `public/config.${env}.json`);
+
+  // Leer el archivo base del repo para preservar claves que no vienen de env vars
+  // (ej: vapidPublicKey). Las env vars sobreescriben; el resto queda intacto.
+  let baseConfig = {};
+  try {
+    baseConfig = JSON.parse(readFileSync(configPath, 'utf8'));
+  } catch {
+    // El archivo no existe aún — se crea desde cero.
+  }
+
   const config = {
+    ...baseConfig,
     apiBaseUrl,
-    appName: process.env.RUNTIME_APP_NAME ?? 'Barbershop',
-    appUrl: process.env.RUNTIME_APP_URL ?? '',
-    assetsBaseUrl: process.env.RUNTIME_ASSETS_BASE_URL ?? '',
-    environmentName: process.env.RUNTIME_ENVIRONMENT_NAME ?? env,
+    appName: process.env.RUNTIME_APP_NAME ?? baseConfig.appName ?? 'Barbershop',
+    appUrl: process.env.RUNTIME_APP_URL ?? baseConfig.appUrl ?? '',
+    assetsBaseUrl: process.env.RUNTIME_ASSETS_BASE_URL ?? baseConfig.assetsBaseUrl ?? '',
+    environmentName: process.env.RUNTIME_ENVIRONMENT_NAME ?? baseConfig.environmentName ?? env,
     ...(process.env.RUNTIME_VAPID_PUBLIC_KEY
       ? { vapidPublicKey: process.env.RUNTIME_VAPID_PUBLIC_KEY }
       : {}),
   };
-  const configPath = resolve(ROOT, `public/config.${env}.json`);
+
   writeFileSync(configPath, JSON.stringify(config, null, 2) + '\n', 'utf8');
   console.log(`[vercel-build] Wrote runtime config → ${configPath}`);
+  console.log(`[vercel-build] vapidPublicKey: ${config.vapidPublicKey ? 'present' : 'MISSING — add RUNTIME_VAPID_PUBLIC_KEY to Vercel env vars'}`);
 }
 
 console.log(`[vercel-build] Building with configuration: ${env}`);
