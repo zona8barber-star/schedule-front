@@ -1,6 +1,4 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { fromEvent } from 'rxjs';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { Router, RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
@@ -22,7 +20,6 @@ import { ThemeService } from '../../../../core/services/theme.service';
 import { getApiErrorMessage } from '../../../../core/utils/api-error.utils';
 import { ApiFeedbackComponent } from '../../../../shared/components/api-feedback/api-feedback.component';
 import { PageStateComponent } from '../../../../shared/components/page-state/page-state.component';
-import { NativeHomeComponent } from './native-home.component';
 
 function todayIso(): string {
   return new Date().toISOString().slice(0, 10);
@@ -30,7 +27,7 @@ function todayIso(): string {
 
 @Component({
   selector: 'app-landing-shell-page',
-  imports: [RouterLink, ApiFeedbackComponent, PageStateComponent, NativeHomeComponent],
+  imports: [RouterLink, ApiFeedbackComponent, PageStateComponent],
   templateUrl: './landing-shell-page.component.html',
   styleUrl: './landing-shell-page.component.scss',
 })
@@ -53,18 +50,6 @@ export class LandingShellPageComponent implements OnInit {
     hour: '2-digit',
     minute: '2-digit',
     hour12: false,
-  });
-
-  private readonly standaloneQuery =
-    globalThis.window !== undefined
-      ? globalThis.window.matchMedia('(display-mode: standalone)')
-      : null;
-
-  readonly isStandalone = signal(this.standaloneQuery?.matches ?? false);
-
-  readonly greetingName = computed(() => {
-    const user = this.authService.currentUser();
-    return user?.fullName?.split(' ')[0] ?? null;
   });
 
   readonly isAuthenticated = computed(() => this.authService.isAuthenticated());
@@ -133,14 +118,6 @@ export class LandingShellPageComponent implements OnInit {
     if (!phone) return null;
     return toWhatsappUrl(phone);
   });
-
-  constructor() {
-    if (this.standaloneQuery) {
-      fromEvent<MediaQueryListEvent>(this.standaloneQuery, 'change')
-        .pipe(takeUntilDestroyed())
-        .subscribe((e) => this.isStandalone.set(e.matches));
-    }
-  }
 
   async ngOnInit(): Promise<void> {
     await this.loadLanding();

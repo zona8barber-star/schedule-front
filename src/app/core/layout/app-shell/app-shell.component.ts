@@ -3,7 +3,7 @@ import { Component, ElementRef, HostListener, computed, effect, inject, signal }
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { SwUpdate, VersionReadyEvent } from '@angular/service-worker';
-import { filter, fromEvent } from 'rxjs';
+import { filter, fromEvent, interval } from 'rxjs';
 
 import { ConfirmModalComponent } from '../../../shared/components/confirm-modal/confirm-modal.component';
 import { ToastOutletComponent } from '../../../shared/components/toast-outlet/toast-outlet.component';
@@ -16,7 +16,6 @@ import { RuntimeConfigService } from '../../config/runtime-config.service';
 import { ROLE_NAMES } from '../../models/auth.models';
 import { AuthService } from '../../services/auth.service';
 import { ConnectivityService } from '../../services/connectivity.service';
-import { ConfirmModalService } from '../../services/confirm-modal.service';
 import { HttpActivityService } from '../../services/http-activity.service';
 import { InstallPromptService } from '../../services/install-prompt.service';
 import { PushNotificationService } from '../../services/push-notification.service';
@@ -65,7 +64,6 @@ export class AppShellComponent {
   readonly connectivityService = inject(ConnectivityService);
 
   private readonly swUpdate = inject(SwUpdate);
-  private readonly confirmModalService = inject(ConfirmModalService);
   private readonly toastService = inject(ToastService);
 
   readonly roleNames = ROLE_NAMES;
@@ -294,7 +292,6 @@ export class AppShellComponent {
     });
 
     if (this.swUpdate.isEnabled) {
-      // Verificar actualizaciones cada vez que el usuario vuelve a la pestaña.
       fromEvent(this.document, 'visibilitychange')
         .pipe(
           filter(() => !this.document.hidden),
@@ -302,13 +299,17 @@ export class AppShellComponent {
         )
         .subscribe(() => void this.swUpdate.checkForUpdate());
 
-      // Cuando el SW ya descargó la nueva versión, ofrecer recargar.
+      // Chequeo periódico cada 5 min — necesario en iOS donde visibilitychange no dispara confiablemente en standalone.
+      interval(5 * 60 * 1000)
+        .pipe(takeUntilDestroyed())
+        .subscribe(() => void this.swUpdate.checkForUpdate());
+
       this.swUpdate.versionUpdates
         .pipe(
           filter((evt): evt is VersionReadyEvent => evt.type === 'VERSION_READY'),
           takeUntilDestroyed(),
         )
-        .subscribe(() => void this.promptSwUpdate());
+        .subscribe(() => void this.applySwUpdate());
     }
   }
 
@@ -404,18 +405,9 @@ export class AppShellComponent {
     }
   }
 
-  private async promptSwUpdate(): Promise<void> {
-    const confirmed = await this.confirmModalService.confirm({
-      title: 'Nueva versión disponible',
-      message: '¿Querés recargar la app para aplicar la actualización?',
-      confirmLabel: 'Actualizar',
-      cancelLabel: 'Más tarde',
-    });
-
-    if (confirmed) {
-      await this.swUpdate.activateUpdate();
-      this.document.location.reload();
-    }
+  private async applySwUpdate(): Promise<void> {
+    await this.swUpdate.activateUpdate();
+    this.document.location.reload();
   }
 
   private setScrollLock(isLocked: boolean): void {
