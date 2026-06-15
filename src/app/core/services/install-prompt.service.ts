@@ -12,7 +12,9 @@ interface BeforeInstallPromptEvent extends Event {
   userChoice: Promise<InstallPromptChoice>;
 }
 
-const installPromptDismissedStorageKey = 'barbershop.installPrompt.dismissed';
+const SNOOZE_KEY = 'barbershop.installPrompt.snoozedUntil';
+const INSTALLED_KEY = 'barbershop.installPrompt.installed';
+const SNOOZE_DAYS = 3;
 
 @Injectable({
   providedIn: 'root',
@@ -20,15 +22,19 @@ const installPromptDismissedStorageKey = 'barbershop.installPrompt.dismissed';
 export class InstallPromptService {
   private readonly hasBrowserContext = typeof window !== 'undefined';
   private readonly deferredPromptEvent = signal<BeforeInstallPromptEvent | null>(null);
-  private readonly dismissed = signal(false);
+  private readonly snoozed = signal(false);
+  private readonly installed = signal(false);
 
-  // True when the app is already running as an installed PWA (standalone display mode,
-  // or the legacy `navigator.standalone` flag on iOS Safari).
   readonly isStandalone = signal(this.detectStandaloneMode());
-
+  readonly isIos = signal(this.detectIos());
   readonly isInstallAvailable = computed(() => this.deferredPromptEvent() !== null);
+
   readonly shouldShowPrompt = computed(
-    () => this.isInstallAvailable() && !this.dismissed() && !this.isStandalone(),
+    () =>
+      !this.isStandalone() &&
+      !this.snoozed() &&
+      !this.installed() &&
+      (this.isIos() || this.isInstallAvailable()),
   );
 
   constructor() {
@@ -36,7 +42,8 @@ export class InstallPromptService {
       return;
     }
 
-    this.dismissed.set(this.readDismissedFlag());
+    this.snoozed.set(this.readSnoozed());
+    this.installed.set(this.readInstalled());
 
     window
       .matchMedia('(display-mode: standalone)')
@@ -49,30 +56,31 @@ export class InstallPromptService {
 
     window.addEventListener('appinstalled', () => {
       this.deferredPromptEvent.set(null);
-      this.dismissed.set(true);
-      this.persistDismissedFlag(true);
+      this.installed.set(true);
+      this.persistInstalled();
     });
   }
 
   dismissPrompt(): void {
-    this.dismissed.set(true);
-    this.persistDismissedFlag(true);
+    const until = Date.now() + SNOOZE_DAYS * 86_400_000;
+    this.snoozed.set(true);
+    this.persistSnooze(until);
   }
 
   async promptInstall(): Promise<void> {
-    const installPromptEvent = this.deferredPromptEvent();
-    if (!installPromptEvent) {
+    const event = this.deferredPromptEvent();
+    if (!event) {
       return;
     }
 
-    await installPromptEvent.prompt();
-
-    const choice = await installPromptEvent.userChoice;
-    const accepted = choice.outcome === 'accepted';
-
+    await event.prompt();
+    const choice = await event.userChoice;
     this.deferredPromptEvent.set(null);
-    this.dismissed.set(accepted);
-    this.persistDismissedFlag(accepted);
+
+    if (choice.outcome === 'accepted') {
+      this.installed.set(true);
+      this.persistInstalled();
+    }
   }
 
   private detectStandaloneMode(): boolean {
@@ -86,31 +94,59 @@ export class InstallPromptService {
     );
   }
 
-  private readDismissedFlag(): boolean {
+  private detectIos(): boolean {
+    if (!this.hasBrowserContext) {
+      return false;
+    }
+
+    const ua = navigator.userAgent;
+    // iPadOS 13+ se reporta como 'Macintosh' pero tiene maxTouchPoints > 1
+    return /iPad|iPhone|iPod/.test(ua) || (ua.includes('Mac') && navigator.maxTouchPoints > 1);
+  }
+
+  private readSnoozed(): boolean {
     if (!this.hasBrowserContext) {
       return false;
     }
 
     try {
-      return window.localStorage.getItem(installPromptDismissedStorageKey) === '1';
+      const val = window.localStorage.getItem(SNOOZE_KEY);
+      if (!val) return false;
+      return Date.now() < Number(val);
     } catch {
       return false;
     }
   }
 
-  private persistDismissedFlag(value: boolean): void {
+  private readInstalled(): boolean {
+    if (!this.hasBrowserContext) {
+      return false;
+    }
+
+    try {
+      return window.localStorage.getItem(INSTALLED_KEY) === '1';
+    } catch {
+      return false;
+    }
+  }
+
+  private persistSnooze(until: number): void {
     if (!this.hasBrowserContext) {
       return;
     }
 
     try {
-      if (value) {
-        window.localStorage.setItem(installPromptDismissedStorageKey, '1');
-      } else {
-        window.localStorage.removeItem(installPromptDismissedStorageKey);
-      }
-    } catch {
-      // Ignore localStorage write errors.
+      window.localStorage.setItem(SNOOZE_KEY, String(until));
+    } catch {}
+  }
+
+  private persistInstalled(): void {
+    if (!this.hasBrowserContext) {
+      return;
     }
+
+    try {
+      window.localStorage.setItem(INSTALLED_KEY, '1');
+    } catch {}
   }
 }

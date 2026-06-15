@@ -870,3 +870,167 @@
     padding-bottom: 1.5rem;
   }
 }
+
+/* ── Install prompt bottom sheet ─────────────────────────────── */
+
+.install-sheet__backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 25;
+  background: rgba(14, 14, 16, 0.55);
+  -webkit-backdrop-filter: blur(3px);
+  backdrop-filter: blur(3px);
+}
+
+.install-sheet {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 26;
+  padding: 0.65rem 1.5rem max(1.5rem, env(safe-area-inset-bottom));
+  background: var(--color-surface, #fff);
+  border-radius: 1.25rem 1.25rem 0 0;
+  box-shadow: 0 -0.5rem 2.5rem rgba(14, 14, 16, 0.22);
+  animation: install-sheet-up 240ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@media (min-width: 480px) {
+  .install-sheet {
+    left: calc(50% - 240px);
+    right: calc(50% - 240px);
+  }
+}
+
+@keyframes install-sheet-up {
+  from {
+    translate: 0 100%;
+  }
+  to {
+    translate: 0 0;
+  }
+}
+
+.install-sheet__handle {
+  width: 2.5rem;
+  height: 0.25rem;
+  border-radius: 999px;
+  background: rgba(14, 14, 16, 0.15);
+  margin: 0 auto 1.25rem;
+}
+
+.install-sheet__title {
+  font-family: var(--z-font-display);
+  font-size: 1.25rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--color-text);
+  margin: 0 0 0.75rem;
+  text-align: center;
+}
+
+.install-sheet__ios-warning {
+  margin-bottom: 1.25rem;
+  padding: 0.7rem 0.9rem;
+  border-radius: 0.75rem;
+  background: rgba(176, 138, 74, 0.1);
+  border: 1px solid rgba(176, 138, 74, 0.28);
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: var(--color-text-secondary);
+  text-align: center;
+}
+
+.install-sheet__ios-warning strong {
+  color: var(--z-brass, #b08a4a);
+  font-weight: 700;
+}
+
+.install-sheet__steps {
+  list-style: none;
+  margin: 0 0 1.5rem;
+  padding: 0;
+  display: grid;
+  gap: 0.85rem;
+}
+
+.install-sheet__step {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.85rem;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  color: var(--color-text);
+}
+
+.install-sheet__step-num {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 999px;
+  background: var(--z-ink, #0e0e10);
+  color: var(--z-bone, #f4f2ec);
+  font-family: var(--z-font-mono);
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.install-sheet__desc {
+  margin: 0 0 1.5rem;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  color: var(--color-text-secondary);
+  text-align: center;
+}
+
+.install-sheet__cta {
+  display: block;
+  width: 100%;
+  padding: 0.9rem;
+  margin-bottom: 0.6rem;
+  border: none;
+  border-radius: 999px;
+  background: var(--btn-primary-bg, #b08a4a);
+  color: var(--btn-primary-text, #0e0e10);
+  font: inherit;
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  transition:
+    background 140ms ease,
+    transform 140ms ease;
+}
+
+.install-sheet__cta:hover {
+  background: var(--btn-primary-bg-hover, #c49a5a);
+  transform: translateY(-1px);
+}
+
+.install-sheet__cta[disabled] {
+  opacity: 0.7;
+  cursor: wait;
+  transform: none;
+}
+
+.install-sheet__dismiss {
+  display: block;
+  width: 100%;
+  padding: 0.85rem;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--color-text-secondary);
+  font: inherit;
+  font-size: 0.95rem;
+  cursor: pointer;
+  transition: background 140ms ease;
+}
+
+.install-sheet__dismiss:hover {
+  background: rgba(14, 14, 16, 0.05);
+}
