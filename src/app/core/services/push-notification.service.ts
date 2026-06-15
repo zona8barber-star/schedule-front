@@ -48,7 +48,9 @@ export class PushNotificationService {
     () =>
       this.isSupported &&
       this.authService.isAuthenticated() &&
-      this.permission() === 'default' &&
+      // Mostrar también cuando el permiso ya fue concedido pero la suscripción
+      // no está registrada (p.ej. falló la llamada a la API en un intento previo).
+      this.permission() !== 'denied' &&
       !this.subscription() &&
       !this.dismissed() &&
       // iOS solo soporta push cuando la app está instalada (standalone)
@@ -93,6 +95,7 @@ export class PushNotificationService {
 
     const vapidPublicKey = this.runtimeConfigService.config().vapidPublicKey;
     if (!vapidPublicKey) {
+      console.error('[Push] vapidPublicKey not found in runtime config');
       return false;
     }
 
@@ -115,33 +118,50 @@ export class PushNotificationService {
     this.enabling.set(true);
 
     try {
-      const subscription = await this.swPush.requestSubscription({ serverPublicKey: vapidPublicKey });
-      const keys = this.extractSubscriptionKeys(subscription);
-
-      if (!keys) {
-        await subscription.unsubscribe();
+      // Paso 1: crear la suscripción en el browser/SW.
+      // Falla aquí si el SW no está activo, la VAPID key es inválida,
+      // o el browser rechaza la suscripción.
+      let subscription: PushSubscription;
+      try {
+        subscription = await this.swPush.requestSubscription({ serverPublicKey: vapidPublicKey });
+      } catch (err) {
+        const msg = err instanceof Error ? `${err.name}: ${err.message}` : String(err);
+        console.error('[Push] Browser subscription failed:', msg, err);
         return false;
       }
 
-      await firstValueFrom(
-        this.notificationsApiService.subscribe({
-          endpoint: keys.endpoint,
-          p256dhKey: keys.p256dhKey,
-          authKey: keys.authKey,
-          userAgent: this.hasBrowserContext ? globalThis.navigator.userAgent : null,
-        }),
-      );
+      const keys = this.extractSubscriptionKeys(subscription);
+      if (!keys) {
+        console.error('[Push] Could not extract p256dh/auth keys from subscription');
+        await subscription.unsubscribe().catch(() => undefined);
+        return false;
+      }
+
+      // Paso 2: registrar la suscripción en el backend.
+      // Falla aquí si hay error de red, auth o validación en la API.
+      try {
+        await firstValueFrom(
+          this.notificationsApiService.subscribe({
+            endpoint: keys.endpoint,
+            p256dhKey: keys.p256dhKey,
+            authKey: keys.authKey,
+            userAgent: this.hasBrowserContext ? globalThis.navigator.userAgent : null,
+          }),
+        );
+      } catch (err) {
+        const msg = err instanceof Error ? `${err.name}: ${err.message}` : String(err);
+        console.error('[Push] API call to save subscription failed:', msg, err);
+        // No cancelamos la suscripción del browser para que `swPush.subscription`
+        // la detecte en el próximo arranque y reintente el registro.
+        return false;
+      }
 
       this.subscription.set(subscription);
-      this.permission.set(this.readPermission());
       this.dismissed.set(true);
       this.persistDismissedFlag(true);
       return true;
-    } catch (err) {
-      console.error('[Push] requestSubscription failed:', err);
-      this.permission.set(this.readPermission());
-      return false;
     } finally {
+      this.permission.set(this.readPermission());
       this.enabling.set(false);
     }
   }
