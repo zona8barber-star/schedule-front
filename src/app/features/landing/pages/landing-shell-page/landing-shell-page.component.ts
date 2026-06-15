@@ -22,6 +22,7 @@ import { ThemeService } from '../../../../core/services/theme.service';
 import { getApiErrorMessage } from '../../../../core/utils/api-error.utils';
 import { ApiFeedbackComponent } from '../../../../shared/components/api-feedback/api-feedback.component';
 import { PageStateComponent } from '../../../../shared/components/page-state/page-state.component';
+import { NativeHomeComponent } from './native-home.component';
 
 function todayIso(): string {
   return new Date().toISOString().slice(0, 10);
@@ -29,7 +30,7 @@ function todayIso(): string {
 
 @Component({
   selector: 'app-landing-shell-page',
-  imports: [RouterLink, ApiFeedbackComponent, PageStateComponent],
+  imports: [RouterLink, ApiFeedbackComponent, PageStateComponent, NativeHomeComponent],
   templateUrl: './landing-shell-page.component.html',
   styleUrl: './landing-shell-page.component.scss',
 })
