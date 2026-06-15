@@ -166,30 +166,46 @@
   }
 
   @if (installPromptService.shouldShowPrompt()) {
-    <section class="app-shell__install" role="status" aria-live="polite">
-      <div class="app-shell__install-copy">
-        <strong>Lleva la barberia en tu celular</strong>
-        <p>Instala la app para reservar mas rapido y volver con un solo toque.</p>
-      </div>
+    <div class="install-sheet__backdrop" aria-hidden="true" (click)="dismissInstallPrompt()"></div>
+    <div class="install-sheet" role="dialog" aria-modal="true" aria-labelledby="install-sheet-title">
+      <div class="install-sheet__handle" aria-hidden="true"></div>
 
-      <div class="app-shell__install-actions">
+      @if (installPromptService.isIos()) {
+        <h2 class="install-sheet__title" id="install-sheet-title">Llevá la barbería en tu iPhone</h2>
+        <div class="install-sheet__ios-warning">
+          Si ya la tenías instalada, <strong>eliminá el acceso anterior</strong> antes de añadirla de nuevo; iOS no actualiza el ícono solo.
+        </div>
+        <ol class="install-sheet__steps">
+          <li class="install-sheet__step">
+            <span class="install-sheet__step-num" aria-hidden="true">1</span>
+            <span>Toca <strong>Compartir</strong> &#8679; en la barra de Safari (abajo en iPhone)</span>
+          </li>
+          <li class="install-sheet__step">
+            <span class="install-sheet__step-num" aria-hidden="true">2</span>
+            <span>Elige <strong>Añadir a pantalla de inicio</strong> &#10010;</span>
+          </li>
+          <li class="install-sheet__step">
+            <span class="install-sheet__step-num" aria-hidden="true">3</span>
+            <span>Toca <strong>Añadir</strong> arriba a la derecha</span>
+          </li>
+        </ol>
+      } @else {
+        <h2 class="install-sheet__title" id="install-sheet-title">Llevá la barbería en tu celular</h2>
+        <p class="install-sheet__desc">Acceso rápido desde tu pantalla de inicio, como una app nativa.</p>
         <button
-          class="app-shell__button"
+          class="install-sheet__cta"
           type="button"
           [disabled]="isInstallPrompting()"
           (click)="installApp()"
         >
           {{ isInstallPrompting() ? 'Abriendo...' : 'Instalar app' }}
         </button>
-        <button
-          class="app-shell__button app-shell__button--ghost"
-          type="button"
-          (click)="dismissInstallPrompt()"
-        >
-          Ahora no
-        </button>
-      </div>
-    </section>
+      }
+
+      <button class="install-sheet__dismiss" type="button" (click)="dismissInstallPrompt()">
+        Ahora no
+      </button>
+    </div>
   }
 
   @if (pushNotificationService.shouldShowPrompt()) {
