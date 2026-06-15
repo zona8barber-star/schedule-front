@@ -6,11 +6,12 @@
  * before delegating to `ng build --configuration <env>`.
  *
  * Vercel env vars → config.json keys:
- *   RUNTIME_API_BASE_URL     → apiBaseUrl       (required to trigger override)
- *   RUNTIME_APP_NAME         → appName
- *   RUNTIME_APP_URL          → appUrl
- *   RUNTIME_ASSETS_BASE_URL  → assetsBaseUrl
- *   RUNTIME_ENVIRONMENT_NAME → environmentName
+ *   RUNTIME_API_BASE_URL      → apiBaseUrl       (required to trigger override)
+ *   RUNTIME_APP_NAME          → appName
+ *   RUNTIME_APP_URL           → appUrl
+ *   RUNTIME_ASSETS_BASE_URL   → assetsBaseUrl
+ *   RUNTIME_ENVIRONMENT_NAME  → environmentName
+ *   RUNTIME_VAPID_PUBLIC_KEY  → vapidPublicKey
  */
 
 import { execFileSync } from 'node:child_process';
@@ -46,6 +47,9 @@ if (apiBaseUrl) {
     appUrl: process.env.RUNTIME_APP_URL ?? '',
     assetsBaseUrl: process.env.RUNTIME_ASSETS_BASE_URL ?? '',
     environmentName: process.env.RUNTIME_ENVIRONMENT_NAME ?? env,
+    ...(process.env.RUNTIME_VAPID_PUBLIC_KEY
+      ? { vapidPublicKey: process.env.RUNTIME_VAPID_PUBLIC_KEY }
+      : {}),
   };
   const configPath = resolve(ROOT, `public/config.${env}.json`);
   writeFileSync(configPath, JSON.stringify(config, null, 2) + '\n', 'utf8');
