@@ -23,9 +23,11 @@ export class AuthApiService {
     });
   }
 
-  // Refresh token is sent automatically via the HttpOnly cookie — no body needed.
-  refresh() {
-    return this.httpClient.post<AuthResponse>(this.buildUrl('/auth/refresh'), {}, {
+  // El refresh token va en la cookie HttpOnly (browsers estándar) y opcionalmente
+  // en el body como fallback para iOS standalone donde ITP puede bloquear la cookie.
+  refresh(refreshToken?: string | null) {
+    const body = refreshToken ? { refreshToken } : {};
+    return this.httpClient.post<AuthResponse>(this.buildUrl('/auth/refresh'), body, {
       withCredentials: true,
     });
   }

@@ -751,6 +751,12 @@
   white-space: nowrap;
 }
 
+/* ── Standalone: oculta el hamburguer (nav va en el bottom nav) ── */
+
+.app-shell--standalone .app-shell__menu-toggle {
+  display: none;
+}
+
 /* ── Standalone phone: siempre muestra bottom nav ────────────── */
 
 .app-shell--standalone:not(.app-shell--standalone-tablet) {
