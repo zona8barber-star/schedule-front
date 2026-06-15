@@ -11,6 +11,11 @@
   display: flex;
   flex-direction: column;
   min-height: 100dvh;
+  margin: -1.5rem;
+
+  @media (max-width: 720px) {
+    margin-inline: -1rem;
+  }
 }
 
 .native-home__hero {
@@ -21,7 +26,7 @@
   min-height: 55dvh;
   overflow: hidden;
   background: var(--z-ink);
-  padding: 2.5rem 1.5rem 2rem;
+  padding: max(2.5rem, calc(env(safe-area-inset-top) + 1.25rem)) 1.5rem 2rem;
 }
 
 .native-home__watermark {
@@ -112,15 +117,6 @@
   flex-shrink: 0;
 }
 
-// ── Reservar ──────────────────────────────────────────────────────
-
-.native-home__booking {
-  display: grid;
-  gap: 1rem;
-  padding: 1.5rem;
-  background: var(--z-bone);
-}
-
 .native-home__section-label {
   margin: 0;
   font-family: var(--z-font-display);
@@ -129,25 +125,6 @@
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--z-ink);
-}
-
-.native-home__cta {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0.85rem 1.5rem;
-  border-radius: 0;
-  background: var(--z-ink);
-  color: var(--z-bone);
-  font-family: var(--z-font-display);
-  font-size: 1rem;
-  font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  text-decoration: none;
-  transition: opacity 140ms ease;
-
-  &:hover { opacity: 0.85; }
 }
 
 // ── Equipo ────────────────────────────────────────────────────────
