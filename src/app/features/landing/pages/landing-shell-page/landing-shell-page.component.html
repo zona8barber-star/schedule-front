@@ -9,7 +9,15 @@
         <h1 class="native-home__title">
           {{ landingContent()?.heroTitle || 'Barbería de oficio' }}
         </h1>
-        <p class="native-home__meta">{{ isOpenNow() ? 'Abierto' : 'Cerrado' }} · {{ formattedSchedule() }}</p>
+        <p class="native-home__meta">
+          <span
+            class="native-home__status-dot"
+            [class.native-home__status-dot--open]="isOpenNow()"
+            [class.native-home__status-dot--closed]="!isOpenNow()"
+            aria-hidden="true"
+          ></span>
+          {{ isOpenNow() ? 'Abierto' : 'Cerrado' }} · {{ formattedSchedule() }}
+        </p>
       </div>
     </header>
 
@@ -27,21 +35,31 @@
         <h2 class="native-home__section-label">El Equipo</h2>
         <div class="native-home__team-grid">
           @for (member of staffMembers(); track member.staffProfileId) {
-            <a class="native-home__team-card" [routerLink]="['/staff', member.staffProfileId]">
-              @if (member.photoUrl) {
-                <img
-                  class="native-home__team-photo"
-                  [src]="member.photoUrl"
-                  [alt]="member.displayName"
-                  [title]="member.displayName"
-                />
-              } @else {
-                <div class="native-home__team-initials" aria-hidden="true">
-                  {{ member.displayName.charAt(0).toUpperCase() }}
-                </div>
-              }
+            <div class="native-home__team-card">
+              <button
+                class="native-home__team-photo-btn"
+                type="button"
+                (click)="openAvailabilityModal(member)"
+                [attr.aria-label]="'Reservar con ' + member.displayName"
+              >
+                @if (member.photoUrl) {
+                  <img
+                    class="native-home__team-photo"
+                    [src]="member.photoUrl"
+                    alt="{{ member.displayName }}"
+                    title="{{ member.displayName }}"
+                  />
+                } @else {
+                  <div class="native-home__team-initials" aria-hidden="true">
+                    {{ member.displayName.charAt(0).toUpperCase() }}
+                  </div>
+                }
+              </button>
               <span class="native-home__team-name">{{ member.displayName }}</span>
-            </a>
+              <button class="native-home__team-rsv" type="button" (click)="openAvailabilityModal(member)">
+                Reservar →
+              </button>
+            </div>
           }
         </div>
       </section>
@@ -59,6 +77,73 @@
           }
         </ul>
         <a class="native-home__services-more" routerLink="/staff">ver todos →</a>
+      </section>
+    }
+
+    @if (landingContent()?.aboutText) {
+      <section class="native-home__about">
+        <h2 class="native-home__section-label">Sobre nosotros</h2>
+        <p class="native-home__about-text">{{ landingContent()!.aboutText }}</p>
+      </section>
+    }
+
+    <section class="native-home__contact">
+      <h2 class="native-home__section-label">Contacto</h2>
+      <div class="native-home__contact-rows">
+        @if (landingContent()?.address) {
+          <div class="native-home__contact-row">
+            <span class="native-home__contact-label">Dirección</span>
+            <span class="native-home__contact-val">{{ landingContent()!.address }}</span>
+          </div>
+        }
+        @if (landingContent()?.contactPhone) {
+          <div class="native-home__contact-row">
+            <span class="native-home__contact-label">Teléfono</span>
+            <span class="native-home__contact-val">
+              @if (whatsappUrl()) {
+                <a [href]="whatsappUrl()!" target="_blank" rel="noopener noreferrer">{{ landingContent()!.contactPhone }}</a>
+              } @else {
+                {{ landingContent()!.contactPhone }}
+              }
+            </span>
+          </div>
+        }
+        <div class="native-home__contact-row">
+          <span class="native-home__contact-label">Horario</span>
+          <span class="native-home__contact-val">{{ formattedSchedule() }}</span>
+        </div>
+      </div>
+      @if (landingContent()?.mapsUrl) {
+        <a
+          class="native-home__maps-btn"
+          [href]="landingContent()!.mapsUrl!"
+          target="_blank"
+          rel="noopener noreferrer"
+        >📍 Abrir en Google Maps</a>
+      }
+    </section>
+
+    @if (!isLoading() && activeBanners().length) {
+      <section class="native-home__banners">
+        <h2 class="native-home__section-label">Novedades</h2>
+        <div class="native-home__banners-list">
+          @for (banner of activeBanners(); track banner.id) {
+            <article class="native-home__banner">
+              @if (banner.imageUrl) {
+                <img class="native-home__banner-img" [src]="banner.imageUrl!" alt="{{ banner.title }}" title="{{ banner.title }}" />
+              }
+              <div class="native-home__banner-body">
+                <h3 class="native-home__banner-title">{{ banner.title }}</h3>
+                @if (banner.subtitle) {
+                  <p class="native-home__banner-sub">{{ banner.subtitle }}</p>
+                }
+                @if (banner.linkUrl) {
+                  <a class="native-home__banner-link" [href]="banner.linkUrl" target="_blank" rel="noreferrer">Ver más →</a>
+                }
+              </div>
+            </article>
+          }
+        </div>
       </section>
     }
 

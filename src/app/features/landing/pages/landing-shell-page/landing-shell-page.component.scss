@@ -968,10 +968,32 @@
 
 .native-home__meta {
   margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
   font-family: var(--z-font-mono);
   font-size: 0.78rem;
   letter-spacing: 0.06em;
   color: var(--z-steel);
+}
+
+.native-home__status-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background: var(--z-steel);
+
+  &--open {
+    background: #7fcf95;
+    box-shadow: 0 0 8px #7fcf95;
+    animation: dot-pulse 2.2s ease-in-out infinite;
+  }
+
+  &--closed {
+    background: #cf7f7f;
+    box-shadow: 0 0 5px #cf7f7f;
+  }
 }
 
 .native-home__ticker {
@@ -1046,9 +1068,35 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.5rem;
-  text-decoration: none;
+  gap: 0.4rem;
   color: var(--z-ink);
+}
+
+.native-home__team-photo-btn {
+  width: 100%;
+  padding: 0;
+  margin: 0;
+  background: none;
+  border: none;
+  cursor: pointer;
+  display: block;
+  border-radius: 0.75rem;
+  overflow: hidden;
+}
+
+.native-home__team-rsv {
+  font-family: var(--z-font-mono);
+  font-size: 0.65rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--z-brass);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  white-space: nowrap;
+
+  &:hover { color: var(--z-brass-dark, #8f6f38); }
 }
 
 .native-home__team-photo {
@@ -1129,6 +1177,145 @@
   &:hover { color: var(--z-bone); }
 }
 
+// ── Sobre nosotros ────────────────────────────────────────────────
+.native-home__about {
+  display: grid;
+  gap: 0.75rem;
+  padding: 1.5rem;
+  background: var(--z-bone);
+  border-top: 1px solid var(--z-hairline-light);
+}
+
+.native-home__about-text {
+  margin: 0;
+  font-size: 0.95rem;
+  line-height: 1.6;
+  color: var(--z-graphite, #555);
+}
+
+// ── Contacto ──────────────────────────────────────────────────────
+.native-home__contact {
+  display: grid;
+  gap: 1rem;
+  padding: 1.5rem;
+  background: var(--z-bone);
+  border-top: 1px solid var(--z-hairline-light);
+}
+
+.native-home__contact-rows {
+  display: flex;
+  flex-direction: column;
+}
+
+.native-home__contact-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid var(--z-hairline-light);
+
+  &:first-of-type {
+    border-top: 1px solid var(--z-hairline-light);
+  }
+}
+
+.native-home__contact-label {
+  font-family: var(--z-font-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--z-steel);
+  flex-shrink: 0;
+}
+
+.native-home__contact-val {
+  font-family: var(--z-font-display);
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: var(--z-ink);
+  text-align: right;
+
+  a {
+    color: inherit;
+    text-decoration: none;
+    &:hover { color: var(--z-brass); }
+  }
+}
+
+.native-home__maps-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: var(--z-brass);
+  font-size: 0.82rem;
+  font-weight: 600;
+  text-decoration: none;
+
+  &:hover { text-decoration: underline; }
+}
+
+// ── Banners ───────────────────────────────────────────────────────
+.native-home__banners {
+  display: grid;
+  gap: 1rem;
+  padding: 1.5rem;
+  background: var(--z-bone);
+  border-top: 1px solid var(--z-hairline-light);
+}
+
+.native-home__banners-list {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.native-home__banner {
+  border: 1px solid var(--z-hairline-light);
+  overflow: hidden;
+  background: var(--z-bone);
+}
+
+.native-home__banner-img {
+  width: 100%;
+  aspect-ratio: 16 / 7;
+  object-fit: cover;
+  display: block;
+}
+
+.native-home__banner-body {
+  padding: 1rem;
+  display: grid;
+  gap: 0.4rem;
+}
+
+.native-home__banner-title {
+  font-family: var(--z-font-display);
+  font-size: 1rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--z-ink);
+  margin: 0;
+}
+
+.native-home__banner-sub {
+  margin: 0;
+  font-size: 0.88rem;
+  color: var(--z-graphite, #555);
+}
+
+.native-home__banner-link {
+  font-family: var(--z-font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--z-brass);
+  text-decoration: none;
+
+  &:hover { color: var(--z-brass-dark, #8f6f38); }
+}
+
+// ── Address (kept for reference) ──────────────────────────────────
 .native-home__address {
   display: flex;
   flex-direction: column;
