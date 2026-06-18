@@ -178,6 +178,7 @@
   input {
     width: 100%;
     box-sizing: border-box;
+    min-height: 2.7rem;
     padding: 0.65rem 0.9rem;
     border: 1.5px solid var(--z-hairline-light);
     border-radius: 0.75rem;
@@ -185,6 +186,11 @@
     color: var(--color-text);
     font: inherit;
     font-size: 0.92rem;
+    line-height: 1.4;
+    // Sin esto, iOS/WebKit pinta los inputs nativos (date) con su propio alto y
+    // tipografía, por lo que se ven más grandes e inconsistentes que el resto.
+    -webkit-appearance: none;
+    appearance: none;
     transition: border-color 120ms ease, box-shadow 120ms ease;
 
     &::placeholder { color: var(--color-text-muted); opacity: 0.55; }
@@ -197,6 +203,23 @@
 
     &.ng-invalid.ng-touched {
       border-color: rgba(180, 83, 60, 0.65);
+    }
+  }
+
+  // Normaliza el input de fecha en iOS/Safari para que iguale a los demás campos.
+  input[type='date'] {
+    // El control nativo alinea el valor arriba; lo centramos verticalmente.
+    &::-webkit-date-and-time-value {
+      margin: 0;
+      text-align: left;
+      font-size: 0.92rem;
+      line-height: 1.4;
+    }
+
+    &::-webkit-calendar-picker-indicator {
+      margin-left: 0.25rem;
+      opacity: 0.55;
+      cursor: pointer;
     }
   }
 }

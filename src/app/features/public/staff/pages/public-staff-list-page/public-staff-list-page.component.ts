@@ -6,7 +6,6 @@ import { firstValueFrom } from 'rxjs';
 import { PublicAvailabilitySlotResponse } from '../../../../../core/models/availability.models';
 import { PublicStaffListItemResponse } from '../../../../../core/models/content.models';
 import { PublicAvailabilityApiService } from '../../../../../core/services/public-availability-api.service';
-import { PublicContentApiService } from '../../../../../core/services/public-content-api.service';
 import { PublicStaffApiService } from '../../../../../core/services/public-staff-api.service';
 import { getApiErrorMessage } from '../../../../../core/utils/api-error.utils';
 import { ApiFeedbackComponent } from '../../../../../shared/components/api-feedback/api-feedback.component';
@@ -30,7 +29,6 @@ function todayIso(): string {
 export class PublicStaffListPageComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly publicStaffApiService = inject(PublicStaffApiService);
-  private readonly publicContentApiService = inject(PublicContentApiService);
   private readonly publicAvailabilityApiService = inject(PublicAvailabilityApiService);
 
   private readonly timeFormatter = new Intl.DateTimeFormat('es-CO', {
@@ -44,7 +42,6 @@ export class PublicStaffListPageComponent implements OnInit {
   readonly isLoading = signal(true);
   readonly errorMessage = signal<string | null>(null);
   readonly staffMembers = signal<PublicStaffListItemResponse[]>([]);
-  readonly contactPhone = signal<string | null>(null);
 
   // Availability modal
   readonly activeStaff = signal<PublicStaffListItemResponse | null>(null);
@@ -56,20 +53,8 @@ export class PublicStaffListPageComponent implements OnInit {
 
   readonly searchButtonLabel = computed(() => (this.isLoading() ? 'Buscando...' : 'Buscar'));
 
-  readonly whatsappUrl = computed<string | null>(() => {
-    const phone = this.contactPhone();
-    if (!phone) return null;
-    const digits = phone.replace(/\D/g, '');
-    return digits ? `https://wa.me/${digits}` : null;
-  });
-
   async ngOnInit(): Promise<void> {
-    await Promise.all([
-      this.loadStaff(),
-      firstValueFrom(this.publicContentApiService.getLanding())
-        .then((landing) => this.contactPhone.set(landing.contactPhone))
-        .catch(() => {}),
-    ]);
+    await this.loadStaff();
   }
 
   async submitSearch(): Promise<void> {
