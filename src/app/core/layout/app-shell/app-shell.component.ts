@@ -18,6 +18,7 @@ import { AuthService } from '../../services/auth.service';
 import { ConnectivityService } from '../../services/connectivity.service';
 import { HttpActivityService } from '../../services/http-activity.service';
 import { InstallPromptService } from '../../services/install-prompt.service';
+import { PublicContentApiService } from '../../services/public-content-api.service';
 import { PushNotificationService } from '../../services/push-notification.service';
 import { ToastService } from '../../services/toast.service';
 
@@ -65,6 +66,16 @@ export class AppShellComponent {
 
   private readonly swUpdate = inject(SwUpdate);
   private readonly toastService = inject(ToastService);
+  private readonly publicContentApiService = inject(PublicContentApiService);
+
+  // Teléfono de contacto de la barbería, cargado una vez al iniciar el shell.
+  // Alimenta el botón flotante de WhatsApp visible en toda la app.
+  private readonly contactPhone = signal<string | null>(null);
+
+  readonly whatsappUrl = computed<string | null>(() => {
+    const digits = this.contactPhone()?.replace(/\D/g, '') ?? '';
+    return digits ? `https://wa.me/+57${digits}` : null;
+  });
 
   readonly roleNames = ROLE_NAMES;
   readonly isSigningOut = signal(false);
@@ -174,6 +185,11 @@ export class AppShellComponent {
           group: 'admin',
         },
         {
+          label: 'Horario de atención',
+          route: '/admin/content/business-hours',
+          group: 'admin',
+        },
+        {
           label: 'Notificaciones',
           route: '/admin/notifications',
           group: 'admin',
@@ -262,6 +278,16 @@ export class AppShellComponent {
   readonly currentYear = new Date().getFullYear();
 
   constructor() {
+    // El shell se monta una sola vez por sesión, así que esta carga ocurre junto
+    // con el arranque inicial (no se repite al navegar entre rutas).
+    this.publicContentApiService
+      .getLanding()
+      .pipe(takeUntilDestroyed())
+      .subscribe({
+        next: (content) => this.contactPhone.set(content.contactPhone ?? null),
+        error: () => this.contactPhone.set(null),
+      });
+
     this.router.events
       .pipe(
         filter((event): event is NavigationEnd => event instanceof NavigationEnd),

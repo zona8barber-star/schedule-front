@@ -537,31 +537,4 @@
   }
 }
 
-// ── WhatsApp FAB ────────────────────────────────────────────────────
-.wa-fab {
-  position: fixed;
-  bottom: 1.5rem;
-  right: 1.5rem;
-  z-index: 50;
-  width: 3.25rem;
-  height: 3.25rem;
-  border-radius: 50%;
-  background: #25d366;
-  color: #fff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.22);
-  transition: transform 150ms ease, box-shadow 150ms ease;
-
-  svg {
-    width: 1.6rem;
-    height: 1.6rem;
-    fill: #fff;
-  }
-
-  &:hover {
-    transform: scale(1.08);
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.28);
-  }
-}
+// WhatsApp FAB: ahora vive en el app-shell global (estilos en styles.scss).

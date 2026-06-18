@@ -112,11 +112,17 @@ textarea::placeholder {
   fill: currentColor;
 }
 
+/* Cuando la barra de navegación inferior está visible (móvil y app instalada),
+   el FAB se eleva por encima de ella con holgura para no quedar pegado sobre el
+   botón "Menú" de la esquina. */
 @media (max-width: 720px) {
-  /* Clear the mobile bottom tab bar (~4.75rem incl. safe area) so the FAB stays reachable. */
   .wa-fab {
-    bottom: calc(4.75rem + env(safe-area-inset-bottom) + 0.75rem);
+    bottom: calc(4.75rem + env(safe-area-inset-bottom) + 1.25rem);
   }
+}
+
+.app-shell--standalone:not(.app-shell--standalone-tablet) .wa-fab {
+  bottom: calc(4.75rem + env(safe-area-inset-bottom) + 1.25rem);
 }
 
 /* ── Route transitions (native View Transitions API, see app.config.ts) ─── */
