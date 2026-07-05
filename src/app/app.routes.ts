@@ -25,6 +25,11 @@ const loadAdminServicesListPage = () =>
     (module) => module.AdminServicesListPageComponent,
   );
 
+const loadAdminIncomeListPage = () =>
+  import('./features/admin/income/pages/admin-income-list-page/admin-income-list-page.component').then(
+    (module) => module.AdminIncomeListPageComponent,
+  );
+
 const loadStaffProfilePage = () =>
   import('./features/staff/profile/pages/staff-profile-page/staff-profile-page.component').then(
     (module) => module.StaffProfilePageComponent,
@@ -286,6 +291,15 @@ export const routes: Routes = [
       roles: [ROLE_NAMES.admin],
     },
     title: 'Servicios',
+  },
+  {
+    path: 'admin/income',
+    canActivate: [authGuard, roleGuard],
+    loadComponent: loadAdminIncomeListPage,
+    data: {
+      roles: [ROLE_NAMES.admin],
+    },
+    title: 'Ingresos',
   },
   {
     path: 'admin/staff/new',
