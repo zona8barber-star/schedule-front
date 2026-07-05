@@ -110,7 +110,13 @@ export class AdminStaffListPageComponent implements OnInit {
           defaultAppointmentDurationMinutes: null,
         }),
       );
-      await this.authService.refreshAccessToken();
+      const refreshedToken = await this.authService.refreshAccessToken();
+      if (!refreshedToken) {
+        this.errorMessage.set(
+          'Tu perfil profesional fue activado, pero tu sesión expiró. Vuelve a iniciar sesión.',
+        );
+        return;
+      }
       await this.router.navigateByUrl('/staff/availability');
     } catch (error) {
       this.errorMessage.set(getApiErrorMessage(error));
