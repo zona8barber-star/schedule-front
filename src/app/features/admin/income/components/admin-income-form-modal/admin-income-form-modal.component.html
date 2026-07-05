@@ -12,7 +12,7 @@
           <span>Servicio</span>
           <select formControlName="serviceId" (change)="onServiceChange(form.controls.serviceId.value)">
             <option value="" disabled>Selecciona un servicio</option>
-            @for (service of services(); track service.id) {
+            @for (service of serviceOptions(); track service.id) {
               <option [value]="service.id">
                 {{ service.name }} ($ {{ service.basePrice | number: '1.0-0' }})
               </option>
@@ -24,7 +24,7 @@
           <span>Profesional</span>
           <select formControlName="staffProfileId">
             <option value="" disabled>Selecciona un profesional</option>
-            @for (member of staff(); track member.staffProfileId) {
+            @for (member of staffOptions(); track member.staffProfileId) {
               <option [value]="member.staffProfileId">{{ member.displayName }}</option>
             }
           </select>

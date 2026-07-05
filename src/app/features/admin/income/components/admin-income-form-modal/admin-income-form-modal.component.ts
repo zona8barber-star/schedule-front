@@ -4,8 +4,6 @@ import { AbstractControl, FormBuilder, ReactiveFormsModule, ValidationErrors, Va
 import { firstValueFrom } from 'rxjs';
 
 import { IncomeEntryView } from '../../../../../core/models/income.models';
-import { ServiceView } from '../../../../../core/models/service.models';
-import { StaffListItem } from '../../../../../core/models/staff.models';
 import { AdminIncomeApiService } from '../../../../../core/services/admin-income-api.service';
 import { AdminServicesApiService } from '../../../../../core/services/admin-services-api.service';
 import { AdminStaffApiService } from '../../../../../core/services/admin-staff-api.service';
@@ -33,8 +31,8 @@ export class AdminIncomeFormModalComponent implements OnInit {
   @Output() readonly saved = new EventEmitter<IncomeEntryView>();
   @Output() readonly cancelled = new EventEmitter<void>();
 
-  readonly services = signal<ServiceView[]>([]);
-  readonly staff = signal<StaffListItem[]>([]);
+  readonly serviceOptions = signal<{ id: string; name: string; basePrice: number }[]>([]);
+  readonly staffOptions = signal<{ staffProfileId: string; displayName: string }[]>([]);
   readonly isSaving = signal(false);
   readonly isLoading = signal(true);
   readonly errorMessage = signal<string | null>(null);
@@ -59,8 +57,30 @@ export class AdminIncomeFormModalComponent implements OnInit {
         firstValueFrom(this.servicesApi.list()),
         firstValueFrom(this.staffApi.list()),
       ]);
-      this.services.set(services.filter((s) => s.isActive));
-      this.staff.set(staff.filter((s) => s.isActive));
+
+      const activeServiceOptions = services
+        .filter((s) => s.isActive)
+        .map((s) => ({ id: s.id, name: s.name, basePrice: s.basePrice }));
+      const activeStaffOptions = staff
+        .filter((s) => s.isActive)
+        .map((s) => ({ staffProfileId: s.staffProfileId, displayName: s.displayName }));
+
+      if (this.entry && !activeServiceOptions.some((s) => s.id === this.entry!.serviceId)) {
+        activeServiceOptions.unshift({
+          id: this.entry.serviceId,
+          name: this.entry.serviceName,
+          basePrice: this.entry.basePrice,
+        });
+      }
+      if (this.entry && !activeStaffOptions.some((s) => s.staffProfileId === this.entry!.staffProfileId)) {
+        activeStaffOptions.unshift({
+          staffProfileId: this.entry.staffProfileId,
+          displayName: this.entry.staffDisplayName,
+        });
+      }
+
+      this.serviceOptions.set(activeServiceOptions);
+      this.staffOptions.set(activeStaffOptions);
 
       if (this.entry) {
         this.form.patchValue({
@@ -81,7 +101,7 @@ export class AdminIncomeFormModalComponent implements OnInit {
   }
 
   onServiceChange(serviceId: string): void {
-    const service = this.services().find((s) => s.id === serviceId);
+    const service = this.serviceOptions().find((s) => s.id === serviceId);
     if (service && !this.isEditing) {
       this.form.patchValue({ amount: service.basePrice });
     }
