@@ -1,0 +1,60 @@
+<section class="exp">
+  <header class="exp__header">
+    <h1>Gastos</h1>
+    <div class="exp__header-actions">
+      <a routerLink="/admin/expenses/fixed" class="exp__link-btn">Gestionar gastos fijos</a>
+      <button class="exp__create-btn" type="button" (click)="openCreate()">+ Registrar gasto</button>
+    </div>
+  </header>
+
+  <div class="exp__filters">
+    <label>
+      <span>Mes</span>
+      <input type="month" [max]="today.slice(0, 7)" [ngModel]="selectedMonth()" (ngModelChange)="onMonthChange($event)" />
+    </label>
+    <div class="exp__total">Total del mes: $ {{ total() | number: '1.0-0' }}</div>
+  </div>
+
+  <app-api-feedback severity="error" [message]="errorMessage()" />
+
+  @if (isLoading()) {
+    <p class="exp__state">Cargando gastos...</p>
+  } @else if (!entries().length) {
+    <p class="exp__state">Sin gastos para este mes.</p>
+  } @else {
+    <div class="exp__table-wrap">
+      <table class="exp__table">
+        <thead>
+          <tr>
+            <th>Concepto</th>
+            <th>Valor</th>
+            <th>Fecha</th>
+            <th aria-label="Acciones"></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (entry of entries(); track entry.id) {
+            <tr>
+              <td>{{ entry.name }}</td>
+              <td>$ {{ entry.amount | number: '1.0-0' }}</td>
+              <td>{{ entry.occurredOn }}</td>
+              <td class="exp__actions">
+                <button type="button" (click)="openEdit(entry)" [disabled]="busyId() === entry.id">Editar</button>
+                <button type="button" (click)="deleteEntry(entry)" [disabled]="busyId() === entry.id">Eliminar</button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</section>
+
+@if (isModalOpen()) {
+  <app-admin-expense-form-modal
+    [entry]="editingEntry()"
+    [defaultDate]="today"
+    (saved)="onSaved()"
+    (cancelled)="closeModal()"
+  />
+}

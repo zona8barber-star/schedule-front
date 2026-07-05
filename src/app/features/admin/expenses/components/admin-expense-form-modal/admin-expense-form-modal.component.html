@@ -1,0 +1,53 @@
+<div class="exp-modal__overlay" (click)="cancel()">
+  <div class="exp-modal__card" (click)="$event.stopPropagation()">
+    <h2>{{ isEditing ? 'Editar gasto' : 'Registrar gasto' }}</h2>
+
+    <app-api-feedback severity="error" [message]="errorMessage()" />
+
+    @if (isLoading()) {
+      <p>Cargando...</p>
+    } @else {
+      <form [formGroup]="form" (ngSubmit)="submit()">
+        <label class="exp-modal__field">
+          <span>Concepto</span>
+          <input
+            type="text"
+            formControlName="name"
+            list="fixed-expense-options"
+            maxlength="120"
+            autocomplete="off"
+            (input)="onNameChange(form.controls.name.value)"
+          />
+          <datalist id="fixed-expense-options">
+            @for (option of fixedExpenses(); track option.id) {
+              <option [value]="option.name"></option>
+            }
+          </datalist>
+        </label>
+        @if (form.controls.name.touched && form.controls.name.invalid) {
+          <small class="exp-modal__error">El concepto debe tener entre 2 y 120 caracteres.</small>
+        }
+
+        <label class="exp-modal__field">
+          <span>Valor (COP)</span>
+          <input type="number" formControlName="amount" min="0" step="1" inputmode="numeric" />
+        </label>
+        @if (form.controls.amount.touched && form.controls.amount.invalid) {
+          <small class="exp-modal__error">Ingresa un valor válido (número entero, 0 o mayor).</small>
+        }
+
+        <label class="exp-modal__field">
+          <span>Fecha</span>
+          <input type="date" formControlName="occurredOn" [max]="defaultDate || null" />
+        </label>
+
+        <div class="exp-modal__actions">
+          <button type="button" (click)="cancel()" [disabled]="isSaving()">Cancelar</button>
+          <button type="submit" [disabled]="isSaving()">
+            {{ isSaving() ? 'Guardando...' : 'Guardar' }}
+          </button>
+        </div>
+      </form>
+    }
+  </div>
+</div>

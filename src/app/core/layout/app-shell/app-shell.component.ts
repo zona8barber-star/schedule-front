@@ -174,6 +174,11 @@ export class AppShellComponent {
           route: '/admin/income',
           group: 'admin',
         },
+        {
+          label: 'Gastos',
+          route: '/admin/expenses',
+          group: 'admin',
+        },
         // {
         //   label: 'Archivos',
         //   route: '/admin/media',

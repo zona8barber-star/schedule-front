@@ -130,6 +130,11 @@ const loadAdminFixedExpensesListPage = () =>
     (module) => module.AdminFixedExpensesListPageComponent,
   );
 
+const loadAdminExpensesListPage = () =>
+  import('./features/admin/expenses/pages/admin-expenses-list-page/admin-expenses-list-page.component').then(
+    (module) => module.AdminExpensesListPageComponent,
+  );
+
 export const routes: Routes = [
   {
     path: '',
@@ -305,6 +310,15 @@ export const routes: Routes = [
       roles: [ROLE_NAMES.admin],
     },
     title: 'Ingresos',
+  },
+  {
+    path: 'admin/expenses',
+    canActivate: [authGuard, roleGuard],
+    loadComponent: loadAdminExpensesListPage,
+    data: {
+      roles: [ROLE_NAMES.admin],
+    },
+    title: 'Gastos',
   },
   {
     path: 'admin/expenses/fixed',
