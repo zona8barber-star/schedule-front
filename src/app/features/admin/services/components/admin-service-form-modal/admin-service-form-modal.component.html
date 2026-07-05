@@ -1,0 +1,36 @@
+<div class="service-modal__overlay" (click)="cancel()">
+  <div class="service-modal__card" (click)="$event.stopPropagation()">
+    <h2>{{ isEditing ? 'Editar servicio' : 'Nuevo servicio' }}</h2>
+
+    <app-api-feedback severity="error" [message]="errorMessage()" />
+
+    @if (isLoading()) {
+      <p>Cargando...</p>
+    } @else {
+      <form [formGroup]="form" (ngSubmit)="submit()">
+        <label class="service-modal__field">
+          <span>Nombre</span>
+          <input type="text" formControlName="name" maxlength="120" autocomplete="off" />
+        </label>
+        @if (form.controls.name.touched && form.controls.name.invalid) {
+          <small class="service-modal__error">El nombre debe tener entre 2 y 120 caracteres.</small>
+        }
+
+        <label class="service-modal__field">
+          <span>Precio base (COP)</span>
+          <input type="number" formControlName="basePrice" min="0" step="1" inputmode="numeric" />
+        </label>
+        @if (form.controls.basePrice.touched && form.controls.basePrice.invalid) {
+          <small class="service-modal__error">Ingresa un precio válido (0 o mayor).</small>
+        }
+
+        <div class="service-modal__actions">
+          <button type="button" (click)="cancel()" [disabled]="isSaving()">Cancelar</button>
+          <button type="submit" [disabled]="isSaving()">
+            {{ isSaving() ? 'Guardando...' : 'Guardar' }}
+          </button>
+        </div>
+      </form>
+    }
+  </div>
+</div>

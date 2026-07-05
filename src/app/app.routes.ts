@@ -20,6 +20,11 @@ const loadAdminStaffFormPage = () =>
     (module) => module.AdminStaffFormPageComponent,
   );
 
+const loadAdminServicesListPage = () =>
+  import('./features/admin/services/pages/admin-services-list-page/admin-services-list-page.component').then(
+    (module) => module.AdminServicesListPageComponent,
+  );
+
 const loadStaffProfilePage = () =>
   import('./features/staff/profile/pages/staff-profile-page/staff-profile-page.component').then(
     (module) => module.StaffProfilePageComponent,
@@ -272,6 +277,15 @@ export const routes: Routes = [
       roles: [ROLE_NAMES.admin],
     },
     title: 'Citas',
+  },
+  {
+    path: 'admin/services',
+    canActivate: [authGuard, roleGuard],
+    loadComponent: loadAdminServicesListPage,
+    data: {
+      roles: [ROLE_NAMES.admin],
+    },
+    title: 'Servicios',
   },
   {
     path: 'admin/staff/new',
