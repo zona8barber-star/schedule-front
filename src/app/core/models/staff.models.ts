@@ -54,6 +54,11 @@ export interface StaffStatusUpdateRequest {
   isActive: boolean;
 }
 
+export interface EnableProfessionalProfileRequest {
+  displayName: string;
+  defaultAppointmentDurationMinutes: number | null;
+}
+
 export interface StaffProfileUpdateRequest {
   displayName: string;
   bio: string | null;
