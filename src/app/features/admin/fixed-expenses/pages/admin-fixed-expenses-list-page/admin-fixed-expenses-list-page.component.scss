@@ -1,0 +1,70 @@
+.fx {
+  padding: 1rem;
+}
+
+.fx__header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.fx__back {
+  display: inline-block;
+  margin-bottom: 0.25rem;
+  opacity: 0.8;
+}
+
+.fx__create-btn {
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  border: none;
+  background: var(--brand-primary, #1f2937);
+  color: #fff;
+  cursor: pointer;
+}
+
+.fx__state {
+  opacity: 0.75;
+}
+
+.fx__table-wrap {
+  overflow-x: auto;
+}
+
+.fx__table {
+  width: 100%;
+  border-collapse: collapse;
+
+  th,
+  td {
+    text-align: left;
+    padding: 0.6rem 0.75rem;
+    border-bottom: 1px solid var(--color-border, #e2e2e2);
+  }
+}
+
+.fx__row--inactive {
+  opacity: 0.55;
+}
+
+.fx__actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+
+  button {
+    padding: 0.35rem 0.6rem;
+    border: 1px solid var(--color-border, #ccc);
+    border-radius: 0.4rem;
+    background: transparent;
+    color: inherit;
+    cursor: pointer;
+
+    &:disabled {
+      opacity: 0.6;
+      cursor: default;
+    }
+  }
+}
