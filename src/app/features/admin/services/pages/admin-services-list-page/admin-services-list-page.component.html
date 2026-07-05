@@ -28,13 +28,28 @@
               <td>$ {{ service.basePrice | number: '1.0-0' }}</td>
               <td>{{ service.isActive ? 'Activo' : 'Inactivo' }}</td>
               <td class="services__actions">
-                <button type="button" (click)="openEdit(service.id)" [disabled]="busyId() === service.id">
+                <button
+                  class="services__action-btn services__action-btn--edit"
+                  type="button"
+                  (click)="openEdit(service.id)"
+                  [disabled]="busyId() === service.id"
+                >
                   Editar
                 </button>
-                <button type="button" (click)="toggleActive(service)" [disabled]="busyId() === service.id">
+                <button
+                  class="services__action-btn services__action-btn--toggle"
+                  type="button"
+                  (click)="toggleActive(service)"
+                  [disabled]="busyId() === service.id"
+                >
                   {{ service.isActive ? 'Desactivar' : 'Activar' }}
                 </button>
-                <button type="button" (click)="deleteService(service)" [disabled]="busyId() === service.id">
+                <button
+                  class="services__action-btn services__action-btn--delete"
+                  type="button"
+                  (click)="deleteService(service)"
+                  [disabled]="busyId() === service.id"
+                >
                   Eliminar
                 </button>
               </td>

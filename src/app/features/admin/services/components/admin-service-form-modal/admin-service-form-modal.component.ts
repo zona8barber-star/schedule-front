@@ -1,11 +1,30 @@
-import { Component, EventEmitter, Input, OnInit, Output, inject, signal } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import {
+  Component,
+  EventEmitter,
+  Input,
+  OnInit,
+  Output,
+  computed,
+  inject,
+  signal,
+} from '@angular/core';
+import {
+  AbstractControl,
+  FormBuilder,
+  ReactiveFormsModule,
+  ValidationErrors,
+  Validators,
+} from '@angular/forms';
 import { firstValueFrom } from 'rxjs';
 
 import { ServiceView } from '../../../../../core/models/service.models';
 import { AdminServicesApiService } from '../../../../../core/services/admin-services-api.service';
 import { getApiErrorMessage } from '../../../../../core/utils/api-error.utils';
 import { ApiFeedbackComponent } from '../../../../../shared/components/api-feedback/api-feedback.component';
+
+function integerValidator(control: AbstractControl): ValidationErrors | null {
+  return Number.isInteger(control.value) ? null : { integer: true };
+}
 
 @Component({
   selector: 'app-admin-service-form-modal',
@@ -25,9 +44,11 @@ export class AdminServiceFormModalComponent implements OnInit {
   readonly isLoading = signal(false);
   readonly errorMessage = signal<string | null>(null);
 
+  readonly isBusy = computed(() => this.isSaving() || this.isLoading());
+
   readonly form = this.formBuilder.nonNullable.group({
     name: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(120)]],
-    basePrice: [0, [Validators.required, Validators.min(0)]],
+    basePrice: [0, [Validators.required, Validators.min(0), integerValidator]],
   });
 
   get isEditing(): boolean {
@@ -77,6 +98,9 @@ export class AdminServiceFormModalComponent implements OnInit {
   }
 
   cancel(): void {
+    if (this.isBusy()) {
+      return;
+    }
     this.cancelled.emit();
   }
 }

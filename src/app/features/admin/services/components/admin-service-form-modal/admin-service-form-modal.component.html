@@ -21,7 +21,9 @@
           <input type="number" formControlName="basePrice" min="0" step="1" inputmode="numeric" />
         </label>
         @if (form.controls.basePrice.touched && form.controls.basePrice.invalid) {
-          <small class="service-modal__error">Ingresa un precio válido (0 o mayor).</small>
+          <small class="service-modal__error">
+            Ingresa un precio válido (número entero, 0 o mayor).
+          </small>
         }
 
         <div class="service-modal__actions">
