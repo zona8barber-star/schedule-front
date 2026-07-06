@@ -58,7 +58,12 @@
                 }
               ],
               "outputHashing": "all",
-              "serviceWorker": "ngsw-config.json"
+              "serviceWorker": "ngsw-config.json",
+              "optimization": {
+                "styles": {
+                  "inlineCritical": false
+                }
+              }
             },
             "qa": {
               "fileReplacements": [
@@ -67,7 +72,11 @@
                   "with": "src/environments/environment.qa.ts"
                 }
               ],
-              "optimization": true,
+              "optimization": {
+                "styles": {
+                  "inlineCritical": false
+                }
+              },
               "extractLicenses": true,
               "sourceMap": true,
               "serviceWorker": "ngsw-config.json"
