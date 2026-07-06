@@ -1,0 +1,106 @@
+<section class="reports">
+  <header class="reports__header">
+    <h1>Reportes</h1>
+  </header>
+
+  <div class="reports__filters">
+    <label>
+      <span>Desde</span>
+      <input type="date" [max]="to()" [ngModel]="from()" (ngModelChange)="onFromChange($event)" />
+    </label>
+    <label>
+      <span>Hasta</span>
+      <input type="date" [ngModel]="to()" (ngModelChange)="onToChange($event)" />
+    </label>
+    <div class="reports__presets">
+      <button type="button" (click)="setToday()">Hoy</button>
+      <button type="button" (click)="setThisMonth()">Este mes</button>
+    </div>
+  </div>
+
+  <app-api-feedback severity="error" [message]="errorMessage()" />
+
+  @if (isLoading()) {
+    <p class="reports__state">Cargando reporte...</p>
+  } @else if (summary(); as s) {
+    <div class="reports__kpis">
+      <div class="reports__kpi">
+        <span class="reports__kpi-label">Ingresos</span>
+        <span class="reports__kpi-value">$ {{ s.totalIncome | number: '1.0-0' }}</span>
+      </div>
+      <div class="reports__kpi">
+        <span class="reports__kpi-label">Gastos</span>
+        <span class="reports__kpi-value">$ {{ s.totalExpenses | number: '1.0-0' }}</span>
+      </div>
+      <div class="reports__kpi" [class.reports__kpi--negative]="s.netProfit < 0">
+        <span class="reports__kpi-label">Utilidad neta</span>
+        <span class="reports__kpi-value">$ {{ s.netProfit | number: '1.0-0' }}</span>
+      </div>
+      <div class="reports__kpi">
+        <span class="reports__kpi-label"># Cortes</span>
+        <span class="reports__kpi-value">{{ s.incomeCount }}</span>
+      </div>
+    </div>
+
+    <div class="reports__chart">
+      <h2>Ingresos vs Gastos</h2>
+      <div class="reports__chart-canvas">
+        <canvas baseChart type="bar" [data]="trendChartData()" [options]="chartOptions"></canvas>
+      </div>
+    </div>
+
+    <div class="reports__grid">
+      <div class="reports__panel">
+        <h2>Ingresos por profesional</h2>
+        <div class="reports__chart-canvas">
+          <canvas baseChart type="bar" [data]="professionalChartData()" [options]="chartOptions"></canvas>
+        </div>
+        <table class="reports__table">
+          <thead>
+            <tr><th>Profesional</th><th>Ingresos</th><th># Cortes</th></tr>
+          </thead>
+          <tbody>
+            @for (row of s.byProfessional; track row.staffProfileId) {
+              <tr>
+                <td>{{ row.displayName }}</td>
+                <td>$ {{ row.incomeTotal | number: '1.0-0' }}</td>
+                <td>{{ row.incomeCount }}</td>
+              </tr>
+            } @empty {
+              <tr><td colspan="3">Sin ingresos en el periodo.</td></tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <div class="reports__panel">
+        <h2>Promo vs Normal</h2>
+        <div class="reports__chart-canvas">
+          <canvas baseChart type="doughnut" [data]="promoChartData()" [options]="chartOptions"></canvas>
+        </div>
+      </div>
+
+      <div class="reports__panel">
+        <h2>Gastos por concepto</h2>
+        <div class="reports__chart-canvas">
+          <canvas baseChart type="bar" [data]="conceptChartData()" [options]="chartOptions"></canvas>
+        </div>
+        <table class="reports__table">
+          <thead>
+            <tr><th>Concepto</th><th>Total</th></tr>
+          </thead>
+          <tbody>
+            @for (row of s.byExpenseConcept; track row.name) {
+              <tr>
+                <td>{{ row.name }}</td>
+                <td>$ {{ row.total | number: '1.0-0' }}</td>
+              </tr>
+            } @empty {
+              <tr><td colspan="2">Sin gastos en el periodo.</td></tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  }
+</section>
