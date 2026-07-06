@@ -9,6 +9,7 @@ import {
 } from '@angular/core';
 import { provideRouter, withViewTransitions } from '@angular/router';
 import { provideServiceWorker } from '@angular/service-worker';
+import { provideCharts, withDefaultRegisterables } from 'ng2-charts';
 
 // Colombian locale: integer COP amounts render with dot thousands separators ($ 25.000).
 registerLocaleData(localeEsCo);
@@ -24,6 +25,7 @@ import { routes } from './app.routes';
 export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
+    provideCharts(withDefaultRegisterables()),
     { provide: LOCALE_ID, useValue: 'es-CO' },
     provideHttpClient(withInterceptors([authInterceptor, loadingInterceptor, toastInterceptor])),
     provideRouter(routes, withViewTransitions()),
