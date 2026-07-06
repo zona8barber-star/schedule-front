@@ -101,6 +101,7 @@ export class AdminReportsPageComponent implements OnInit {
   private async load(): Promise<void> {
     if (this.from() > this.to()) {
       this.errorMessage.set('La fecha "desde" debe ser anterior o igual a "hasta".');
+      this.isLoading.set(false);
       return;
     }
 
