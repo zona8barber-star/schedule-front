@@ -88,8 +88,18 @@ export class AdminExpenseFormModalComponent implements OnInit {
 
     const name = this.form.controls.name.value.trim();
     const match = this.matchFixedExpense(name);
+    let fixedExpenseId = match ? match.id : null;
+    if (
+      fixedExpenseId === null &&
+      this.entry &&
+      name.toLowerCase() === this.entry.name.trim().toLowerCase()
+    ) {
+      // Editing without changing the concept: keep the existing link even if that
+      // fixed expense is now inactive (it isn't in the active-only match set).
+      fixedExpenseId = this.entry.fixedExpenseId;
+    }
     const payload = {
-      fixedExpenseId: match ? match.id : null,
+      fixedExpenseId,
       name,
       amount: Math.trunc(this.form.controls.amount.value),
       occurredOn: this.form.controls.occurredOn.value,
