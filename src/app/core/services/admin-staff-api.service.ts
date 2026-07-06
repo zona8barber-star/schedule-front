@@ -5,6 +5,7 @@ import { RuntimeConfigService } from '../config/runtime-config.service';
 import {
   AdminStaffCreateRequest,
   AdminStaffUpdateRequest,
+  EnableProfessionalProfileRequest,
   StaffListItem,
   StaffResponse,
   StaffStatusUpdateRequest,
@@ -38,6 +39,10 @@ export class AdminStaffApiService {
       this.buildUrl(`/admin/staff/${staffId}/status`),
       request,
     );
+  }
+
+  activateOwnProfessionalProfile(request: EnableProfessionalProfileRequest) {
+    return this.httpClient.post<StaffResponse>(this.buildUrl('/admin/staff/me'), request);
   }
 
   remove(staffId: string) {

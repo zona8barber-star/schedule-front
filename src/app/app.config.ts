@@ -1,11 +1,18 @@
+import { registerLocaleData } from '@angular/common';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
+import localeEsCo from '@angular/common/locales/es-CO';
 import {
   APP_INITIALIZER,
   ApplicationConfig,
+  LOCALE_ID,
   provideBrowserGlobalErrorListeners,
 } from '@angular/core';
 import { provideRouter, withViewTransitions } from '@angular/router';
 import { provideServiceWorker } from '@angular/service-worker';
+import { provideCharts, withDefaultRegisterables } from 'ng2-charts';
+
+// Colombian locale: integer COP amounts render with dot thousands separators ($ 25.000).
+registerLocaleData(localeEsCo);
 
 import { environment } from '../environments/environment';
 import { RuntimeConfigService } from './core/config/runtime-config.service';
@@ -18,6 +25,8 @@ import { routes } from './app.routes';
 export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
+    provideCharts(withDefaultRegisterables()),
+    { provide: LOCALE_ID, useValue: 'es-CO' },
     provideHttpClient(withInterceptors([authInterceptor, loadingInterceptor, toastInterceptor])),
     provideRouter(routes, withViewTransitions()),
     provideServiceWorker('ngsw-worker.js', {

@@ -20,6 +20,16 @@ const loadAdminStaffFormPage = () =>
     (module) => module.AdminStaffFormPageComponent,
   );
 
+const loadAdminServicesListPage = () =>
+  import('./features/admin/services/pages/admin-services-list-page/admin-services-list-page.component').then(
+    (module) => module.AdminServicesListPageComponent,
+  );
+
+const loadAdminIncomeListPage = () =>
+  import('./features/admin/income/pages/admin-income-list-page/admin-income-list-page.component').then(
+    (module) => module.AdminIncomeListPageComponent,
+  );
+
 const loadStaffProfilePage = () =>
   import('./features/staff/profile/pages/staff-profile-page/staff-profile-page.component').then(
     (module) => module.StaffProfilePageComponent,
@@ -113,6 +123,21 @@ const loadAdminBusinessHoursPage = () =>
 const loadAdminUsersListPage = () =>
   import('./features/admin/users/pages/admin-users-list-page/admin-users-list-page.component').then(
     (module) => module.AdminUsersListPageComponent,
+  );
+
+const loadAdminFixedExpensesListPage = () =>
+  import('./features/admin/fixed-expenses/pages/admin-fixed-expenses-list-page/admin-fixed-expenses-list-page.component').then(
+    (module) => module.AdminFixedExpensesListPageComponent,
+  );
+
+const loadAdminExpensesListPage = () =>
+  import('./features/admin/expenses/pages/admin-expenses-list-page/admin-expenses-list-page.component').then(
+    (module) => module.AdminExpensesListPageComponent,
+  );
+
+const loadAdminReportsPage = () =>
+  import('./features/admin/reports/pages/admin-reports-page/admin-reports-page.component').then(
+    (module) => module.AdminReportsPageComponent,
   );
 
 export const routes: Routes = [
@@ -272,6 +297,51 @@ export const routes: Routes = [
       roles: [ROLE_NAMES.admin],
     },
     title: 'Citas',
+  },
+  {
+    path: 'admin/services',
+    canActivate: [authGuard, roleGuard],
+    loadComponent: loadAdminServicesListPage,
+    data: {
+      roles: [ROLE_NAMES.admin],
+    },
+    title: 'Servicios',
+  },
+  {
+    path: 'admin/income',
+    canActivate: [authGuard, roleGuard],
+    loadComponent: loadAdminIncomeListPage,
+    data: {
+      roles: [ROLE_NAMES.admin],
+    },
+    title: 'Ingresos',
+  },
+  {
+    path: 'admin/expenses',
+    canActivate: [authGuard, roleGuard],
+    loadComponent: loadAdminExpensesListPage,
+    data: {
+      roles: [ROLE_NAMES.admin],
+    },
+    title: 'Gastos',
+  },
+  {
+    path: 'admin/expenses/fixed',
+    canActivate: [authGuard, roleGuard],
+    loadComponent: loadAdminFixedExpensesListPage,
+    data: {
+      roles: [ROLE_NAMES.admin],
+    },
+    title: 'Gastos fijos',
+  },
+  {
+    path: 'admin/reports',
+    canActivate: [authGuard, roleGuard],
+    loadComponent: loadAdminReportsPage,
+    data: {
+      roles: [ROLE_NAMES.admin],
+    },
+    title: 'Reportes',
   },
   {
     path: 'admin/staff/new',

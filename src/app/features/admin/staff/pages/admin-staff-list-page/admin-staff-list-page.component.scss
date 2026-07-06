@@ -378,3 +378,28 @@
     display: none;
   }
 }
+
+/* ── Self-activation CTA ──────────────────────────────────────── */
+
+.staff-list__self-cta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  padding: 1rem 1.25rem;
+  border: 1px solid var(--color-border, #e2e2e2);
+  border-radius: 0.75rem;
+  background: var(--color-surface-muted, #f7f7f7);
+
+  &-text h2 {
+    margin: 0 0 0.25rem;
+    font-size: 1rem;
+  }
+
+  &-text p {
+    margin: 0;
+    opacity: 0.75;
+  }
+}

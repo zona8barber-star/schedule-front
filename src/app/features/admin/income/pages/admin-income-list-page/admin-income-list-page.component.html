@@ -1,0 +1,68 @@
+<section class="income">
+  <header class="income__header">
+    <h1>Ingresos</h1>
+    <button class="income__create-btn" type="button" (click)="openCreate()">+ Registrar ingreso</button>
+  </header>
+
+  <div class="income__filters">
+    <label>
+      <span>Fecha</span>
+      <input type="date" [max]="today" [ngModel]="selectedDate()" (ngModelChange)="onDateChange($event)" />
+    </label>
+    <label>
+      <span>Profesional</span>
+      <select [ngModel]="selectedStaffId()" (ngModelChange)="onStaffChange($event)">
+        <option value="">Todos</option>
+        @for (member of staff(); track member.staffProfileId) {
+          <option [value]="member.staffProfileId">{{ member.displayName }}</option>
+        }
+      </select>
+    </label>
+    <div class="income__total">Total: $ {{ total() | number: '1.0-0' }}</div>
+  </div>
+
+  <app-api-feedback severity="error" [message]="errorMessage()" />
+
+  @if (isLoading()) {
+    <p class="income__state">Cargando ingresos...</p>
+  } @else if (!entries().length) {
+    <p class="income__state">Sin ingresos para este día.</p>
+  } @else {
+    <div class="income__table-wrap">
+      <table class="income__table">
+        <thead>
+          <tr>
+            <th>Servicio</th>
+            <th>Profesional</th>
+            <th>Valor</th>
+            <th>Promo</th>
+            <th aria-label="Acciones"></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (entry of entries(); track entry.id) {
+            <tr>
+              <td>{{ entry.serviceName }}</td>
+              <td>{{ entry.staffDisplayName }}</td>
+              <td>$ {{ entry.amount | number: '1.0-0' }}</td>
+              <td>{{ entry.isPromo ? 'Sí' : '—' }}</td>
+              <td class="income__actions">
+                <button type="button" (click)="openEdit(entry)" [disabled]="busyId() === entry.id">Editar</button>
+                <button type="button" (click)="deleteEntry(entry)" [disabled]="busyId() === entry.id">Eliminar</button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</section>
+
+@if (isModalOpen()) {
+  <app-admin-income-form-modal
+    [entry]="editingEntry()"
+    [defaultDate]="today"
+    (saved)="onSaved()"
+    (cancelled)="closeModal()"
+  />
+}

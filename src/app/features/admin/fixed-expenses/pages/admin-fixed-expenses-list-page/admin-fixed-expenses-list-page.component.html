@@ -1,0 +1,54 @@
+<section class="fx">
+  <header class="fx__header">
+    <div>
+      <a routerLink="/admin/expenses" class="fx__back">← Gastos</a>
+      <h1>Gastos fijos</h1>
+    </div>
+    <button class="fx__create-btn" type="button" (click)="openCreate()">+ Nuevo gasto fijo</button>
+  </header>
+
+  <app-api-feedback severity="error" [message]="errorMessage()" />
+
+  @if (isLoading()) {
+    <p class="fx__state">Cargando...</p>
+  } @else if (!items().length) {
+    <p class="fx__state">Aún no hay gastos fijos. Crea el primero.</p>
+  } @else {
+    <div class="fx__table-wrap">
+      <table class="fx__table">
+        <thead>
+          <tr>
+            <th>Nombre</th>
+            <th>Valor por defecto</th>
+            <th>Estado</th>
+            <th aria-label="Acciones"></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (item of items(); track item.id) {
+            <tr [class.fx__row--inactive]="!item.isActive">
+              <td>{{ item.name }}</td>
+              <td>{{ item.defaultAmount === null ? '—' : '$ ' + (item.defaultAmount | number: '1.0-0') }}</td>
+              <td>{{ item.isActive ? 'Activo' : 'Inactivo' }}</td>
+              <td class="fx__actions">
+                <button type="button" (click)="openEdit(item.id)" [disabled]="busyId() === item.id">Editar</button>
+                <button type="button" (click)="toggleActive(item)" [disabled]="busyId() === item.id">
+                  {{ item.isActive ? 'Desactivar' : 'Activar' }}
+                </button>
+                <button type="button" (click)="deleteItem(item)" [disabled]="busyId() === item.id">Eliminar</button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</section>
+
+@if (isModalOpen()) {
+  <app-admin-fixed-expense-form-modal
+    [fixedExpenseId]="editingId()"
+    (saved)="onSaved($event)"
+    (cancelled)="closeModal()"
+  />
+}

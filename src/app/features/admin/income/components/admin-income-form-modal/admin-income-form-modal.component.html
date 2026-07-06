@@ -1,0 +1,60 @@
+<div class="income-modal__overlay" (click)="cancel()">
+  <div class="income-modal__card" (click)="$event.stopPropagation()">
+    <h2>{{ isEditing ? 'Editar ingreso' : 'Registrar ingreso' }}</h2>
+
+    <app-api-feedback severity="error" [message]="errorMessage()" />
+
+    @if (isLoading()) {
+      <p>Cargando...</p>
+    } @else {
+      <form [formGroup]="form" (ngSubmit)="submit()">
+        <label class="income-modal__field">
+          <span>Servicio</span>
+          <select formControlName="serviceId" (change)="onServiceChange(form.controls.serviceId.value)">
+            <option value="" disabled>Selecciona un servicio</option>
+            @for (service of serviceOptions(); track service.id) {
+              <option [value]="service.id">
+                {{ service.name }} ($ {{ service.basePrice | number: '1.0-0' }})
+              </option>
+            }
+          </select>
+        </label>
+
+        <label class="income-modal__field">
+          <span>Profesional</span>
+          <select formControlName="staffProfileId">
+            <option value="" disabled>Selecciona un profesional</option>
+            @for (member of staffOptions(); track member.staffProfileId) {
+              <option [value]="member.staffProfileId">{{ member.displayName }}</option>
+            }
+          </select>
+        </label>
+
+        <label class="income-modal__field">
+          <span>Valor (COP)</span>
+          <input type="number" formControlName="amount" min="0" step="1" inputmode="numeric" />
+        </label>
+        @if (form.controls.amount.touched && form.controls.amount.invalid) {
+          <small class="income-modal__error">Ingresa un valor válido (número entero, 0 o mayor).</small>
+        }
+
+        <label class="income-modal__checkbox">
+          <input type="checkbox" formControlName="isPromo" />
+          <span>Promo</span>
+        </label>
+
+        <label class="income-modal__field">
+          <span>Fecha</span>
+          <input type="date" formControlName="occurredOn" [max]="defaultDate || null" />
+        </label>
+
+        <div class="income-modal__actions">
+          <button type="button" (click)="cancel()" [disabled]="isSaving()">Cancelar</button>
+          <button type="submit" [disabled]="isSaving()">
+            {{ isSaving() ? 'Guardando...' : 'Guardar' }}
+          </button>
+        </div>
+      </form>
+    }
+  </div>
+</div>

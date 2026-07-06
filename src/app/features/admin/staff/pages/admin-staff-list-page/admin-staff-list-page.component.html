@@ -11,6 +11,23 @@
 
   <app-api-feedback severity="error" [message]="errorMessage()" />
 
+  @if (canActivateProfessional()) {
+    <div class="staff-list__self-cta">
+      <div class="staff-list__self-cta-text">
+        <h2>Atiende como profesional</h2>
+        <p>Activa tu perfil para gestionar tu disponibilidad, agenda y aparecer como reservable.</p>
+      </div>
+      <button
+        class="staff-list__create-btn"
+        type="button"
+        [disabled]="isActivating()"
+        (click)="activateProfessional()"
+      >
+        {{ isActivating() ? 'Activando...' : 'Activar mi perfil profesional' }}
+      </button>
+    </div>
+  }
+
   @if (isLoading()) {
     <div class="staff-list__state">
       <p>Cargando profesionales...</p>
