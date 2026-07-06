@@ -1,0 +1,36 @@
+<div class="fx-modal__overlay" (click)="cancel()">
+  <div class="fx-modal__card" (click)="$event.stopPropagation()">
+    <h2>{{ isEditing ? 'Editar gasto fijo' : 'Nuevo gasto fijo' }}</h2>
+
+    <app-api-feedback severity="error" [message]="errorMessage()" />
+
+    @if (isLoading()) {
+      <p>Cargando...</p>
+    } @else {
+      <form [formGroup]="form" (ngSubmit)="submit()">
+        <label class="fx-modal__field">
+          <span>Nombre</span>
+          <input type="text" formControlName="name" maxlength="120" autocomplete="off" />
+        </label>
+        @if (form.controls.name.touched && form.controls.name.invalid) {
+          <small class="fx-modal__error">El nombre debe tener entre 2 y 120 caracteres.</small>
+        }
+
+        <label class="fx-modal__field">
+          <span>Valor por defecto (COP, opcional)</span>
+          <input type="number" formControlName="defaultAmount" min="0" step="1" inputmode="numeric" />
+        </label>
+        @if (form.controls.defaultAmount.touched && form.controls.defaultAmount.invalid) {
+          <small class="fx-modal__error">Si lo llenas, debe ser un número entero (0 o mayor).</small>
+        }
+
+        <div class="fx-modal__actions">
+          <button type="button" (click)="cancel()" [disabled]="isSaving()">Cancelar</button>
+          <button type="submit" [disabled]="isSaving()">
+            {{ isSaving() ? 'Guardando...' : 'Guardar' }}
+          </button>
+        </div>
+      </form>
+    }
+  </div>
+</div>

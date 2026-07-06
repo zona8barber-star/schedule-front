@@ -1,0 +1,70 @@
+<section class="services">
+  <header class="services__header">
+    <h1>Servicios</h1>
+    <button class="services__create-btn" type="button" (click)="openCreate()">+ Nuevo servicio</button>
+  </header>
+
+  <app-api-feedback severity="error" [message]="errorMessage()" />
+
+  @if (isLoading()) {
+    <p class="services__state">Cargando servicios...</p>
+  } @else if (!services().length) {
+    <p class="services__state">Aún no hay servicios. Crea el primero.</p>
+  } @else {
+    <div class="services__table-wrap">
+      <table class="services__table">
+        <thead>
+          <tr>
+            <th>Nombre</th>
+            <th>Precio</th>
+            <th>Estado</th>
+            <th aria-label="Acciones"></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (service of services(); track service.id) {
+            <tr [class.services__row--inactive]="!service.isActive">
+              <td>{{ service.name }}</td>
+              <td>$ {{ service.basePrice | number: '1.0-0' }}</td>
+              <td>{{ service.isActive ? 'Activo' : 'Inactivo' }}</td>
+              <td class="services__actions">
+                <button
+                  class="services__action-btn services__action-btn--edit"
+                  type="button"
+                  (click)="openEdit(service.id)"
+                  [disabled]="busyId() === service.id"
+                >
+                  Editar
+                </button>
+                <button
+                  class="services__action-btn services__action-btn--toggle"
+                  type="button"
+                  (click)="toggleActive(service)"
+                  [disabled]="busyId() === service.id"
+                >
+                  {{ service.isActive ? 'Desactivar' : 'Activar' }}
+                </button>
+                <button
+                  class="services__action-btn services__action-btn--delete"
+                  type="button"
+                  (click)="deleteService(service)"
+                  [disabled]="busyId() === service.id"
+                >
+                  Eliminar
+                </button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</section>
+
+@if (isModalOpen()) {
+  <app-admin-service-form-modal
+    [serviceId]="editingServiceId()"
+    (saved)="onSaved($event)"
+    (cancelled)="closeModal()"
+  />
+}

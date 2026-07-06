@@ -1,0 +1,69 @@
+.exp-modal__overlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.5);
+  padding: 1rem;
+  z-index: 1000;
+}
+
+.exp-modal__card {
+  width: 100%;
+  max-width: 460px;
+  background: var(--color-surface, #fff);
+  color: inherit;
+  border-radius: 0.75rem;
+  padding: 1.5rem;
+
+  h2 {
+    margin: 0 0 1rem;
+  }
+}
+
+.exp-modal__field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin-bottom: 0.75rem;
+
+  input {
+    padding: 0.5rem 0.65rem;
+    border: 1px solid var(--color-border, #ccc);
+    border-radius: 0.5rem;
+    font: inherit;
+  }
+}
+
+.exp-modal__error {
+  color: #c0392b;
+  display: block;
+  margin: -0.5rem 0 0.75rem;
+}
+
+.exp-modal__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  margin-top: 1rem;
+
+  button {
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+    border: 1px solid var(--color-border, #ccc);
+    background: var(--brand-primary, #1f2937);
+    color: #fff;
+    cursor: pointer;
+
+    &:first-child {
+      background: transparent;
+      color: inherit;
+    }
+
+    &:disabled {
+      opacity: 0.6;
+      cursor: default;
+    }
+  }
+}
