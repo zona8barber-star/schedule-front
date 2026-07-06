@@ -135,6 +135,11 @@ const loadAdminExpensesListPage = () =>
     (module) => module.AdminExpensesListPageComponent,
   );
 
+const loadAdminReportsPage = () =>
+  import('./features/admin/reports/pages/admin-reports-page/admin-reports-page.component').then(
+    (module) => module.AdminReportsPageComponent,
+  );
+
 export const routes: Routes = [
   {
     path: '',
@@ -328,6 +333,15 @@ export const routes: Routes = [
       roles: [ROLE_NAMES.admin],
     },
     title: 'Gastos fijos',
+  },
+  {
+    path: 'admin/reports',
+    canActivate: [authGuard, roleGuard],
+    loadComponent: loadAdminReportsPage,
+    data: {
+      roles: [ROLE_NAMES.admin],
+    },
+    title: 'Reportes',
   },
   {
     path: 'admin/staff/new',

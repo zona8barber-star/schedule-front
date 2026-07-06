@@ -26,6 +26,8 @@
     "@fontsource/archivo": "^5.2.8",
     "@fontsource/oswald": "^5.2.8",
     "@fontsource/space-mono": "^5.2.9",
+    "chart.js": "^4.5.1",
+    "ng2-charts": "^10.0.0",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0"
   },
