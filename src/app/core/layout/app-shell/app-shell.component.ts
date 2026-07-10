@@ -205,6 +205,11 @@ export class AppShellComponent {
           group: 'admin',
         },
         {
+          label: 'Ticker',
+          route: '/admin/content/ticker-items',
+          group: 'admin',
+        },
+        {
           label: 'Horario de atención',
           route: '/admin/content/business-hours',
           group: 'admin',
