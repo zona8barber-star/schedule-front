@@ -141,3 +141,24 @@ export interface UpsertBusinessScheduleDayRequest {
 export interface UpsertBusinessScheduleRequest {
   days: UpsertBusinessScheduleDayRequest[];
 }
+
+export interface TickerItemResponse {
+  id: string;
+  text: string;
+  sortOrder: number;
+  isActive: boolean;
+  createdAtUtc: string;
+  updatedAtUtc: string | null;
+}
+
+export interface CreateTickerItemRequest {
+  text: string;
+  sortOrder: number;
+  isActive: boolean;
+}
+
+export interface UpdateTickerItemRequest {
+  text: string;
+  sortOrder: number;
+  isActive: boolean;
+}

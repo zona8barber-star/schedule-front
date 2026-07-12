@@ -20,9 +20,14 @@
     </div>
   </header>
 
-  <div class="native-home__ticker" aria-hidden="true">
-    ✦ CORTES · DISEÑO · BARBA · AFEITADO · CORTES · DISEÑO · BARBA ✦
-  </div>
+  @if (tickerItems().length) {
+    <div class="native-home__ticker" aria-hidden="true">
+      <span>✦</span>
+      @for (item of tickerItems(); track item.id) {
+        <span> {{ item.text }} ✦</span>
+      }
+    </div>
+  }
 
   @if (staffMembers().length) {
     <section class="native-home__team">

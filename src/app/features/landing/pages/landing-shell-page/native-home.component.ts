@@ -1,7 +1,12 @@
 import { Component, input, output } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
-import { BannerResponse, LandingContentResponse, PublicStaffListItemResponse } from '../../../../core/models/content.models';
+import {
+  BannerResponse,
+  LandingContentResponse,
+  PublicStaffListItemResponse,
+  TickerItemResponse,
+} from '../../../../core/models/content.models';
 
 @Component({
   selector: 'app-native-home',
@@ -17,6 +22,7 @@ export class NativeHomeComponent {
   readonly formattedSchedule = input('');
   readonly staffMembers = input<PublicStaffListItemResponse[]>([]);
   readonly activeBanners = input<BannerResponse[]>([]);
+  readonly tickerItems = input<TickerItemResponse[]>([]);
   readonly isLoading = input(false);
   readonly whatsappUrl = input<string | null>(null);
 

@@ -7,8 +7,11 @@ import {
   BrandingSettingsResponse,
   BusinessScheduleResponse,
   CreateBannerRequest,
+  CreateTickerItemRequest,
   LandingContentResponse,
+  TickerItemResponse,
   UpdateBannerRequest,
+  UpdateTickerItemRequest,
   UpsertBrandingSettingsRequest,
   UpsertBusinessScheduleRequest,
   UpsertLandingContentRequest,
@@ -64,6 +67,34 @@ export class AdminContentApiService {
 
   deleteBanner(bannerId: string) {
     return this.httpClient.delete<void>(this.buildUrl(`/admin/content/banners/${bannerId}`));
+  }
+
+  listTickerItems() {
+    return this.httpClient.get<TickerItemResponse[]>(this.buildUrl('/admin/content/ticker-items'));
+  }
+
+  getTickerItemById(tickerItemId: string) {
+    return this.httpClient.get<TickerItemResponse>(
+      this.buildUrl(`/admin/content/ticker-items/${tickerItemId}`),
+    );
+  }
+
+  createTickerItem(request: CreateTickerItemRequest) {
+    return this.httpClient.post<TickerItemResponse>(
+      this.buildUrl('/admin/content/ticker-items'),
+      request,
+    );
+  }
+
+  updateTickerItem(tickerItemId: string, request: UpdateTickerItemRequest) {
+    return this.httpClient.put<TickerItemResponse>(
+      this.buildUrl(`/admin/content/ticker-items/${tickerItemId}`),
+      request,
+    );
+  }
+
+  deleteTickerItem(tickerItemId: string) {
+    return this.httpClient.delete<void>(this.buildUrl(`/admin/content/ticker-items/${tickerItemId}`));
   }
 
   getBusinessSchedule() {

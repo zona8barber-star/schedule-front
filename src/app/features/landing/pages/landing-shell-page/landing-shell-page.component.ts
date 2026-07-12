@@ -11,6 +11,7 @@ import {
   BusinessScheduleResponse,
   LandingContentResponse,
   PublicStaffListItemResponse,
+  TickerItemResponse,
 } from '../../../../core/models/content.models';
 import { AuthService } from '../../../../core/services/auth.service';
 import { PublicAvailabilityApiService } from '../../../../core/services/public-availability-api.service';
@@ -32,12 +33,6 @@ function todayIso(): string {
   styleUrl: './landing-shell-page.component.scss',
 })
 export class LandingShellPageComponent implements OnInit {
-  readonly tickerItems = [
-    'Reserva en minutos',
-    'Profesionales verificados',
-    'Cortes con estilo',
-    'Agenda 100% online',
-  ];
   private readonly router = inject(Router);
   private readonly authService = inject(AuthService);
   private readonly publicContentApiService = inject(PublicContentApiService);
@@ -58,6 +53,11 @@ export class LandingShellPageComponent implements OnInit {
   readonly landingContent = signal<LandingContentResponse | null>(null);
   readonly branding = signal<BrandingSettingsResponse | null>(null);
   readonly banners = signal<BannerResponse[]>([]);
+  readonly tickerItems = signal<TickerItemResponse[]>([]);
+  readonly tickerLoopItems = computed(() => {
+    const items = this.tickerItems();
+    return items.length ? [...items, ...items] : [];
+  });
   readonly staffMembers = signal<PublicStaffListItemResponse[]>([]);
   readonly businessSchedule = signal<BusinessScheduleResponse | null>(null);
   readonly isLoading = signal(true);
@@ -203,13 +203,14 @@ export class LandingShellPageComponent implements OnInit {
 
     this.themeService.applyBranding(null);
 
-    const [landingResult, brandingResult, bannersResult, staffResult, scheduleResult] =
+    const [landingResult, brandingResult, bannersResult, staffResult, scheduleResult, tickerItemsResult] =
       await Promise.allSettled([
         firstValueFrom(this.publicContentApiService.getLanding()),
         firstValueFrom(this.publicContentApiService.getBranding()),
         firstValueFrom(this.publicContentApiService.getBanners()),
         firstValueFrom(this.publicStaffApiService.list()),
         firstValueFrom(this.publicContentApiService.getBusinessSchedule()),
+        firstValueFrom(this.publicContentApiService.getTickerItems()),
       ]);
 
     const failedSections: string[] = [];
@@ -247,6 +248,12 @@ export class LandingShellPageComponent implements OnInit {
       this.businessSchedule.set(scheduleResult.value);
     } else {
       this.businessSchedule.set(null);
+    }
+
+    if (tickerItemsResult.status === 'fulfilled') {
+      this.tickerItems.set(tickerItemsResult.value);
+    } else {
+      this.tickerItems.set([]);
     }
 
     const hasAnyContent =
