@@ -110,6 +110,11 @@ const loadAdminBannersPage = () =>
     (module) => module.AdminBannersPageComponent,
   );
 
+const loadAdminTickerItemsPage = () =>
+  import(
+    './features/admin/landing-content/pages/admin-ticker-items-page/admin-ticker-items-page.component'
+  ).then((module) => module.AdminTickerItemsPageComponent);
+
 const loadAdminNotificationsPage = () =>
   import(
     './features/admin/notifications/pages/admin-notifications-page/admin-notifications-page.component'
@@ -396,6 +401,15 @@ export const routes: Routes = [
       roles: [ROLE_NAMES.admin],
     },
     title: 'Banners',
+  },
+  {
+    path: 'admin/content/ticker-items',
+    canActivate: [authGuard, roleGuard],
+    loadComponent: loadAdminTickerItemsPage,
+    data: {
+      roles: [ROLE_NAMES.admin],
+    },
+    title: 'Ticker',
   },
   {
     path: 'admin/content/business-hours',

@@ -7,6 +7,7 @@ import {
   BrandingSettingsResponse,
   BusinessScheduleResponse,
   LandingContentResponse,
+  TickerItemResponse,
 } from '../models/content.models';
 
 @Injectable({
@@ -22,6 +23,10 @@ export class PublicContentApiService {
 
   getBanners() {
     return this.httpClient.get<BannerResponse[]>(this.buildUrl('/public/content/banners'));
+  }
+
+  getTickerItems() {
+    return this.httpClient.get<TickerItemResponse[]>(this.buildUrl('/public/content/ticker-items'));
   }
 
   getBranding() {

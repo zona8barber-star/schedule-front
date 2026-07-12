@@ -1,0 +1,115 @@
+<section class="admin-ticker-items-page">
+  <header class="admin-ticker-items-page__hero">
+    <div>
+      <p class="admin-ticker-items-page__eyebrow">Gestion</p>
+      <h1>Ticker</h1>
+      <p>Gestiona las frases que rotan en el ticker animado de la landing.</p>
+    </div>
+  </header>
+
+  <app-api-feedback severity="error" [message]="errorMessage()" />
+  <app-api-feedback severity="info" [message]="successMessage()" />
+
+  <article class="admin-ticker-items-page__panel">
+    <div class="admin-ticker-items-page__section-heading">
+      <div>
+        <p class="admin-ticker-items-page__eyebrow">Formulario</p>
+        <h2>{{ editingItemId() ? 'Editar frase' : 'Crear frase' }}</h2>
+      </div>
+    </div>
+
+    <form [formGroup]="tickerItemForm" (ngSubmit)="submit()" novalidate>
+      <fieldset [disabled]="isBusy()">
+        <div class="admin-ticker-items-page__grid">
+          <div class="admin-ticker-items-page__field admin-ticker-items-page__field--wide">
+            <label for="text">Texto</label>
+            <input id="text" type="text" formControlName="text" />
+            @if (showError('text', 'required')) {
+              <p class="admin-ticker-items-page__error">El texto es obligatorio.</p>
+            }
+            @if (showError('text', 'maxlength')) {
+              <p class="admin-ticker-items-page__error">El texto debe tener 120 caracteres o menos.</p>
+            }
+          </div>
+
+          <div class="admin-ticker-items-page__field">
+            <label for="sortOrder">Orden</label>
+            <input id="sortOrder" type="number" formControlName="sortOrder" />
+            @if (showError('sortOrder', 'required')) {
+              <p class="admin-ticker-items-page__error">El orden es obligatorio.</p>
+            }
+          </div>
+
+          <label class="admin-ticker-items-page__checkbox">
+            <input type="checkbox" formControlName="isActive" />
+            <span>Frase activa</span>
+          </label>
+        </div>
+      </fieldset>
+
+      <div class="admin-ticker-items-page__actions">
+        <button type="submit" [disabled]="isBusy()">{{ submitLabel() }}</button>
+        @if (editingItemId()) {
+          <button
+            type="button"
+            class="admin-ticker-items-page__secondary"
+            [disabled]="isBusy()"
+            (click)="resetForm()"
+          >
+            Cancelar edicion
+          </button>
+        }
+      </div>
+    </form>
+  </article>
+
+  <article class="admin-ticker-items-page__panel">
+    <div class="admin-ticker-items-page__section-heading">
+      <div>
+        <p class="admin-ticker-items-page__eyebrow">Listado</p>
+        <h2>Frases registradas</h2>
+      </div>
+    </div>
+
+    @if (isLoading()) {
+      <app-page-state kind="loading" message="Cargando frases..." />
+    } @else if (!tickerItems().length) {
+      <app-page-state kind="empty" message="No hay frases registradas." />
+    } @else {
+      <div class="admin-ticker-items-page__list">
+        @for (item of tickerItems(); track item.id) {
+          <article class="admin-ticker-items-page__card">
+            <header>
+              <div>
+                <p class="admin-ticker-items-page__eyebrow">Orden {{ item.sortOrder }}</p>
+                <h3>{{ item.text }}</h3>
+              </div>
+              <span [class.admin-ticker-items-page__badge--inactive]="!item.isActive">
+                {{ item.isActive ? 'Activo' : 'Inactivo' }}
+              </span>
+            </header>
+
+            <div class="admin-ticker-items-page__card-actions">
+              <button
+                type="button"
+                class="admin-ticker-items-page__secondary"
+                [disabled]="isBusy()"
+                (click)="startEdit(item)"
+              >
+                Editar
+              </button>
+              <button
+                type="button"
+                class="admin-ticker-items-page__danger"
+                [disabled]="deletingItemId() === item.id || isBusy()"
+                (click)="deleteTickerItem(item)"
+              >
+                {{ deletingItemId() === item.id ? 'Eliminando...' : 'Eliminar' }}
+              </button>
+            </div>
+          </article>
+        }
+      </div>
+    }
+  </article>
+</section>

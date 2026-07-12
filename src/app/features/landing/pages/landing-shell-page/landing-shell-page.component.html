@@ -76,16 +76,15 @@
   </section>
 
   <!-- TICKER ──────────────────────────────────────────────────── -->
-  <div class="lp__ticker" aria-hidden="true">
-    <div class="lp__ticker-track">
-      <span>Sin fila · Con cita</span><span>—</span>
-      <span>El corte es oficio</span><span>—</span>
-      <span>Fades · Barba · Navaja · Diseño</span><span>—</span>
-      <span>Sin fila · Con cita</span><span>—</span>
-      <span>El corte es oficio</span><span>—</span>
-      <span>Fades · Barba · Navaja · Diseño</span><span>—</span>
+  @if (tickerItems().length) {
+    <div class="lp__ticker" aria-hidden="true">
+      <div class="lp__ticker-track">
+        @for (item of tickerLoopItems(); track $index) {
+          <span>{{ item.text }}</span><span>—</span>
+        }
+      </div>
     </div>
-  </div>
+  }
 
   <app-api-feedback severity="error" [message]="errorMessage()" />
   <app-api-feedback severity="info"  [message]="infoMessage()"  />
