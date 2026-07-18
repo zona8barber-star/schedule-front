@@ -7,6 +7,9 @@ export interface IncomeEntryView {
   staffDisplayName: string;
   amount: number;
   isPromo: boolean;
+  businessPercentage: number;
+  businessAmount: number;
+  professionalAmount: number;
   occurredOn: string; // YYYY-MM-DD
   createdAt: string;
   updatedAt: string | null;
