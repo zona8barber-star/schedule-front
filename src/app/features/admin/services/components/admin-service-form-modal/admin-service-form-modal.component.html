@@ -26,6 +26,16 @@
           </small>
         }
 
+        <label class="service-modal__field">
+          <span>% para el negocio</span>
+          <input type="number" formControlName="businessPercentage" min="0" max="100" step="1" inputmode="numeric" />
+        </label>
+        @if (form.controls.businessPercentage.touched && form.controls.businessPercentage.invalid) {
+          <small class="service-modal__error">
+            Ingresa un porcentaje válido (0 a 100). El resto queda para el profesional.
+          </small>
+        }
+
         <div class="service-modal__actions">
           <button type="button" (click)="cancel()" [disabled]="isSaving()">Cancelar</button>
           <button type="submit" [disabled]="isSaving()">
