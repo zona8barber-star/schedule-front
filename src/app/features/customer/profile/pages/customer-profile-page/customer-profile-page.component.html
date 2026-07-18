@@ -60,7 +60,7 @@
 
           <div class="cp__photo-info">
             <p class="cp__photo-label">Foto de perfil</p>
-            <p class="cp__photo-hint">JPG, PNG o WebP · máx. 1 MB</p>
+            <p class="cp__photo-hint">JPG, PNG o WebP · máx. 10 MB</p>
 
             @if (photoError()) {
               <p class="cp__field-error">{{ photoError() }}</p>
@@ -255,6 +255,17 @@
 
       </div>
     }
+
+    <div class="cp__session">
+      <button
+        class="cp__btn cp__btn--danger"
+        type="button"
+        [disabled]="isSigningOut()"
+        (click)="logout()"
+      >
+        {{ isSigningOut() ? 'Cerrando sesión...' : 'Cerrar sesión' }}
+      </button>
+    </div>
 
   }
 </div>

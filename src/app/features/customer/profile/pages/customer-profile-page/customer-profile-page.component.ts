@@ -1,15 +1,17 @@
 import { Component, DestroyRef, ElementRef, OnInit, computed, inject, signal, viewChild } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 
 import { CustomerProfileResponse } from '../../../../../core/models/customer-profile.models';
+import { AuthService } from '../../../../../core/services/auth.service';
 import { ConfirmModalService } from '../../../../../core/services/confirm-modal.service';
 import { CustomerProfileApiService } from '../../../../../core/services/customer-profile-api.service';
 import { getApiErrorMessage } from '../../../../../core/utils/api-error.utils';
 import { ApiFeedbackComponent } from '../../../../../shared/components/api-feedback/api-feedback.component';
 import { PageStateComponent } from '../../../../../shared/components/page-state/page-state.component';
 
-const MAX_FILE_BYTES = 1_048_576; // 1 MB
+const MAX_FILE_BYTES = 10_485_760; // 10 MB
 
 type ProfileTab = 'info' | 'password';
 
@@ -24,6 +26,8 @@ export class CustomerProfilePageComponent implements OnInit {
   private readonly profileApiService = inject(CustomerProfileApiService);
   private readonly confirmModal = inject(ConfirmModalService);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly authService = inject(AuthService);
+  private readonly router = inject(Router);
 
   readonly photoInput = viewChild<ElementRef<HTMLInputElement>>('photoInput');
 
@@ -38,6 +42,7 @@ export class CustomerProfilePageComponent implements OnInit {
 
   readonly pwdSubmitted = signal(false);
   readonly isPwdSaving = signal(false);
+  readonly isSigningOut = signal(false);
 
   readonly photoError = signal<string | null>(null);
   readonly infoError = signal<string | null>(null);
@@ -118,7 +123,7 @@ export class CustomerProfilePageComponent implements OnInit {
 
     this.photoError.set(null);
     if (file.size > MAX_FILE_BYTES) {
-      this.photoError.set('La foto no puede superar 1 MB.');
+      this.photoError.set('La foto no puede superar 10 MB.');
       input.value = '';
       return;
     }
@@ -208,6 +213,16 @@ export class CustomerProfilePageComponent implements OnInit {
   showPwdError(field: 'currentPassword' | 'newPassword' | 'confirmPassword', errorName: string): boolean {
     const c = this.pwdForm.controls[field];
     return c.hasError(errorName) && (c.touched || this.pwdSubmitted());
+  }
+
+  async logout(): Promise<void> {
+    this.isSigningOut.set(true);
+    try {
+      await this.authService.logout();
+      await this.router.navigateByUrl('/auth/login', { replaceUrl: true });
+    } finally {
+      this.isSigningOut.set(false);
+    }
   }
 
   private async loadProfile(): Promise<void> {
