@@ -3,6 +3,8 @@ export interface ReportProfessionalIncomeView {
   displayName: string;
   incomeTotal: number;
   incomeCount: number;
+  businessTotal: number;
+  professionalTotal: number;
 }
 
 export interface ReportExpenseConceptView {
@@ -26,6 +28,8 @@ export interface ReportSummaryView {
   incomeCount: number;
   promoIncome: number;
   normalIncome: number;
+  businessIncome: number;
+  professionalIncome: number;
   byProfessional: ReportProfessionalIncomeView[];
   byExpenseConcept: ReportExpenseConceptView[];
   trend: ReportTrendPointView[];
