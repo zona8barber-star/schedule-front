@@ -17,6 +17,8 @@
           <tr>
             <th>Nombre</th>
             <th>Precio</th>
+            <th>% Negocio</th>
+            <th>% Profesional</th>
             <th>Estado</th>
             <th aria-label="Acciones"></th>
           </tr>
@@ -26,6 +28,8 @@
             <tr [class.services__row--inactive]="!service.isActive">
               <td>{{ service.name }}</td>
               <td>$ {{ service.basePrice | number: '1.0-0' }}</td>
+              <td>{{ service.businessPercentage }}%</td>
+              <td>{{ 100 - service.businessPercentage }}%</td>
               <td>{{ service.isActive ? 'Activo' : 'Inactivo' }}</td>
               <td class="services__actions">
                 <button
