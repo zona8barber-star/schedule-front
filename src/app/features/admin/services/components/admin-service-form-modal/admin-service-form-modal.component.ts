@@ -49,6 +49,7 @@ export class AdminServiceFormModalComponent implements OnInit {
   readonly form = this.formBuilder.nonNullable.group({
     name: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(120)]],
     basePrice: [0, [Validators.required, Validators.min(0), integerValidator]],
+    businessPercentage: [0, [Validators.required, Validators.min(0), Validators.max(100), integerValidator]],
   });
 
   get isEditing(): boolean {
@@ -63,7 +64,11 @@ export class AdminServiceFormModalComponent implements OnInit {
     this.isLoading.set(true);
     try {
       const service = await firstValueFrom(this.adminServicesApiService.getById(this.serviceId));
-      this.form.patchValue({ name: service.name, basePrice: service.basePrice });
+      this.form.patchValue({
+        name: service.name,
+        basePrice: service.basePrice,
+        businessPercentage: service.businessPercentage,
+      });
     } catch (error) {
       this.errorMessage.set(getApiErrorMessage(error));
     } finally {
@@ -83,6 +88,7 @@ export class AdminServiceFormModalComponent implements OnInit {
     const payload = {
       name: this.form.controls.name.value.trim(),
       basePrice: Math.trunc(this.form.controls.basePrice.value),
+      businessPercentage: Math.trunc(this.form.controls.businessPercentage.value),
     };
 
     try {

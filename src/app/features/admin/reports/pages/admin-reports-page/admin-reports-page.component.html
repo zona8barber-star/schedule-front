@@ -40,6 +40,14 @@
         <span class="reports__kpi-label"># Cortes</span>
         <span class="reports__kpi-value">{{ s.incomeCount }}</span>
       </div>
+      <div class="reports__kpi">
+        <span class="reports__kpi-label">Para el negocio</span>
+        <span class="reports__kpi-value">$ {{ s.businessIncome | number: '1.0-0' }}</span>
+      </div>
+      <div class="reports__kpi">
+        <span class="reports__kpi-label">Para profesionales</span>
+        <span class="reports__kpi-value">$ {{ s.professionalIncome | number: '1.0-0' }}</span>
+      </div>
     </div>
 
     <div class="reports__chart">
@@ -57,7 +65,7 @@
         </div>
         <table class="reports__table">
           <thead>
-            <tr><th>Profesional</th><th>Ingresos</th><th># Cortes</th></tr>
+            <tr><th>Profesional</th><th>Ingresos</th><th># Cortes</th><th>Negocio</th><th>Profesional</th></tr>
           </thead>
           <tbody>
             @for (row of s.byProfessional; track row.staffProfileId) {
@@ -65,9 +73,11 @@
                 <td>{{ row.displayName }}</td>
                 <td>$ {{ row.incomeTotal | number: '1.0-0' }}</td>
                 <td>{{ row.incomeCount }}</td>
+                <td>$ {{ row.businessTotal | number: '1.0-0' }}</td>
+                <td>$ {{ row.professionalTotal | number: '1.0-0' }}</td>
               </tr>
             } @empty {
-              <tr><td colspan="3">Sin ingresos en el periodo.</td></tr>
+              <tr><td colspan="5">Sin ingresos en el periodo.</td></tr>
             }
           </tbody>
         </table>
