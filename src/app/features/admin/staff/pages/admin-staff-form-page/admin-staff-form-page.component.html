@@ -166,5 +166,25 @@
         </form>
       }
     </article>
+
+    @if (isEditMode() && hasRecord()) {
+      <aside class="staff-form-page__aside">
+        <h2>Horario de disponibilidad</h2>
+        @if (availabilityLoading()) {
+          <p>Cargando horario...</p>
+        } @else if (availability()) {
+          <ul class="staff-form-page__schedule">
+            @for (day of scheduleByDay(); track day.label) {
+              <li>
+                <strong>{{ day.label }}:</strong>
+                {{ day.ranges.length ? day.ranges.join(', ') : 'Sin horario configurado' }}
+              </li>
+            }
+          </ul>
+        } @else {
+          <p>No se pudo cargar el horario de este profesional.</p>
+        }
+      </aside>
+    }
   </div>
 </section>
