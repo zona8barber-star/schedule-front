@@ -34,7 +34,7 @@ function normalizeErrorMessage(rawMessage: unknown, fallback: string): string {
   const hasTechnicalWording =
     /\b(api|endpoint|stack|trace|exception|database|sql|server|storage|config|localhost|runtime|debug|mvp)\b/i.test(
       message,
-    );
+    ) || /is required\.?$/i.test(message);
 
   return hasTechnicalWording ? fallback : message;
 }

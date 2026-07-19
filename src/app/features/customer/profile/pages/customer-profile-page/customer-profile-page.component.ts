@@ -128,6 +128,14 @@ export class CustomerProfilePageComponent implements OnInit {
       return;
     }
 
+    if (file.size === 0) {
+      this.photoError.set(
+        'No pudimos leer el archivo seleccionado. Vuelve a intentarlo o elige la foto desde la galería.',
+      );
+      input.value = '';
+      return;
+    }
+
     const preview = URL.createObjectURL(file);
     const current = this.photoPreviewUrl();
     if (current?.startsWith('blob:')) URL.revokeObjectURL(current);
