@@ -36,7 +36,7 @@
       <div class="profile-page__media-card">
         <p class="profile-page__media-label">Foto de perfil</p>
         <p class="profile-page__media-hint">
-          Imagen JPG, PNG o WebP. Max. 1 MB. Si subes una nueva reemplaza la actual.
+          Imagen JPG, PNG o WebP. Max. 10 MB. Si subes una nueva reemplaza la actual.
         </p>
 
         @if (photoPreviewUrl() || profile()?.photoUrl) {
@@ -103,7 +103,7 @@
       <div class="profile-page__media-card">
         <p class="profile-page__media-label">QR de propinas</p>
         <p class="profile-page__media-hint">
-          Imagen o PDF. Max. 1 MB. Si subes uno nuevo reemplaza el actual.
+          Imagen o PDF. Max. 10 MB. Si subes uno nuevo reemplaza el actual.
         </p>
 
         @if (qrPreviewUrl() || profile()?.tipsQrUrl) {
@@ -299,5 +299,16 @@
         </button>
       </div>
     </form>
+
+    <div class="profile-page__session">
+      <button
+        class="profile-page__btn-remove"
+        type="button"
+        [disabled]="isSigningOut()"
+        (click)="logout()"
+      >
+        {{ isSigningOut() ? 'Cerrando sesion...' : 'Cerrar sesion' }}
+      </button>
+    </div>
   }
 </section>
