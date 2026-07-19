@@ -152,6 +152,13 @@ export class StaffProfilePageComponent implements OnInit {
       resetFileInput(event);
       return;
     }
+    if (file.size === 0) {
+      this.photoError.set(
+        'No pudimos leer el archivo seleccionado. Vuelve a intentarlo o elige la foto desde la galería.',
+      );
+      resetFileInput(event);
+      return;
+    }
     this.photoUploading.set(true);
     const preview = URL.createObjectURL(file);
     revokeBlobUrl(this.photoPreviewUrl());
@@ -199,6 +206,13 @@ export class StaffProfilePageComponent implements OnInit {
     if (file.size > MAX_FILE_BYTES) {
       this.qrError.set(
         'El archivo no puede superar 10 MB. Si subes uno nuevo reemplazará el actual.',
+      );
+      resetFileInput(event);
+      return;
+    }
+    if (file.size === 0) {
+      this.qrError.set(
+        'No pudimos leer el archivo seleccionado. Vuelve a intentarlo o elige otra imagen.',
       );
       resetFileInput(event);
       return;
