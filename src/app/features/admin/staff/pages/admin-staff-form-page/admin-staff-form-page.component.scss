@@ -184,6 +184,11 @@ textarea:focus {
   gap: 0.65rem;
 }
 
+.staff-form-page__schedule li strong {
+  color: var(--color-text);
+  margin-right: 0.35rem;
+}
+
 @media (max-width: 900px) {
   .staff-form-page__layout,
   .staff-form-page__grid {
