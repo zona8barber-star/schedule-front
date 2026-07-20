@@ -12,6 +12,7 @@ import { ApiFeedbackComponent } from '../../../../../shared/components/api-feedb
 import { PageStateComponent } from '../../../../../shared/components/page-state/page-state.component';
 
 const MAX_FILE_BYTES = 10_485_760; // 10 MB
+const ACCEPTED_PHOTO_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 
 type ProfileTab = 'info' | 'password';
 
@@ -122,6 +123,16 @@ export class CustomerProfilePageComponent implements OnInit {
     if (!file) return;
 
     this.photoError.set(null);
+    if (file.type && !ACCEPTED_PHOTO_TYPES.includes(file.type)) {
+      this.photoError.set(
+        file.type.includes('heic') || file.type.includes('heif')
+          ? 'Ese formato de foto (HEIC) no es compatible. En tu iPhone, ve a Ajustes > Cámara > Formatos y elige "Más compatible", o toma la foto con otra app.'
+          : 'Ese formato de archivo no es compatible. Usa una foto JPG, PNG o WEBP.',
+      );
+      input.value = '';
+      return;
+    }
+
     if (file.size > MAX_FILE_BYTES) {
       this.photoError.set('La foto no puede superar 10 MB.');
       input.value = '';
