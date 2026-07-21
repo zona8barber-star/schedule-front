@@ -94,7 +94,7 @@
         <input
           #photoInput
           type="file"
-          accept="image/jpeg,image/png,image/webp"
+          accept="image/*"
           class="profile-page__file-hidden"
           (change)="onPhotoSelected($event)"
         />
@@ -162,7 +162,7 @@
         <input
           #qrInput
           type="file"
-          accept="image/jpeg,image/png,image/webp,application/pdf"
+          accept="image/*,application/pdf"
           class="profile-page__file-hidden"
           (change)="onQrSelected($event)"
         />
