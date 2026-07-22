@@ -7,6 +7,7 @@ import {
   CustomerProfileResponse,
   CustomerProfileUpdateRequest,
 } from '../models/customer-profile.models';
+import { getUploadFileName } from '../utils/upload-file-name.utils';
 
 @Injectable({
   providedIn: 'root',
@@ -28,7 +29,7 @@ export class CustomerProfileApiService {
 
   uploadPhoto(file: File) {
     const form = new FormData();
-    form.append('photo', file);
+    form.append('photo', file, getUploadFileName(file, 'profile-photo'));
     return this.httpClient.post<CustomerProfileResponse>(
       this.buildUrl('/customer/profile/photo'),
       form,
