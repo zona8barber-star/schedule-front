@@ -26,6 +26,12 @@ export class StaffProfileApiService {
     return this.httpClient.post<StaffSelfProfileResponse>(
       this.buildUrl('/staff/profile/photo'),
       form,
+      {
+        headers: {
+          'X-Upload-File-Size': String(file.size),
+          'X-Upload-File-Type': file.type || 'unknown',
+        },
+      },
     );
   }
 
@@ -39,6 +45,12 @@ export class StaffProfileApiService {
     return this.httpClient.post<StaffSelfProfileResponse>(
       this.buildUrl('/staff/profile/tips-qr'),
       form,
+      {
+        headers: {
+          'X-Upload-File-Size': String(file.size),
+          'X-Upload-File-Type': file.type || 'unknown',
+        },
+      },
     );
   }
 
