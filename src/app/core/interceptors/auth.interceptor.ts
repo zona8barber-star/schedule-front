@@ -60,6 +60,7 @@ export const authInterceptor: HttpInterceptorFn = (request, next) => {
 
           return next(
             request.clone({
+              body: cloneBodyForRetry(request.body),
               setHeaders: {
                 Authorization: `Bearer ${refreshedAccessToken}`,
               },
@@ -75,4 +76,23 @@ export const authInterceptor: HttpInterceptorFn = (request, next) => {
 
 function extractRequestPath(requestUrl: string, apiBaseUrl: string): string {
   return requestUrl.slice(apiBaseUrl.length).split('?')[0] ?? '';
+}
+
+function cloneBodyForRetry(body: unknown): unknown {
+  if (!(body instanceof FormData)) {
+    return body;
+  }
+
+  const clone = new FormData();
+
+  body.forEach((value, key) => {
+    if (value instanceof File) {
+      clone.append(key, value, value.name);
+      return;
+    }
+
+    clone.append(key, value);
+  });
+
+  return clone;
 }
