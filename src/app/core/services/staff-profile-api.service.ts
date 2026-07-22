@@ -3,6 +3,7 @@ import { Injectable, inject } from '@angular/core';
 
 import { RuntimeConfigService } from '../config/runtime-config.service';
 import { StaffProfileUpdateRequest, StaffSelfProfileResponse } from '../models/staff.models';
+import { getUploadFileName } from '../utils/upload-file-name.utils';
 
 @Injectable({
   providedIn: 'root',
@@ -21,7 +22,7 @@ export class StaffProfileApiService {
 
   uploadPhoto(file: File) {
     const form = new FormData();
-    form.append('photo', file);
+    form.append('photo', file, getUploadFileName(file, 'staff-photo'));
     return this.httpClient.post<StaffSelfProfileResponse>(
       this.buildUrl('/staff/profile/photo'),
       form,
@@ -34,7 +35,7 @@ export class StaffProfileApiService {
 
   uploadTipsQr(file: File) {
     const form = new FormData();
-    form.append('file', file);
+    form.append('file', file, getUploadFileName(file, 'tips-qr'));
     return this.httpClient.post<StaffSelfProfileResponse>(
       this.buildUrl('/staff/profile/tips-qr'),
       form,
