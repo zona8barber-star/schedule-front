@@ -136,13 +136,20 @@ export class CustomerProfilePageComponent implements OnInit {
       return;
     }
 
-    const preview = URL.createObjectURL(file);
-    const current = this.photoPreviewUrl();
-    if (current?.startsWith('blob:')) URL.revokeObjectURL(current);
-    this.photoPreviewUrl.set(preview);
     this.photoUploading.set(true);
 
     try {
+      const refreshedAccessToken = await this.authService.refreshAccessToken();
+      if (!refreshedAccessToken) {
+        this.photoError.set('Tu sesión expiró. Inicia sesión nuevamente e intenta subir la foto otra vez.');
+        return;
+      }
+
+      const preview = URL.createObjectURL(file);
+      const current = this.photoPreviewUrl();
+      if (current?.startsWith('blob:')) URL.revokeObjectURL(current);
+      this.photoPreviewUrl.set(preview);
+
       const updated = await firstValueFrom(this.profileApiService.uploadPhoto(file));
       this.profile.set(updated);
       const prev = this.photoPreviewUrl();

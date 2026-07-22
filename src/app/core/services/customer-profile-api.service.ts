@@ -33,6 +33,12 @@ export class CustomerProfileApiService {
     return this.httpClient.post<CustomerProfileResponse>(
       this.buildUrl('/customer/profile/photo'),
       form,
+      {
+        headers: {
+          'X-Upload-File-Size': String(file.size),
+          'X-Upload-File-Type': file.type || 'unknown',
+        },
+      },
     );
   }
 

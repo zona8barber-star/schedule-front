@@ -160,10 +160,18 @@ export class StaffProfilePageComponent implements OnInit {
       return;
     }
     this.photoUploading.set(true);
-    const preview = URL.createObjectURL(file);
-    revokeBlobUrl(this.photoPreviewUrl());
-    this.photoPreviewUrl.set(preview);
+    let preview: string | null = null;
     try {
+      const refreshedAccessToken = await this.authService.refreshAccessToken();
+      if (!refreshedAccessToken) {
+        this.photoError.set('Tu sesión expiró. Inicia sesión nuevamente e intenta subir la foto otra vez.');
+        return;
+      }
+
+      preview = URL.createObjectURL(file);
+      revokeBlobUrl(this.photoPreviewUrl());
+      this.photoPreviewUrl.set(preview);
+
       const updated = await firstValueFrom(this.staffProfileApiService.uploadPhoto(file));
       this.profile.set(updated);
       revokeBlobUrl(preview);
@@ -218,10 +226,18 @@ export class StaffProfilePageComponent implements OnInit {
       return;
     }
     this.qrUploading.set(true);
-    const preview = URL.createObjectURL(file);
-    revokeBlobUrl(this.qrPreviewUrl());
-    this.qrPreviewUrl.set(preview);
+    let preview: string | null = null;
     try {
+      const refreshedAccessToken = await this.authService.refreshAccessToken();
+      if (!refreshedAccessToken) {
+        this.qrError.set('Tu sesión expiró. Inicia sesión nuevamente e intenta subir el archivo otra vez.');
+        return;
+      }
+
+      preview = URL.createObjectURL(file);
+      revokeBlobUrl(this.qrPreviewUrl());
+      this.qrPreviewUrl.set(preview);
+
       const updated = await firstValueFrom(this.staffProfileApiService.uploadTipsQr(file));
       this.profile.set(updated);
       revokeBlobUrl(preview);
