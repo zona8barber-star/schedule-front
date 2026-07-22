@@ -36,7 +36,7 @@
       <div class="profile-page__media-card">
         <p class="profile-page__media-label">Foto de perfil</p>
         <p class="profile-page__media-hint">
-          Imagen JPG, PNG o WebP. Max. 10 MB. Si subes una nueva reemplaza la actual.
+          Cualquier imagen. Max. 10 MB. Si subes una nueva reemplaza la actual.
         </p>
 
         @if (photoPreviewUrl() || profile()?.photoUrl) {
@@ -94,7 +94,7 @@
         <input
           #photoInput
           type="file"
-          accept="image/jpeg,image/png,image/webp"
+          accept="image/*"
           class="profile-page__file-hidden"
           (change)="onPhotoSelected($event)"
         />
@@ -162,7 +162,7 @@
         <input
           #qrInput
           type="file"
-          accept="image/jpeg,image/png,image/webp,application/pdf"
+          accept="image/*,application/pdf"
           class="profile-page__file-hidden"
           (change)="onQrSelected($event)"
         />

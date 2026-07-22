@@ -24,14 +24,6 @@ import { ApiFeedbackComponent } from '../../../../../shared/components/api-feedb
 import { PageStateComponent } from '../../../../../shared/components/page-state/page-state.component';
 
 const MAX_FILE_BYTES = 10_485_760; // 10 MB
-const ACCEPTED_PHOTO_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
-const ACCEPTED_QR_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'];
-
-function heicMessage(fileType: string): string {
-  return fileType.includes('heic') || fileType.includes('heif')
-    ? 'Ese formato de foto (HEIC) no es compatible. En tu iPhone, ve a Ajustes > Cámara > Formatos y elige "Más compatible", o toma la foto con otra app.'
-    : 'Ese formato de archivo no es compatible. Usa una imagen JPG, PNG o WEBP.';
-}
 
 @Component({
   selector: 'app-staff-profile-page',
@@ -153,11 +145,6 @@ export class StaffProfilePageComponent implements OnInit {
     const file = getFileFromEvent(event);
     if (!file) return;
     this.photoError.set(null);
-    if (file.type && !ACCEPTED_PHOTO_TYPES.includes(file.type)) {
-      this.photoError.set(heicMessage(file.type));
-      resetFileInput(event);
-      return;
-    }
     if (file.size > MAX_FILE_BYTES) {
       this.photoError.set(
         'El archivo no puede superar 10 MB. Si subes uno nuevo reemplazará el actual.',
@@ -216,11 +203,6 @@ export class StaffProfilePageComponent implements OnInit {
     const file = getFileFromEvent(event);
     if (!file) return;
     this.qrError.set(null);
-    if (file.type && !ACCEPTED_QR_TYPES.includes(file.type)) {
-      this.qrError.set(heicMessage(file.type));
-      resetFileInput(event);
-      return;
-    }
     if (file.size > MAX_FILE_BYTES) {
       this.qrError.set(
         'El archivo no puede superar 10 MB. Si subes uno nuevo reemplazará el actual.',
