@@ -4,10 +4,6 @@ import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 
-import {
-  AvailabilitySummary,
-  STAFF_AVAILABILITY_DAYS,
-} from '../../../../../core/models/availability.models';
 import { STAFF_DURATION_RANGE, StaffResponse } from '../../../../../core/models/staff.models';
 import { AdminStaffApiService } from '../../../../../core/services/admin-staff-api.service';
 import { getApiErrorMessage } from '../../../../../core/utils/api-error.utils';
@@ -45,20 +41,6 @@ export class AdminStaffFormPageComponent {
     return this.isEditMode() ? 'Guardar cambios' : 'Crear profesional';
   });
   readonly isBusy = computed(() => this.isLoading() || this.isSubmitting());
-  readonly availability = signal<AvailabilitySummary | null>(null);
-  readonly availabilityLoading = signal(false);
-  readonly scheduleByDay = computed(() => {
-    const summary = this.availability();
-    if (!summary) return [];
-
-    return STAFF_AVAILABILITY_DAYS.map((day) => ({
-      label: day.label,
-      ranges: summary.rules
-        .filter((rule) => rule.dayOfWeek === day.dayOfWeek && rule.isActive)
-        .sort((a, b) => a.startTime.localeCompare(b.startTime))
-        .map((rule) => `${rule.startTime.slice(0, 5)}–${rule.endTime.slice(0, 5)}`),
-    }));
-  });
 
   readonly staffForm = this.formBuilder.group({
     fullName: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(120)]],
@@ -169,27 +151,11 @@ export class AdminStaffFormPageComponent {
       const staff = await firstValueFrom(this.adminStaffApiService.getById(this.staffId()!));
       this.applyStaffToForm(staff);
       this.hasRecord.set(true);
-      void this.loadAvailability();
     } catch (error) {
       this.errorMessage.set(getApiErrorMessage(error));
       this.hasRecord.set(false);
     } finally {
       this.isLoading.set(false);
-    }
-  }
-
-  private async loadAvailability(): Promise<void> {
-    this.availabilityLoading.set(true);
-    try {
-      const availability = await firstValueFrom(
-        this.adminStaffApiService.getAvailability(this.staffId()!),
-      );
-      this.availability.set(availability);
-    } catch {
-      // El horario es informativo; si falla no debe bloquear la edicion del perfil.
-      this.availability.set(null);
-    } finally {
-      this.availabilityLoading.set(false);
     }
   }
 

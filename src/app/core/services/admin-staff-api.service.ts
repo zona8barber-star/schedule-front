@@ -2,7 +2,6 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 
 import { RuntimeConfigService } from '../config/runtime-config.service';
-import { AvailabilitySummary } from '../models/availability.models';
 import {
   AdminStaffCreateRequest,
   AdminStaffUpdateRequest,
@@ -48,12 +47,6 @@ export class AdminStaffApiService {
 
   remove(staffId: string) {
     return this.httpClient.delete<void>(this.buildUrl(`/admin/staff/${staffId}`));
-  }
-
-  getAvailability(staffId: string) {
-    return this.httpClient.get<AvailabilitySummary>(
-      this.buildUrl(`/admin/staff/${staffId}/availability`),
-    );
   }
 
   private buildUrl(path: string): string {
