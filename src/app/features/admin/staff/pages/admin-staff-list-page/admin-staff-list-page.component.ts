@@ -1,5 +1,5 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 
 import { firstValueFrom } from 'rxjs';
 
@@ -14,7 +14,7 @@ import { AdminStaffFormModalComponent } from '../../components/admin-staff-form-
 
 @Component({
   selector: 'app-admin-staff-list-page',
-  imports: [ApiFeedbackComponent, AdminStaffFormModalComponent],
+  imports: [ApiFeedbackComponent, AdminStaffFormModalComponent, RouterLink],
   templateUrl: './admin-staff-list-page.component.html',
   styleUrl: './admin-staff-list-page.component.scss',
 })

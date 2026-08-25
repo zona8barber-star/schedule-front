@@ -12,6 +12,7 @@
     <app-page-state kind="loading" message="Cargando disponibilidad..." />
   } @else if (!summary()) {
     <app-page-state kind="empty" message="No se pudo cargar la disponibilidad de este profesional." />
+    <a class="avail-page__back" routerLink="/admin/staff">Volver al listado de profesionales</a>
   } @else {
     <div class="avail-page__stats">
       <div class="avail-page__stat">

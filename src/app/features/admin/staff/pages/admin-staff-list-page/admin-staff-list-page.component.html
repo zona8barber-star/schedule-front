@@ -220,6 +220,12 @@
                   </svg>
                   Editar
                 </button>
+                <a
+                  class="staff-table__action-btn"
+                  [routerLink]="['/admin/staff', member.staffProfileId, 'availability']"
+                >
+                  Disponibilidad
+                </a>
                 <button
                   class="staff-table__action-btn staff-table__action-btn--delete"
                   type="button"
