@@ -1,14 +1,5 @@
 import { Component, computed, inject, signal } from '@angular/core';
-import {
-  AbstractControl,
-  FormArray,
-  FormControl,
-  FormGroup,
-  ReactiveFormsModule,
-  ValidationErrors,
-  ValidatorFn,
-  Validators,
-} from '@angular/forms';
+import { FormArray, FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { Observable, catchError, firstValueFrom, forkJoin, map, of } from 'rxjs';
 
@@ -24,33 +15,27 @@ import {
 import { AdminStaffApiService } from '../../../../../core/services/admin-staff-api.service';
 import { AdminStaffAvailabilityApiService } from '../../../../../core/services/admin-staff-availability-api.service';
 import { ConfirmModalService } from '../../../../../core/services/confirm-modal.service';
+import {
+  AbsenceFormGroup,
+  DayRuleFormGroup,
+  TimeBlockFormGroup,
+  absenceValidator,
+  createDayRuleForm,
+  createTimeBlockForm,
+  formatDateTimeLocal,
+  normalizeOptional,
+  sortPeriods,
+  toUtcIsoString,
+} from '../../../../../core/utils/availability-form.utils';
 import { getApiErrorMessage } from '../../../../../core/utils/api-error.utils';
 import { ApiFeedbackComponent } from '../../../../../shared/components/api-feedback/api-feedback.component';
 import { PageStateComponent } from '../../../../../shared/components/page-state/page-state.component';
-
-type TimeBlockFormGroup = FormGroup<{
-  startTime: FormControl<string>;
-  endTime: FormControl<string>;
-}>;
-
-type DayRuleFormGroup = FormGroup<{
-  dayOfWeek: FormControl<number>;
-  isActive: FormControl<boolean>;
-  blocks: FormArray<TimeBlockFormGroup>;
-}>;
-
-type AbsenceFormGroup = FormGroup<{
-  isAllDay: FormControl<boolean>;
-  startValue: FormControl<string>;
-  endValue: FormControl<string>;
-  reason: FormControl<string>;
-}>;
 
 @Component({
   selector: 'app-admin-staff-availability-page',
   imports: [ReactiveFormsModule, RouterLink, ApiFeedbackComponent, PageStateComponent],
   templateUrl: './admin-staff-availability-page.component.html',
-  styleUrl: './admin-staff-availability-page.component.scss',
+  styleUrl: '../../../../../shared/styles/availability-page.scss',
 })
 export class AdminStaffAvailabilityPageComponent {
   private readonly route = inject(ActivatedRoute);
@@ -478,75 +463,6 @@ export class AdminStaffAvailabilityPageComponent {
 
     this.rulesSubmitted.set(false);
   }
-}
-
-function createTimeBlockForm(): TimeBlockFormGroup {
-  return new FormGroup({
-    startTime: new FormControl('09:00', { nonNullable: true }),
-    endTime: new FormControl('17:00', { nonNullable: true }),
-  });
-}
-
-function createDayRuleForm(dayOfWeek: number): DayRuleFormGroup {
-  return new FormGroup({
-    dayOfWeek: new FormControl(dayOfWeek, { nonNullable: true }),
-    isActive: new FormControl(false, { nonNullable: true }),
-    blocks: new FormArray<TimeBlockFormGroup>([createTimeBlockForm()]),
-  });
-}
-
-function absenceValidator(): ValidatorFn {
-  return (control: AbstractControl): ValidationErrors | null => {
-    const group = control as AbsenceFormGroup;
-    const isAllDay = group.controls.isAllDay.value;
-    const start = group.controls.startValue.value;
-    const end = group.controls.endValue.value;
-
-    if (!start || !end) return null;
-
-    const errors: ValidationErrors = {};
-
-    if (isAllDay) {
-      const today = new Date();
-      const y = today.getFullYear();
-      const m = String(today.getMonth() + 1).padStart(2, '0');
-      const d = String(today.getDate()).padStart(2, '0');
-      const todayStr = `${y}-${m}-${d}`;
-
-      if (start <= todayStr) errors['pastStart'] = true;
-      if (end < start) errors['timeRange'] = true;
-    } else {
-      const tomorrow = new Date();
-      tomorrow.setDate(tomorrow.getDate() + 1);
-      tomorrow.setHours(0, 0, 0, 0);
-      const offset = tomorrow.getTimezoneOffset() * 60_000;
-      const tomorrowLocal = new Date(tomorrow.getTime() - offset).toISOString().slice(0, 16);
-
-      if (start < tomorrowLocal) errors['pastStart'] = true;
-      if (end <= start) errors['timeRange'] = true;
-    }
-
-    return Object.keys(errors).length > 0 ? errors : null;
-  };
-}
-
-function normalizeOptional(value: string | null | undefined): string | null {
-  const v = value?.trim() ?? '';
-  return v || null;
-}
-
-function toUtcIsoString(value: string): string {
-  return new Date(value).toISOString();
-}
-
-function formatDateTimeLocal(value: string): string {
-  const date = new Date(value);
-  const offsetMs = date.getTimezoneOffset() * 60_000;
-  return new Date(date.getTime() - offsetMs).toISOString().slice(0, 16);
-}
-
-function sortPeriods(periods: UnavailablePeriod[]): UnavailablePeriod[] {
-  return [...periods].sort((a, b) => a.startsAtUtc.localeCompare(b.startsAtUtc));
 }
 
 type SettledResult<T> = { ok: true; value: T } | { ok: false; error: unknown };
