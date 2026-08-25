@@ -10,7 +10,7 @@ import {
   Validators,
 } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { finalize, firstValueFrom } from 'rxjs';
+import { Observable, catchError, firstValueFrom, forkJoin, map, of } from 'rxjs';
 
 import {
   AvailabilityRule,
@@ -21,7 +21,6 @@ import {
   UnavailablePeriod,
   UpdateUnavailablePeriodRequest,
 } from '../../../../../core/models/availability.models';
-import { StaffResponse } from '../../../../../core/models/staff.models';
 import { AdminStaffApiService } from '../../../../../core/services/admin-staff-api.service';
 import { AdminStaffAvailabilityApiService } from '../../../../../core/services/admin-staff-availability-api.service';
 import { ConfirmModalService } from '../../../../../core/services/confirm-modal.service';
@@ -382,67 +381,50 @@ export class AdminStaffAvailabilityPageComponent {
     return this.dateTimeFormatter.format(new Date(value));
   }
 
+  /**
+   * Loads the staff profile, availability summary, and unavailable periods
+   * together, updating state once all three requests have settled — not
+   * fail-fast like the original `Promise.all` approach. Each source is wrapped
+   * so a failure becomes a tagged `{ ok: false }` result instead of an RxJS
+   * error, which means `forkJoin` never sees an error and so never
+   * unsubscribes the still-in-flight siblings early. Failing fast would do
+   * exactly that: cancel the other requests, and under
+   * HttpClientTestingModule an unsubscribed mock request is marked
+   * "cancelled" and can no longer be flush()'d, breaking tests that flush all
+   * three regardless of which one errors first.
+   */
   private loadAvailability(): void {
     this.isLoading.set(true);
     this.pageErrorMessage.set(null);
 
-    // Each request is subscribed independently (rather than combined with
-    // forkJoin/Promise.all) so that one request failing does not cancel the
-    // others: HttpClientTestingModule marks an unsubscribed mock request as
-    // "cancelled" and refuses to flush() it afterwards, which forkJoin would
-    // trigger as soon as the first source errors. Settling is tracked
-    // manually so the page only finishes loading once all three have
-    // resolved (successfully or not).
-    let staffResult: StaffResponse | null = null;
-    let summaryResult: AvailabilitySummary | null = null;
-    let periodsResult: UnavailablePeriod[] | null = null;
-    let firstError: unknown = null;
-    let pending = 3;
+    forkJoin([
+      toSettledResult(this.adminStaffApiService.getById(this.staffId)),
+      toSettledResult(this.adminStaffAvailabilityApiService.getSummary(this.staffId)),
+      toSettledResult(this.adminStaffAvailabilityApiService.listUnavailablePeriods(this.staffId)),
+    ]).subscribe(([staffResult, summaryResult, periodsResult]) => {
+      const errorResult = [staffResult, summaryResult, periodsResult].find(
+        (r): r is { ok: false; error: unknown } => !r.ok,
+      );
 
-    const settle = (): void => {
-      pending -= 1;
-      if (pending > 0) return;
-
-      if (firstError) {
-        this.pageErrorMessage.set(getApiErrorMessage(firstError));
+      if (errorResult) {
+        this.pageErrorMessage.set(getApiErrorMessage(errorResult.error));
         this.summary.set(null);
         this.unavailablePeriods.set([]);
-      } else if (staffResult && summaryResult && periodsResult) {
-        this.staffName.set(staffResult.displayName);
+      } else if (staffResult.ok && summaryResult.ok && periodsResult.ok) {
+        this.staffName.set(staffResult.value.displayName);
 
-        const sorted = sortPeriods(periodsResult);
-        const normalized: AvailabilitySummary = { ...summaryResult, unavailablePeriods: sorted };
+        const sorted = sortPeriods(periodsResult.value);
+        const normalized: AvailabilitySummary = {
+          ...summaryResult.value,
+          unavailablePeriods: sorted,
+        };
         this.summary.set(normalized);
         this.unavailablePeriods.set(sorted);
         this.applySummaryToRules(normalized);
       }
 
       this.isLoading.set(false);
-    };
-
-    this.adminStaffApiService
-      .getById(this.staffId)
-      .pipe(finalize(settle))
-      .subscribe({
-        next: (staff) => (staffResult = staff),
-        error: (error: unknown) => (firstError ??= error),
-      });
-
-    this.adminStaffAvailabilityApiService
-      .getSummary(this.staffId)
-      .pipe(finalize(settle))
-      .subscribe({
-        next: (summary) => (summaryResult = summary),
-        error: (error: unknown) => (firstError ??= error),
-      });
-
-    this.adminStaffAvailabilityApiService
-      .listUnavailablePeriods(this.staffId)
-      .pipe(finalize(settle))
-      .subscribe({
-        next: (periods) => (periodsResult = periods),
-        error: (error: unknown) => (firstError ??= error),
-      });
+    });
   }
 
   private async refreshUnavailablePeriods(): Promise<void> {
@@ -565,4 +547,18 @@ function formatDateTimeLocal(value: string): string {
 
 function sortPeriods(periods: UnavailablePeriod[]): UnavailablePeriod[] {
   return [...periods].sort((a, b) => a.startsAtUtc.localeCompare(b.startsAtUtc));
+}
+
+type SettledResult<T> = { ok: true; value: T } | { ok: false; error: unknown };
+
+/**
+ * Wraps a source so it never emits an RxJS error: a failure is caught and
+ * re-emitted as `{ ok: false, error }` instead. Used with `forkJoin` so that
+ * one source failing does not cause the others to be unsubscribed early.
+ */
+function toSettledResult<T>(source: Observable<T>): Observable<SettledResult<T>> {
+  return source.pipe(
+    map((value): SettledResult<T> => ({ ok: true, value })),
+    catchError((error: unknown) => of<SettledResult<T>>({ ok: false, error })),
+  );
 }
