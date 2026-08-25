@@ -156,4 +156,40 @@ describe('AdminStaffFormPageComponent', () => {
     fixture.detectChanges();
     expect(fixture.componentInstance.staff()?.photoUrl).toBeNull();
   });
+
+  it('preserves the existing photo and QR asset ids when saving unrelated field changes', async () => {
+    await createFixture(staffId);
+    fixture.detectChanges();
+
+    const photoMediaAssetId = '55555555-5555-5555-5555-555555555555';
+    const tipsQrMediaAssetId = '66666666-6666-6666-6666-666666666666';
+    httpMock.expectOne(`${environment.defaultApiBaseUrl}/admin/staff/${staffId}`).flush({
+      ...baseStaffView(),
+      photoMediaAssetId,
+      photoUrl: 'https://cdn.example.com/photo.jpg',
+      tipsQrMediaAssetId,
+      tipsQrUrl: 'https://cdn.example.com/qr.png',
+    });
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    const submitPromise = fixture.componentInstance.submit();
+    await flushMicrotasks();
+
+    const req = httpMock.expectOne(`${environment.defaultApiBaseUrl}/admin/staff/${staffId}`);
+    expect(req.request.method).toBe('PUT');
+    expect(req.request.body.photoMediaAssetId).toBe(photoMediaAssetId);
+    expect(req.request.body.tipsQrMediaAssetId).toBe(tipsQrMediaAssetId);
+    req.flush({
+      ...baseStaffView(),
+      photoMediaAssetId,
+      photoUrl: 'https://cdn.example.com/photo.jpg',
+      tipsQrMediaAssetId,
+      tipsQrUrl: 'https://cdn.example.com/qr.png',
+    });
+
+    await submitPromise;
+    await fixture.whenStable();
+    fixture.detectChanges();
+  });
 });

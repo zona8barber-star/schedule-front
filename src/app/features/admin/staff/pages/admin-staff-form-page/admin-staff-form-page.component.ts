@@ -63,7 +63,9 @@ export class AdminStaffFormPageComponent {
 
     return this.isEditMode() ? 'Guardar cambios' : 'Crear profesional';
   });
-  readonly isBusy = computed(() => this.isLoading() || this.isSubmitting());
+  readonly isBusy = computed(
+    () => this.isLoading() || this.isSubmitting() || this.photoUploading() || this.qrUploading(),
+  );
 
   readonly staffForm = this.formBuilder.group({
     fullName: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(120)]],
