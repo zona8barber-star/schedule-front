@@ -25,6 +25,125 @@
       } @else if (isEditMode() && !hasRecord()) {
         <section class="staff-form-page__state">No se pudo cargar el perfil solicitado.</section>
       } @else {
+        @if (isEditMode()) {
+          <div class="staff-form-page__media">
+            <div class="staff-form-page__media-card">
+              <p class="staff-form-page__media-label">Foto de perfil</p>
+              <p class="staff-form-page__media-hint">
+                Cualquier imagen. Max. 10 MB. Si subes una nueva reemplaza la actual.
+              </p>
+
+              @if (photoPreviewUrl() || staff()?.photoUrl) {
+                <div class="staff-form-page__thumbnail-wrap">
+                  <img
+                    [src]="photoPreviewUrl() ?? staff()!.photoUrl"
+                    alt="Foto del profesional"
+                    class="staff-form-page__thumbnail"
+                  />
+                </div>
+              } @else {
+                <div class="staff-form-page__thumbnail-wrap"></div>
+              }
+
+              <app-api-feedback severity="error" [message]="photoError()" />
+
+              <div class="staff-form-page__media-actions">
+                <button
+                  data-testid="photo-upload-button"
+                  class="staff-form-page__btn-upload"
+                  type="button"
+                  [disabled]="photoUploading()"
+                  (click)="triggerPhotoInput()"
+                >
+                  {{
+                    photoUploading()
+                      ? 'Subiendo...'
+                      : photoPreviewUrl() || staff()?.photoUrl
+                        ? 'Cambiar foto'
+                        : 'Subir foto'
+                  }}
+                </button>
+                @if (staff()?.photoUrl) {
+                  <button
+                    class="staff-form-page__btn-remove"
+                    type="button"
+                    [disabled]="photoUploading()"
+                    (click)="removePhoto()"
+                  >
+                    Eliminar foto
+                  </button>
+                }
+              </div>
+              <input
+                #photoInput
+                type="file"
+                accept="image/*"
+                class="staff-form-page__file-hidden"
+                (change)="onPhotoSelected($event)"
+              />
+            </div>
+
+            <div class="staff-form-page__media-card">
+              <p class="staff-form-page__media-label">QR de propinas</p>
+              <p class="staff-form-page__media-hint">
+                Imagen o PDF. Max. 10 MB. Si subes uno nuevo reemplaza el actual.
+              </p>
+
+              @if (qrPreviewUrl() || staff()?.tipsQrUrl) {
+                <div class="staff-form-page__thumbnail-wrap">
+                  <img
+                    [src]="qrPreviewUrl() ?? staff()!.tipsQrUrl"
+                    alt="QR de propinas del profesional"
+                    class="staff-form-page__thumbnail"
+                  />
+                </div>
+              } @else {
+                <div class="staff-form-page__thumbnail-wrap"></div>
+              }
+
+              <app-api-feedback severity="error" [message]="qrError()" />
+
+              <div class="staff-form-page__media-actions">
+                <button
+                  class="staff-form-page__btn-upload"
+                  type="button"
+                  [disabled]="qrUploading()"
+                  (click)="triggerQrInput()"
+                >
+                  {{
+                    qrUploading()
+                      ? 'Subiendo...'
+                      : qrPreviewUrl() || staff()?.tipsQrUrl
+                        ? 'Cambiar QR'
+                        : 'Subir QR'
+                  }}
+                </button>
+                @if (staff()?.tipsQrUrl) {
+                  <button
+                    class="staff-form-page__btn-remove"
+                    type="button"
+                    [disabled]="qrUploading()"
+                    (click)="removeQr()"
+                  >
+                    Eliminar QR
+                  </button>
+                }
+              </div>
+              <input
+                #qrInput
+                type="file"
+                accept="image/*,application/pdf"
+                class="staff-form-page__file-hidden"
+                (change)="onQrSelected($event)"
+              />
+            </div>
+          </div>
+        } @else {
+          <p class="staff-form-page__media-hint">
+            Podras subir la foto y el QR de propinas una vez que crees el profesional.
+          </p>
+        }
+
         <form [formGroup]="staffForm" (ngSubmit)="submit()" novalidate>
           <fieldset [disabled]="isBusy()">
             <div class="staff-form-page__grid">
@@ -127,26 +246,6 @@
                 <textarea id="bio" rows="4" formControlName="bio"></textarea>
                 @if (showError('bio', 'maxlength')) {
                   <p class="staff-form-page__error">La bio debe tener 2000 caracteres o menos.</p>
-                }
-              </div>
-
-              <div class="staff-form-page__field">
-                <label for="photoMediaAssetId">ID de foto (opcional)</label>
-                <input id="photoMediaAssetId" type="text" formControlName="photoMediaAssetId" />
-                @if (showError('photoMediaAssetId', 'uuid')) {
-                  <p class="staff-form-page__error">
-                    Ingresa un UUID valido o deja el campo vacio.
-                  </p>
-                }
-              </div>
-
-              <div class="staff-form-page__field">
-                <label for="tipsQrMediaAssetId">ID de QR de propinas (opcional)</label>
-                <input id="tipsQrMediaAssetId" type="text" formControlName="tipsQrMediaAssetId" />
-                @if (showError('tipsQrMediaAssetId', 'uuid')) {
-                  <p class="staff-form-page__error">
-                    Ingresa un UUID valido o deja el campo vacio.
-                  </p>
                 }
               </div>
 
