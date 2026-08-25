@@ -20,6 +20,11 @@ const loadAdminStaffFormPage = () =>
     (module) => module.AdminStaffFormPageComponent,
   );
 
+const loadAdminStaffAvailabilityPage = () =>
+  import(
+    './features/admin/staff/pages/admin-staff-availability-page/admin-staff-availability-page.component'
+  ).then((module) => module.AdminStaffAvailabilityPageComponent);
+
 const loadAdminServicesListPage = () =>
   import('./features/admin/services/pages/admin-services-list-page/admin-services-list-page.component').then(
     (module) => module.AdminServicesListPageComponent,
@@ -365,6 +370,15 @@ export const routes: Routes = [
       roles: [ROLE_NAMES.admin],
     },
     title: 'Editar profesional',
+  },
+  {
+    path: 'admin/staff/:staffId/availability',
+    canActivate: [authGuard, roleGuard],
+    loadComponent: loadAdminStaffAvailabilityPage,
+    data: {
+      roles: [ROLE_NAMES.admin],
+    },
+    title: 'Disponibilidad del profesional',
   },
   {
     path: 'admin/media',
