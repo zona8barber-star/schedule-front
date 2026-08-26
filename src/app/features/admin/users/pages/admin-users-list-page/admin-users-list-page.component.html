@@ -175,6 +175,23 @@
           }
         </div>
 
+        <fieldset class="ul-modal__roles">
+          <legend>Roles personalizados</legend>
+          @if (!customRoles().length) {
+            <p class="ul-modal__hint">No hay roles personalizados creados. Créalos en Roles.</p>
+          }
+          @for (role of customRoles(); track role.id) {
+            <label class="ul-modal__role">
+              <input
+                type="checkbox"
+                [checked]="isCustomRoleSelected(role.id)"
+                (change)="toggleCustomRole(role.id)"
+              />
+              <span>{{ role.name }}</span>
+            </label>
+          }
+        </fieldset>
+
         <div class="ul-modal__foot">
           <button class="ul-modal__btn ul-modal__btn--ghost" type="button" (click)="closeEdit()">
             Cancelar

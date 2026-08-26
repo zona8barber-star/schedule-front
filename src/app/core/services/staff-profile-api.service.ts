@@ -21,13 +21,14 @@ export class StaffProfileApiService {
   }
 
   uploadPhoto(file: File) {
-    const form = new FormData();
-    form.append('photo', file, getUploadFileName(file, 'staff-photo'));
+    const fileName = getUploadFileName(file, 'staff-photo');
     return this.httpClient.post<StaffSelfProfileResponse>(
       this.buildUrl('/staff/profile/photo'),
-      form,
+      file,
       {
         headers: {
+          'Content-Type': file.type || 'application/octet-stream',
+          'X-Upload-File-Name': encodeURIComponent(fileName),
           'X-Upload-File-Size': String(file.size),
           'X-Upload-File-Type': file.type || 'unknown',
         },
@@ -40,13 +41,14 @@ export class StaffProfileApiService {
   }
 
   uploadTipsQr(file: File) {
-    const form = new FormData();
-    form.append('file', file, getUploadFileName(file, 'tips-qr'));
+    const fileName = getUploadFileName(file, 'tips-qr');
     return this.httpClient.post<StaffSelfProfileResponse>(
       this.buildUrl('/staff/profile/tips-qr'),
-      form,
+      file,
       {
         headers: {
+          'Content-Type': file.type || 'application/octet-stream',
+          'X-Upload-File-Name': encodeURIComponent(fileName),
           'X-Upload-File-Size': String(file.size),
           'X-Upload-File-Type': file.type || 'unknown',
         },

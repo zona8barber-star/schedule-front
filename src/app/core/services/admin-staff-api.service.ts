@@ -2,7 +2,6 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 
 import { RuntimeConfigService } from '../config/runtime-config.service';
-import { AvailabilitySummary } from '../models/availability.models';
 import {
   AdminStaffCreateRequest,
   AdminStaffUpdateRequest,
@@ -11,6 +10,7 @@ import {
   StaffResponse,
   StaffStatusUpdateRequest,
 } from '../models/staff.models';
+import { getUploadFileName } from '../utils/upload-file-name.utils';
 
 @Injectable({
   providedIn: 'root',
@@ -50,10 +50,36 @@ export class AdminStaffApiService {
     return this.httpClient.delete<void>(this.buildUrl(`/admin/staff/${staffId}`));
   }
 
-  getAvailability(staffId: string) {
-    return this.httpClient.get<AvailabilitySummary>(
-      this.buildUrl(`/admin/staff/${staffId}/availability`),
-    );
+  uploadPhoto(staffId: string, file: File) {
+    const fileName = getUploadFileName(file, 'admin-staff-photo');
+    return this.httpClient.post<StaffResponse>(this.buildUrl(`/admin/staff/${staffId}/photo`), file, {
+      headers: {
+        'Content-Type': file.type || 'application/octet-stream',
+        'X-Upload-File-Name': encodeURIComponent(fileName),
+        'X-Upload-File-Size': String(file.size),
+        'X-Upload-File-Type': file.type || 'unknown',
+      },
+    });
+  }
+
+  removePhoto(staffId: string) {
+    return this.httpClient.delete<StaffResponse>(this.buildUrl(`/admin/staff/${staffId}/photo`));
+  }
+
+  uploadTipsQr(staffId: string, file: File) {
+    const fileName = getUploadFileName(file, 'admin-staff-tips-qr');
+    return this.httpClient.post<StaffResponse>(this.buildUrl(`/admin/staff/${staffId}/tips-qr`), file, {
+      headers: {
+        'Content-Type': file.type || 'application/octet-stream',
+        'X-Upload-File-Name': encodeURIComponent(fileName),
+        'X-Upload-File-Size': String(file.size),
+        'X-Upload-File-Type': file.type || 'unknown',
+      },
+    });
+  }
+
+  removeTipsQr(staffId: string) {
+    return this.httpClient.delete<StaffResponse>(this.buildUrl(`/admin/staff/${staffId}/tips-qr`));
   }
 
   private buildUrl(path: string): string {

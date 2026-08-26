@@ -3,6 +3,8 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { firstValueFrom } from 'rxjs';
 
 import { AdminUserItem } from '../../../../../core/models/admin-user.models';
+import { RoleView } from '../../../../../core/models/role.models';
+import { AdminRolesApiService } from '../../../../../core/services/admin-roles-api.service';
 import { AdminUsersApiService } from '../../../../../core/services/admin-users-api.service';
 import { ConfirmModalService } from '../../../../../core/services/confirm-modal.service';
 import { getApiErrorMessage } from '../../../../../core/utils/api-error.utils';
@@ -17,15 +19,18 @@ import { PageStateComponent } from '../../../../../shared/components/page-state/
 })
 export class AdminUsersListPageComponent implements OnInit {
   private readonly api = inject(AdminUsersApiService);
+  private readonly rolesApi = inject(AdminRolesApiService);
   private readonly confirmModal = inject(ConfirmModalService);
   private readonly fb = inject(FormBuilder);
 
   readonly isLoading = signal(true);
   readonly errorMessage = signal<string | null>(null);
   readonly users = signal<AdminUserItem[]>([]);
+  readonly customRoles = signal<RoleView[]>([]);
 
   readonly viewingUser = signal<AdminUserItem | null>(null);
   readonly editingUser = signal<AdminUserItem | null>(null);
+  readonly selectedCustomRoleIds = signal<Set<string>>(new Set());
   readonly disablingUserId = signal<string | null>(null);
   readonly saveError = signal<string | null>(null);
   readonly isSaving = signal(false);
@@ -52,6 +57,7 @@ export class AdminUsersListPageComponent implements OnInit {
       fullName: user.fullName,
       phoneNumber: user.phoneNumber ?? '',
     });
+    this.selectedCustomRoleIds.set(new Set(user.customRoleIds));
     this.saveError.set(null);
     this.editingUser.set(user);
   }
@@ -59,6 +65,22 @@ export class AdminUsersListPageComponent implements OnInit {
   closeEdit(): void {
     this.editingUser.set(null);
     this.saveError.set(null);
+  }
+
+  isCustomRoleSelected(roleId: string): boolean {
+    return this.selectedCustomRoleIds().has(roleId);
+  }
+
+  toggleCustomRole(roleId: string): void {
+    this.selectedCustomRoleIds.update((current) => {
+      const next = new Set(current);
+      if (next.has(roleId)) {
+        next.delete(roleId);
+      } else {
+        next.add(roleId);
+      }
+      return next;
+    });
   }
 
   async saveEdit(): Promise<void> {
@@ -74,13 +96,29 @@ export class AdminUsersListPageComponent implements OnInit {
     this.saveError.set(null);
 
     try {
-      const updated = await firstValueFrom(
-        this.api.update(user.userId, {
-          fullName: this.editForm.value.fullName!.trim(),
-          phoneNumber: this.editForm.value.phoneNumber?.trim() || null,
+      // Only PUT profile fields when the admin actually touched them — the backend's
+      // update endpoint unconditionally overwrites DateOfBirth to null, so a role-only
+      // edit must never fire this call.
+      if (this.editForm.dirty) {
+        const updatedProfile = await firstValueFrom(
+          this.api.update(user.userId, {
+            fullName: this.editForm.value.fullName!.trim(),
+            phoneNumber: this.editForm.value.phoneNumber?.trim() || null,
+          }),
+        );
+        this.users.update((list) =>
+          list.map((u) => (u.userId === updatedProfile.userId ? updatedProfile : u)),
+        );
+      }
+
+      const updatedWithRoles = await firstValueFrom(
+        this.api.updateCustomRoles(user.userId, {
+          roleIds: Array.from(this.selectedCustomRoleIds()),
         }),
       );
-      this.users.update((list) => list.map((u) => (u.userId === updated.userId ? updated : u)));
+      this.users.update((list) =>
+        list.map((u) => (u.userId === updatedWithRoles.userId ? updatedWithRoles : u)),
+      );
       this.closeEdit();
     } catch (err) {
       this.saveError.set(getApiErrorMessage(err));
@@ -129,12 +167,26 @@ export class AdminUsersListPageComponent implements OnInit {
   private async loadUsers(): Promise<void> {
     this.isLoading.set(true);
     this.errorMessage.set(null);
-    try {
-      this.users.set(await firstValueFrom(this.api.list()));
-    } catch (err) {
-      this.errorMessage.set(getApiErrorMessage(err));
-    } finally {
-      this.isLoading.set(false);
+
+    // The two fetches must fail independently: a broken /admin/roles catalog is only an
+    // auxiliary input to the edit checklist and must never blank the users list itself.
+    const [usersResult, rolesResult] = await Promise.allSettled([
+      firstValueFrom(this.api.list()),
+      firstValueFrom(this.rolesApi.list()),
+    ]);
+
+    if (usersResult.status === 'fulfilled') {
+      this.users.set(usersResult.value);
+    } else {
+      this.errorMessage.set(getApiErrorMessage(usersResult.reason));
     }
+
+    this.customRoles.set(
+      rolesResult.status === 'fulfilled'
+        ? rolesResult.value.filter((role) => !role.isSystemRole)
+        : [],
+    );
+
+    this.isLoading.set(false);
   }
 }

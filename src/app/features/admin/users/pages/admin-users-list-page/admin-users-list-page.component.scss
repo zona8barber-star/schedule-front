@@ -333,3 +333,33 @@ h1 {
     &:hover:not([disabled]) { border-color: var(--color-text); }
   }
 }
+
+.ul-modal__roles {
+  border: 1px solid var(--z-hairline-light);
+  border-radius: var(--radius-sharp);
+  padding: 0.75rem 1rem;
+  margin: 0;
+
+  legend {
+    font-family: var(--z-font-mono);
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--z-steel);
+    padding: 0 0.35rem;
+  }
+}
+
+.ul-modal__role {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.3rem 0;
+  font-size: 0.9rem;
+  color: var(--color-text);
+
+  input {
+    width: auto;
+  }
+}
