@@ -1,0 +1,41 @@
+<div class="role-modal__overlay" (click)="cancel()">
+  <div class="role-modal__card" (click)="$event.stopPropagation()">
+    <h2>{{ isEditing ? 'Editar rol' : 'Nuevo rol' }}</h2>
+
+    <app-api-feedback severity="error" [message]="errorMessage()" />
+
+    <form [formGroup]="form" (ngSubmit)="submit()">
+      <label class="role-modal__field">
+        <span>Nombre</span>
+        <input type="text" formControlName="name" maxlength="50" autocomplete="off" />
+      </label>
+      @if (form.controls.name.touched && form.controls.name.invalid) {
+        <small class="role-modal__error">El nombre debe tener entre 2 y 50 caracteres.</small>
+      }
+
+      <fieldset class="role-modal__permissions">
+        <legend>Permisos</legend>
+        @if (!permissions.length) {
+          <p class="role-modal__empty">No hay permisos disponibles todavía.</p>
+        }
+        @for (permission of permissions; track permission.id) {
+          <label class="role-modal__permission">
+            <input
+              type="checkbox"
+              [checked]="isSelected(permission.id)"
+              (change)="togglePermission(permission.id)"
+            />
+            <span>{{ permission.description }}</span>
+          </label>
+        }
+      </fieldset>
+
+      <div class="role-modal__actions">
+        <button type="button" (click)="cancel()" [disabled]="isSaving()">Cancelar</button>
+        <button type="submit" [disabled]="isSaving()">
+          {{ isSaving() ? 'Guardando...' : 'Guardar' }}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

@@ -4,6 +4,7 @@ export interface AdminUserItem {
   email: string;
   phoneNumber: string | null;
   roles: string[];
+  customRoleIds: string[];
   isActive: boolean;
   createdAt: string;
 }
@@ -11,4 +12,8 @@ export interface AdminUserItem {
 export interface AdminUserUpdateRequest {
   fullName: string;
   phoneNumber: string | null;
+}
+
+export interface AdminUserRolesUpdateRequest {
+  roleIds: string[];
 }

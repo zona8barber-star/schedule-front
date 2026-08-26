@@ -696,46 +696,79 @@
 .app-shell__bottom-nav {
   display: none;
   position: fixed;
-  inset-inline: 0;
-  bottom: 0;
+  left: 50%;
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 0.9rem);
+  transform: translateX(-50%);
   z-index: 24;
-  grid-auto-flow: column;
-  grid-auto-columns: 1fr;
-  align-items: stretch;
-  gap: 0.25rem;
-  padding: 0.4rem 0.5rem max(0.4rem, env(safe-area-inset-bottom));
-  background: rgba(244, 242, 236, 0.85);
-  border-top: 1px solid var(--z-hairline-light);
-  -webkit-backdrop-filter: blur(18px);
-  backdrop-filter: blur(18px);
+  align-items: center;
+  gap: 0.15rem;
+  padding: 0.4rem;
+  border-radius: 999px;
+  background: rgba(244, 242, 236, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  backdrop-filter: blur(20px) saturate(180%);
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.14),
+    0 2px 8px rgba(0, 0, 0, 0.08),
+    inset 0 1px 1px rgba(255, 255, 255, 0.7);
+}
+
+/* Vidrio deslizante detrás del tab de ruta activa. Oculto (opacity 0) hasta
+   que TS calcula su primera posición, para no mostrarlo en (0,0) al montar. */
+.app-shell__bottom-nav-highlight {
+  position: absolute;
+  top: 0.4rem;
+  left: 0;
+  height: 2.6rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.78);
+  box-shadow:
+    inset 0 1px 1px rgba(255, 255, 255, 0.9),
+    0 2px 6px rgba(0, 0, 0, 0.08);
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    transform 0.38s cubic-bezier(0.22, 1, 0.36, 1),
+    width 0.38s cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 0.2s ease;
+}
+
+.app-shell__bottom-nav-highlight--visible {
+  opacity: 1;
 }
 
 .app-shell__bottom-nav-item {
+  position: relative;
+  z-index: 1;
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 0.2rem;
-  padding: 0.35rem 0.25rem;
+  width: 2.9rem;
+  height: 2.6rem;
   border: none;
-  border-radius: 0.65rem;
+  border-radius: 999px;
   background: transparent;
   color: var(--color-text-muted);
   text-decoration: none;
   font: inherit;
   cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
   transition:
     color 140ms ease,
-    background 140ms ease;
+    transform 140ms ease;
 }
 
 .app-shell__bottom-nav-item.is-active {
   color: var(--z-ink);
+}
+
+.app-shell__bottom-nav-item--button.is-active {
   background: rgba(14, 14, 16, 0.08);
 }
 
 .app-shell__bottom-nav-item:active {
-  background: rgba(14, 14, 16, 0.12);
+  transform: scale(0.92);
 }
 
 .app-shell__bottom-nav-icon svg {
@@ -743,12 +776,11 @@
   height: 1.4rem;
 }
 
-.app-shell__bottom-nav-label {
-  font-family: var(--z-font-mono);
-  font-size: 0.65rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  white-space: nowrap;
+@media (prefers-reduced-motion: reduce) {
+  .app-shell__bottom-nav-highlight,
+  .app-shell__bottom-nav-item {
+    transition: none;
+  }
 }
 
 /* ── Standalone: oculta el hamburguer (nav va en el bottom nav) ── */
@@ -761,7 +793,7 @@
 
 .app-shell--standalone:not(.app-shell--standalone-tablet) {
   .app-shell__bottom-nav {
-    display: grid;
+    display: flex;
   }
 
   .app-shell__content {

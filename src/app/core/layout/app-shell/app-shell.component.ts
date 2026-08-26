@@ -1,5 +1,15 @@
 import { DOCUMENT } from '@angular/common';
-import { Component, ElementRef, HostListener, computed, effect, inject, signal } from '@angular/core';
+import {
+  Component,
+  ElementRef,
+  HostListener,
+  computed,
+  effect,
+  inject,
+  signal,
+  viewChild,
+  viewChildren,
+} from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { SwUpdate, VersionReadyEvent } from '@angular/service-worker';
@@ -21,6 +31,7 @@ import { InstallPromptService } from '../../services/install-prompt.service';
 import { PublicContentApiService } from '../../services/public-content-api.service';
 import { PushNotificationService } from '../../services/push-notification.service';
 import { ToastService } from '../../services/toast.service';
+import { TabHighlightStyle, computeTabHighlightStyle } from '../../utils/tab-highlight.utils';
 
 interface NavLink {
   label: string;
@@ -96,6 +107,12 @@ export class AppShellComponent {
   readonly isInstallPrompting = signal(false);
   readonly isMobileMenuOpen = signal(false);
   readonly isUserMenuOpen = signal(false);
+
+  // Sliding "glass" highlight behind the active bottom-nav tab.
+  private readonly bottomNav = viewChild<ElementRef<HTMLElement>>('bottomNav');
+  private readonly bottomNavTabRefs = viewChildren<ElementRef<HTMLElement>>('bottomNavTab');
+  readonly activeBottomNavTabIndex = signal<number | null>(null);
+  readonly bottomNavHighlightStyle = signal<TabHighlightStyle | null>(null);
 
   private readonly router = inject(Router);
   private readonly document = inject(DOCUMENT);
@@ -217,6 +234,11 @@ export class AppShellComponent {
         {
           label: 'Notificaciones',
           route: '/admin/notifications',
+          group: 'admin',
+        },
+        {
+          label: 'Roles',
+          route: '/admin/roles',
           group: 'admin',
         },
         {
@@ -342,6 +364,30 @@ export class AppShellComponent {
       }
     });
 
+    effect(() => {
+      // Re-read so the effect reruns on every active-tab change, even though
+      // the actual measurement happens in repositionBottomNavHighlight().
+      this.activeBottomNavTabIndex();
+      this.bottomNavTabRefs();
+      requestAnimationFrame(() => this.repositionBottomNavHighlight());
+    });
+
+    // The bottom nav is `display: none` outside standalone/mobile mode, so the
+    // very first position computation can land on a 0×0 box before the nav
+    // becomes visible (e.g. while `isStandalone` is still resolving). A
+    // ResizeObserver re-measures whenever the container's real size appears,
+    // instead of relying on a single one-shot measurement.
+    effect((onCleanup) => {
+      const navEl = this.bottomNav()?.nativeElement;
+      if (!navEl) {
+        return;
+      }
+
+      const observer = new ResizeObserver(() => this.repositionBottomNavHighlight());
+      observer.observe(navEl);
+      onCleanup(() => observer.disconnect());
+    });
+
     if (this.swUpdate.isEnabled) {
       fromEvent(this.document, 'visibilitychange')
         .pipe(
@@ -383,6 +429,25 @@ export class AppShellComponent {
     if (globalThis.innerWidth > 980) {
       this.closeMobileMenu();
     }
+
+    this.repositionBottomNavHighlight();
+  }
+
+  onBottomNavTabActiveChange(index: number, isActive: boolean): void {
+    if (isActive) {
+      this.activeBottomNavTabIndex.set(index);
+    }
+  }
+
+  private repositionBottomNavHighlight(): void {
+    const index = this.activeBottomNavTabIndex();
+    const refs = this.bottomNavTabRefs();
+    if (index === null || !refs[index]) {
+      return;
+    }
+
+    const el = refs[index].nativeElement;
+    this.bottomNavHighlightStyle.set(computeTabHighlightStyle(el.offsetLeft, el.offsetWidth));
   }
 
   toggleMobileMenu(): void {

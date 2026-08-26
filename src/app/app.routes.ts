@@ -20,9 +20,19 @@ const loadAdminStaffFormPage = () =>
     (module) => module.AdminStaffFormPageComponent,
   );
 
+const loadAdminStaffAvailabilityPage = () =>
+  import(
+    './features/admin/staff/pages/admin-staff-availability-page/admin-staff-availability-page.component'
+  ).then((module) => module.AdminStaffAvailabilityPageComponent);
+
 const loadAdminServicesListPage = () =>
   import('./features/admin/services/pages/admin-services-list-page/admin-services-list-page.component').then(
     (module) => module.AdminServicesListPageComponent,
+  );
+
+const loadAdminRolesListPage = () =>
+  import('./features/admin/roles/pages/admin-roles-list-page/admin-roles-list-page.component').then(
+    (module) => module.AdminRolesListPageComponent,
   );
 
 const loadAdminIncomeListPage = () =>
@@ -367,6 +377,15 @@ export const routes: Routes = [
     title: 'Editar profesional',
   },
   {
+    path: 'admin/staff/:staffId/availability',
+    canActivate: [authGuard, roleGuard],
+    loadComponent: loadAdminStaffAvailabilityPage,
+    data: {
+      roles: [ROLE_NAMES.admin],
+    },
+    title: 'Disponibilidad del profesional',
+  },
+  {
     path: 'admin/media',
     canActivate: [authGuard, roleGuard],
     loadComponent: loadAdminMediaManagerPage,
@@ -437,6 +456,15 @@ export const routes: Routes = [
       roles: [ROLE_NAMES.admin],
     },
     title: 'Usuarios',
+  },
+  {
+    path: 'admin/roles',
+    canActivate: [authGuard, roleGuard],
+    loadComponent: loadAdminRolesListPage,
+    data: {
+      roles: [ROLE_NAMES.admin],
+    },
+    title: 'Roles',
   },
   {
     path: 'media',

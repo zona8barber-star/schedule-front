@@ -10,6 +10,14 @@
   padding: clamp(1rem, 3vw, 2rem);
 }
 
+.avail-page__back {
+  display: inline-block;
+  width: fit-content;
+  text-decoration: none;
+  font-weight: 700;
+  color: var(--brand-primary);
+}
+
 /* â”€â”€ Header â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
 .avail-page__header {

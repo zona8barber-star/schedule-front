@@ -28,13 +28,14 @@ export class CustomerProfileApiService {
   }
 
   uploadPhoto(file: File) {
-    const form = new FormData();
-    form.append('photo', file, getUploadFileName(file, 'profile-photo'));
+    const fileName = getUploadFileName(file, 'profile-photo');
     return this.httpClient.post<CustomerProfileResponse>(
       this.buildUrl('/customer/profile/photo'),
-      form,
+      file,
       {
         headers: {
+          'Content-Type': file.type || 'application/octet-stream',
+          'X-Upload-File-Name': encodeURIComponent(fileName),
           'X-Upload-File-Size': String(file.size),
           'X-Upload-File-Type': file.type || 'unknown',
         },

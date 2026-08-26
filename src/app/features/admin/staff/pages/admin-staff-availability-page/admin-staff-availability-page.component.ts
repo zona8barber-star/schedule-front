@@ -1,6 +1,7 @@
-﻿import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { FormArray, FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { firstValueFrom } from 'rxjs';
+import { ActivatedRoute, RouterLink } from '@angular/router';
+import { Observable, catchError, firstValueFrom, forkJoin, map, of } from 'rxjs';
 
 import {
   AvailabilityRule,
@@ -11,9 +12,9 @@ import {
   UnavailablePeriod,
   UpdateUnavailablePeriodRequest,
 } from '../../../../../core/models/availability.models';
+import { AdminStaffApiService } from '../../../../../core/services/admin-staff-api.service';
+import { AdminStaffAvailabilityApiService } from '../../../../../core/services/admin-staff-availability-api.service';
 import { ConfirmModalService } from '../../../../../core/services/confirm-modal.service';
-import { StaffAvailabilityApiService } from '../../../../../core/services/staff-availability-api.service';
-import { StaffProfileApiService } from '../../../../../core/services/staff-profile-api.service';
 import {
   AbsenceFormGroup,
   DayRuleFormGroup,
@@ -31,14 +32,15 @@ import { ApiFeedbackComponent } from '../../../../../shared/components/api-feedb
 import { PageStateComponent } from '../../../../../shared/components/page-state/page-state.component';
 
 @Component({
-  selector: 'app-staff-availability-page',
-  imports: [ReactiveFormsModule, ApiFeedbackComponent, PageStateComponent],
-  templateUrl: './staff-availability-page.component.html',
+  selector: 'app-admin-staff-availability-page',
+  imports: [ReactiveFormsModule, RouterLink, ApiFeedbackComponent, PageStateComponent],
+  templateUrl: './admin-staff-availability-page.component.html',
   styleUrl: '../../../../../shared/styles/availability-page.scss',
 })
-export class StaffAvailabilityPageComponent {
-  private readonly staffAvailabilityApiService = inject(StaffAvailabilityApiService);
-  private readonly staffProfileApiService = inject(StaffProfileApiService);
+export class AdminStaffAvailabilityPageComponent {
+  private readonly route = inject(ActivatedRoute);
+  private readonly adminStaffAvailabilityApiService = inject(AdminStaffAvailabilityApiService);
+  private readonly adminStaffApiService = inject(AdminStaffApiService);
   private readonly confirmModal = inject(ConfirmModalService);
   private readonly dateTimeFormatter = new Intl.DateTimeFormat('es-AR', {
     dateStyle: 'medium',
@@ -46,10 +48,11 @@ export class StaffAvailabilityPageComponent {
   });
 
   readonly dayOptions = STAFF_AVAILABILITY_DAYS;
+  readonly staffId = this.route.snapshot.paramMap.get('staffId') ?? '';
 
-  // â”€â”€ State â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   readonly activeTab = signal<'availability' | 'absences'>('availability');
   readonly showAbsenceModal = signal(false);
+  readonly staffName = signal<string | null>(null);
   readonly summary = signal<AvailabilitySummary | null>(null);
   readonly unavailablePeriods = signal<UnavailablePeriod[]>([]);
   readonly isLoading = signal(true);
@@ -59,15 +62,11 @@ export class StaffAvailabilityPageComponent {
   readonly editingAbsenceId = signal<string | null>(null);
   readonly rulesSubmitted = signal(false);
   readonly absenceSubmitted = signal(false);
-  readonly editingDuration = signal(false);
-  readonly isSavingDuration = signal(false);
   readonly pageErrorMessage = signal<string | null>(null);
   readonly rulesErrorMessage = signal<string | null>(null);
   readonly rulesSuccessMessage = signal<string | null>(null);
   readonly absenceErrorMessage = signal<string | null>(null);
-  readonly durationErrorMessage = signal<string | null>(null);
 
-  // â”€â”€ Computed â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   readonly isRulesBusy = computed(() => this.isLoading() || this.isSavingRules());
   readonly isAbsenceBusy = computed(
     () => this.isLoading() || this.isSavingAbsence() || this.deletingAbsenceId() !== null,
@@ -85,7 +84,7 @@ export class StaffAvailabilityPageComponent {
   readonly durationWarning = computed(() => {
     const d = this.summary()?.defaultAppointmentDurationMinutes ?? 0;
     return d <= 0
-      ? 'La duracion base de citas es 0. Actualizala en Mi Perfil para que los turnos se calculen correctamente.'
+      ? 'La duracion base de citas es 0. Actualizala en los datos del profesional para que los turnos se calculen correctamente.'
       : null;
   });
 
@@ -94,7 +93,6 @@ export class StaffAvailabilityPageComponent {
     return this.unavailablePeriods().filter((p) => new Date(p.createdAtUtc).getTime() >= cutoff);
   });
 
-  // Min date/datetime for absence form (tomorrow, not today)
   readonly minStartDate: string = (() => {
     const d = new Date();
     d.setDate(d.getDate() + 1);
@@ -112,16 +110,10 @@ export class StaffAvailabilityPageComponent {
     return new Date(tomorrow.getTime() - offset).toISOString().slice(0, 16);
   }
 
-  // â”€â”€ Forms â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   readonly daysForm = new FormGroup({
     days: new FormArray<DayRuleFormGroup>(
       STAFF_AVAILABILITY_DAYS.map((d) => createDayRuleForm(d.dayOfWeek)),
     ),
-  });
-
-  readonly durationControl = new FormControl<number>(30, {
-    nonNullable: true,
-    validators: [Validators.required, Validators.min(5), Validators.max(480)],
   });
 
   readonly absenceForm: AbsenceFormGroup = new FormGroup(
@@ -135,10 +127,9 @@ export class StaffAvailabilityPageComponent {
   );
 
   constructor() {
-    void this.loadAvailability();
+    this.loadAvailability();
   }
 
-  // â”€â”€ Accessors â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   get daysArray(): FormArray<DayRuleFormGroup> {
     return this.daysForm.controls.days;
   }
@@ -147,63 +138,6 @@ export class StaffAvailabilityPageComponent {
     return this.daysArray.at(dayIndex).controls.blocks;
   }
 
-  // Duration edit
-
-  startEditDuration(): void {
-    this.durationControl.setValue(this.summary()?.defaultAppointmentDurationMinutes ?? 30);
-    this.durationErrorMessage.set(null);
-    this.editingDuration.set(true);
-  }
-
-  cancelEditDuration(): void {
-    this.editingDuration.set(false);
-    this.durationErrorMessage.set(null);
-  }
-
-  async saveDuration(): Promise<void> {
-    this.durationControl.markAsTouched();
-    if (this.durationControl.invalid) return;
-
-    this.isSavingDuration.set(true);
-    this.durationErrorMessage.set(null);
-
-    try {
-      const profile = await firstValueFrom(this.staffProfileApiService.getCurrent());
-      const updated = await firstValueFrom(
-        this.staffProfileApiService.updateCurrent({
-          displayName: profile.displayName,
-          bio: profile.bio,
-          phoneNumber: profile.phoneNumber,
-          defaultAppointmentDurationMinutes: this.durationControl.value,
-          photoMediaAssetId: profile.photoMediaAssetId,
-          tipsQrMediaAssetId: profile.tipsQrMediaAssetId,
-          instagramUrl: profile.instagramUrl,
-          facebookUrl: profile.facebookUrl,
-          tikTokUrl: profile.tikTokUrl,
-          youtubeUrl: profile.youtubeUrl,
-          xUrl: profile.xUrl,
-        }),
-      );
-
-      const s = this.summary();
-      if (s) {
-        this.summary.set({
-          ...s,
-          defaultAppointmentDurationMinutes: updated.defaultAppointmentDurationMinutes,
-        });
-      }
-      this.cancelEditDuration();
-    } catch (error) {
-      this.durationErrorMessage.set(getApiErrorMessage(error));
-    } finally {
-      this.isSavingDuration.set(false);
-    }
-  }
-
-  // â”€â”€ Rule methods â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-
-  /** Normal method (not computed) so it re-evaluates on every change detection
-   *  when Angular re-renders the template. */
   hasRulesErrors(): boolean {
     for (const dayGroup of this.daysArray.controls) {
       if (!dayGroup.controls.isActive.value) continue;
@@ -271,7 +205,7 @@ export class StaffAvailabilityPageComponent {
       }
 
       const rules = await firstValueFrom(
-        this.staffAvailabilityApiService.updateWeeklyRules(request),
+        this.adminStaffAvailabilityApiService.updateWeeklyRules(this.staffId, request),
       );
 
       const currentSummary = this.summary();
@@ -281,15 +215,13 @@ export class StaffAvailabilityPageComponent {
         this.applySummaryToRules(updated);
       }
 
-      this.rulesSuccessMessage.set('Tu disponibilidad semanal se guardo correctamente.');
+      this.rulesSuccessMessage.set('La disponibilidad semanal se guardo correctamente.');
     } catch (error) {
       this.rulesErrorMessage.set(getApiErrorMessage(error));
     } finally {
       this.isSavingRules.set(false);
     }
   }
-
-  // â”€â”€ Absence methods â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   isAbsencePast(period: UnavailablePeriod): boolean {
     const todayStart = new Date();
@@ -366,10 +298,16 @@ export class StaffAvailabilityPageComponent {
       const editingId = this.editingAbsenceId();
       if (editingId) {
         await firstValueFrom(
-          this.staffAvailabilityApiService.updateUnavailablePeriod(editingId, request),
+          this.adminStaffAvailabilityApiService.updateUnavailablePeriod(
+            this.staffId,
+            editingId,
+            request,
+          ),
         );
       } else {
-        await firstValueFrom(this.staffAvailabilityApiService.createUnavailablePeriod(request));
+        await firstValueFrom(
+          this.adminStaffAvailabilityApiService.createUnavailablePeriod(this.staffId, request),
+        );
       }
 
       await this.refreshUnavailablePeriods();
@@ -394,7 +332,9 @@ export class StaffAvailabilityPageComponent {
     this.deletingAbsenceId.set(period.id);
 
     try {
-      await firstValueFrom(this.staffAvailabilityApiService.deleteUnavailablePeriod(period.id));
+      await firstValueFrom(
+        this.adminStaffAvailabilityApiService.deleteUnavailablePeriod(this.staffId, period.id),
+      );
       await this.refreshUnavailablePeriods();
     } catch (error) {
       this.absenceErrorMessage.set(getApiErrorMessage(error));
@@ -418,43 +358,65 @@ export class StaffAvailabilityPageComponent {
     );
   }
 
-  // â”€â”€ Formatting â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   formatPeriodWindow(period: UnavailablePeriod): string {
-    return `${this.formatTimestamp(period.startsAtUtc)} â€” ${this.formatTimestamp(period.endsAtUtc)}`;
+    return `${this.formatTimestamp(period.startsAtUtc)} - ${this.formatTimestamp(period.endsAtUtc)}`;
   }
 
   formatTimestamp(value: string): string {
     return this.dateTimeFormatter.format(new Date(value));
   }
 
-  // â”€â”€ Private â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-  private async loadAvailability(): Promise<void> {
+  /**
+   * Loads the staff profile, availability summary, and unavailable periods
+   * together, updating state once all three requests have settled — not
+   * fail-fast like the original `Promise.all` approach. Each source is wrapped
+   * so a failure becomes a tagged `{ ok: false }` result instead of an RxJS
+   * error, which means `forkJoin` never sees an error and so never
+   * unsubscribes the still-in-flight siblings early. Failing fast would do
+   * exactly that: cancel the other requests, and under
+   * HttpClientTestingModule an unsubscribed mock request is marked
+   * "cancelled" and can no longer be flush()'d, breaking tests that flush all
+   * three regardless of which one errors first.
+   */
+  private loadAvailability(): void {
     this.isLoading.set(true);
     this.pageErrorMessage.set(null);
 
-    try {
-      const [summary, periods] = await Promise.all([
-        firstValueFrom(this.staffAvailabilityApiService.getAvailabilitySummary()),
-        firstValueFrom(this.staffAvailabilityApiService.listUnavailablePeriods()),
-      ]);
+    forkJoin([
+      toSettledResult(this.adminStaffApiService.getById(this.staffId)),
+      toSettledResult(this.adminStaffAvailabilityApiService.getSummary(this.staffId)),
+      toSettledResult(this.adminStaffAvailabilityApiService.listUnavailablePeriods(this.staffId)),
+    ]).subscribe(([staffResult, summaryResult, periodsResult]) => {
+      const errorResult = [staffResult, summaryResult, periodsResult].find(
+        (r): r is { ok: false; error: unknown } => !r.ok,
+      );
 
-      const sorted = sortPeriods(periods);
-      const normalized: AvailabilitySummary = { ...summary, unavailablePeriods: sorted };
-      this.summary.set(normalized);
-      this.unavailablePeriods.set(sorted);
-      this.applySummaryToRules(normalized);
-    } catch (error) {
-      this.pageErrorMessage.set(getApiErrorMessage(error));
-      this.summary.set(null);
-      this.unavailablePeriods.set([]);
-    } finally {
+      if (errorResult) {
+        this.pageErrorMessage.set(getApiErrorMessage(errorResult.error));
+        this.summary.set(null);
+        this.unavailablePeriods.set([]);
+      } else if (staffResult.ok && summaryResult.ok && periodsResult.ok) {
+        this.staffName.set(staffResult.value.displayName);
+
+        const sorted = sortPeriods(periodsResult.value);
+        const normalized: AvailabilitySummary = {
+          ...summaryResult.value,
+          unavailablePeriods: sorted,
+        };
+        this.summary.set(normalized);
+        this.unavailablePeriods.set(sorted);
+        this.applySummaryToRules(normalized);
+      }
+
       this.isLoading.set(false);
-    }
+    });
   }
 
   private async refreshUnavailablePeriods(): Promise<void> {
     const sorted = sortPeriods(
-      await firstValueFrom(this.staffAvailabilityApiService.listUnavailablePeriods()),
+      await firstValueFrom(
+        this.adminStaffAvailabilityApiService.listUnavailablePeriods(this.staffId),
+      ),
     );
     this.unavailablePeriods.set(sorted);
     const s = this.summary();
@@ -501,4 +463,18 @@ export class StaffAvailabilityPageComponent {
 
     this.rulesSubmitted.set(false);
   }
+}
+
+type SettledResult<T> = { ok: true; value: T } | { ok: false; error: unknown };
+
+/**
+ * Wraps a source so it never emits an RxJS error: a failure is caught and
+ * re-emitted as `{ ok: false, error }` instead. Used with `forkJoin` so that
+ * one source failing does not cause the others to be unsubscribed early.
+ */
+function toSettledResult<T>(source: Observable<T>): Observable<SettledResult<T>> {
+  return source.pipe(
+    map((value): SettledResult<T> => ({ ok: true, value })),
+    catchError((error: unknown) => of<SettledResult<T>>({ ok: false, error })),
+  );
 }

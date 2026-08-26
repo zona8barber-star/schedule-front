@@ -46,6 +46,7 @@ export class AdminStaffFormModalComponent implements OnInit, OnDestroy {
   readonly isSubmitting = signal(false);
   readonly errorMessage = signal<string | null>(null);
   readonly hasRecord = signal(true);
+  readonly staff = signal<StaffResponse | null>(null);
 
   readonly isEditMode = computed(() => this.staffId() !== null);
   readonly pageTitle = computed(() =>
@@ -115,10 +116,10 @@ export class AdminStaffFormModalComponent implements OnInit, OnDestroy {
             email: normalizeRequired(formValue.email),
             displayName: normalizeRequired(formValue.displayName),
             phoneNumber: normalizeOptional(formValue.phoneNumber),
-            bio: null,
+            bio: this.staff()?.bio ?? null,
             defaultAppointmentDurationMinutes: 0,
-            photoMediaAssetId: null,
-            tipsQrMediaAssetId: null,
+            photoMediaAssetId: this.staff()?.photoMediaAssetId ?? null,
+            tipsQrMediaAssetId: this.staff()?.tipsQrMediaAssetId ?? null,
             isActive: formValue.isActive ?? true,
           }),
         );
@@ -170,6 +171,7 @@ export class AdminStaffFormModalComponent implements OnInit, OnDestroy {
       const staffId = this.staffId();
       if (!staffId) return;
       const staff = await firstValueFrom(this.adminStaffApiService.getById(staffId));
+      this.staff.set(staff);
       this.staffForm.patchValue({
         fullName: staff.fullName,
         email: staff.email,

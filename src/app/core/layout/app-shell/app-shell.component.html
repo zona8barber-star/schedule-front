@@ -315,13 +315,24 @@
     </div>
   </nav>
 
-  <nav class="app-shell__bottom-nav" aria-label="Navegacion principal movil">
-    @for (link of bottomNavLinks(); track link.route) {
+  <nav #bottomNav class="app-shell__bottom-nav" aria-label="Navegacion principal movil">
+    <span
+      class="app-shell__bottom-nav-highlight"
+      [class.app-shell__bottom-nav-highlight--visible]="bottomNavHighlightStyle()"
+      [style.transform]="bottomNavHighlightStyle()?.transform"
+      [style.width]="bottomNavHighlightStyle()?.width"
+      aria-hidden="true"
+    ></span>
+
+    @for (link of bottomNavLinks(); track link.route; let i = $index) {
       <a
+        #bottomNavTab
         class="app-shell__bottom-nav-item"
         [routerLink]="link.route"
         routerLinkActive="is-active"
         [routerLinkActiveOptions]="{ exact: link.exact ?? false }"
+        (isActiveChange)="onBottomNavTabActiveChange(i, $event)"
+        [attr.aria-label]="link.label"
       >
         <span class="app-shell__bottom-nav-icon" aria-hidden="true">
           @switch (link.icon) {
@@ -377,7 +388,6 @@
             }
           }
         </span>
-        <span class="app-shell__bottom-nav-label">{{ link.label }}</span>
       </a>
     }
 
@@ -387,6 +397,7 @@
       [class.is-active]="isMobileMenuOpen()"
       [attr.aria-expanded]="isMobileMenuOpen()"
       aria-controls="mobile-menu"
+      aria-label="Menu"
       (click)="toggleMobileMenu()"
     >
       <span class="app-shell__bottom-nav-icon" aria-hidden="true">
@@ -394,7 +405,6 @@
           <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5M3.75 17.25h16.5" />
         </svg>
       </span>
-      <span class="app-shell__bottom-nav-label">Menu</span>
     </button>
   </nav>
 
