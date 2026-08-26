@@ -2,7 +2,11 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 
 import { RuntimeConfigService } from '../config/runtime-config.service';
-import { AdminUserItem, AdminUserUpdateRequest } from '../models/admin-user.models';
+import {
+  AdminUserItem,
+  AdminUserRolesUpdateRequest,
+  AdminUserUpdateRequest,
+} from '../models/admin-user.models';
 
 @Injectable({
   providedIn: 'root',
@@ -25,6 +29,10 @@ export class AdminUsersApiService {
 
   deactivate(userId: string) {
     return this.http.delete<void>(this.url(`/admin/users/${userId}`));
+  }
+
+  updateCustomRoles(userId: string, request: AdminUserRolesUpdateRequest) {
+    return this.http.patch<AdminUserItem>(this.url(`/admin/users/${userId}/roles`), request);
   }
 
   private url(path: string): string {
