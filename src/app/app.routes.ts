@@ -30,6 +30,11 @@ const loadAdminServicesListPage = () =>
     (module) => module.AdminServicesListPageComponent,
   );
 
+const loadAdminRolesListPage = () =>
+  import('./features/admin/roles/pages/admin-roles-list-page/admin-roles-list-page.component').then(
+    (module) => module.AdminRolesListPageComponent,
+  );
+
 const loadAdminIncomeListPage = () =>
   import('./features/admin/income/pages/admin-income-list-page/admin-income-list-page.component').then(
     (module) => module.AdminIncomeListPageComponent,
@@ -451,6 +456,15 @@ export const routes: Routes = [
       roles: [ROLE_NAMES.admin],
     },
     title: 'Usuarios',
+  },
+  {
+    path: 'admin/roles',
+    canActivate: [authGuard, roleGuard],
+    loadComponent: loadAdminRolesListPage,
+    data: {
+      roles: [ROLE_NAMES.admin],
+    },
+    title: 'Roles',
   },
   {
     path: 'media',

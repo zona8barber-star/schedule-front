@@ -237,6 +237,11 @@ export class AppShellComponent {
           group: 'admin',
         },
         {
+          label: 'Roles',
+          route: '/admin/roles',
+          group: 'admin',
+        },
+        {
           label: 'Usuarios',
           route: '/admin/users',
           group: 'admin',
