@@ -1,0 +1,67 @@
+<section class="roles">
+  <header class="roles__header">
+    <h1>Roles</h1>
+    <button class="roles__create-btn" type="button" (click)="openCreate()">+ Nuevo rol</button>
+  </header>
+
+  <app-api-feedback severity="error" [message]="errorMessage()" />
+
+  @if (isLoading()) {
+    <p class="roles__state">Cargando roles...</p>
+  } @else if (!roles().length) {
+    <p class="roles__state">Aún no hay roles. Crea el primero.</p>
+  } @else {
+    <div class="roles__table-wrap">
+      <table class="roles__table">
+        <thead>
+          <tr>
+            <th>Nombre</th>
+            <th>Tipo</th>
+            <th>Permisos</th>
+            <th aria-label="Acciones"></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (role of roles(); track role.id) {
+            <tr>
+              <td>{{ role.name }}</td>
+              <td>{{ role.isSystemRole ? 'Rol de sistema' : 'Personalizado' }}</td>
+              <td>{{ formatPermissions(role) }}</td>
+              <td class="roles__actions">
+                @if (role.isSystemRole) {
+                  <span class="roles__state">Rol de sistema</span>
+                } @else {
+                  <button
+                    class="roles__action-btn roles__action-btn--edit"
+                    type="button"
+                    (click)="openEdit(role)"
+                    [disabled]="busyId() === role.id"
+                  >
+                    Editar
+                  </button>
+                  <button
+                    class="roles__action-btn roles__action-btn--delete"
+                    type="button"
+                    (click)="deleteRole(role)"
+                    [disabled]="busyId() === role.id"
+                  >
+                    Eliminar
+                  </button>
+                }
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</section>
+
+@if (isModalOpen()) {
+  <app-admin-role-form-modal
+    [role]="editingRole()"
+    [permissions]="permissions()"
+    (saved)="onSaved($event)"
+    (cancelled)="closeModal()"
+  />
+}
