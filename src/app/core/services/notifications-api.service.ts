@@ -5,7 +5,10 @@ import {
   CustomerSummaryResponse,
   NotificationBroadcastRequest,
   NotificationCampaignResponse,
+  NotificationInboxResponse,
+  PushClientConfigResponse,
   PushSubscriptionRequest,
+  PushTestResultResponse,
   PushUnsubscribeRequest,
 } from '../models/notification.models';
 import { RuntimeConfigService } from '../config/runtime-config.service';
@@ -23,6 +26,31 @@ export class NotificationsApiService {
 
   unsubscribe(request: PushUnsubscribeRequest) {
     return this.httpClient.post<void>(this.buildUrl('/notifications/unsubscribe'), request);
+  }
+
+  getPushConfig() {
+    return this.httpClient.get<PushClientConfigResponse>(this.buildUrl('/notifications/push-config'));
+  }
+
+  sendTestPush() {
+    return this.httpClient.post<PushTestResultResponse>(this.buildUrl('/notifications/test'), {});
+  }
+
+  getInbox(limit: number) {
+    return this.httpClient.get<NotificationInboxResponse>(this.buildUrl('/notifications/inbox'), {
+      params: { limit },
+    });
+  }
+
+  markNotificationAsRead(notificationId: string) {
+    return this.httpClient.post<void>(
+      this.buildUrl(`/notifications/inbox/${encodeURIComponent(notificationId)}/read`),
+      {},
+    );
+  }
+
+  markAllNotificationsAsRead() {
+    return this.httpClient.post<void>(this.buildUrl('/notifications/inbox/read-all'), {});
   }
 
   broadcast(request: NotificationBroadcastRequest) {

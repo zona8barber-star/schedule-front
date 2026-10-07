@@ -38,6 +38,7 @@ export class AuthService {
 
   private bootstrapPromise: Promise<void> | null = null;
   private refreshPromise: Promise<string | null> | null = null;
+  private readonly beforeLogoutHooks: Array<() => Promise<void>> = [];
 
   private readonly currentUserState = signal<AuthUserResponse | null>(null);
   private readonly accessTokenState = signal<string | null>(null);
@@ -74,12 +75,21 @@ export class AuthService {
     return this.authenticate(() => this.authApiService.login(request));
   }
 
+  /**
+   * Registers work that must run while the session is still valid, right before logging out
+   * (e.g. unlinking this device's push subscription from the account). Hooks must not throw.
+   */
+  registerBeforeLogout(hook: () => Promise<void>): void {
+    this.beforeLogoutHooks.push(hook);
+  }
+
   async logout(): Promise<void> {
     this.loadingState.set(true);
     this.errorState.set(null);
 
     try {
       if (this.accessTokenState()) {
+        await Promise.allSettled(this.beforeLogoutHooks.map((hook) => hook()));
         await firstValueFrom(this.authApiService.logout());
       }
     } catch {

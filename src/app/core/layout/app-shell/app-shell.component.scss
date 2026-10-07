@@ -24,6 +24,13 @@
   backdrop-filter: blur(18px);
 }
 
+.app-shell__header-actions {
+  display: flex;
+  align-items: center;
+  justify-self: end;
+  gap: 0.6rem;
+}
+
 .app-shell__brand {
   display: inline-flex;
   align-items: center;
