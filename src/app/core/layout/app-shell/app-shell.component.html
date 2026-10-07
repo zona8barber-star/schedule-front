@@ -21,117 +21,134 @@
       }
     </nav>
 
-    <div class="app-shell__auth app-shell__auth--desktop">
-      @if (authService.status() === 'restoring') {
-        <span class="app-shell__status">Preparando tu cuenta...</span>
-      } @else if (authService.isAuthenticated()) {
-        <div class="app-shell__user-menu">
-          <button
-            class="app-shell__user-btn"
-            type="button"
-            [attr.aria-expanded]="isUserMenuOpen()"
-            aria-haspopup="true"
-            aria-label="Abrir menu de usuario"
-            (click)="toggleUserMenu()"
-          >
-            <svg
-              class="app-shell__user-icon"
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 24 24"
-              fill="currentColor"
-              aria-hidden="true"
-            >
-              <path
-                d="M12 12a5 5 0 1 0 0-10 5 5 0 0 0 0 10zm0 2c-5.33 0-8 2.67-8 4v1h16v-1c0-1.33-2.67-4-8-4z"
-              />
-            </svg>
-          </button>
-
-          @if (isUserMenuOpen()) {
-            <div class="app-shell__user-dropdown" role="menu">
-              <div class="app-shell__user-dropdown-header">
-                <strong>{{ authService.currentUser()?.fullName }}</strong>
-                <small>{{ identitySubtitle() }}</small>
-              </div>
-
-              @if (userDropdownCustomerLinks().length || userDropdownStaffLinks().length) {
-                <div class="app-shell__user-dropdown-section">
-                  @for (link of userDropdownCustomerLinks(); track link.route) {
-                    <a
-                      class="app-shell__user-dropdown-item"
-                      [routerLink]="link.route"
-                      routerLinkActive="is-active"
-                      [routerLinkActiveOptions]="{ exact: link.exact ?? false }"
-                      role="menuitem"
-                    >
-                      {{ link.label }}
-                    </a>
-                  }
-                  @for (link of userDropdownStaffLinks(); track link.route) {
-                    <a
-                      class="app-shell__user-dropdown-item"
-                      [routerLink]="link.route"
-                      routerLinkActive="is-active"
-                      [routerLinkActiveOptions]="{ exact: link.exact ?? false }"
-                      role="menuitem"
-                    >
-                      {{ link.label }}
-                    </a>
-                  }
-                </div>
-              }
-
-              @if (userDropdownAdminLinks().length) {
-                <div class="app-shell__user-dropdown-section">
-                  <p class="app-shell__user-dropdown-label">Administracion</p>
-                  @for (link of userDropdownAdminLinks(); track link.route) {
-                    <a
-                      class="app-shell__user-dropdown-item"
-                      [routerLink]="link.route"
-                      routerLinkActive="is-active"
-                      [routerLinkActiveOptions]="{ exact: link.exact ?? false }"
-                      role="menuitem"
-                    >
-                      {{ link.label }}
-                    </a>
-                  }
-                </div>
-              }
-
-              <div class="app-shell__user-dropdown-footer">
-                <button
-                  class="app-shell__user-dropdown-logout"
-                  type="button"
-                  [disabled]="isSigningOut()"
-                  role="menuitem"
-                  (click)="logout()"
-                >
-                  {{ isSigningOut() ? 'Cerrando...' : 'Cerrar sesion' }}
-                </button>
-              </div>
-            </div>
-          }
-        </div>
-      } @else {
-        <a class="app-shell__button app-shell__button--entry" routerLink="/auth/login"
-          >Iniciar sesion</a
-        >
+    <div class="app-shell__header-actions">
+      @if (authService.isAuthenticated()) {
+        <app-notification-bell />
       }
-    </div>
 
-    <button
-      class="app-shell__menu-toggle"
-      type="button"
-      [attr.aria-expanded]="isMobileMenuOpen()"
-      aria-controls="mobile-menu"
-      [attr.aria-label]="isMobileMenuOpen() ? 'Cerrar menu' : 'Abrir menu'"
-      (click)="toggleMobileMenu()"
-    >
-      <span class="app-shell__menu-icon" aria-hidden="true"></span>
-      <span class="app-shell__sr-only">{{
-        isMobileMenuOpen() ? 'Cerrar menu' : 'Abrir menu'
-      }}</span>
-    </button>
+      <div class="app-shell__auth app-shell__auth--desktop">
+        @if (authService.status() === 'restoring') {
+          <span class="app-shell__status">Preparando tu cuenta...</span>
+        } @else if (authService.isAuthenticated()) {
+          <div class="app-shell__user-menu">
+            <button
+              class="app-shell__user-btn"
+              type="button"
+              [attr.aria-expanded]="isUserMenuOpen()"
+              aria-haspopup="true"
+              aria-label="Abrir menu de usuario"
+              (click)="toggleUserMenu()"
+            >
+              <svg
+                class="app-shell__user-icon"
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="currentColor"
+                aria-hidden="true"
+              >
+                <path
+                  d="M12 12a5 5 0 1 0 0-10 5 5 0 0 0 0 10zm0 2c-5.33 0-8 2.67-8 4v1h16v-1c0-1.33-2.67-4-8-4z"
+                />
+              </svg>
+            </button>
+
+            @if (isUserMenuOpen()) {
+              <div class="app-shell__user-dropdown" role="menu">
+                <div class="app-shell__user-dropdown-header">
+                  <strong>{{ authService.currentUser()?.fullName }}</strong>
+                  <small>{{ identitySubtitle() }}</small>
+                </div>
+
+                @if (userDropdownCustomerLinks().length || userDropdownStaffLinks().length) {
+                  <div class="app-shell__user-dropdown-section">
+                    @for (link of userDropdownCustomerLinks(); track link.route) {
+                      <a
+                        class="app-shell__user-dropdown-item"
+                        [routerLink]="link.route"
+                        routerLinkActive="is-active"
+                        [routerLinkActiveOptions]="{ exact: link.exact ?? false }"
+                        role="menuitem"
+                      >
+                        {{ link.label }}
+                      </a>
+                    }
+                    @for (link of userDropdownStaffLinks(); track link.route) {
+                      <a
+                        class="app-shell__user-dropdown-item"
+                        [routerLink]="link.route"
+                        routerLinkActive="is-active"
+                        [routerLinkActiveOptions]="{ exact: link.exact ?? false }"
+                        role="menuitem"
+                      >
+                        {{ link.label }}
+                      </a>
+                    }
+                  </div>
+                }
+
+                @if (userDropdownAdminLinks().length) {
+                  <div class="app-shell__user-dropdown-section">
+                    <p class="app-shell__user-dropdown-label">Administracion</p>
+                    @for (link of userDropdownAdminLinks(); track link.route) {
+                      <a
+                        class="app-shell__user-dropdown-item"
+                        [routerLink]="link.route"
+                        routerLinkActive="is-active"
+                        [routerLinkActiveOptions]="{ exact: link.exact ?? false }"
+                        role="menuitem"
+                      >
+                        {{ link.label }}
+                      </a>
+                    }
+                  </div>
+                }
+
+                <div class="app-shell__user-dropdown-section">
+                  <a
+                    class="app-shell__user-dropdown-item"
+                    routerLink="/account/notifications"
+                    routerLinkActive="is-active"
+                    role="menuitem"
+                  >
+                    Notificaciones
+                  </a>
+                </div>
+
+                <div class="app-shell__user-dropdown-footer">
+                  <button
+                    class="app-shell__user-dropdown-logout"
+                    type="button"
+                    [disabled]="isSigningOut()"
+                    role="menuitem"
+                    (click)="logout()"
+                  >
+                    {{ isSigningOut() ? 'Cerrando...' : 'Cerrar sesion' }}
+                  </button>
+                </div>
+              </div>
+            }
+          </div>
+        } @else {
+          <a class="app-shell__button app-shell__button--entry" routerLink="/auth/login"
+            >Iniciar sesion</a
+          >
+        }
+      </div>
+
+      <button
+        class="app-shell__menu-toggle"
+        type="button"
+        [attr.aria-expanded]="isMobileMenuOpen()"
+        aria-controls="mobile-menu"
+        [attr.aria-label]="isMobileMenuOpen() ? 'Cerrar menu' : 'Abrir menu'"
+        (click)="toggleMobileMenu()"
+      >
+        <span class="app-shell__menu-icon" aria-hidden="true"></span>
+        <span class="app-shell__sr-only">{{
+          isMobileMenuOpen() ? 'Cerrar menu' : 'Abrir menu'
+        }}</span>
+      </button>
+    </div>
   </header>
 
   @if (httpActivityService.isLoading()) {
@@ -295,6 +312,13 @@
             <strong>{{ authService.currentUser()?.fullName }}</strong>
             <small>{{ identitySubtitle() }}</small>
           </div>
+          <a
+            routerLink="/account/notifications"
+            routerLinkActive="is-active"
+            (click)="closeMobileMenu()"
+          >
+            Notificaciones
+          </a>
           <button
             class="app-shell__button app-shell__button--ghost"
             type="button"
@@ -441,6 +465,13 @@
 
       <div class="app-shell__side-rail-footer">
         @if (authService.isAuthenticated()) {
+          <a
+            class="app-shell__side-rail-item"
+            routerLink="/account/notifications"
+            routerLinkActive="is-active"
+          >
+            Notificaciones
+          </a>
           <button
             class="app-shell__side-rail-logout"
             type="button"

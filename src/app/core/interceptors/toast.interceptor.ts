@@ -111,6 +111,11 @@ function resolveErrorMessage(
     return null;
   }
 
+  // Push sync runs in the background; PushNotificationService reports its own errors where relevant.
+  if (requestPath.startsWith('/notifications/')) {
+    return null;
+  }
+
   if (error.status === 401 || error.status === 403) {
     return null;
   }

@@ -9,6 +9,44 @@ export interface PushUnsubscribeRequest {
   endpoint: string;
 }
 
+export interface PushClientConfigResponse {
+  enabled: boolean;
+  vapidPublicKey: string | null;
+}
+
+export interface PushDeviceResultResponse {
+  subscriptionId: string;
+  pushService: string;
+  userAgent: string | null;
+  delivered: boolean;
+  statusCode: number | null;
+  error: string | null;
+  removed: boolean;
+}
+
+export interface PushTestResultResponse {
+  enabled: boolean;
+  deviceCount: number;
+  deliveredCount: number;
+  devices: PushDeviceResultResponse[];
+  warnings: string[];
+}
+
+export interface UserNotificationItem {
+  id: string;
+  type: string;
+  title: string;
+  body: string;
+  url: string | null;
+  createdAtUtc: string;
+  readAtUtc: string | null;
+}
+
+export interface NotificationInboxResponse {
+  unreadCount: number;
+  items: UserNotificationItem[];
+}
+
 export type NotificationBroadcastTargetType = 'all' | 'selected' | 'filter';
 
 export interface NotificationBroadcastRequest {

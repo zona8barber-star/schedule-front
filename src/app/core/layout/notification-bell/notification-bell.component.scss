@@ -1,0 +1,232 @@
+:host {
+  position: relative;
+  display: inline-flex;
+}
+
+.bell__button {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.6rem;
+  height: 2.6rem;
+  border-radius: 999px;
+  border: 1.5px solid rgba(176, 138, 74, 0.5);
+  background: rgba(176, 138, 74, 0.12);
+  color: var(--color-text-inverse);
+  cursor: pointer;
+  transition:
+    background-color 140ms ease,
+    border-color 140ms ease,
+    transform 140ms ease;
+
+  &:hover,
+  &[aria-expanded='true'] {
+    background: rgba(176, 138, 74, 0.22);
+    border-color: rgba(176, 138, 74, 0.7);
+    transform: translateY(-1px);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--z-brass);
+    outline-offset: 2px;
+  }
+}
+
+.bell__icon {
+  width: 1.3rem;
+  height: 1.3rem;
+}
+
+.bell__badge {
+  position: absolute;
+  top: -0.3rem;
+  right: -0.35rem;
+  min-width: 1.2rem;
+  height: 1.2rem;
+  padding: 0 0.3rem;
+  display: inline-grid;
+  place-items: center;
+  border-radius: 999px;
+  border: 2px solid var(--z-ink);
+  background: var(--color-error);
+  color: #fff;
+  font-size: 0.68rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.bell__panel {
+  position: fixed;
+  z-index: 40;
+  max-height: min(32rem, calc(100vh - 6rem));
+  display: flex;
+  flex-direction: column;
+  border: 1px solid rgba(176, 138, 74, 0.3);
+  border-radius: var(--radius-sharp);
+  background: var(--color-surface);
+  color: var(--color-text);
+  box-shadow: 0 0.5rem 2rem rgba(14, 14, 16, 0.22);
+  animation: bell-panel-in 130ms ease;
+}
+
+@keyframes bell-panel-in {
+  from {
+    opacity: 0;
+    transform: translateY(-0.4rem) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.bell__panel-head,
+.bell__panel-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.8rem 1rem;
+}
+
+.bell__panel-head {
+  border-bottom: 1px solid rgba(176, 138, 74, 0.15);
+
+  strong {
+    font-family: var(--z-font-display);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    font-size: 0.95rem;
+  }
+}
+
+.bell__panel-foot {
+  border-top: 1px solid rgba(176, 138, 74, 0.15);
+
+  a {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--color-text-secondary);
+    text-decoration: none;
+
+    &:hover {
+      color: var(--z-brass-dk);
+    }
+  }
+}
+
+.bell__link-btn {
+  border: 0;
+  padding: 0;
+  background: none;
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--z-brass-dk);
+  cursor: pointer;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+.bell__list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  overflow-y: auto;
+}
+
+.bell__item {
+  position: relative;
+  width: 100%;
+  display: grid;
+  grid-template-columns: 0.55rem minmax(0, 1fr);
+  gap: 0.65rem;
+  padding: 0.75rem 1rem;
+  border: 0;
+  border-bottom: 1px solid rgba(20, 18, 16, 0.06);
+  background: transparent;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+
+  &:hover,
+  &:focus-visible {
+    background: var(--z-bone);
+    outline: none;
+  }
+}
+
+.bell__item--unread {
+  background: rgba(176, 138, 74, 0.07);
+
+  .bell__dot {
+    background: var(--z-brass);
+  }
+
+  .bell__item-title {
+    font-weight: 700;
+  }
+}
+
+.bell__dot {
+  width: 0.5rem;
+  height: 0.5rem;
+  margin-top: 0.4rem;
+  border-radius: 50%;
+  background: transparent;
+}
+
+.bell__item-body {
+  display: grid;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.bell__item-title {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.bell__item-text {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  font-size: 0.82rem;
+  line-height: 1.45;
+  color: var(--color-text-secondary);
+}
+
+.bell__item-time {
+  font-size: 0.74rem;
+  color: var(--color-text-muted);
+}
+
+.bell__empty {
+  margin: 0;
+  padding: 1.5rem 1rem;
+  text-align: center;
+  font-size: 0.88rem;
+  color: var(--color-text-muted);
+}
+
+.bell__sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bell__panel {
+    animation: none;
+  }
+}

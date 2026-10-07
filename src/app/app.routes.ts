@@ -125,6 +125,11 @@ const loadAdminTickerItemsPage = () =>
     './features/admin/landing-content/pages/admin-ticker-items-page/admin-ticker-items-page.component'
   ).then((module) => module.AdminTickerItemsPageComponent);
 
+const loadNotificationSettingsPage = () =>
+  import(
+    './features/account/notifications/pages/notification-settings-page/notification-settings-page.component'
+  ).then((module) => module.NotificationSettingsPageComponent);
+
 const loadAdminNotificationsPage = () =>
   import(
     './features/admin/notifications/pages/admin-notifications-page/admin-notifications-page.component'
@@ -465,6 +470,12 @@ export const routes: Routes = [
       roles: [ROLE_NAMES.admin],
     },
     title: 'Roles',
+  },
+  {
+    path: 'account/notifications',
+    canActivate: [authGuard],
+    loadComponent: loadNotificationSettingsPage,
+    title: 'Notificaciones',
   },
   {
     path: 'media',
