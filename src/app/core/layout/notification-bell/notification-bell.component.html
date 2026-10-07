@@ -1,0 +1,73 @@
+<button
+  #trigger
+  class="bell__button"
+  type="button"
+  data-testid="notification-bell"
+  aria-haspopup="true"
+  [attr.aria-expanded]="isOpen()"
+  [attr.aria-label]="ariaLabel()"
+  (click)="toggle()"
+>
+  <svg class="bell__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true">
+    <path
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      d="M14.857 17.082a23.848 23.848 0 0 0 5.454-1.31A8.967 8.967 0 0 1 18 9.75V9A6 6 0 0 0 6 9v.75a8.967 8.967 0 0 1-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 0 1-5.714 0m5.714 0a3 3 0 1 1-5.714 0"
+    />
+  </svg>
+
+  @if (unreadCount() > 0) {
+    <span class="bell__badge" data-testid="notification-bell-badge" aria-hidden="true">{{ badgeLabel() }}</span>
+  }
+</button>
+
+@if (isOpen()) {
+  <section
+    class="bell__panel"
+    role="dialog"
+    aria-label="Notificaciones"
+    [style.top.px]="panelPosition().top"
+    [style.right.px]="panelPosition().right"
+    [style.width.px]="panelPosition().width"
+  >
+    <header class="bell__panel-head">
+      <strong>Notificaciones</strong>
+      @if (unreadCount() > 0) {
+        <button class="bell__link-btn" type="button" (click)="markAllAsRead()">Marcar todas como leídas</button>
+      }
+    </header>
+
+    @if (center.items().length) {
+      <ul class="bell__list">
+        @for (item of center.items(); track item.id) {
+          <li>
+            <button
+              class="bell__item"
+              type="button"
+              [class.bell__item--unread]="!item.readAtUtc"
+              (click)="open(item)"
+            >
+              <span class="bell__dot" aria-hidden="true"></span>
+              <span class="bell__item-body">
+                <span class="bell__item-title">{{ item.title }}</span>
+                <span class="bell__item-text">{{ item.body }}</span>
+                <time class="bell__item-time" [attr.datetime]="item.createdAtUtc">{{ timeAgo(item.createdAtUtc) }}</time>
+              </span>
+              @if (!item.readAtUtc) {
+                <span class="bell__sr-only">(sin leer)</span>
+              }
+            </button>
+          </li>
+        }
+      </ul>
+    } @else if (center.isLoading() && !center.hasLoaded()) {
+      <p class="bell__empty">Cargando...</p>
+    } @else {
+      <p class="bell__empty">No tienes notificaciones todavía.</p>
+    }
+
+    <footer class="bell__panel-foot">
+      <a routerLink="/account/notifications" (click)="close()">Ajustes de notificaciones</a>
+    </footer>
+  </section>
+}

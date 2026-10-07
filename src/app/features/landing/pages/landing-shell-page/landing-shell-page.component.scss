@@ -191,6 +191,17 @@
   overflow: hidden;
 }
 
+.lp__ph--logo {
+  align-items: center;
+  justify-content: center;
+}
+
+.lp__ph-logo {
+  width: min(70%, 22rem);
+  height: auto;
+  opacity: 0.92;
+}
+
 .lp__ph-cap {
   font-family: var(--z-font-mono);
   font-size: 9.5px;

@@ -16,6 +16,7 @@ import { SwUpdate, VersionReadyEvent } from '@angular/service-worker';
 import { filter, fromEvent, interval } from 'rxjs';
 
 import { ConfirmModalComponent } from '../../../shared/components/confirm-modal/confirm-modal.component';
+import { NotificationBellComponent } from '../notification-bell/notification-bell.component';
 import { ToastOutletComponent } from '../../../shared/components/toast-outlet/toast-outlet.component';
 import { BUSINESS_CONTACT } from '../../config/business-contact.config';
 import {
@@ -63,6 +64,7 @@ interface FooterSocialLink {
     RouterOutlet,
     ToastOutletComponent,
     ConfirmModalComponent,
+    NotificationBellComponent,
   ],
   templateUrl: './app-shell.component.html',
   styleUrl: './app-shell.component.scss',
@@ -498,10 +500,10 @@ export class AppShellComponent {
   async enablePushNotifications(): Promise<void> {
     const error = await this.pushNotificationService.enable();
 
-    if (error === null) {
-      this.toastService.success('Notificaciones activadas');
-    } else if (error) {
+    if (error) {
       this.toastService.error(error);
+    } else if (this.pushNotificationService.isSubscribed()) {
+      this.toastService.success('Notificaciones activadas');
     }
   }
 
