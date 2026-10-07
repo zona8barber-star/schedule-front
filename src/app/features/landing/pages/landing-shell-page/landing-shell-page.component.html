@@ -60,8 +60,9 @@
             [title]="branding()!.appName"
           />
         } @else {
-          <div class="lp__ph" aria-hidden="true">
-            <span class="lp__ph-cap">Foto · Interior barbería</span>
+          <!-- Sin mapa ni logo configurados: mostrar el logo de la app en vez de un recuadro vacío -->
+          <div class="lp__ph lp__ph--logo">
+            <img class="lp__ph-logo" src="assets/images/logo.png" [alt]="branding()?.appName || 'Zona 8'" />
           </div>
         }
         <div class="lp__hero-badge">
