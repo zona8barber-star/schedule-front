@@ -33,14 +33,6 @@
         }
         @case ('enabled') {
           <button
-            class="ns__btn ns__btn--primary"
-            type="button"
-            [disabled]="isTesting()"
-            (click)="sendTest()"
-          >
-            {{ isTesting() ? 'Enviando...' : 'Enviar notificación de prueba' }}
-          </button>
-          <button
             class="ns__btn ns__btn--outline"
             type="button"
             [disabled]="isDisabling()"
@@ -52,47 +44,11 @@
       }
     </div>
 
-    <app-api-feedback severity="error" [message]="testError()" />
-
-    @if (testResult(); as result) {
-      <div class="ns__result" role="status" aria-live="polite">
-        @if (testSummary(); as summary) {
-          <p class="ns__result-summary">{{ summary }}</p>
-        }
-
-        @if (result.devices.length) {
-          <ul class="ns__devices">
-            @for (device of result.devices; track device.subscriptionId) {
-              <li class="ns__device" [class.ns__device--failed]="!device.delivered">
-                <span class="ns__device-mark" aria-hidden="true">{{ device.delivered ? '✓' : '✕' }}</span>
-                <span class="ns__device-body">
-                  <strong>{{ device.pushService }}</strong>
-                  @if (!device.delivered) {
-                    <small>
-                      No entregada: {{ describeStatusCode(device.statusCode) }}
-                      @if (device.removed) {
-                        — se quitó de tu cuenta
-                      }
-                    </small>
-                    @if (device.error && !device.removed) {
-                      <small class="ns__device-error">{{ device.error }}</small>
-                    }
-                  }
-                </span>
-              </li>
-            }
-          </ul>
-        }
-
-        @for (warning of result.warnings; track warning) {
-          <p class="ns__warning">{{ warning }}</p>
-        }
-
-        <p class="ns__hint">
-          ¿No te llegó? Revisa que el modo "No molestar" esté apagado y que el navegador tenga permiso de
-          notificaciones en los ajustes del teléfono.
-        </p>
-      </div>
+    @if (status() === 'enabled') {
+      <p class="ns__hint">
+        ¿No te llegan? Revisa que el modo "No molestar" esté apagado y que el navegador tenga permiso de
+        notificaciones en los ajustes del teléfono.
+      </p>
     }
   </section>
 </div>
