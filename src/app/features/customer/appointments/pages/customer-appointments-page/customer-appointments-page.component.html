@@ -190,18 +190,26 @@
   <div class="my-appts__card-actions">
     @if (canCancel(appt)) {
       <button
+        class="my-appts__btn my-appts__btn--outline"
+        type="button"
+        [disabled]="pendingCancelId() === appt.id"
+        (click)="openReschedule(appt)"
+      >
+        Reprogramar
+      </button>
+      <button
         class="my-appts__btn my-appts__btn--cancel"
         type="button"
         [disabled]="pendingCancelId() === appt.id"
-        (click)="cancelAppointment(appt)"
+        (click)="askCancel(appt)"
       >
         @if (pendingCancelId() === appt.id) { Cancelando... } @else { Cancelar cita }
       </button>
+    } @else {
+      <a class="my-appts__btn my-appts__btn--outline" routerLink="/staff">
+        Agendar otra cita
+      </a>
     }
-
-    <a class="my-appts__btn my-appts__btn--outline" routerLink="/staff">
-      Agendar otra cita
-    </a>
 
     @if (canReview(appt)) {
       <button
@@ -318,6 +326,135 @@
         </button>
 
       </form>
+    </dialog>
+  </div>
+}
+
+<!-- ── Diálogo: cancelar (con opción de reprogramar) ─────────────────────── -->
+@if (cancelDialogAppointment(); as appt) {
+  <div class="my-appts__overlay" (click)="closeCancelDialog()" tabindex="-1">
+    <dialog
+      class="my-appts__modal my-appts__modal--compact"
+      open
+      aria-labelledby="cancel-modal-title"
+      (click)="$event.stopPropagation()"
+      (keydown.escape)="closeCancelDialog()"
+    >
+      <div class="my-appts__modal-header">
+        <h2 id="cancel-modal-title">¿Cancelar tu cita?</h2>
+        <div class="my-appts__modal-appt-info">
+          <strong>{{ appt.staffName ?? 'Profesional' }}</strong>
+          &nbsp;·&nbsp;
+          {{ formatDate(appt.startsAtUtc) }}
+          &nbsp;a las&nbsp;
+          {{ formatTime(appt.startsAtUtc) }}
+        </div>
+        <p class="my-appts__modal-text">
+          Si no puedes ir a esa hora, puedes moverla a otro día u hora en vez de cancelarla.
+        </p>
+      </div>
+
+      <div class="my-appts__modal-actions">
+        <button
+          class="my-appts__btn my-appts__btn--primary my-appts__btn--full"
+          type="button"
+          [disabled]="pendingCancelId() === appt.id"
+          (click)="switchToReschedule(appt)"
+        >
+          Reprogramar
+        </button>
+        <button
+          class="my-appts__btn my-appts__btn--cancel my-appts__btn--full"
+          type="button"
+          [disabled]="pendingCancelId() === appt.id"
+          (click)="cancelAppointment(appt)"
+        >
+          {{ pendingCancelId() === appt.id ? 'Cancelando...' : 'Sí, cancelar cita' }}
+        </button>
+        <button
+          class="my-appts__btn my-appts__btn--ghost my-appts__btn--full"
+          type="button"
+          [disabled]="pendingCancelId() === appt.id"
+          (click)="closeCancelDialog()"
+        >
+          Volver
+        </button>
+      </div>
+    </dialog>
+  </div>
+}
+
+<!-- ── Diálogo: reprogramar ───────────────────────────────────────────────── -->
+@if (rescheduleAppointment(); as appt) {
+  <div class="my-appts__overlay" (click)="closeReschedule()" tabindex="-1">
+    <dialog
+      class="my-appts__modal"
+      open
+      aria-labelledby="reschedule-modal-title"
+      (click)="$event.stopPropagation()"
+      (keydown.escape)="closeReschedule()"
+    >
+      <button
+        class="my-appts__modal-close"
+        type="button"
+        aria-label="Cerrar"
+        [disabled]="isRescheduling()"
+        (click)="closeReschedule()"
+      >
+        <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+        </svg>
+      </button>
+
+      <div class="my-appts__modal-header">
+        <h2 id="reschedule-modal-title">Reprogramar cita</h2>
+        <div class="my-appts__modal-appt-info">
+          Ahora: {{ formatDate(appt.startsAtUtc) }} a las {{ formatTime(appt.startsAtUtc) }}
+          con <strong>{{ appt.staffName ?? 'tu barbero' }}</strong>
+        </div>
+      </div>
+
+      <app-api-feedback severity="error" [message]="rescheduleError()" />
+
+      @if (rescheduleSlot(); as slot) {
+        <div class="my-appts__reschedule-confirm" role="status" aria-live="polite">
+          <span class="my-appts__label">Nueva hora</span>
+          <p class="my-appts__reschedule-new">
+            {{ formatDate(slot.startAtUtc) }} a las {{ formatTime(slot.startAtUtc) }}
+          </p>
+          @if (appt.status === APPOINTMENT_STATUS.confirmed) {
+            <p class="my-appts__modal-text">Tu barbero tendrá que confirmar el nuevo horario.</p>
+          }
+          <div class="my-appts__modal-actions">
+            <button
+              class="my-appts__btn my-appts__btn--primary my-appts__btn--full"
+              type="button"
+              [disabled]="isRescheduling()"
+              (click)="confirmReschedule()"
+            >
+              {{ isRescheduling() ? 'Guardando...' : 'Confirmar cambio' }}
+            </button>
+            <button
+              class="my-appts__btn my-appts__btn--ghost my-appts__btn--full"
+              type="button"
+              [disabled]="isRescheduling()"
+              (click)="rescheduleSlot.set(null)"
+            >
+              Elegir otra hora
+            </button>
+          </div>
+        </div>
+      }
+
+      <!-- Se oculta (sin destruirse) mientras se confirma, para no recargar los horarios. -->
+      <div [hidden]="!!rescheduleSlot()">
+        <app-slot-picker
+          [staffProfileId]="appt.staffProfileId"
+          [initialDate]="rescheduleInitialDate(appt)"
+          [disabled]="isRescheduling()"
+          (slotSelected)="onRescheduleSlot($event)"
+        />
+      </div>
     </dialog>
   </div>
 }

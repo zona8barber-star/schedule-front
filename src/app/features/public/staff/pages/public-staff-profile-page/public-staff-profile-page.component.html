@@ -184,34 +184,13 @@
           </button>
         </div>
 
-        <p class="psp__modal-sub">Elegí el día y seleccioná el horario que más te convenga.</p>
+        <p class="psp__modal-sub">Elige el día y toca el horario que más te convenga.</p>
 
-        <label class="psp__date-label" for="booking-date">Fecha</label>
-        <input
-          id="booking-date"
-          class="psp__date-input"
-          type="date"
-          [value]="selectedDate()"
-          [min]="todayDate()"
-          (change)="onDateChange($event)"
+        <app-slot-picker
+          [staffProfileId]="staffProfileId()!"
+          [initialDate]="bookingDate()"
+          (slotSelected)="selectSlot($event)"
         />
-
-        <app-api-feedback severity="error" [message]="slotsError()" />
-
-        @if (slotsLoading()) {
-          <p class="psp__slots-msg">Buscando horarios disponibles...</p>
-        } @else if (!slots().length) {
-          <p class="psp__slots-msg">No hay horarios disponibles para este día.</p>
-        } @else {
-          <p class="psp__slots-hint">Seleccioná un horario para continuar</p>
-          <div class="psp__slots">
-            @for (slot of slots(); track slot.startAtUtc) {
-              <button class="psp__slot" type="button" (click)="selectSlot(slot)">
-                {{ formatSlotTime(slot.startAtUtc) }}
-              </button>
-            }
-          </div>
-        }
       </dialog>
     </div>
   }

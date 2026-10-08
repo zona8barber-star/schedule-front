@@ -346,6 +346,16 @@
   width: 100%;
 }
 
+.my-appts__btn--ghost {
+  background: transparent;
+  color: var(--color-text-muted);
+
+  &:not(:disabled):hover {
+    color: var(--color-text);
+    transform: none;
+  }
+}
+
 // ─── Modal overlay ────────────────────────────────────────────────────────────
 
 .my-appts__overlay {
@@ -426,6 +436,38 @@
 .my-appts__modal-appt-info {
   font-size: 0.9rem;
   color: var(--color-text-muted);
+}
+
+.my-appts__modal--compact {
+  max-width: 26rem;
+}
+
+.my-appts__modal-text {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: 0.9rem;
+  line-height: 1.55;
+}
+
+.my-appts__modal-actions {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.my-appts__reschedule-confirm {
+  display: grid;
+  gap: 0.6rem;
+  padding: 1rem;
+  border: 1px solid var(--z-hairline-light);
+  border-radius: 0.85rem;
+  background: var(--z-bone-2);
+}
+
+.my-appts__reschedule-new {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--color-text);
 }
 
 // ─── Aviso de anonimato ───────────────────────────────────────────────────────
