@@ -14,24 +14,6 @@ export interface PushClientConfigResponse {
   vapidPublicKey: string | null;
 }
 
-export interface PushDeviceResultResponse {
-  subscriptionId: string;
-  pushService: string;
-  userAgent: string | null;
-  delivered: boolean;
-  statusCode: number | null;
-  error: string | null;
-  removed: boolean;
-}
-
-export interface PushTestResultResponse {
-  enabled: boolean;
-  deviceCount: number;
-  deliveredCount: number;
-  devices: PushDeviceResultResponse[];
-  warnings: string[];
-}
-
 export interface UserNotificationItem {
   id: string;
   type: string;
