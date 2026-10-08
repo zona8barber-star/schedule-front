@@ -5,7 +5,6 @@ import { SwPush } from '@angular/service-worker';
 import { firstValueFrom, take } from 'rxjs';
 
 import { RuntimeConfigService } from '../config/runtime-config.service';
-import { PushTestResultResponse } from '../models/notification.models';
 import { AuthService } from './auth.service';
 import { NotificationsApiService } from './notifications-api.service';
 
@@ -282,10 +281,6 @@ export class PushNotificationService {
     } finally {
       this.subscription.set(null);
     }
-  }
-
-  sendTest(): Promise<PushTestResultResponse> {
-    return firstValueFrom(this.notificationsApiService.sendTestPush());
   }
 
   /**

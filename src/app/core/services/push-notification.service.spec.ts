@@ -53,7 +53,6 @@ describe('PushNotificationService', () => {
     subscribe: ReturnType<typeof vi.fn>;
     unsubscribe: ReturnType<typeof vi.fn>;
     getPushConfig: ReturnType<typeof vi.fn>;
-    sendTestPush: ReturnType<typeof vi.fn>;
   };
   let currentUser: ReturnType<typeof signal<AuthUserResponse | null>>;
   let logoutHooks: Array<() => Promise<void>>;
@@ -86,7 +85,6 @@ describe('PushNotificationService', () => {
       subscribe: vi.fn(() => of(undefined)),
       unsubscribe: vi.fn(() => of(undefined)),
       getPushConfig: vi.fn(() => of({ enabled: true, vapidPublicKey: SERVER_KEY })),
-      sendTestPush: vi.fn(),
     };
 
     currentUser = signal<AuthUserResponse | null>(null);

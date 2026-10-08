@@ -8,7 +8,6 @@ import {
   NotificationInboxResponse,
   PushClientConfigResponse,
   PushSubscriptionRequest,
-  PushTestResultResponse,
   PushUnsubscribeRequest,
 } from '../models/notification.models';
 import { RuntimeConfigService } from '../config/runtime-config.service';
@@ -30,10 +29,6 @@ export class NotificationsApiService {
 
   getPushConfig() {
     return this.httpClient.get<PushClientConfigResponse>(this.buildUrl('/notifications/push-config'));
-  }
-
-  sendTestPush() {
-    return this.httpClient.post<PushTestResultResponse>(this.buildUrl('/notifications/test'), {});
   }
 
   getInbox(limit: number) {
