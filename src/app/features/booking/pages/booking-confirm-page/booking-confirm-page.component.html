@@ -53,6 +53,10 @@
         </div>
       </section>
 
+      @if (slotTaken()) {
+        <p class="booking-confirm-page__hint">Elige otra hora con "Cambiar fecha u hora".</p>
+      }
+
       <div class="booking-confirm-page__actions">
         <button
           class="booking-confirm-page__button"
@@ -62,9 +66,13 @@
         >
           {{ submitLabel() }}
         </button>
-        <a routerLink="/customer/appointments" class="booking-confirm-page__link"
-          >Ir a mis citas</a
+        <a
+          class="booking-confirm-page__link"
+          [routerLink]="['/staff', staffProfileId()]"
+          [queryParams]="changeDateQueryParams()"
         >
+          Cambiar fecha u hora
+        </a>
       </div>
     }
   </article>

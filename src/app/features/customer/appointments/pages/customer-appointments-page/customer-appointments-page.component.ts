@@ -1,4 +1,4 @@
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, signal, viewChild } from '@angular/core';
 import { NgTemplateOutlet } from '@angular/common';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
@@ -8,6 +8,7 @@ import {
   APPOINTMENT_STATUS,
   AppointmentResponse,
 } from '../../../../../core/models/appointment.models';
+import { PublicAvailabilitySlotResponse } from '../../../../../core/models/availability.models';
 import {
   CustomerReviewResponse,
   REVIEW_STARS_VALUES,
@@ -15,9 +16,12 @@ import {
 } from '../../../../../core/models/review.models';
 import { CustomerAppointmentsApiService } from '../../../../../core/services/customer-appointments-api.service';
 import { CustomerReviewsApiService } from '../../../../../core/services/customer-reviews-api.service';
+import { ToastService } from '../../../../../core/services/toast.service';
 import { getApiErrorMessage } from '../../../../../core/utils/api-error.utils';
+import { BOGOTA_TIME_ZONE, bogotaDateKey } from '../../../../../core/utils/bogota-date.utils';
 import { ApiFeedbackComponent } from '../../../../../shared/components/api-feedback/api-feedback.component';
 import { PageStateComponent } from '../../../../../shared/components/page-state/page-state.component';
+import { SlotPickerComponent } from '../../../../../shared/components/slot-picker/slot-picker.component';
 import { PullToRefreshDirective } from '../../../../../shared/directives/pull-to-refresh.directive';
 
 /** Ventana de calificación desde que terminó la cita: 7 días en ms */
@@ -39,6 +43,7 @@ type ReviewFormGroup = FormGroup<{
     RouterLink,
     NgTemplateOutlet,
     PullToRefreshDirective,
+    SlotPickerComponent,
   ],
   templateUrl: './customer-appointments-page.component.html',
   styleUrl: './customer-appointments-page.component.scss',
@@ -46,19 +51,24 @@ type ReviewFormGroup = FormGroup<{
 export class CustomerAppointmentsPageComponent implements OnInit {
   private readonly customerAppointmentsApiService = inject(CustomerAppointmentsApiService);
   private readonly customerReviewsApiService = inject(CustomerReviewsApiService);
+  private readonly toastService = inject(ToastService);
 
   private readonly dateFormatter = new Intl.DateTimeFormat('es-CO', {
     weekday: 'long',
     day: 'numeric',
     month: 'long',
     year: 'numeric',
+    timeZone: BOGOTA_TIME_ZONE,
   });
 
   private readonly timeFormatter = new Intl.DateTimeFormat('es-CO', {
     hour: '2-digit',
     minute: '2-digit',
     hour12: false,
+    timeZone: BOGOTA_TIME_ZONE,
   });
+
+  private readonly reschedulePicker = viewChild(SlotPickerComponent);
 
   readonly APPOINTMENT_STATUS = APPOINTMENT_STATUS;
   readonly reviewStarsValues = REVIEW_STARS_VALUES;
@@ -73,6 +83,15 @@ export class CustomerAppointmentsPageComponent implements OnInit {
 
   readonly pendingCancelId = signal<string | null>(null);
   readonly pendingReviewId = signal<string | null>(null);
+
+  /** Cita en el diálogo "¿Cancelar tu cita?" */
+  readonly cancelDialogAppointment = signal<AppointmentResponse | null>(null);
+
+  /** Cita que se está reprogramando y la nueva hora elegida (pendiente de confirmar). */
+  readonly rescheduleAppointment = signal<AppointmentResponse | null>(null);
+  readonly rescheduleSlot = signal<PublicAvailabilitySlotResponse | null>(null);
+  readonly isRescheduling = signal(false);
+  readonly rescheduleError = signal<string | null>(null);
 
   /** Cita actualmente abierta en el modal de calificación */
   readonly reviewModalAppointment = signal<AppointmentResponse | null>(null);
@@ -150,6 +169,22 @@ export class CustomerAppointmentsPageComponent implements OnInit {
     return cancelable && Date.parse(appointment.startsAtUtc) > Date.now();
   }
 
+  askCancel(appointment: AppointmentResponse): void {
+    if (!this.canCancel(appointment)) return;
+    this.cancelDialogAppointment.set(appointment);
+  }
+
+  closeCancelDialog(): void {
+    if (this.pendingCancelId()) return;
+    this.cancelDialogAppointment.set(null);
+  }
+
+  /** Desde el diálogo de cancelar: mejor moverla a otra hora. */
+  switchToReschedule(appointment: AppointmentResponse): void {
+    this.cancelDialogAppointment.set(null);
+    this.openReschedule(appointment);
+  }
+
   async cancelAppointment(appointment: AppointmentResponse): Promise<void> {
     if (!this.canCancel(appointment)) return;
 
@@ -159,12 +194,79 @@ export class CustomerAppointmentsPageComponent implements OnInit {
 
     try {
       await firstValueFrom(this.customerAppointmentsApiService.cancel(appointment.id));
+      this.cancelDialogAppointment.set(null);
+      this.toastService.success('Tu cita fue cancelada.');
       await this.loadAppointments();
-      this.successMessage.set('La cita fue cancelada correctamente.');
     } catch (error) {
+      this.cancelDialogAppointment.set(null);
       this.errorMessage.set(getApiErrorMessage(error));
     } finally {
       this.pendingCancelId.set(null);
+    }
+  }
+
+  // ── Reprogramación ───────────────────────────────────────────────────────
+
+  /** Día en que abre el selector: el de la cita actual. */
+  rescheduleInitialDate(appointment: AppointmentResponse): string {
+    return bogotaDateKey(appointment.startsAtUtc);
+  }
+
+  openReschedule(appointment: AppointmentResponse): void {
+    if (!this.canCancel(appointment)) return;
+    this.rescheduleSlot.set(null);
+    this.rescheduleError.set(null);
+    this.rescheduleAppointment.set(appointment);
+  }
+
+  closeReschedule(): void {
+    if (this.isRescheduling()) return;
+    this.rescheduleAppointment.set(null);
+    this.rescheduleSlot.set(null);
+    this.rescheduleError.set(null);
+  }
+
+  onRescheduleSlot(slot: PublicAvailabilitySlotResponse): void {
+    this.rescheduleError.set(null);
+    this.rescheduleSlot.set(slot);
+  }
+
+  async confirmReschedule(): Promise<void> {
+    const appointment = this.rescheduleAppointment();
+    const slot = this.rescheduleSlot();
+    if (!appointment || !slot || this.isRescheduling()) return;
+
+    this.isRescheduling.set(true);
+    this.rescheduleError.set(null);
+
+    try {
+      const updated = await firstValueFrom(
+        this.customerAppointmentsApiService.reschedule(appointment.id, {
+          startsAtUtc: slot.startAtUtc,
+        }),
+      );
+
+      const needsConfirmation =
+        appointment.status === APPOINTMENT_STATUS.confirmed &&
+        updated.status === APPOINTMENT_STATUS.pending;
+
+      this.isRescheduling.set(false);
+      this.closeReschedule();
+      this.toastService.success(
+        `Tu cita quedó para el ${this.formatDate(updated.startsAtUtc).toLowerCase()} a las ${this.formatTime(updated.startsAtUtc)}.` +
+          (needsConfirmation ? ' Tu barbero confirmará el nuevo horario.' : ''),
+      );
+      await this.loadAppointments();
+    } catch (error) {
+      if (isHttpStatus(error, 409)) {
+        this.rescheduleError.set('Esa hora se acaba de ocupar. Elige otra.');
+        this.rescheduleSlot.set(null);
+        await this.reschedulePicker()?.reload();
+      } else {
+        this.rescheduleError.set(getApiErrorMessage(error));
+      }
+    } finally {
+      this.isRescheduling.set(false);
     }
   }
 
@@ -320,11 +422,15 @@ function indexReviewsByAppointmentId(
 }
 
 function getReviewSubmissionErrorMessage(error: unknown): string {
-  const status =
-    typeof error === 'object' && error !== null && 'status' in error
-      ? Number((error as { status?: unknown }).status)
-      : null;
-
-  if (status === 409) return 'Ya enviaste una reseña para esta cita.';
+  if (isHttpStatus(error, 409)) return 'Ya enviaste una reseña para esta cita.';
   return getApiErrorMessage(error);
+}
+
+function isHttpStatus(error: unknown, status: number): boolean {
+  return (
+    typeof error === 'object' &&
+    error !== null &&
+    'status' in error &&
+    Number((error as { status?: unknown }).status) === status
+  );
 }
