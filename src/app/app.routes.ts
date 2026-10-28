@@ -30,6 +30,16 @@ const loadAdminServicesListPage = () =>
     (module) => module.AdminServicesListPageComponent,
   );
 
+const loadAdminCustomersListPage = () =>
+  import('./features/admin/customers/pages/admin-customers-list-page/admin-customers-list-page.component').then(
+    (module) => module.AdminCustomersListPageComponent,
+  );
+
+const loadAdminCustomerDetailPage = () =>
+  import('./features/admin/customers/pages/admin-customer-detail-page/admin-customer-detail-page.component').then(
+    (module) => module.AdminCustomerDetailPageComponent,
+  );
+
 const loadAdminRolesListPage = () =>
   import('./features/admin/roles/pages/admin-roles-list-page/admin-roles-list-page.component').then(
     (module) => module.AdminRolesListPageComponent,
@@ -326,6 +336,24 @@ export const routes: Routes = [
       roles: [ROLE_NAMES.admin],
     },
     title: 'Servicios',
+  },
+  {
+    path: 'admin/customers',
+    canActivate: [authGuard, roleGuard],
+    loadComponent: loadAdminCustomersListPage,
+    data: {
+      roles: [ROLE_NAMES.admin],
+    },
+    title: 'Clientes',
+  },
+  {
+    path: 'admin/customers/:customerId',
+    canActivate: [authGuard, roleGuard],
+    loadComponent: loadAdminCustomerDetailPage,
+    data: {
+      roles: [ROLE_NAMES.admin],
+    },
+    title: 'Cliente',
   },
   {
     path: 'admin/income',

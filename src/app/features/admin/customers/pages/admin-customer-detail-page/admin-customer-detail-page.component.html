@@ -1,0 +1,151 @@
+<section class="customer-detail">
+  <a class="customer-detail__back" routerLink="/admin/customers">← Clientes</a>
+
+  <app-api-feedback severity="error" [message]="errorMessage()" />
+
+  @if (isLoading()) {
+    <app-page-state kind="loading" message="Cargando cliente..." />
+  } @else if (customer(); as c) {
+    <header class="customer-detail__header">
+      <h1>{{ c.fullName }}</h1>
+      @if (!c.mergedIntoCustomerId) {
+        <button class="customer-detail__btn" type="button" (click)="open('edit')">Editar datos</button>
+      }
+    </header>
+
+    @if (c.mergedIntoCustomerId) {
+      <div class="customer-detail__notice" role="status">
+        Este perfil fue fusionado en
+        <a [routerLink]="['/admin/customers', c.mergedIntoCustomerId]">{{ c.mergedIntoCustomerName || 'otro perfil' }}</a>
+        ({{ c.mergedAt | date: 'medium' }}). Se conserva solo como historial y no se puede modificar.
+      </div>
+    }
+
+    <div class="customer-detail__grid">
+      <article class="customer-detail__card">
+        <h2>Datos de contacto</h2>
+        <dl>
+          <dt>Teléfono</dt>
+          <dd>{{ c.phone }}</dd>
+          <dt>Correo</dt>
+          <dd>{{ c.email }}</dd>
+          <dt>Creado</dt>
+          <dd>{{ c.createdAt | date: 'medium' }}</dd>
+        </dl>
+      </article>
+
+      <article class="customer-detail__card">
+        <h2>Cuenta de la app</h2>
+        @if (c.linkedAccount; as account) {
+          <dl>
+            <dt>Nombre</dt>
+            <dd>{{ account.fullName }}</dd>
+            <dt>Correo</dt>
+            <dd>{{ account.email }}</dd>
+            <dt>Vinculada</dt>
+            <dd>
+              {{ account.linkedAt | date: 'medium' }}
+              @if (account.linkedByName) {
+                por {{ account.linkedByName }}
+              }
+            </dd>
+          </dl>
+          @if (!c.mergedIntoCustomerId) {
+            <button class="customer-detail__btn customer-detail__btn--danger" type="button" (click)="open('unlink')">
+              Desvincular cuenta
+            </button>
+          }
+        } @else if (c.mergedIntoCustomerId) {
+          @if (transferredAccountEmail(c); as email) {
+            <p class="customer-detail__muted">
+              Al fusionarse, la cuenta {{ email }} pasó a
+              <a [routerLink]="['/admin/customers', c.mergedIntoCustomerId]">{{ c.mergedIntoCustomerName || 'el perfil destino' }}</a>.
+            </p>
+          } @else {
+            <p class="customer-detail__muted">No tenía una cuenta de la app vinculada al momento de la fusión.</p>
+          }
+        } @else {
+          <p class="customer-detail__muted">Este cliente aún no tiene una cuenta de la app vinculada.</p>
+          <button class="customer-detail__btn" type="button" (click)="open('link')">Vincular cuenta</button>
+        }
+      </article>
+    </div>
+
+    @if (!c.mergedIntoCustomerId) {
+      <article class="customer-detail__card">
+        <h2>Perfiles duplicados</h2>
+        <p class="customer-detail__muted">
+          Si esta persona tiene otro perfil, fusiónalo aquí. Este perfil se conserva y el otro queda marcado como
+          fusionado, sin eliminarse.
+        </p>
+        <button class="customer-detail__btn" type="button" (click)="open('merge')">Fusionar perfil duplicado</button>
+      </article>
+    }
+
+    <article class="customer-detail__card">
+      <h2>Historial</h2>
+      @if (!c.events.length) {
+        <p class="customer-detail__muted">Sin movimientos.</p>
+      } @else {
+        <ol class="customer-detail__events">
+          @for (customerEvent of c.events; track customerEvent.id) {
+            <li>
+              <strong>{{ eventLabel(customerEvent) }}</strong>
+              <span class="customer-detail__muted">
+                {{ customerEvent.performedAt | date: 'medium' }}
+                @if (customerEvent.performedByName) {
+                  · {{ customerEvent.performedByName }}
+                }
+              </span>
+              @if (customerEvent.userEmail) {
+                <span>Cuenta: {{ customerEvent.userEmail }}</span>
+              }
+              @if (customerEvent.relatedCustomerId) {
+                <span>
+                  Perfil relacionado:
+                  <a [routerLink]="['/admin/customers', customerEvent.relatedCustomerId]">
+                    {{ customerEvent.relatedCustomerName || 'ver perfil' }}
+                  </a>
+                </span>
+              }
+              @if (customerEvent.reason) {
+                <span>Motivo: {{ customerEvent.reason }}</span>
+              }
+            </li>
+          }
+        </ol>
+      }
+    </article>
+
+    @switch (openModal()) {
+      @case ('edit') {
+        <app-admin-customer-form-modal
+          [customer]="c"
+          (saved)="onUpdated($event, 'Datos del cliente actualizados.')"
+          (cancelled)="closeModal()"
+        />
+      }
+      @case ('link') {
+        <app-admin-customer-link-account-modal
+          [customer]="c"
+          (linked)="onUpdated($event, 'Cuenta vinculada.')"
+          (cancelled)="closeModal()"
+        />
+      }
+      @case ('unlink') {
+        <app-admin-customer-unlink-account-modal
+          [customer]="c"
+          (unlinked)="onUpdated($event, 'Cuenta desvinculada.')"
+          (cancelled)="closeModal()"
+        />
+      }
+      @case ('merge') {
+        <app-admin-customer-merge-modal
+          [customer]="c"
+          (merged)="onUpdated($event, 'Perfiles fusionados.')"
+          (cancelled)="closeModal()"
+        />
+      }
+    }
+  }
+</section>
