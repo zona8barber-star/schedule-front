@@ -189,6 +189,11 @@ export class AppShellComponent {
           group: 'admin',
         },
         {
+          label: 'Membresías',
+          route: '/admin/membership-plans',
+          group: 'admin',
+        },
+        {
           label: 'Servicios',
           route: '/admin/services',
           group: 'admin',

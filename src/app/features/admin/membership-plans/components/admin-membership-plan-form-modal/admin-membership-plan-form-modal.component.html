@@ -1,0 +1,201 @@
+<div class="plan-modal__overlay" (click)="cancel()">
+  <div class="plan-modal__card" (click)="$event.stopPropagation()">
+    <h2>{{ isEditing ? 'Editar tipo de membresía' : 'Nuevo tipo de membresía' }}</h2>
+
+    <app-api-feedback severity="error" [message]="errorMessage()" />
+
+    @if (isLoading()) {
+      <p>Cargando...</p>
+    } @else {
+      <form [formGroup]="form" (ngSubmit)="submit()">
+        <fieldset class="plan-modal__section">
+          <legend>Datos generales</legend>
+
+          <label class="plan-modal__field">
+            <span>Nombre</span>
+            <input type="text" formControlName="name" maxlength="120" autocomplete="off" />
+          </label>
+          @if (form.controls.name.touched && form.controls.name.invalid) {
+            <small class="plan-modal__error">El nombre debe tener entre 2 y 120 caracteres.</small>
+          }
+
+          <label class="plan-modal__field">
+            <span>Descripción (opcional)</span>
+            <textarea formControlName="description" maxlength="1000" rows="2"></textarea>
+          </label>
+
+          <div class="plan-modal__row">
+            <label class="plan-modal__field">
+              <span>Precio (COP)</span>
+              <input type="number" formControlName="price" min="0" step="1" inputmode="numeric" />
+            </label>
+            <label class="plan-modal__field">
+              <span>Vigencia predeterminada (días)</span>
+              <input type="number" formControlName="defaultDurationDays" min="1" [max]="maxDurationDays" step="1" inputmode="numeric" />
+            </label>
+          </div>
+          @if (form.controls.price.touched && form.controls.price.invalid) {
+            <small class="plan-modal__error">Ingresa un precio válido (número entero, 0 o mayor).</small>
+          }
+          @if (form.controls.defaultDurationDays.touched && form.controls.defaultDurationDays.invalid) {
+            <small class="plan-modal__error">La vigencia debe ser un número entero de días entre 1 y {{ maxDurationDays }}.</small>
+          }
+        </fieldset>
+
+        <fieldset class="plan-modal__section">
+          <legend>Modalidad y servicios</legend>
+
+          <div class="plan-modal__choices" role="radiogroup" aria-label="Modalidad">
+            <label>
+              <input type="radio" formControlName="mode" value="Pool" />
+              <span><strong>Bolsa común</strong><small>Una cantidad total para usar entre los servicios incluidos.</small></span>
+            </label>
+            <label>
+              <input type="radio" formControlName="mode" value="PerService" />
+              <span><strong>Cantidades por servicio</strong><small>Cada servicio tiene su propia cantidad.</small></span>
+            </label>
+          </div>
+
+          @if (isPool()) {
+            <label class="plan-modal__field plan-modal__field--narrow">
+              <span>Cantidad total de servicios</span>
+              <input type="number" formControlName="poolQuantity" min="1" [max]="maxQuantity" step="1" inputmode="numeric" />
+            </label>
+            @if (form.controls.poolQuantity.touched && form.controls.poolQuantity.invalid) {
+              <small class="plan-modal__error">Indica una cantidad entera entre 1 y {{ maxQuantity }}.</small>
+            }
+          }
+
+          <ul class="plan-modal__list" formArrayName="services">
+            @for (group of servicesArray.controls; track group; let index = $index) {
+              <li class="plan-modal__item" [formGroupName]="index">
+                <span class="plan-modal__item-name">
+                  {{ serviceName(group.controls['serviceId'].value) }}
+                  @if (isServiceInactive(group.controls['serviceId'].value)) {
+                    <small class="plan-modal__muted">(inactivo en el catálogo)</small>
+                  }
+                </span>
+                @if (!isPool()) {
+                  <label class="plan-modal__inline">
+                    <span>Cantidad</span>
+                    <input type="number" formControlName="quantity" min="1" [max]="maxQuantity" step="1" inputmode="numeric" />
+                  </label>
+                }
+                <button type="button" class="plan-modal__link-btn" (click)="removeService(index)">Quitar</button>
+                @if (group.controls['quantity'].touched && group.controls['quantity'].invalid) {
+                  <small class="plan-modal__error plan-modal__error--block">Cantidad entera entre 1 y {{ maxQuantity }}.</small>
+                }
+              </li>
+            }
+          </ul>
+
+          <label class="plan-modal__field">
+            <span>Agregar servicio del catálogo</span>
+            <select #serviceSelect (change)="addService(serviceSelect.value); serviceSelect.value = ''">
+              <option value="">Selecciona un servicio...</option>
+              @for (option of addableServices(); track option.id) {
+                <option [value]="option.id">{{ option.name }}</option>
+              }
+            </select>
+          </label>
+        </fieldset>
+
+        <fieldset class="plan-modal__section">
+          <legend>Obsequios</legend>
+          <p class="plan-modal__muted">
+            Son reglas: el obsequio concreto se asigna a cada membresía al venderla.
+          </p>
+
+          <ul class="plan-modal__list" formArrayName="giftRules">
+            @for (gift of giftsArray.controls; track gift; let index = $index) {
+              <li class="plan-modal__gift" [formGroupName]="index">
+                <strong>{{ gift.controls['kind'].value === 'Service' ? 'Servicio de obsequio' : 'Obsequio físico' }}</strong>
+
+                @if (gift.controls['kind'].value === 'Service') {
+                  <label class="plan-modal__field">
+                    <span>Servicio (solo los incluidos)</span>
+                    <select formControlName="serviceId">
+                      @for (service of includedServices(); track service.id) {
+                        <option [value]="service.id">{{ service.name }}</option>
+                      }
+                    </select>
+                  </label>
+                } @else {
+                  <label class="plan-modal__field">
+                    <span>Descripción del obsequio</span>
+                    <input type="text" formControlName="description" maxlength="200" placeholder="Ej.: Cera para cabello" />
+                  </label>
+                  @if (gift.controls['description'].touched && gift.controls['description'].invalid) {
+                    <small class="plan-modal__error">Describe el obsequio (entre 2 y 200 caracteres).</small>
+                  }
+                }
+
+                <label class="plan-modal__field plan-modal__field--narrow">
+                  <span>Cantidad</span>
+                  <input type="number" formControlName="quantity" min="1" [max]="maxQuantity" step="1" inputmode="numeric" />
+                </label>
+                @if (gift.controls['quantity'].touched && gift.controls['quantity'].invalid) {
+                  <small class="plan-modal__error">Cantidad entera entre 1 y {{ maxQuantity }}.</small>
+                }
+
+                <!-- Toggle buttons instead of a <select>: the long option wraps on narrow screens. -->
+                <div class="plan-modal__field">
+                  <span [id]="'gift-condition-' + index">Se entrega</span>
+                  <div class="plan-modal__condition" role="group" [attr.aria-labelledby]="'gift-condition-' + index">
+                    @for (condition of conditionOptions; track condition) {
+                      <button
+                        type="button"
+                        class="plan-modal__condition-btn"
+                        [class.is-selected]="gift.controls['condition'].value === condition"
+                        [attr.aria-pressed]="gift.controls['condition'].value === condition"
+                        (click)="setCondition(index, condition)"
+                      >
+                        {{ conditionLabels[condition] }}
+                      </button>
+                    }
+                  </div>
+                </div>
+
+                <button type="button" class="plan-modal__link-btn" (click)="removeGift(index)">Quitar obsequio</button>
+              </li>
+            }
+          </ul>
+
+          <div class="plan-modal__add-gifts">
+            <button type="button" (click)="addGift('Service')" [disabled]="!includedServices().length">+ Servicio de obsequio</button>
+            <button type="button" (click)="addGift('Physical')">+ Obsequio físico</button>
+          </div>
+        </fieldset>
+
+        <fieldset class="plan-modal__section">
+          <legend>Términos y condiciones</legend>
+          <label class="plan-modal__field">
+            <span>Términos generales</span>
+            <textarea formControlName="terms" maxlength="4000" rows="6"></textarea>
+          </label>
+          @if (form.controls.terms.touched && form.controls.terms.invalid) {
+            <small class="plan-modal__error">Los términos son obligatorios.</small>
+          }
+          <label class="plan-modal__field">
+            <span>Condiciones particulares (opcional)</span>
+            <textarea formControlName="specificConditions" maxlength="2000" rows="3"></textarea>
+          </label>
+          <p class="plan-modal__muted">Cada membresía vendida conservará una copia de estos términos.</p>
+        </fieldset>
+
+        @if (submitted() && planProblems().length) {
+          <div class="plan-modal__problems" role="alert">
+            @for (problem of planProblems(); track problem) {
+              <p>{{ problem }}</p>
+            }
+          </div>
+        }
+
+        <div class="plan-modal__actions">
+          <button type="button" (click)="cancel()" [disabled]="isSaving()">Cancelar</button>
+          <button type="submit" [disabled]="isSaving()">{{ isSaving() ? 'Guardando...' : 'Guardar' }}</button>
+        </div>
+      </form>
+    }
+  </div>
+</div>
