@@ -57,8 +57,11 @@ export class AdminReportsPageComponent implements OnInit {
   readonly promoChartData = computed<ChartData<'doughnut'>>(() => {
     const summary = this.summary();
     return {
-      labels: ['Promo', 'Normal'],
-      datasets: [{ data: [summary?.promoIncome ?? 0, summary?.normalIncome ?? 0] }],
+      // Promo and normal are service income; with membership sales the three slices add up to total income.
+      labels: ['Promo', 'Normal', 'Membresías'],
+      datasets: [
+        { data: [summary?.promoIncome ?? 0, summary?.normalIncome ?? 0, summary?.membershipSalesIncome ?? 0] },
+      ],
     };
   });
 

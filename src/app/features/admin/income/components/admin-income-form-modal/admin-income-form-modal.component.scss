@@ -37,6 +37,42 @@
   }
 }
 
+.income-modal__kind {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  margin: 0 0 0.75rem;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--color-border, #e2e2e2);
+  border-radius: 0.5rem;
+
+  legend {
+    padding: 0 0.35rem;
+    font-weight: 600;
+  }
+
+  label {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    cursor: pointer;
+  }
+}
+
+.income-modal__kind-fixed {
+  margin: 0;
+
+  small {
+    opacity: 0.7;
+  }
+}
+
+.income-modal__hint {
+  margin: 0 0 0.75rem;
+  font-size: 0.9rem;
+  opacity: 0.8;
+}
+
 .income-modal__checkbox {
   display: flex;
   align-items: center;

@@ -32,7 +32,7 @@
       <table class="income__table">
         <thead>
           <tr>
-            <th>Servicio</th>
+            <th>Concepto</th>
             <th>Profesional</th>
             <th>Valor</th>
             <th>Promo</th>
@@ -42,8 +42,13 @@
         <tbody>
           @for (entry of entries(); track entry.id) {
             <tr>
-              <td>{{ entry.serviceName }}</td>
-              <td>{{ entry.staffDisplayName }}</td>
+              @if (entry.kind === 'MembershipSale') {
+                <td><span class="income__badge">Venta de membresía</span></td>
+                <td>—</td>
+              } @else {
+                <td>{{ entry.serviceName }}</td>
+                <td>{{ entry.staffDisplayName }}</td>
+              }
               <td>$ {{ entry.amount | number: '1.0-0' }}</td>
               <td>{{ entry.isPromo ? 'Sí' : '—' }}</td>
               <td class="income__actions">

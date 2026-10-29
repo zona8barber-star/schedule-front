@@ -25,7 +25,9 @@ export interface ReportSummaryView {
   totalIncome: number;
   totalExpenses: number;
   netProfit: number;
+  /** Services performed; membership sales are not counted. */
   incomeCount: number;
+  /** Promo and normal cover service income only: promo + normal + membership sales = total income. */
   promoIncome: number;
   normalIncome: number;
   businessIncome: number;
@@ -33,4 +35,6 @@ export interface ReportSummaryView {
   byProfessional: ReportProfessionalIncomeView[];
   byExpenseConcept: ReportExpenseConceptView[];
   trend: ReportTrendPointView[];
+  membershipSalesIncome: number;
+  membershipSalesCount: number;
 }
