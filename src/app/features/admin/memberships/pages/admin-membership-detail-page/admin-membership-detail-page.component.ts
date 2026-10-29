@@ -4,7 +4,11 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 
-import { CustomerMembershipDetailView, MembershipAllowanceView } from '../../../../../core/models/membership.models';
+import {
+  CustomerMembershipDetailView,
+  MembershipAllowanceView,
+  MembershipConsumptionView,
+} from '../../../../../core/models/membership.models';
 import { AdminMembershipsApiService } from '../../../../../core/services/admin-memberships-api.service';
 import { ConfirmModalService } from '../../../../../core/services/confirm-modal.service';
 import { ToastService } from '../../../../../core/services/toast.service';
@@ -12,6 +16,7 @@ import { getApiErrorMessage } from '../../../../../core/utils/api-error.utils';
 import { ApiFeedbackComponent } from '../../../../../shared/components/api-feedback/api-feedback.component';
 import { PageStateComponent } from '../../../../../shared/components/page-state/page-state.component';
 import { GIFT_CONDITION_LABELS } from '../../../membership-plans/membership-plan-defaults';
+import { AdminMembershipConsumeModalComponent } from '../../components/admin-membership-consume-modal/admin-membership-consume-modal.component';
 import { AdminMembershipIncomeLinkModalComponent } from '../../components/admin-membership-income-link-modal/admin-membership-income-link-modal.component';
 import { AdminMembershipReasonModalComponent } from '../../components/admin-membership-reason-modal/admin-membership-reason-modal.component';
 import {
@@ -21,7 +26,7 @@ import {
   bogotaToday,
 } from '../../membership-labels';
 
-type MembershipModal = 'annul' | 'activateExpired' | 'link' | 'unlink';
+type MembershipModal = 'annul' | 'activateExpired' | 'link' | 'unlink' | 'consume' | 'reverse';
 
 @Component({
   selector: 'app-admin-membership-detail-page',
@@ -33,6 +38,7 @@ type MembershipModal = 'annul' | 'activateExpired' | 'link' | 'unlink';
     PageStateComponent,
     AdminMembershipReasonModalComponent,
     AdminMembershipIncomeLinkModalComponent,
+    AdminMembershipConsumeModalComponent,
   ],
   templateUrl: './admin-membership-detail-page.component.html',
   styleUrl: './admin-membership-detail-page.component.scss',
@@ -55,6 +61,26 @@ export class AdminMembershipDetailPageComponent implements OnInit {
   readonly openModal = signal<MembershipModal | null>(null);
   readonly isBusy = signal(false);
   readonly modalError = signal<string | null>(null);
+  readonly reversing = signal<MembershipConsumptionView | null>(null);
+
+  /** Consumptions need an active membership that has started; an expired one still takes retroactive ones. */
+  readonly canConsume = computed(() => {
+    const membership = this.membership();
+    return membership?.status === 'Active' && membership.displayStatus !== 'Scheduled';
+  });
+
+  /** Purchased and gifted units, granted and still available, kept apart. */
+  readonly totals = computed(() => {
+    const lines = this.membership()?.allowances ?? [];
+    const sum = (origin: 'Purchased' | 'Gift', pick: (line: MembershipAllowanceView) => number) =>
+      lines.filter((line) => line.origin === origin).reduce((total, line) => total + pick(line), 0);
+    return {
+      purchasedGranted: sum('Purchased', (line) => line.grantedQuantity),
+      purchasedAvailable: sum('Purchased', (line) => line.availableQuantity),
+      giftedGranted: sum('Gift', (line) => line.grantedQuantity),
+      giftedAvailable: sum('Gift', (line) => line.availableQuantity),
+    };
+  });
 
   readonly isExpired = computed(() => {
     const membership = this.membership();
@@ -121,6 +147,48 @@ export class AdminMembershipDetailPageComponent implements OnInit {
       () => this.membershipsApi.unlinkIncome(membership.id, { discrepancyJustification: justification }),
       'Ingreso desvinculado.',
     );
+  }
+
+  onConsumed(membership: CustomerMembershipDetailView): void {
+    this.membership.set(membership);
+    this.openModal.set(null);
+    this.toastService.success('Consumo registrado.');
+  }
+
+  openReverse(consumption: MembershipConsumptionView): void {
+    this.reversing.set(consumption);
+    this.open('reverse');
+  }
+
+  async reverse(reason: string | null): Promise<void> {
+    const membership = this.membership();
+    const consumption = this.reversing();
+    if (!membership || !consumption || !reason) return;
+    await this.run(
+      () => this.membershipsApi.reverseConsumption(membership.id, consumption.id, { reason }),
+      'Consumo revertido.',
+    );
+  }
+
+  canReverse(consumption: MembershipConsumptionView): boolean {
+    return !consumption.reversal && this.membership()?.status !== 'PendingActivation';
+  }
+
+  partsLabel(consumption: MembershipConsumptionView): string {
+    const count = (origin: 'Purchased' | 'Gift') =>
+      consumption.parts.filter((part) => part.origin === origin).reduce((total, part) => total + part.quantity, 0);
+    const parts: string[] = [];
+    if (count('Gift')) parts.push(`${count('Gift')} regalado(s)`);
+    if (count('Purchased')) parts.push(`${count('Purchased')} pagado(s)`);
+    return parts.join(' + ');
+  }
+
+  reverseMessage(membership: CustomerMembershipDetailView): string {
+    const consumption = this.reversing();
+    const base = consumption
+      ? `Se devolverán ${consumption.quantity} × ${consumption.serviceName} a los saldos de donde salieron. El registro original se conserva.`
+      : '';
+    return membership.status === 'Annulled' ? `${base} La membresía sigue anulada: esas unidades quedan bloqueadas.` : base;
   }
 
   onLinked(membership: CustomerMembershipDetailView): void {

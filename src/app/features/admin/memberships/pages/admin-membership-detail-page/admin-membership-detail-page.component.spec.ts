@@ -55,6 +55,7 @@ describe('AdminMembershipDetailPageComponent', () => {
     ],
     income: null,
     events: [],
+    consumptions: [],
     createdAt: '',
   };
 
@@ -155,5 +156,90 @@ describe('AdminMembershipDetailPageComponent', () => {
       income: { ...membership!.income!, linkedMemberships: [own], linkedMembershipsTotal: 250000, amount: 250000 },
     }));
     expect(page.unlinkNeedsJustification()).toBe(false);
+  });
+
+  const consumption = {
+    id: 'c-1',
+    serviceId: 's-1',
+    serviceName: 'Barba',
+    quantity: 3,
+    serviceDate: '2026-10-20',
+    staffProfileId: 'st-1',
+    staffName: 'Alex',
+    registeredAt: '2026-10-28T20:00:00Z',
+    registeredByName: 'Admin Principal',
+    parts: [
+      { allowanceId: 'a-2', origin: 'Gift' as const, quantity: 2 },
+      { allowanceId: 'a-1', origin: 'Purchased' as const, quantity: 1 },
+    ],
+    reversal: null,
+  };
+
+  it('offers registering consumptions only on a started active membership', async () => {
+    const pending = await openPage(base);
+    let buttons = [...pending.nativeElement.querySelectorAll('button')].map((button) => button.textContent.trim());
+    expect(buttons).not.toContain('Registrar consumo');
+    httpMock.verify();
+    TestBed.resetTestingModule();
+
+    const active = await openPage({ ...base, status: 'Active', displayStatus: 'Active' });
+    buttons = [...active.nativeElement.querySelectorAll('button')].map((button) => button.textContent.trim());
+    expect(buttons).toContain('Registrar consumo');
+    expect(active.nativeElement.textContent).toContain('Todavía no se registran consumos');
+  });
+
+  it('lists consumptions with the gifted and purchased split and the paid/gifted totals', async () => {
+    const fixture = await openPage({
+      ...base,
+      status: 'Active',
+      displayStatus: 'Active',
+      allowances: [
+        { ...base.allowances[0], consumedQuantity: 1, availableQuantity: 9 },
+        { id: 'a-2', origin: 'Gift', giftId: 'g-9', grantedQuantity: 2, consumedQuantity: 2, availableQuantity: 0, services: [{ serviceId: 's-1', serviceName: 'Barba' }] },
+      ],
+      consumptions: [consumption],
+    });
+    const text = fixture.nativeElement.textContent as string;
+
+    expect(text).toContain('Pagados: 9 de 10');
+    expect(text).toContain('Regalados: 0 de 2');
+    expect(text).toContain('1 usado(s)');
+    expect(text).toContain('3 × Barba');
+    expect(text).toContain('2 regalado(s) + 1 pagado(s)');
+    expect(text).toContain('Profesional: Alex');
+    expect(text).toContain('Admin Principal');
+  });
+
+  it('reverses a consumption of an annulled membership with a reason, keeping it annulled', async () => {
+    const fixture = await openPage({
+      ...base,
+      status: 'Annulled',
+      displayStatus: 'Annulled',
+      annulmentReason: 'Retracto',
+      annulledAt: '2026-10-28T21:00:00Z',
+      consumptions: [consumption],
+    });
+    const page = harness.routeDebugElement!.componentInstance as AdminMembershipDetailPageComponent;
+    expect(fixture.nativeElement.textContent).toContain('Bloqueados por anulación');
+
+    page.openReverse(page.membership()!.consumptions[0]);
+    fixture.detectChanges();
+    expect(fixture.nativeElement.textContent).toContain('La membresía sigue anulada');
+
+    const reversing = page.reverse('Registrado por error');
+    const req = httpMock.expectOne(`${api}/admin/memberships/m-1/consumptions/c-1/reverse`);
+    expect(req.request.body).toEqual({ reason: 'Registrado por error' });
+    req.flush({
+      ...page.membership()!,
+      consumptions: [{ ...consumption, reversal: { reason: 'Registrado por error', performedAt: '2026-10-28T22:00:00Z', performedByName: 'Admin Principal' } }],
+    });
+    await reversing;
+    fixture.detectChanges();
+
+    const text = fixture.nativeElement.textContent as string;
+    expect(text).toContain('Motivo: Registrado por error');
+    expect(text).toContain('Anulada');
+    const buttons = [...fixture.nativeElement.querySelectorAll('button')].map((button) => button.textContent.trim());
+    expect(buttons).not.toContain('Revertir');
   });
 });

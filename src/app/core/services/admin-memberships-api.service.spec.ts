@@ -58,6 +58,17 @@ describe('AdminMembershipsApiService', () => {
     service.unlinkIncome('m-1', { discrepancyJustification: 'x' }).subscribe();
     expect(httpMock.expectOne(`${api}/admin/memberships/m-1/income-unlink`).request.method).toBe('POST');
 
+    const consumption = { serviceId: 's-1', quantity: 2, serviceDate: '2026-10-28', staffProfileId: null, idempotencyKey: 'k-1' };
+    service.consume('m-1', consumption).subscribe();
+    const consumeReq = httpMock.expectOne(`${api}/admin/memberships/m-1/consumptions`);
+    expect(consumeReq.request.method).toBe('POST');
+    expect(consumeReq.request.body).toEqual(consumption);
+
+    service.reverseConsumption('m-1', 'c-1', { reason: 'Error' }).subscribe();
+    const reverseReq = httpMock.expectOne(`${api}/admin/memberships/m-1/consumptions/c-1/reverse`);
+    expect(reverseReq.request.method).toBe('POST');
+    expect(reverseReq.request.body).toEqual({ reason: 'Error' });
+
     service.incomeCandidates('2026-10-28').subscribe();
     expect(httpMock.expectOne(`${api}/admin/memberships/income-candidates?date=2026-10-28`).request.method).toBe('GET');
   });

@@ -7,6 +7,8 @@ import {
   CustomerMembershipSummaryView,
   MembershipActivateRequest,
   MembershipAnnulRequest,
+  MembershipConsumptionRequest,
+  MembershipConsumptionReverseRequest,
   MembershipIncomeCandidateView,
   MembershipIncomeLinkRequest,
   MembershipIncomeUnlinkRequest,
@@ -67,6 +69,20 @@ export class AdminMembershipsApiService {
   unlinkIncome(membershipId: string, request: MembershipIncomeUnlinkRequest) {
     return this.httpClient.post<CustomerMembershipDetailView>(
       this.buildUrl(`/admin/memberships/${membershipId}/income-unlink`),
+      request,
+    );
+  }
+
+  consume(membershipId: string, request: MembershipConsumptionRequest) {
+    return this.httpClient.post<CustomerMembershipDetailView>(
+      this.buildUrl(`/admin/memberships/${membershipId}/consumptions`),
+      request,
+    );
+  }
+
+  reverseConsumption(membershipId: string, consumptionId: string, request: MembershipConsumptionReverseRequest) {
+    return this.httpClient.post<CustomerMembershipDetailView>(
+      this.buildUrl(`/admin/memberships/${membershipId}/consumptions/${consumptionId}/reverse`),
       request,
     );
   }

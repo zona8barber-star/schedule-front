@@ -14,6 +14,9 @@
         <span class="membership-detail__status" [attr.data-status]="m.displayStatus">{{ statusLabels[m.displayStatus] }}</span>
       </div>
       <div class="membership-detail__actions">
+        @if (canConsume()) {
+          <button class="membership-detail__btn" type="button" (click)="open('consume')">Registrar consumo</button>
+        }
         @if (m.status === 'PendingActivation') {
           <button class="membership-detail__btn" type="button" (click)="activate()" [disabled]="isBusy()">Activar</button>
         }
@@ -99,17 +102,71 @@
     <article class="membership-detail__card">
       <h2>Servicios y saldos</h2>
       <p class="membership-detail__muted">Copia de lo vendido; los cambios posteriores del catálogo no la modifican.</p>
+      <p class="membership-detail__totals">
+        <span>Pagados: <strong>{{ totals().purchasedAvailable }} de {{ totals().purchasedGranted }}</strong></span>
+        @if (totals().giftedGranted) {
+          <span>Regalados: <strong>{{ totals().giftedAvailable }} de {{ totals().giftedGranted }}</strong></span>
+        }
+        @if (m.status === 'Annulled') {
+          <span class="membership-detail__warning">Bloqueados por anulación</span>
+        }
+      </p>
       <ul class="membership-detail__balances">
         @for (line of m.allowances; track line.id) {
           <li>
             <span class="membership-detail__balance-label">{{ allowanceLabel(line.origin, line.services.length) }}</span>
-            <strong>{{ line.availableQuantity }} de {{ line.grantedQuantity }} disponibles</strong>
+            <strong>
+              {{ line.availableQuantity }} de {{ line.grantedQuantity }} disponibles
+              @if (line.consumedQuantity) {
+                <span class="membership-detail__muted">· {{ line.consumedQuantity }} usado(s)</span>
+              }
+            </strong>
             <span class="membership-detail__muted">
               {{ line.services.length > 1 ? 'Para cualquiera de: ' : '' }}{{ serviceNames(line) }}
             </span>
           </li>
         }
       </ul>
+    </article>
+
+    <article class="membership-detail__card">
+      <h2>Consumos</h2>
+      @if (!m.consumptions.length) {
+        <p class="membership-detail__muted">Todavía no se registran consumos.</p>
+      } @else {
+        <ul class="membership-detail__balances">
+          @for (consumption of m.consumptions; track consumption.id) {
+            <li [class.membership-detail__reversed]="consumption.reversal">
+              <span class="membership-detail__balance-label">
+                {{ consumption.serviceDate }}
+                @if (consumption.reversal) {
+                  · Revertido
+                }
+              </span>
+              <strong>{{ consumption.quantity }} × {{ consumption.serviceName }}</strong>
+              <span class="membership-detail__muted">
+                {{ partsLabel(consumption) }}
+                @if (consumption.staffName) {
+                  · Profesional: {{ consumption.staffName }}
+                }
+              </span>
+              <span class="membership-detail__muted">
+                Registrado el {{ consumption.registeredAt | date: 'medium' }} por {{ consumption.registeredByName }}
+              </span>
+              @if (consumption.reversal; as reversal) {
+                <span>
+                  Revertido el {{ reversal.performedAt | date: 'medium' }} por {{ reversal.performedByName }} — Motivo:
+                  {{ reversal.reason }}
+                </span>
+              } @else if (canReverse(consumption)) {
+                <button class="membership-detail__btn membership-detail__btn--inline" type="button" (click)="openReverse(consumption)">
+                  Revertir
+                </button>
+              }
+            </li>
+          }
+        </ul>
+      }
     </article>
 
     <article class="membership-detail__card">
@@ -202,6 +259,21 @@
           [isBusy]="isBusy()"
           [errorMessage]="modalError()"
           (confirmed)="unlink($event)"
+          (cancelled)="closeModal()"
+        />
+      }
+      @case ('consume') {
+        <app-admin-membership-consume-modal [membership]="m" (consumed)="onConsumed($event)" (cancelled)="closeModal()" />
+      }
+      @case ('reverse') {
+        <app-admin-membership-reason-modal
+          title="Revertir consumo"
+          [message]="reverseMessage(m)"
+          confirmLabel="Revertir"
+          [danger]="true"
+          [isBusy]="isBusy()"
+          [errorMessage]="modalError()"
+          (confirmed)="reverse($event)"
           (cancelled)="closeModal()"
         />
       }

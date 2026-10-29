@@ -161,3 +161,24 @@
   border-color: rgba(180, 83, 60, 0.4);
   color: var(--color-error, #b4533c);
 }
+
+.membership-detail__totals {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 1.25rem;
+  margin: 0 0 0.75rem;
+
+  .membership-detail__warning {
+    margin: 0;
+  }
+}
+
+.membership-detail__btn--inline {
+  align-self: flex-start;
+  margin-top: 0.4rem;
+}
+
+.membership-detail__reversed strong {
+  text-decoration: line-through;
+  opacity: 0.6;
+}

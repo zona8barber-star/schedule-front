@@ -84,6 +84,33 @@ export interface MembershipEventView {
   relatedCustomerName: string | null;
 }
 
+/** Units a consumption took from one balance line. */
+export interface MembershipConsumptionPartView {
+  allowanceId: string;
+  origin: 'Purchased' | 'Gift';
+  quantity: number;
+}
+
+export interface MembershipConsumptionReversalView {
+  reason: string;
+  performedAt: string;
+  performedByName: string;
+}
+
+export interface MembershipConsumptionView {
+  id: string;
+  serviceId: string;
+  serviceName: string;
+  quantity: number;
+  serviceDate: string;
+  staffProfileId: string | null;
+  staffName: string | null;
+  registeredAt: string;
+  registeredByName: string;
+  parts: MembershipConsumptionPartView[];
+  reversal: MembershipConsumptionReversalView | null;
+}
+
 export interface CustomerMembershipDetailView {
   id: string;
   customerId: string;
@@ -111,6 +138,7 @@ export interface CustomerMembershipDetailView {
   gifts: MembershipGiftView[];
   income: MembershipIncomeView | null;
   events: MembershipEventView[];
+  consumptions: MembershipConsumptionView[];
   createdAt: string;
 }
 
@@ -149,4 +177,17 @@ export interface MembershipIncomeLinkRequest {
 
 export interface MembershipIncomeUnlinkRequest {
   discrepancyJustification: string | null;
+}
+
+/** `idempotencyKey` is generated once per intended consumption, so a retried request is not counted twice. */
+export interface MembershipConsumptionRequest {
+  serviceId: string;
+  quantity: number;
+  serviceDate: string;
+  staffProfileId: string | null;
+  idempotencyKey: string;
+}
+
+export interface MembershipConsumptionReverseRequest {
+  reason: string;
 }
