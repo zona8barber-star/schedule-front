@@ -110,6 +110,16 @@ const loadCustomerProfilePage = () =>
     (module) => module.CustomerProfilePageComponent,
   );
 
+const loadCustomerMembershipsPage = () =>
+  import('./features/customer/memberships/pages/customer-memberships-page/customer-memberships-page.component').then(
+    (module) => module.CustomerMembershipsPageComponent,
+  );
+
+const loadCustomerMembershipDetailPage = () =>
+  import(
+    './features/customer/memberships/pages/customer-membership-detail-page/customer-membership-detail-page.component'
+  ).then((module) => module.CustomerMembershipDetailPageComponent);
+
 const loadCustomerReviewsPage = () =>
   import('./features/customer/reviews/pages/customer-reviews-page/customer-reviews-page.component').then(
     (module) => module.CustomerReviewsPageComponent,
@@ -267,6 +277,24 @@ export const routes: Routes = [
       roles: [ROLE_NAMES.customer],
     },
     title: 'Mi perfil',
+  },
+  {
+    path: 'customer/memberships',
+    canActivate: [authGuard, roleGuard],
+    loadComponent: loadCustomerMembershipsPage,
+    data: {
+      roles: [ROLE_NAMES.customer],
+    },
+    title: 'Mis membresías',
+  },
+  {
+    path: 'customer/memberships/:membershipId',
+    canActivate: [authGuard, roleGuard],
+    loadComponent: loadCustomerMembershipDetailPage,
+    data: {
+      roles: [ROLE_NAMES.customer],
+    },
+    title: 'Mi membresía',
   },
   {
     path: 'customer/reviews',

@@ -414,6 +414,12 @@
   gap: 0.45rem;
 }
 
+// The drawer has a light surface: the header's on-dark secondary colour would be unreadable here.
+.app-shell__drawer-auth .app-shell__identity small,
+.app-shell__drawer-auth .app-shell__status {
+  color: var(--color-text-secondary);
+}
+
 .app-shell__drawer-title {
   margin: 0;
   font-size: 0.82rem;

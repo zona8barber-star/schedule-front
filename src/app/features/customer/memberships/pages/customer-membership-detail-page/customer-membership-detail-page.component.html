@@ -1,0 +1,158 @@
+<section class="my-memberships">
+  <a class="my-memberships__link" routerLink="/customer/memberships">← Mis membresías</a>
+
+  <app-api-feedback severity="error" [message]="errorMessage()" />
+
+  @if (isLoading()) {
+    <article class="my-memberships__panel">
+      <app-page-state kind="loading" message="Cargando membresía..." />
+    </article>
+  } @else if (membership(); as m) {
+    <header class="my-memberships__hero">
+      <p class="my-memberships__eyebrow">Membresía</p>
+      <div class="my-memberships__card-header">
+        <h1>{{ m.planName }}</h1>
+        <span class="my-memberships__status" [attr.data-status]="m.displayStatus">{{ statusLabels[m.displayStatus] }}</span>
+      </div>
+      @if (m.planDescription) {
+        <p>{{ m.planDescription }}</p>
+      }
+    </header>
+
+    <article class="my-memberships__card">
+      <dl class="my-memberships__facts">
+        <div>
+          <dt>Vigencia</dt>
+          <dd>{{ m.startsOn }} al {{ m.endsOn }} (incluido)</dd>
+        </div>
+        <div>
+          <dt>Precio de compra</dt>
+          <dd>$&nbsp;{{ m.price | number: '1.0-0' }}</dd>
+        </div>
+        <div>
+          <dt>Comprada el</dt>
+          <dd>{{ m.soldOn }}</dd>
+        </div>
+        @if (m.purchasedByName) {
+          <div>
+            <dt>Comprada como</dt>
+            <dd>{{ m.purchasedByName }}</dd>
+          </div>
+        }
+      </dl>
+      @if (availability(); as state) {
+        <p class="my-memberships__notice" [class.my-memberships__notice--blocked]="!state.usable">{{ state.text }}</p>
+      }
+    </article>
+
+    <article class="my-memberships__card">
+      <h2>Saldos</h2>
+      <dl class="my-memberships__facts">
+        <div>
+          <dt>Pagados</dt>
+          <dd>
+            {{ totals().purchased.available }} disponibles de {{ totals().purchased.granted }} ·
+            {{ totals().purchased.consumed }} usados
+          </dd>
+        </div>
+        @if (totals().gifted.granted) {
+          <div>
+            <dt>Regalados</dt>
+            <dd>
+              {{ totals().gifted.available }} disponibles de {{ totals().gifted.granted }} ·
+              {{ totals().gifted.consumed }} usados
+            </dd>
+          </div>
+        }
+      </dl>
+
+      <h3>Servicios incluidos</h3>
+      <ul class="my-memberships__lines">
+        @for (line of includedServices(); track $index) {
+          <li>
+            <span class="my-memberships__line-label">
+              {{ m.mode === 'Pool' ? 'Bolsa común' : 'Cantidad por servicio' }}
+            </span>
+            <strong>{{ line.grantedQuantity }} × {{ line.services.join(', ') }}</strong>
+            <span class="my-memberships__muted">
+              {{ line.availableQuantity }} disponibles · {{ line.consumedQuantity }} usados
+              @if (m.mode === 'Pool' && line.services.length > 1) {
+                · para cualquiera de estos servicios
+              }
+            </span>
+          </li>
+        }
+      </ul>
+    </article>
+
+    <article class="my-memberships__card">
+      <h2>Consumos</h2>
+      @if (!m.consumptions.length) {
+        <p class="my-memberships__muted">Todavía no has usado servicios de esta membresía.</p>
+      } @else {
+        <ul class="my-memberships__lines">
+          @for (consumption of m.consumptions; track $index) {
+            <li [class.my-memberships__reversed]="consumption.isReversed">
+              <span class="my-memberships__line-label">
+                {{ consumption.serviceDate }}
+                @if (consumption.isReversed) {
+                  · Corregido
+                }
+              </span>
+              <strong>{{ consumption.quantity }} × {{ consumption.serviceName }}</strong>
+              <span class="my-memberships__muted">{{ partsLabel(consumption) }}</span>
+              @if (consumption.isReversed) {
+                <span class="my-memberships__muted">
+                  La barbería anuló este registro el {{ consumption.reversedAt | date: 'mediumDate' }}; esas unidades
+                  volvieron a tu saldo.
+                </span>
+              }
+            </li>
+          }
+        </ul>
+      }
+    </article>
+
+    <article class="my-memberships__card">
+      <h2>Obsequios</h2>
+      @if (!m.gifts.length) {
+        <p class="my-memberships__muted">Esta compra no incluyó obsequios.</p>
+      } @else {
+        <ul class="my-memberships__lines">
+          @for (gift of serviceGifts(); track $index) {
+            <li>
+              <span class="my-memberships__line-label">Servicio regalado</span>
+              <strong>{{ gift.quantity }} × {{ gift.description }}</strong>
+              <span class="my-memberships__muted">{{ giftStatusLabels[gift.status] }}</span>
+            </li>
+          }
+          @for (gift of physicalGifts(); track $index) {
+            <li>
+              <span class="my-memberships__line-label">Obsequio</span>
+              <strong>{{ gift.quantity }} × {{ gift.description }}</strong>
+              <span class="my-memberships__muted">
+                {{ giftStatusLabels[gift.status] }}
+                @if (gift.deliveredOn) {
+                  el {{ gift.deliveredOn }}
+                }
+              </span>
+            </li>
+          }
+        </ul>
+      }
+    </article>
+
+    <article class="my-memberships__card">
+      <h2>Condiciones de tu compra</h2>
+      <p class="my-memberships__terms">{{ m.terms }}</p>
+      @if (m.specificConditions) {
+        <h3>Condiciones particulares</h3>
+        <p class="my-memberships__terms">{{ m.specificConditions }}</p>
+      }
+    </article>
+  } @else if (!errorMessage()) {
+    <article class="my-memberships__panel">
+      <app-page-state kind="empty" title="Membresía no encontrada" message="Esta membresía no está disponible en tu cuenta." />
+    </article>
+  }
+</section>

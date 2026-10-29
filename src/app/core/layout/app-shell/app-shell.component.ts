@@ -144,6 +144,11 @@ export class AppShellComponent {
           group: 'customer',
         },
         {
+          label: 'Mis membresías',
+          route: '/customer/memberships',
+          group: 'customer',
+        },
+        {
           label: 'Mi perfil',
           route: '/customer/profile',
           group: 'customer',
