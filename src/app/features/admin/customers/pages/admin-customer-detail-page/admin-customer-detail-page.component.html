@@ -71,6 +71,38 @@
       </article>
     </div>
 
+    <article class="customer-detail__card">
+      <div class="customer-detail__card-header">
+        <h2>Membresías</h2>
+        @if (!c.mergedIntoCustomerId) {
+          <button class="customer-detail__btn" type="button" (click)="open('sell')">Vender membresía</button>
+        }
+      </div>
+      <app-api-feedback severity="error" [message]="membershipsError()" />
+      @if (!memberships().length) {
+        <p class="customer-detail__muted">
+          {{ c.mergedIntoCustomerId ? 'Sus membresías pasaron al perfil que se conserva.' : 'Este cliente aún no tiene membresías.' }}
+        </p>
+      } @else {
+        <ul class="customer-detail__memberships">
+          @for (membership of memberships(); track membership.id) {
+            <li>
+              <a [routerLink]="['/admin/memberships', membership.id]">{{ membership.planName }}</a>
+              <span class="customer-detail__status" [attr.data-status]="membership.displayStatus">
+                {{ membershipStatusLabels[membership.displayStatus] }}
+              </span>
+              <span class="customer-detail__muted">
+                {{ membership.startsOn }} al {{ membership.endsOn }} · $&nbsp;{{ membership.price | number: '1.0-0' }}
+                @if (!membership.incomeEntryId) {
+                  · sin ingreso vinculado
+                }
+              </span>
+            </li>
+          }
+        </ul>
+      }
+    </article>
+
     @if (!c.mergedIntoCustomerId) {
       <article class="customer-detail__card">
         <h2>Perfiles duplicados</h2>
@@ -136,6 +168,14 @@
         <app-admin-customer-unlink-account-modal
           [customer]="c"
           (unlinked)="onUpdated($event, 'Cuenta desvinculada.')"
+          (cancelled)="closeModal()"
+        />
+      }
+      @case ('sell') {
+        <app-admin-membership-sell-modal
+          [customerId]="c.id"
+          [customerName]="c.fullName"
+          (sold)="onSold($event)"
           (cancelled)="closeModal()"
         />
       }

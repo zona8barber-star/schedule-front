@@ -1,0 +1,92 @@
+<div class="membership-modal__overlay" (click)="cancel()">
+  <div class="membership-modal__card" (click)="$event.stopPropagation()">
+    <h2>Vincular ingreso</h2>
+    <p class="membership-modal__hint">
+      Solo se listan ingresos registrados como "Venta de membresía". La vinculación no crea ni modifica ingresos.
+    </p>
+
+    <app-api-feedback severity="error" [message]="errorMessage()" />
+
+    <label class="membership-modal__field">
+      <span>Fecha del ingreso</span>
+      <input type="date" name="date" [ngModel]="date()" (ngModelChange)="onDateChange($event)" />
+    </label>
+
+    @if (isLoading()) {
+      <p class="membership-modal__hint">Buscando ingresos...</p>
+    } @else if (!candidates().length) {
+      <p class="membership-modal__hint">No hay ventas de membresía registradas en esa fecha.</p>
+    } @else {
+      <ul class="membership-modal__options">
+        @for (candidate of candidates(); track candidate.incomeEntryId) {
+          <li>
+            <label>
+              <input
+                type="radio"
+                name="income"
+                [checked]="selectedIncomeId() === candidate.incomeEntryId"
+                (change)="selectedIncomeId.set(candidate.incomeEntryId)"
+              />
+              <span>
+                <strong>$&nbsp;{{ candidate.amount | number: '1.0-0' }}</strong>
+                @if (candidate.linkedMemberships.length) {
+                  <small>
+                    Ya cubre {{ candidate.linkedMemberships.length }} membresía(s) por
+                    $&nbsp;{{ candidate.linkedMembershipsTotal | number: '1.0-0' }}
+                  </small>
+                } @else {
+                  <small>Sin membresías vinculadas</small>
+                }
+              </span>
+            </label>
+          </li>
+        }
+      </ul>
+    }
+
+    @if (selected() && siblings().length) {
+      <p class="membership-modal__hint">¿El mismo pago cubre otras membresías de este cliente?</p>
+      <ul class="membership-modal__options">
+        @for (sibling of siblings(); track sibling.id) {
+          <li>
+            <label>
+              <input
+                type="checkbox"
+                [checked]="includedSiblingIds().includes(sibling.id)"
+                (change)="toggleSibling(sibling.id, $any($event.target).checked)"
+              />
+              <span>
+                {{ sibling.planName }} · $&nbsp;{{ sibling.price | number: '1.0-0' }}
+                <small>Vendida el {{ sibling.soldOn }}</small>
+              </span>
+            </label>
+          </li>
+        }
+      </ul>
+    }
+
+    @if (selected(); as income) {
+      <div class="membership-modal__summary">
+        <p>Valor del ingreso: <strong>$&nbsp;{{ income.amount | number: '1.0-0' }}</strong></p>
+        <p>Membresías que cubrirá: <strong>$&nbsp;{{ projectedTotal() | number: '1.0-0' }}</strong></p>
+      </div>
+
+      @if (hasDiscrepancy()) {
+        <div class="membership-modal__warning" role="alert">
+          <p>Los valores no coinciden. Explica la diferencia: quedará en el historial.</p>
+          <label class="membership-modal__field">
+            <span>Justificación (obligatoria)</span>
+            <textarea name="justification" maxlength="500" [ngModel]="justification()" (ngModelChange)="justification.set($event)"></textarea>
+          </label>
+        </div>
+      }
+    }
+
+    <div class="membership-modal__actions">
+      <button type="button" (click)="cancel()" [disabled]="isSaving()">Cancelar</button>
+      <button type="button" (click)="confirm()" [disabled]="!canConfirm()">
+        {{ isSaving() ? 'Vinculando...' : 'Vincular' }}
+      </button>
+    </div>
+  </div>
+</div>

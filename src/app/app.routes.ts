@@ -45,6 +45,11 @@ const loadAdminMembershipPlansListPage = () =>
     './features/admin/membership-plans/pages/admin-membership-plans-list-page/admin-membership-plans-list-page.component'
   ).then((module) => module.AdminMembershipPlansListPageComponent);
 
+const loadAdminMembershipDetailPage = () =>
+  import('./features/admin/memberships/pages/admin-membership-detail-page/admin-membership-detail-page.component').then(
+    (module) => module.AdminMembershipDetailPageComponent,
+  );
+
 const loadAdminRolesListPage = () =>
   import('./features/admin/roles/pages/admin-roles-list-page/admin-roles-list-page.component').then(
     (module) => module.AdminRolesListPageComponent,
@@ -368,6 +373,15 @@ export const routes: Routes = [
       roles: [ROLE_NAMES.admin],
     },
     title: 'Membresías',
+  },
+  {
+    path: 'admin/memberships/:membershipId',
+    canActivate: [authGuard, roleGuard],
+    loadComponent: loadAdminMembershipDetailPage,
+    data: {
+      roles: [ROLE_NAMES.admin],
+    },
+    title: 'Membresía',
   },
   {
     path: 'admin/income',

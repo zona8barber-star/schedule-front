@@ -1,7 +1,7 @@
-import { DatePipe } from '@angular/common';
+import { DatePipe, DecimalPipe } from '@angular/common';
 import { Component, DestroyRef, OnInit, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 
 import {
@@ -9,7 +9,9 @@ import {
   CustomerEventType,
   CustomerEventView,
 } from '../../../../../core/models/customer.models';
+import { CustomerMembershipDetailView, CustomerMembershipSummaryView } from '../../../../../core/models/membership.models';
 import { AdminCustomersApiService } from '../../../../../core/services/admin-customers-api.service';
+import { AdminMembershipsApiService } from '../../../../../core/services/admin-memberships-api.service';
 import { ToastService } from '../../../../../core/services/toast.service';
 import { getApiErrorMessage } from '../../../../../core/utils/api-error.utils';
 import { ApiFeedbackComponent } from '../../../../../shared/components/api-feedback/api-feedback.component';
@@ -18,8 +20,10 @@ import { AdminCustomerFormModalComponent } from '../../components/admin-customer
 import { AdminCustomerLinkAccountModalComponent } from '../../components/admin-customer-link-account-modal/admin-customer-link-account-modal.component';
 import { AdminCustomerMergeModalComponent } from '../../components/admin-customer-merge-modal/admin-customer-merge-modal.component';
 import { AdminCustomerUnlinkAccountModalComponent } from '../../components/admin-customer-unlink-account-modal/admin-customer-unlink-account-modal.component';
+import { AdminMembershipSellModalComponent } from '../../../memberships/components/admin-membership-sell-modal/admin-membership-sell-modal.component';
+import { MEMBERSHIP_STATUS_LABELS } from '../../../memberships/membership-labels';
 
-type CustomerModal = 'edit' | 'link' | 'unlink' | 'merge';
+type CustomerModal = 'edit' | 'link' | 'unlink' | 'merge' | 'sell';
 
 const EVENT_LABELS: Record<CustomerEventType, string> = {
   Created: 'Perfil creado',
@@ -40,6 +44,8 @@ const EVENT_LABELS: Record<CustomerEventType, string> = {
     AdminCustomerLinkAccountModalComponent,
     AdminCustomerUnlinkAccountModalComponent,
     AdminCustomerMergeModalComponent,
+    AdminMembershipSellModalComponent,
+    DecimalPipe,
   ],
   templateUrl: './admin-customer-detail-page.component.html',
   styleUrl: './admin-customer-detail-page.component.scss',
@@ -48,7 +54,13 @@ export class AdminCustomerDetailPageComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly destroyRef = inject(DestroyRef);
   private readonly adminCustomersApiService = inject(AdminCustomersApiService);
+  private readonly membershipsApi = inject(AdminMembershipsApiService);
+  private readonly router = inject(Router);
   private readonly toastService = inject(ToastService);
+
+  readonly membershipStatusLabels = MEMBERSHIP_STATUS_LABELS;
+  readonly memberships = signal<CustomerMembershipSummaryView[]>([]);
+  readonly membershipsError = signal<string | null>(null);
 
   readonly isLoading = signal(true);
   readonly errorMessage = signal<string | null>(null);
@@ -77,6 +89,14 @@ export class AdminCustomerDetailPageComponent implements OnInit {
     this.customer.set(customer);
     this.openModal.set(null);
     this.toastService.success(message);
+    // A merge brings the duplicate's memberships over to this profile.
+    void this.loadMemberships(customer.id);
+  }
+
+  onSold(membership: CustomerMembershipDetailView): void {
+    this.openModal.set(null);
+    this.toastService.success('Membresía vendida.');
+    void this.router.navigate(['/admin/memberships', membership.id]);
   }
 
   eventLabel(customerEvent: CustomerEventView): string {
@@ -99,6 +119,21 @@ export class AdminCustomerDetailPageComponent implements OnInit {
       this.errorMessage.set(getApiErrorMessage(error));
     } finally {
       this.isLoading.set(false);
+    }
+
+    if (this.customer()) {
+      await this.loadMemberships(customerId);
+    }
+  }
+
+  /** Loaded separately so a failure here never hides the customer's own data. */
+  private async loadMemberships(customerId: string): Promise<void> {
+    this.membershipsError.set(null);
+    try {
+      this.memberships.set(await firstValueFrom(this.membershipsApi.listForCustomer(customerId)));
+    } catch (error) {
+      this.memberships.set([]);
+      this.membershipsError.set(getApiErrorMessage(error));
     }
   }
 }

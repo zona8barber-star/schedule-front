@@ -118,3 +118,60 @@
   border-color: rgba(180, 83, 60, 0.4);
   color: var(--color-error, #b4533c);
 }
+
+.customer-detail__card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+
+  h2 {
+    margin: 0;
+  }
+}
+
+.customer-detail__memberships {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+
+  li {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.25rem 0.75rem;
+    padding: 0.6rem 0;
+    overflow-wrap: anywhere;
+  }
+
+  li + li {
+    border-top: 1px solid var(--color-border, #e2e2e2);
+  }
+
+  a {
+    color: inherit;
+    font-weight: 600;
+  }
+}
+
+.customer-detail__status {
+  display: inline-block;
+  padding: 0.1rem 0.55rem;
+  border: 1px solid var(--color-border, #ccc);
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 600;
+
+  &[data-status='Active'] {
+    border-color: rgba(46, 125, 50, 0.5);
+    background: rgba(46, 125, 50, 0.12);
+  }
+
+  &[data-status='Expired'],
+  &[data-status='Annulled'] {
+    border-color: rgba(180, 83, 60, 0.45);
+    background: rgba(180, 83, 60, 0.1);
+  }
+}

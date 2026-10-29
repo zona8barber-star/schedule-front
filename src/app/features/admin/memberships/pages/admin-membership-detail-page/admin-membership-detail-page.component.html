@@ -1,0 +1,213 @@
+<section class="membership-detail">
+  @if (membership(); as m) {
+    <a class="membership-detail__back" [routerLink]="['/admin/customers', m.customerId]">← {{ m.customerName }}</a>
+  }
+
+  <app-api-feedback severity="error" [message]="errorMessage()" />
+
+  @if (isLoading()) {
+    <app-page-state kind="loading" message="Cargando membresía..." />
+  } @else if (membership(); as m) {
+    <header class="membership-detail__header">
+      <div>
+        <h1>{{ m.planName }}</h1>
+        <span class="membership-detail__status" [attr.data-status]="m.displayStatus">{{ statusLabels[m.displayStatus] }}</span>
+      </div>
+      <div class="membership-detail__actions">
+        @if (m.status === 'PendingActivation') {
+          <button class="membership-detail__btn" type="button" (click)="activate()" [disabled]="isBusy()">Activar</button>
+        }
+        @if (m.status !== 'Annulled') {
+          <button class="membership-detail__btn membership-detail__btn--danger" type="button" (click)="open('annul')">
+            Anular
+          </button>
+        }
+      </div>
+    </header>
+
+    @if (m.status === 'Annulled') {
+      <div class="membership-detail__notice" role="status">
+        Anulada el {{ m.annulledAt | date: 'medium' }}
+        @if (m.annulledByName) {
+          por {{ m.annulledByName }}
+        }
+        — Motivo: {{ m.annulmentReason }}. Sus beneficios pendientes quedan bloqueados y no se reembolsa dinero
+        automáticamente.
+      </div>
+    }
+
+    <div class="membership-detail__grid">
+      <article class="membership-detail__card">
+        <h2>Venta</h2>
+        <dl>
+          <dt>Cliente</dt>
+          <dd><a [routerLink]="['/admin/customers', m.customerId]">{{ m.customerName }}</a></dd>
+          @if (m.originalCustomerId !== m.customerId) {
+            <dt>Comprada por</dt>
+            <dd>
+              <a [routerLink]="['/admin/customers', m.originalCustomerId]">{{ m.originalCustomerName }}</a>
+              (perfil fusionado)
+            </dd>
+          }
+          <dt>Precio</dt>
+          <dd>$&nbsp;{{ m.price | number: '1.0-0' }}</dd>
+          <dt>Modalidad</dt>
+          <dd>{{ m.mode === 'Pool' ? 'Bolsa común' : 'Cantidades por servicio' }}</dd>
+          <dt>Vendida</dt>
+          <dd>{{ m.soldOn }}</dd>
+          <dt>Vigencia</dt>
+          <dd>{{ m.startsOn }} al {{ m.endsOn }} (incluido)</dd>
+          @if (m.activatedAt) {
+            <dt>Activada</dt>
+            <dd>
+              {{ m.activatedAt | date: 'medium' }}
+              @if (m.activatedByName) {
+                por {{ m.activatedByName }}
+              }
+            </dd>
+          }
+        </dl>
+      </article>
+
+      <article class="membership-detail__card">
+        <h2>Ingreso</h2>
+        @if (m.income; as income) {
+          <dl>
+            <dt>Valor</dt>
+            <dd>$&nbsp;{{ income.amount | number: '1.0-0' }} ({{ income.occurredOn }})</dd>
+            <dt>Cubre</dt>
+            <dd>
+              {{ income.linkedMemberships.length }} membresía(s) por $&nbsp;{{ income.linkedMembershipsTotal | number: '1.0-0' }}
+            </dd>
+          </dl>
+          @if (income.hasDiscrepancy) {
+            <p class="membership-detail__warning">Los valores no coinciden; la justificación está en el historial.</p>
+          }
+          @if (income.isDeleted) {
+            <p class="membership-detail__warning">El ingreso fue eliminado en Ingresos.</p>
+          }
+          <button class="membership-detail__btn" type="button" (click)="open('unlink')">Desvincular ingreso</button>
+        } @else {
+          <p class="membership-detail__muted">
+            Sin ingreso vinculado. Registra el pago en Ingresos como "Venta de membresía" y vincúlalo aquí.
+          </p>
+          <button class="membership-detail__btn" type="button" (click)="open('link')">Vincular ingreso</button>
+        }
+      </article>
+    </div>
+
+    <article class="membership-detail__card">
+      <h2>Servicios y saldos</h2>
+      <p class="membership-detail__muted">Copia de lo vendido; los cambios posteriores del catálogo no la modifican.</p>
+      <ul class="membership-detail__balances">
+        @for (line of m.allowances; track line.id) {
+          <li>
+            <span class="membership-detail__balance-label">{{ allowanceLabel(line.origin, line.services.length) }}</span>
+            <strong>{{ line.availableQuantity }} de {{ line.grantedQuantity }} disponibles</strong>
+            <span class="membership-detail__muted">
+              {{ line.services.length > 1 ? 'Para cualquiera de: ' : '' }}{{ serviceNames(line) }}
+            </span>
+          </li>
+        }
+      </ul>
+    </article>
+
+    <article class="membership-detail__card">
+      <h2>Obsequios</h2>
+      @if (!m.gifts.length) {
+        <p class="membership-detail__muted">Esta compra no recibió obsequios.</p>
+      } @else {
+        <ul class="membership-detail__balances">
+          @for (gift of m.gifts; track gift.id) {
+            <li>
+              <span class="membership-detail__balance-label">{{ gift.kind === 'Service' ? 'Servicio' : 'Producto' }}</span>
+              <strong>{{ gift.quantity }} × {{ gift.kind === 'Service' ? gift.serviceName : gift.description }}</strong>
+              <span class="membership-detail__muted">
+                {{ giftStatusLabels[gift.status] }} · {{ conditionLabels[gift.condition] }}
+              </span>
+            </li>
+          }
+        </ul>
+      }
+    </article>
+
+    <article class="membership-detail__card">
+      <h2>Términos y condiciones</h2>
+      <p class="membership-detail__terms">{{ m.terms }}</p>
+      @if (m.specificConditions) {
+        <h3>Condiciones particulares</h3>
+        <p class="membership-detail__terms">{{ m.specificConditions }}</p>
+      }
+    </article>
+
+    <article class="membership-detail__card">
+      <h2>Historial</h2>
+      <ol class="membership-detail__events">
+        @for (event of m.events; track event.id) {
+          <li>
+            <strong>{{ eventLabels[event.type] }}</strong>
+            <span class="membership-detail__muted">
+              {{ event.performedAt | date: 'medium' }}
+              @if (event.performedByName) {
+                · {{ event.performedByName }}
+              }
+            </span>
+            @if (event.relatedCustomerName) {
+              <span>Desde el perfil: {{ event.relatedCustomerName }}</span>
+            }
+            @if (event.reason) {
+              <span>{{ event.type === 'IncomeLinked' || event.type === 'IncomeUnlinked' ? 'Justificación' : 'Motivo' }}: {{ event.reason }}</span>
+            }
+          </li>
+        }
+      </ol>
+    </article>
+
+    @switch (openModal()) {
+      @case ('annul') {
+        <app-admin-membership-reason-modal
+          title="Anular membresía"
+          message="Se bloquearán sus beneficios pendientes. No se borra nada y no se reembolsa dinero automáticamente."
+          confirmLabel="Anular"
+          [danger]="true"
+          [isBusy]="isBusy()"
+          [errorMessage]="modalError()"
+          (confirmed)="annul($event)"
+          (cancelled)="closeModal()"
+        />
+      }
+      @case ('activateExpired') {
+        <app-admin-membership-reason-modal
+          title="Activar membresía vencida"
+          message="Su fecha de vencimiento ya pasó. Activarla es una operación excepcional y quedará registrada."
+          confirmationText="Confirmo que quiero activarla de todas formas."
+          confirmLabel="Activar"
+          [isBusy]="isBusy()"
+          [errorMessage]="modalError()"
+          (confirmed)="activateExpired($event)"
+          (cancelled)="closeModal()"
+        />
+      }
+      @case ('unlink') {
+        <app-admin-membership-reason-modal
+          title="Desvincular ingreso"
+          [message]="
+            unlinkNeedsJustification()
+              ? 'Las membresías que quedan en el ingreso dejarán de sumar su valor: explica la diferencia.'
+              : 'Solo se quita la referencia: saldos, obsequios e historial no cambian.'
+          "
+          [reasonLabel]="unlinkNeedsJustification() ? 'Justificación (obligatoria)' : 'Comentario (opcional)'"
+          [reasonRequired]="unlinkNeedsJustification()"
+          confirmLabel="Desvincular"
+          [isBusy]="isBusy()"
+          [errorMessage]="modalError()"
+          (confirmed)="unlink($event)"
+          (cancelled)="closeModal()"
+        />
+      }
+      @case ('link') {
+        <app-admin-membership-income-link-modal [membership]="m" (linked)="onLinked($event)" (cancelled)="closeModal()" />
+      }
+    }
+  }
+</section>

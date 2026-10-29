@@ -6,6 +6,7 @@ import { RouterTestingHarness } from '@angular/router/testing';
 
 import { environment } from '../../../../../../environments/environment';
 import { CustomerDetailView } from '../../../../../core/models/customer.models';
+import { CustomerMembershipSummaryView } from '../../../../../core/models/membership.models';
 import { AdminCustomerDetailPageComponent } from './admin-customer-detail-page.component';
 
 describe('AdminCustomerDetailPageComponent', () => {
@@ -57,6 +58,8 @@ describe('AdminCustomerDetailPageComponent', () => {
     events: [],
   };
 
+  let memberships: CustomerMembershipSummaryView[] = [];
+
   async function openPage(customer: CustomerDetailView): Promise<ComponentFixture<unknown>> {
     TestBed.configureTestingModule({
       providers: [
@@ -71,6 +74,9 @@ describe('AdminCustomerDetailPageComponent', () => {
     await new Promise<void>((resolve) => setTimeout(resolve, 0));
     httpMock.expectOne(`${base}/${customer.id}`).flush(customer);
     await navigation;
+    await new Promise<void>((resolve) => setTimeout(resolve, 0));
+    // The page then loads the customer's memberships.
+    httpMock.expectOne(`${base}/${customer.id}/memberships`).flush(memberships);
     await new Promise<void>((resolve) => setTimeout(resolve, 0));
     harness.detectChanges();
     return harness.fixture;
@@ -89,6 +95,38 @@ describe('AdminCustomerDetailPageComponent', () => {
     expect(text).toContain('Desvincular cuenta');
     expect(text).toContain('Cuenta vinculada');
     expect(text).toContain('Fusionar perfil duplicado');
+  });
+
+  it('lists the customer memberships with their status and offers selling one', async () => {
+    memberships = [
+      {
+        id: 'm-1',
+        customerId: 'c-1',
+        planName: 'Membresía Oro',
+        price: 250000,
+        mode: 'Pool',
+        status: 'Active',
+        displayStatus: 'Active',
+        soldOn: '2026-10-01',
+        startsOn: '2026-10-01',
+        endsOn: '2026-12-29',
+        purchasedQuantity: 10,
+        giftedServiceQuantity: 0,
+        physicalGiftCount: 0,
+        incomeEntryId: null,
+        createdAt: '',
+      },
+    ];
+    const fixture = await openPage(linkedCustomer);
+    const text = fixture.nativeElement.textContent as string;
+
+    expect(text).toContain('Membresía Oro');
+    expect(text).toContain('Vigente');
+    expect(text).toContain('sin ingreso vinculado');
+    expect(text).toContain('Vender membresía');
+    const link = fixture.nativeElement.querySelector('.customer-detail__memberships a') as HTMLAnchorElement;
+    expect(link.getAttribute('href')).toBe('/admin/memberships/m-1');
+    memberships = [];
   });
 
   it('shows a merged profile as read-only history with a link to the surviving profile', async () => {
