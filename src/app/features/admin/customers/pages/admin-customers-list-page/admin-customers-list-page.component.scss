@@ -1,0 +1,126 @@
+.customers {
+  padding: 1rem;
+}
+
+.customers__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.customers__header-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.customers__search {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+
+  input {
+    flex: 1 1 14rem;
+    min-width: 0;
+    padding: 0.5rem 0.65rem;
+    border: 1px solid var(--color-border, #ccc);
+    border-radius: 0.5rem;
+    font: inherit;
+  }
+}
+
+.customers__table-wrap {
+  overflow-x: auto;
+}
+
+.customers__table {
+  width: 100%;
+  border-collapse: collapse;
+
+  th,
+  td {
+    text-align: left;
+    padding: 0.6rem 0.75rem;
+    border-bottom: 1px solid var(--color-border, #e2e2e2);
+    vertical-align: top;
+  }
+}
+
+// The name opens the detail, so on narrow screens it is reachable without scrolling the table sideways.
+.customers__name-link {
+  color: inherit;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+
+.customers__contact {
+  display: block;
+}
+
+.customers__contact--muted {
+  opacity: 0.75;
+  font-size: 0.9rem;
+}
+
+.customers__badge {
+  display: inline-block;
+  padding: 0.15rem 0.6rem;
+  border-radius: 999px;
+  border: 1px solid var(--color-border, #ccc);
+  font-size: 0.8rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.customers__badge--linked {
+  border-color: rgba(46, 125, 50, 0.5);
+  background: rgba(46, 125, 50, 0.12);
+}
+
+.customers__create-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.6rem 1.1rem;
+  border: 0;
+  border-radius: 999px;
+  background: var(--btn-primary-bg, #1a1a1a);
+  color: var(--btn-primary-text, #fff);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color 130ms ease;
+
+  &:hover {
+    background: var(--btn-primary-bg-hover, #333);
+  }
+}
+
+.customers__action-btn {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.4rem 0.8rem;
+  border: 1px solid var(--color-border, #ccc);
+  border-radius: 0.5rem;
+  background: var(--color-surface, #fff);
+  color: inherit;
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  transition:
+    background-color 120ms ease,
+    border-color 120ms ease;
+
+  &:hover {
+    background: var(--color-surface-muted, #f2f2f2);
+    border-color: var(--brand-primary, #888);
+  }
+}

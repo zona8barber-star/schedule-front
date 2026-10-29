@@ -1,0 +1,117 @@
+<div class="membership-modal__overlay" (click)="cancel()">
+  <div class="membership-modal__card" (click)="$event.stopPropagation()">
+    <h2>Vender membresía</h2>
+    <p class="membership-modal__hint">Cliente: <strong>{{ customerName }}</strong></p>
+
+    <app-api-feedback severity="error" [message]="errorMessage()" />
+
+    @if (isLoading()) {
+      <p>Cargando...</p>
+    } @else if (!plans().length) {
+      <p class="membership-modal__hint">No hay tipos de membresía activos para vender.</p>
+    } @else {
+      <label class="membership-modal__field">
+        <span>Tipo de membresía</span>
+        <select name="plan" [ngModel]="planId()" (ngModelChange)="onPlanChange($event)">
+          <option value="" disabled>Selecciona un tipo</option>
+          @for (option of plans(); track option.id) {
+            <option [value]="option.id">{{ option.name }} ($&nbsp;{{ option.price | number: '1.0-0' }})</option>
+          }
+        </select>
+      </label>
+
+      @if (plan(); as p) {
+        <div class="membership-modal__summary">
+          <p>
+            <strong>$&nbsp;{{ p.price | number: '1.0-0' }}</strong> ·
+            {{ p.mode === 'Pool' ? 'Bolsa común de ' + p.poolQuantity + ' servicios' : 'Cantidades por servicio' }} ·
+            {{ p.defaultDurationDays }} días
+          </p>
+          <ul>
+            @for (service of p.services; track service.serviceId) {
+              <li>{{ p.mode === 'PerService' ? service.quantity + ' × ' : '' }}{{ service.serviceName }}</li>
+            }
+          </ul>
+          @if (p.giftRules.length) {
+            <p>Obsequios configurados:</p>
+            <ul>
+              @for (gift of p.giftRules; track gift.id) {
+                <li>
+                  {{ gift.quantity }} × {{ gift.kind === 'Service' ? gift.serviceName : gift.description }}
+                  <small>({{ conditionLabels[gift.condition] }})</small>
+                </li>
+              }
+            </ul>
+            <p class="membership-modal__hint">La condición de primera compra se evalúa al guardar.</p>
+          }
+        </div>
+      }
+
+      <div class="membership-modal__row">
+        <label class="membership-modal__field">
+          <span>Fecha de venta</span>
+          <input type="date" name="soldOn" [max]="today" [ngModel]="soldOn()" (ngModelChange)="soldOn.set($event)" />
+        </label>
+        <label class="membership-modal__field">
+          <span>Inicio de vigencia</span>
+          <input type="date" name="startsOn" [ngModel]="startsOn()" (ngModelChange)="onStartsOnChange($event)" />
+        </label>
+        <label class="membership-modal__field">
+          <span>Vence (incluido)</span>
+          <input type="date" name="endsOn" [ngModel]="endsOn()" (ngModelChange)="onEndsOnChange($event)" />
+        </label>
+      </div>
+      @if (endsOnEdited()) {
+        <p class="membership-modal__hint">
+          Fecha de vencimiento ajustada a mano.
+          <button type="button" (click)="resetEndsOn()">Usar la duración del tipo</button>
+        </p>
+      }
+
+      <label class="membership-modal__check">
+        <input type="checkbox" [checked]="activateNow()" (change)="activateNow.set($any($event.target).checked)" />
+        <span>Activar ahora</span>
+      </label>
+
+      @if (isExpiredActivation()) {
+        <div class="membership-modal__warning" role="alert">
+          <p>La fecha de vencimiento ya pasó: activarla es una operación excepcional.</p>
+          <label class="membership-modal__check">
+            <input type="checkbox" [checked]="confirmExpired()" (change)="confirmExpired.set($any($event.target).checked)" />
+            <span>Confirmo que quiero activarla de todas formas.</span>
+          </label>
+          <label class="membership-modal__field">
+            <span>Motivo (obligatorio)</span>
+            <textarea
+              name="activationReason"
+              maxlength="500"
+              [ngModel]="activationReason()"
+              (ngModelChange)="activationReason.set($event)"
+            ></textarea>
+          </label>
+        </div>
+      }
+
+      @if (submitted() && problems().length) {
+        <div class="membership-modal__warning membership-modal__blocking" role="alert">
+          <ul>
+            @for (problem of problems(); track problem) {
+              <li>{{ problem }}</li>
+            }
+          </ul>
+        </div>
+      }
+
+      <p class="membership-modal__hint">
+        La venta no registra el ingreso: regístralo en Ingresos como "Venta de membresía" y vincúlalo desde el detalle.
+      </p>
+    }
+
+    <div class="membership-modal__actions">
+      <button type="button" (click)="cancel()" [disabled]="isSaving()">Cancelar</button>
+      <button type="button" (click)="submit()" [disabled]="isSaving() || isLoading() || !plans().length">
+        {{ isSaving() ? 'Guardando...' : 'Registrar venta' }}
+      </button>
+    </div>
+  </div>
+</div>

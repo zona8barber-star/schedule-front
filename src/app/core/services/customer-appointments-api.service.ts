@@ -6,6 +6,7 @@ import { RuntimeConfigService } from '../config/runtime-config.service';
 import {
   AppointmentResponse,
   CreateCustomerAppointmentRequest,
+  RescheduleCustomerAppointmentRequest,
 } from '../models/appointment.models';
 
 @Injectable({
@@ -60,6 +61,14 @@ export class CustomerAppointmentsApiService {
 
         return throwError(() => error);
       }),
+    );
+  }
+
+  /** Moves the appointment to another free slot with the same barber. */
+  reschedule(appointmentId: string, request: RescheduleCustomerAppointmentRequest) {
+    return this.httpClient.patch<AppointmentResponse>(
+      this.buildUrl(`/customer/appointments/${appointmentId}/reschedule`),
+      request,
     );
   }
 

@@ -1,0 +1,48 @@
+<div class="customer-modal__overlay" (click)="cancel()">
+  <div class="customer-modal__card" (click)="$event.stopPropagation()">
+    <h2>Desvincular cuenta</h2>
+
+    <app-api-feedback severity="error" [message]="errorMessage()" />
+
+    @if (customer.linkedAccount; as account) {
+      <div class="customer-modal__compare">
+        <div>
+          <h3>Cuenta vinculada</h3>
+          <p><strong>{{ account.fullName }}</strong></p>
+          <p>{{ account.email }}</p>
+          <p>{{ account.phoneNumber || 'Sin teléfono' }}</p>
+        </div>
+      </div>
+    }
+
+    <p class="customer-modal__hint">
+      El perfil, la cuenta y todo el historial se conservan. La cuenta solo dejará de ver la información de
+      este perfil.
+    </p>
+
+    <label class="customer-modal__field">
+      <span>Motivo (obligatorio)</span>
+      <textarea
+        name="reason"
+        [attr.maxlength]="reasonMaxLength"
+        [ngModel]="reason()"
+        (ngModelChange)="reason.set($event)"
+      ></textarea>
+    </label>
+    @if (reason().length > 0 && !reasonIsValid()) {
+      <small class="customer-modal__error">El motivo debe tener entre 3 y 500 caracteres.</small>
+    }
+
+    <label class="customer-modal__check">
+      <input type="checkbox" [checked]="confirmed()" (change)="confirmed.set($any($event.target).checked)" />
+      <span>Confirmo que quiero desvincular esta cuenta del perfil.</span>
+    </label>
+
+    <div class="customer-modal__actions">
+      <button type="button" (click)="cancel()" [disabled]="isSaving()">Cancelar</button>
+      <button type="button" class="customer-modal__danger" (click)="confirm()" [disabled]="!canConfirm()">
+        {{ isSaving() ? 'Desvinculando...' : 'Desvincular' }}
+      </button>
+    </div>
+  </div>
+</div>

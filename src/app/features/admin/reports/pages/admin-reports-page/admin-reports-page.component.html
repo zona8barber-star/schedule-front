@@ -41,6 +41,10 @@
         <span class="reports__kpi-value">{{ s.incomeCount }}</span>
       </div>
       <div class="reports__kpi">
+        <span class="reports__kpi-label">Ventas de membresías ({{ s.membershipSalesCount }})</span>
+        <span class="reports__kpi-value">$ {{ s.membershipSalesIncome | number: '1.0-0' }}</span>
+      </div>
+      <div class="reports__kpi">
         <span class="reports__kpi-label">Para el negocio</span>
         <span class="reports__kpi-value">$ {{ s.businessIncome | number: '1.0-0' }}</span>
       </div>
@@ -84,7 +88,7 @@
       </div>
 
       <div class="reports__panel">
-        <h2>Promo vs Normal</h2>
+        <h2>Promo, normal y membresías</h2>
         <div class="reports__chart-canvas">
           <canvas baseChart type="doughnut" [data]="promoChartData()" [options]="chartOptions"></canvas>
         </div>

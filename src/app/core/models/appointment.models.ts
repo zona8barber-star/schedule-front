@@ -21,6 +21,10 @@ export interface CreateCustomerAppointmentRequest {
   notes?: string | null;
 }
 
+export interface RescheduleCustomerAppointmentRequest {
+  startsAtUtc: string;
+}
+
 export interface StaffManualAppointmentCreateRequest {
   startsAtUtc: string;
   endsAtUtc?: string | null;

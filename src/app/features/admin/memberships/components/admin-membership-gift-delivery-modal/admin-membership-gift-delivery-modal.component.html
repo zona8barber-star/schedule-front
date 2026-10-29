@@ -1,0 +1,46 @@
+<div class="membership-modal__overlay" (click)="cancel()">
+  <div class="membership-modal__card" (click)="$event.stopPropagation()">
+    <h2>Registrar entrega</h2>
+    <p class="membership-modal__hint">{{ membership.planName }} · {{ membership.customerName }}</p>
+
+    <app-api-feedback severity="error" [message]="errorMessage()" />
+
+    <div class="membership-modal__summary">
+      <p>
+        Se entrega completo: <strong>{{ gift.quantity }} × {{ gift.description }}</strong>
+      </p>
+      <p class="membership-modal__hint">No se registran entregas parciales.</p>
+    </div>
+
+    <label class="membership-modal__field">
+      <span>Fecha real de entrega</span>
+      <input
+        type="date"
+        name="deliveredOn"
+        [min]="membership.soldOn"
+        [max]="today"
+        [ngModel]="deliveredOn()"
+        (ngModelChange)="deliveredOn.set($event)"
+      />
+    </label>
+
+    @if (submitted() && problems().length) {
+      <div class="membership-modal__warning membership-modal__blocking" role="alert">
+        <ul>
+          @for (problem of problems(); track problem) {
+            <li>{{ problem }}</li>
+          }
+        </ul>
+      </div>
+    }
+
+    <p class="membership-modal__hint">La entrega no registra ingresos ni gastos y no modifica los saldos de servicios.</p>
+
+    <div class="membership-modal__actions">
+      <button type="button" (click)="cancel()" [disabled]="isSaving()">Cancelar</button>
+      <button type="button" (click)="submit()" [disabled]="isSaving()">
+        {{ isSaving() ? 'Guardando...' : 'Registrar entrega' }}
+      </button>
+    </div>
+  </div>
+</div>

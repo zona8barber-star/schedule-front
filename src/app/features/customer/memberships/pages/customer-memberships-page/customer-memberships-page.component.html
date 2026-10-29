@@ -1,0 +1,64 @@
+<section class="my-memberships">
+  <header class="my-memberships__hero">
+    <p class="my-memberships__eyebrow">Cuenta</p>
+    <h1>Mis membresías</h1>
+    <p>Consulta la vigencia, los saldos, los consumos y los obsequios de tus membresías.</p>
+  </header>
+
+  <app-api-feedback severity="error" [message]="errorMessage()" />
+
+  @if (isLoading()) {
+    <article class="my-memberships__panel">
+      <app-page-state kind="loading" message="Cargando membresías..." />
+    </article>
+  } @else if (!memberships().length && !errorMessage()) {
+    <article class="my-memberships__panel">
+      <app-page-state
+        kind="empty"
+        title="Aún no tienes membresías"
+        message="Cuando compres una membresía en la barbería aparecerá aquí. Si ya compraste una y no la ves, pide en la barbería que la vinculen a tu cuenta."
+      />
+    </article>
+  } @else {
+    <div class="my-memberships__list">
+      @for (membership of memberships(); track membership.id) {
+        <a class="my-memberships__card my-memberships__card-link" [routerLink]="['/customer/memberships', membership.id]">
+          <div class="my-memberships__card-header">
+            <h2>{{ membership.planName }}</h2>
+            <span class="my-memberships__status" [attr.data-status]="membership.displayStatus">
+              {{ statusLabels[membership.displayStatus] }}
+            </span>
+          </div>
+          <dl class="my-memberships__facts">
+            <div>
+              <dt>Vigencia</dt>
+              <dd>{{ membership.startsOn }} al {{ membership.endsOn }}</dd>
+            </div>
+            <div>
+              <dt>Pagados</dt>
+              <dd>{{ membership.purchasedAvailable }} de {{ membership.purchasedGranted }} disponibles</dd>
+            </div>
+            @if (membership.giftedGranted) {
+              <div>
+                <dt>Regalados</dt>
+                <dd>{{ membership.giftedAvailable }} de {{ membership.giftedGranted }} disponibles</dd>
+              </div>
+            }
+            @if (membership.pendingPhysicalGifts) {
+              <div>
+                <dt>Obsequios por recibir</dt>
+                <dd>{{ membership.pendingPhysicalGifts }}</dd>
+              </div>
+            }
+          </dl>
+          <p
+            class="my-memberships__notice"
+            [class.my-memberships__notice--blocked]="!availability(membership).usable"
+          >
+            {{ availability(membership).text }}
+          </p>
+        </a>
+      }
+    </div>
+  }
+</section>

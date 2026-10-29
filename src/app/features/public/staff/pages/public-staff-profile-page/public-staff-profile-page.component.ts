@@ -8,21 +8,24 @@ import {
   PublicStaffReviewResponse,
   StaffReviewSummaryResponse,
 } from '../../../../../core/models/review.models';
-import { PublicAvailabilityApiService } from '../../../../../core/services/public-availability-api.service';
 import { PublicStaffApiService } from '../../../../../core/services/public-staff-api.service';
 import { PublicStaffReviewsApiService } from '../../../../../core/services/public-staff-reviews-api.service';
 import { getApiErrorMessage } from '../../../../../core/utils/api-error.utils';
 import { ApiFeedbackComponent } from '../../../../../shared/components/api-feedback/api-feedback.component';
 import { PageStateComponent } from '../../../../../shared/components/page-state/page-state.component';
 import { PhotoPlaceholderComponent } from '../../../../../shared/components/photo-placeholder/photo-placeholder.component';
-
-function todayIso(): string {
-  return new Date().toISOString().slice(0, 10);
-}
+import { SlotPickerComponent } from '../../../../../shared/components/slot-picker/slot-picker.component';
+import { isDateKey } from '../../../../../core/utils/bogota-date.utils';
 
 @Component({
   selector: 'app-public-staff-profile-page',
-  imports: [RouterLink, ApiFeedbackComponent, PageStateComponent, PhotoPlaceholderComponent],
+  imports: [
+    RouterLink,
+    ApiFeedbackComponent,
+    PageStateComponent,
+    PhotoPlaceholderComponent,
+    SlotPickerComponent,
+  ],
   templateUrl: './public-staff-profile-page.component.html',
   styleUrl: './public-staff-profile-page.component.scss',
 })
@@ -31,13 +34,7 @@ export class PublicStaffProfilePageComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly publicStaffApiService = inject(PublicStaffApiService);
   private readonly publicStaffReviewsApiService = inject(PublicStaffReviewsApiService);
-  private readonly publicAvailabilityApiService = inject(PublicAvailabilityApiService);
 
-  private readonly timeFormatter = new Intl.DateTimeFormat('es-CO', {
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: false,
-  });
   private readonly dateFormatter = new Intl.DateTimeFormat('es-CO', {
     dateStyle: 'medium',
   });
@@ -53,13 +50,11 @@ export class PublicStaffProfilePageComponent implements OnInit {
   readonly errorMessage = signal<string | null>(null);
   readonly reviewsErrorMessage = signal<string | null>(null);
 
-  // Booking modal
-  readonly showBookingModal = signal(false);
-  readonly selectedDate = signal(todayIso());
-  readonly slots = signal<PublicAvailabilitySlotResponse[]>([]);
-  readonly slotsLoading = signal(false);
-  readonly slotsError = signal<string | null>(null);
-  readonly slotsLoaded = signal(false);
+  // Booking modal. "?reservar=1&fecha=YYYY-MM-DD" opens it on that day (used by "Cambiar fecha u hora").
+  readonly showBookingModal = signal(this.route.snapshot.queryParamMap.has('reservar'));
+  readonly bookingDate = signal<string | null>(
+    readDateParam(this.route.snapshot.queryParamMap.get('fecha')),
+  );
 
   readonly displayAverageRating = computed(
     () => this.reviewsSummary()?.averageStars ?? this.staffProfile()?.averageRating ?? 0,
@@ -80,16 +75,8 @@ export class PublicStaffProfilePageComponent implements OnInit {
     await this.loadReviews();
   }
 
-  todayDate(): string {
-    return todayIso();
-  }
-
   formatRating(value: number): string {
     return value.toFixed(1);
-  }
-
-  formatSlotTime(utc: string): string {
-    return this.timeFormatter.format(new Date(utc));
   }
 
   formatDate(value: string): string {
@@ -98,21 +85,21 @@ export class PublicStaffProfilePageComponent implements OnInit {
 
   openBookingModal(): void {
     this.showBookingModal.set(true);
-    if (!this.slotsLoaded()) {
-      void this.loadSlots();
-    }
   }
 
   closeBookingModal(): void {
     this.showBookingModal.set(false);
-  }
+    this.bookingDate.set(null);
 
-  onDateChange(event: Event): void {
-    const value = (event.target as HTMLInputElement).value;
-    if (!value) return;
-    this.selectedDate.set(value);
-    this.slotsLoaded.set(false);
-    void this.loadSlots();
+    // Coming from "Cambiar fecha u hora": drop the params so a refresh does not reopen it.
+    if (this.route.snapshot.queryParamMap.has('reservar')) {
+      void this.router.navigate([], {
+        relativeTo: this.route,
+        queryParams: { reservar: null, fecha: null },
+        queryParamsHandling: 'merge',
+        replaceUrl: true,
+      });
+    }
   }
 
   selectSlot(slot: PublicAvailabilitySlotResponse): void {
@@ -122,27 +109,6 @@ export class PublicStaffProfilePageComponent implements OnInit {
         startsAt: slot.startAtUtc,
       },
     });
-  }
-
-  private async loadSlots(): Promise<void> {
-    const staffProfileId = this.staffProfileId();
-    const date = this.selectedDate();
-    if (!staffProfileId || !date) return;
-
-    this.slotsLoading.set(true);
-    this.slotsError.set(null);
-    try {
-      const response = await firstValueFrom(
-        this.publicAvailabilityApiService.getSlots(staffProfileId, date, date),
-      );
-      this.slots.set(response.slots);
-      this.slotsLoaded.set(true);
-    } catch {
-      this.slotsError.set('No pudimos cargar los horarios. Intenta de nuevo.');
-      this.slots.set([]);
-    } finally {
-      this.slotsLoading.set(false);
-    }
   }
 
   private async loadProfile(): Promise<void> {
@@ -193,4 +159,8 @@ export class PublicStaffProfilePageComponent implements OnInit {
       this.reviewsLoading.set(false);
     }
   }
+}
+
+function readDateParam(value: string | null): string | null {
+  return isDateKey(value) ? value : null;
 }

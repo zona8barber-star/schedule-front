@@ -1,0 +1,90 @@
+<div class="membership-modal__overlay" (click)="cancel()">
+  <div class="membership-modal__card" (click)="$event.stopPropagation()">
+    <h2>Registrar consumo</h2>
+    <p class="membership-modal__hint">
+      {{ membership.planName }} · {{ membership.customerName }} · vigencia {{ membership.startsOn }} al {{ membership.endsOn }}
+    </p>
+
+    <app-api-feedback severity="error" [message]="errorMessage()" />
+
+    <label class="membership-modal__field">
+      <span>Servicio</span>
+      <select name="service" [ngModel]="serviceId()" (ngModelChange)="serviceId.set($event)">
+        <option value="" disabled>Selecciona un servicio</option>
+        @for (balance of balances(); track balance.serviceId) {
+          <option [value]="balance.serviceId">{{ balance.serviceName }} ({{ balance.gifted + balance.purchased }} disponibles)</option>
+        }
+      </select>
+    </label>
+
+    @if (selected(); as balance) {
+      <div class="membership-modal__summary">
+        <p>Regalados disponibles: <strong>{{ balance.gifted }}</strong></p>
+        <p>Pagados disponibles: <strong>{{ balance.purchased }}</strong></p>
+      </div>
+    }
+
+    <div class="membership-modal__row">
+      <label class="membership-modal__field">
+        <span>Cantidad</span>
+        <input type="number" name="quantity" min="1" step="1" [ngModel]="quantity()" (ngModelChange)="quantity.set($event)" />
+      </label>
+      <label class="membership-modal__field">
+        <span>Fecha real del servicio</span>
+        <input
+          type="date"
+          name="serviceDate"
+          [min]="membership.startsOn"
+          [max]="maxDate()"
+          [ngModel]="serviceDate()"
+          (ngModelChange)="serviceDate.set($event)"
+        />
+      </label>
+    </div>
+
+    <label class="membership-modal__field">
+      <span>Profesional (opcional)</span>
+      <select name="staff" [ngModel]="staffProfileId()" (ngModelChange)="staffProfileId.set($event)">
+        <option value="">Sin indicar</option>
+        @for (member of staff(); track member.staffProfileId) {
+          <option [value]="member.staffProfileId">{{ member.displayName }}</option>
+        }
+      </select>
+    </label>
+
+    @if (split(); as parts) {
+      <p class="membership-modal__hint">
+        Se descontarán
+        @if (parts.gifted) {
+          <strong>{{ parts.gifted }} regalado(s)</strong>
+        }
+        @if (parts.gifted && parts.purchased) {
+          y
+        }
+        @if (parts.purchased) {
+          <strong>{{ parts.purchased }} pagado(s)</strong>
+        }
+        en una sola operación.
+      </p>
+    }
+
+    @if (submitted() && problems().length) {
+      <div class="membership-modal__warning membership-modal__blocking" role="alert">
+        <ul>
+          @for (problem of problems(); track problem) {
+            <li>{{ problem }}</li>
+          }
+        </ul>
+      </div>
+    }
+
+    <p class="membership-modal__hint">El consumo no registra ingresos ni comisiones y no modifica citas.</p>
+
+    <div class="membership-modal__actions">
+      <button type="button" (click)="cancel()" [disabled]="isSaving()">Cancelar</button>
+      <button type="button" (click)="submit()" [disabled]="isSaving()">
+        {{ isSaving() ? 'Guardando...' : 'Registrar consumo' }}
+      </button>
+    </div>
+  </div>
+</div>
