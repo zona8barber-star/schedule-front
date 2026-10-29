@@ -52,6 +52,18 @@ describe('availability-form.utils', () => {
   });
 
   describe('absenceValidator', () => {
+    // The validator compares against the browser's local "today"/"tomorrow". Pin the clock to a local
+    // evening (21:30 on 2026-10-28): from 19:00 in Bogotá (UTC-5) the UTC date is already the next day,
+    // which is exactly when building the expected dates from UTC used to break these tests.
+    beforeEach(() => {
+      vi.useFakeTimers({ toFake: ['Date'] });
+      vi.setSystemTime(new Date(2026, 9, 28, 21, 30));
+    });
+
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
     function buildGroup(value: { isAllDay: boolean; startValue: string; endValue: string }) {
       return new FormGroup({
         isAllDay: new FormControl(value.isAllDay, { nonNullable: true }),
@@ -67,10 +79,16 @@ describe('availability-form.utils', () => {
     });
 
     it('flags an all-day range starting today or earlier as pastStart', () => {
-      const today = new Date();
-      const todayStr = today.toISOString().slice(0, 10);
-      const group = buildGroup({ isAllDay: true, startValue: todayStr, endValue: todayStr });
-      expect(absenceValidator()(group)).toEqual({ pastStart: true });
+      const today = buildGroup({ isAllDay: true, startValue: '2026-10-28', endValue: '2026-10-28' });
+      expect(absenceValidator()(today)).toEqual({ pastStart: true });
+
+      const yesterday = buildGroup({ isAllDay: true, startValue: '2026-10-27', endValue: '2026-10-28' });
+      expect(absenceValidator()(yesterday)).toEqual({ pastStart: true });
+    });
+
+    it('accepts an all-day range starting tomorrow, even when the UTC date is already tomorrow', () => {
+      const group = buildGroup({ isAllDay: true, startValue: '2026-10-29', endValue: '2026-10-29' });
+      expect(absenceValidator()(group)).toBeNull();
     });
 
     it('flags an all-day range ending before it starts as timeRange', () => {
@@ -79,17 +97,22 @@ describe('availability-form.utils', () => {
     });
 
     it('accepts a valid future all-day range', () => {
-      const farFuture = new Date();
-      farFuture.setFullYear(farFuture.getFullYear() + 1);
-      const dateStr = farFuture.toISOString().slice(0, 10);
-      const group = buildGroup({ isAllDay: true, startValue: dateStr, endValue: dateStr });
+      const group = buildGroup({ isAllDay: true, startValue: '2027-10-28', endValue: '2027-10-28' });
       expect(absenceValidator()(group)).toBeNull();
     });
 
     it('flags a timed range starting before tomorrow as pastStart', () => {
-      const now = new Date().toISOString().slice(0, 16);
-      const group = buildGroup({ isAllDay: false, startValue: now, endValue: now });
-      expect(absenceValidator()(group)?.['pastStart']).toBe(true);
+      // Local "now" and the last minute of today are both before tomorrow 00:00.
+      const now = buildGroup({ isAllDay: false, startValue: '2026-10-28T21:30', endValue: '2026-10-28T21:30' });
+      expect(absenceValidator()(now)?.['pastStart']).toBe(true);
+
+      const lastMinute = buildGroup({ isAllDay: false, startValue: '2026-10-28T23:59', endValue: '2026-10-29T08:00' });
+      expect(absenceValidator()(lastMinute)).toEqual({ pastStart: true });
+    });
+
+    it('accepts a timed range starting at tomorrow 00:00 local', () => {
+      const group = buildGroup({ isAllDay: false, startValue: '2026-10-29T00:00', endValue: '2026-10-29T08:00' });
+      expect(absenceValidator()(group)).toBeNull();
     });
   });
 });

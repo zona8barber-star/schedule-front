@@ -1,0 +1,83 @@
+<section class="customers">
+  <header class="customers__header">
+    <h1>Clientes</h1>
+    <div class="customers__header-actions">
+      <button class="customers__action-btn" type="button" (click)="openFromAccount()">
+        Crear desde cuenta registrada
+      </button>
+      <button class="customers__create-btn" type="button" (click)="openCreate()">+ Nuevo cliente</button>
+    </div>
+  </header>
+
+  <form class="customers__search" (ngSubmit)="search()">
+    <input
+      type="search"
+      name="query"
+      placeholder="Buscar por nombre, correo o teléfono"
+      aria-label="Buscar clientes"
+      [ngModel]="query()"
+      (ngModelChange)="query.set($event)"
+    />
+    <button type="submit" class="customers__action-btn">Buscar</button>
+    @if (query()) {
+      <button type="button" class="customers__action-btn" (click)="clearSearch()">Limpiar</button>
+    }
+  </form>
+
+  <app-api-feedback severity="error" [message]="errorMessage()" />
+
+  @if (isLoading()) {
+    <app-page-state kind="loading" message="Cargando clientes..." />
+  } @else if (!customers().length) {
+    <app-page-state
+      [message]="query() ? 'No hay clientes que coincidan con la búsqueda.' : 'Aún no hay clientes. Crea el primero.'"
+    />
+  } @else {
+    <div class="customers__table-wrap">
+      <table class="customers__table">
+        <thead>
+          <tr>
+            <th>Nombre</th>
+            <th>Contacto</th>
+            <th>Cuenta de la app</th>
+            <th>Creado</th>
+            <th aria-label="Acciones"></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (customer of customers(); track customer.id) {
+            <tr>
+              <td>
+                <a class="customers__name-link" [routerLink]="['/admin/customers', customer.id]">{{ customer.fullName }}</a>
+              </td>
+              <td>
+                <span class="customers__contact">{{ customer.phone }}</span>
+                <span class="customers__contact customers__contact--muted">{{ customer.email }}</span>
+              </td>
+              <td>
+                @if (customer.linkedAccount) {
+                  <span class="customers__badge customers__badge--linked">Vinculada</span>
+                } @else {
+                  <span class="customers__badge">Sin cuenta</span>
+                }
+              </td>
+              <td>{{ customer.createdAt | date: 'mediumDate' }}</td>
+              <td>
+                <a class="customers__action-btn" [routerLink]="['/admin/customers', customer.id]">Ver</a>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</section>
+
+@switch (openModal()) {
+  @case ('create') {
+    <app-admin-customer-form-modal (saved)="onCreated($event)" (cancelled)="closeModal()" />
+  }
+  @case ('fromAccount') {
+    <app-admin-customer-from-account-modal (saved)="onCreated($event)" (cancelled)="closeModal()" />
+  }
+}

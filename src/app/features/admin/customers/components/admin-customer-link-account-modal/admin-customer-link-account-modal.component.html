@@ -1,0 +1,84 @@
+<div class="customer-modal__overlay" (click)="cancel()">
+  <div class="customer-modal__card" (click)="$event.stopPropagation()">
+    <h2>Vincular cuenta de la app</h2>
+
+    <p class="customer-modal__hint">
+      Solo se listan cuentas de clientes activas que no estén vinculadas a otro perfil.
+    </p>
+
+    <app-api-feedback severity="error" [message]="errorMessage()" />
+
+    <form class="customer-modal__search" (ngSubmit)="search()">
+      <input
+        type="search"
+        name="query"
+        placeholder="Nombre, correo o teléfono"
+        aria-label="Buscar cuenta"
+        [ngModel]="query()"
+        (ngModelChange)="query.set($event)"
+      />
+      <button type="submit" [disabled]="isSearching()">Buscar</button>
+    </form>
+
+    @if (isSearching()) {
+      <p class="customer-modal__hint">Buscando cuentas...</p>
+    } @else if (!candidates().length) {
+      <p class="customer-modal__hint">No hay cuentas disponibles con ese criterio.</p>
+    } @else {
+      <ul class="customer-modal__options">
+        @for (candidate of candidates(); track candidate.userId) {
+          <li>
+            <label>
+              <input
+                type="radio"
+                name="account"
+                [checked]="selectedUserId() === candidate.userId"
+                (change)="select(candidate.userId)"
+              />
+              <span>
+                <strong>{{ candidate.fullName }}</strong>
+                <small>{{ candidate.email }}</small>
+                @if (candidate.phoneNumber) {
+                  <small>{{ candidate.phoneNumber }}</small>
+                }
+              </span>
+            </label>
+          </li>
+        }
+      </ul>
+    }
+
+    @if (selected(); as account) {
+      <div class="customer-modal__compare">
+        <div>
+          <h3>Perfil del cliente</h3>
+          <p><strong>{{ customer.fullName }}</strong></p>
+          <p>{{ customer.email }}</p>
+          <p>{{ customer.phone }}</p>
+        </div>
+        <div>
+          <h3>Cuenta de la app</h3>
+          <p><strong>{{ account.fullName }}</strong></p>
+          <p>{{ account.email }}</p>
+          <p>{{ account.phoneNumber || 'Sin teléfono' }}</p>
+        </div>
+      </div>
+
+      <label class="customer-modal__check">
+        <input
+          type="checkbox"
+          [checked]="identityVerified()"
+          (change)="identityVerified.set($any($event.target).checked)"
+        />
+        <span>Verifiqué en persona que esta cuenta pertenece a este cliente.</span>
+      </label>
+    }
+
+    <div class="customer-modal__actions">
+      <button type="button" (click)="cancel()" [disabled]="isSaving()">Cancelar</button>
+      <button type="button" (click)="confirm()" [disabled]="!canConfirm()">
+        {{ isSaving() ? 'Vinculando...' : 'Vincular cuenta' }}
+      </button>
+    </div>
+  </div>
+</div>

@@ -1,10 +1,19 @@
+/**
+ * Service income is a service a professional performed and is split with them; a membership sale has no
+ * service or professional and belongs entirely to the business. The kind never changes after creation.
+ */
+export type IncomeKind = 'Service' | 'MembershipSale';
+
 export interface IncomeEntryView {
   id: string;
-  serviceId: string;
-  serviceName: string;
+  kind: IncomeKind;
+  /** Null for membership sales. */
+  serviceId: string | null;
+  serviceName: string | null;
   basePrice: number;
-  staffProfileId: string;
-  staffDisplayName: string;
+  /** Null for membership sales. */
+  staffProfileId: string | null;
+  staffDisplayName: string | null;
   amount: number;
   isPromo: boolean;
   businessPercentage: number;
@@ -16,17 +25,12 @@ export interface IncomeEntryView {
 }
 
 export interface IncomeEntryCreateRequest {
-  serviceId: string;
-  staffProfileId: string;
+  kind: IncomeKind;
+  serviceId: string | null;
+  staffProfileId: string | null;
   amount: number;
   isPromo: boolean;
   occurredOn: string; // YYYY-MM-DD
 }
 
-export interface IncomeEntryUpdateRequest {
-  serviceId: string;
-  staffProfileId: string;
-  amount: number;
-  isPromo: boolean;
-  occurredOn: string; // YYYY-MM-DD
-}
+export type IncomeEntryUpdateRequest = IncomeEntryCreateRequest;

@@ -10,6 +10,7 @@ import { PublicStaffProfileResponse } from '../../../../core/models/content.mode
 import { CustomerAppointmentsApiService } from '../../../../core/services/customer-appointments-api.service';
 import { PublicStaffApiService } from '../../../../core/services/public-staff-api.service';
 import { getApiErrorMessage } from '../../../../core/utils/api-error.utils';
+import { BOGOTA_TIME_ZONE, bogotaDateKey } from '../../../../core/utils/bogota-date.utils';
 import { ApiFeedbackComponent } from '../../../../shared/components/api-feedback/api-feedback.component';
 import { PageStateComponent } from '../../../../shared/components/page-state/page-state.component';
 
@@ -23,9 +24,10 @@ export class BookingConfirmPageComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly customerAppointmentsApiService = inject(CustomerAppointmentsApiService);
   private readonly publicStaffApiService = inject(PublicStaffApiService);
-  private readonly dateTimeFormatter = new Intl.DateTimeFormat('es-AR', {
+  private readonly dateTimeFormatter = new Intl.DateTimeFormat('es-CO', {
     dateStyle: 'full',
     timeStyle: 'short',
+    timeZone: BOGOTA_TIME_ZONE,
   });
 
   readonly staffProfileId = signal<string | null>(
@@ -36,6 +38,8 @@ export class BookingConfirmPageComponent implements OnInit {
   readonly isSubmitting = signal(false);
   readonly errorMessage = signal<string | null>(null);
   readonly successAppointment = signal<AppointmentResponse | null>(null);
+  /** The chosen time was taken by someone else while confirming (409). */
+  readonly slotTaken = signal(false);
 
   readonly canSubmit = computed(() => {
     const staffProfileId = this.staffProfileId();
@@ -45,6 +49,13 @@ export class BookingConfirmPageComponent implements OnInit {
     }
 
     return !Number.isNaN(Date.parse(startsAtUtc));
+  });
+
+  /** Back to the barber's booking modal, opened on the same day. */
+  readonly changeDateQueryParams = computed(() => {
+    const startsAtUtc = this.startsAtUtc();
+    const valid = !!startsAtUtc && !Number.isNaN(Date.parse(startsAtUtc));
+    return valid ? { reservar: 1, fecha: bogotaDateKey(startsAtUtc) } : { reservar: 1 };
   });
 
   readonly submitLabel = computed(() =>
@@ -80,6 +91,7 @@ export class BookingConfirmPageComponent implements OnInit {
 
   async confirmBooking(): Promise<void> {
     this.errorMessage.set(null);
+    this.slotTaken.set(false);
 
     if (!this.canSubmit() || this.isSubmitting()) {
       return;
@@ -104,6 +116,7 @@ export class BookingConfirmPageComponent implements OnInit {
         await firstValueFrom(this.customerAppointmentsApiService.create(request)),
       );
     } catch (error) {
+      this.slotTaken.set(isHttpConflict(error));
       this.errorMessage.set(getBookingErrorMessage(error));
     } finally {
       this.isSubmitting.set(false);
@@ -117,7 +130,7 @@ export class BookingConfirmPageComponent implements OnInit {
 
 function getBookingErrorMessage(error: unknown): string {
   if (isHttpConflict(error)) {
-    return 'Ese horario ya no esta disponible. Selecciona otro turno.';
+    return 'Ese horario ya no está disponible.';
   }
 
   return getApiErrorMessage(error);

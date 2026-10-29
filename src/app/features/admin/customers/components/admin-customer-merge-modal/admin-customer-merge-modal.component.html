@@ -1,0 +1,101 @@
+<div class="customer-modal__overlay" (click)="cancel()">
+  <div class="customer-modal__card" (click)="$event.stopPropagation()">
+    <h2>Fusionar un perfil duplicado</h2>
+
+    <p class="customer-modal__hint">
+      Busca el perfil duplicado. Se fusionará en <strong>{{ customer.fullName }}</strong>, que es el perfil que se
+      conserva.
+    </p>
+
+    <app-api-feedback severity="error" [message]="errorMessage()" />
+
+    <form class="customer-modal__search" (ngSubmit)="search()">
+      <input
+        type="search"
+        name="query"
+        placeholder="Nombre, correo o teléfono"
+        aria-label="Buscar perfil duplicado"
+        [ngModel]="query()"
+        (ngModelChange)="query.set($event)"
+      />
+      <button type="submit" [disabled]="isBusy()">Buscar</button>
+    </form>
+
+    @if (hasSearched() && !results().length) {
+      <p class="customer-modal__hint">No encontramos otros perfiles con ese criterio.</p>
+    }
+
+    @if (results().length) {
+      <ul class="customer-modal__options">
+        @for (candidate of results(); track candidate.id) {
+          <li>
+            <label>
+              <input
+                type="radio"
+                name="source"
+                [checked]="preview()?.source?.id === candidate.id"
+                [disabled]="isBusy()"
+                (change)="choose(candidate)"
+              />
+              <span>
+                <strong>{{ candidate.fullName }}</strong>
+                <small>{{ candidate.email }} · {{ candidate.phone }}</small>
+                <small>{{ candidate.linkedAccount ? 'Con cuenta vinculada' : 'Sin cuenta' }}</small>
+              </span>
+            </label>
+          </li>
+        }
+      </ul>
+    }
+
+    @if (preview(); as merge) {
+      <div class="customer-modal__compare">
+        <div>
+          <h3>Se conserva</h3>
+          <p><strong>{{ merge.target.fullName }}</strong></p>
+          <p>{{ merge.target.email }}</p>
+          <p>{{ merge.target.linkedAccount?.email || 'Sin cuenta' }}</p>
+        </div>
+        <div>
+          <h3>Se fusiona</h3>
+          <p><strong>{{ merge.source.fullName }}</strong></p>
+          <p>{{ merge.source.email }}</p>
+          <p>{{ merge.source.linkedAccount?.email || 'Sin cuenta' }}</p>
+        </div>
+      </div>
+
+      @if (merge.blockingReasons.length) {
+        <div class="customer-modal__warning customer-modal__blocking" role="alert">
+          <p>No se puede fusionar:</p>
+          <ul>
+            @for (reason of merge.blockingReasons; track reason) {
+              <li>{{ reason }}</li>
+            }
+          </ul>
+        </div>
+      } @else {
+        @if (merge.warnings.length) {
+          <div class="customer-modal__warning">
+            <ul>
+              @for (warning of merge.warnings; track warning) {
+                <li>{{ warning }}</li>
+              }
+            </ul>
+          </div>
+        }
+
+        <label class="customer-modal__check">
+          <input type="checkbox" [checked]="confirmed()" (change)="confirmed.set($any($event.target).checked)" />
+          <span>Confirmo que ambos perfiles son la misma persona.</span>
+        </label>
+      }
+    }
+
+    <div class="customer-modal__actions">
+      <button type="button" (click)="cancel()" [disabled]="isBusy()">Cancelar</button>
+      <button type="button" class="customer-modal__danger" (click)="confirm()" [disabled]="!canConfirm()">
+        {{ isBusy() ? 'Procesando...' : 'Fusionar' }}
+      </button>
+    </div>
+  </div>
+</div>

@@ -144,6 +144,11 @@ export class AppShellComponent {
           group: 'customer',
         },
         {
+          label: 'Mis membresías',
+          route: '/customer/memberships',
+          group: 'customer',
+        },
+        {
           label: 'Mi perfil',
           route: '/customer/profile',
           group: 'customer',
@@ -181,6 +186,16 @@ export class AppShellComponent {
         {
           label: 'Citas',
           route: '/admin/appointments',
+          group: 'admin',
+        },
+        {
+          label: 'Clientes',
+          route: '/admin/customers',
+          group: 'admin',
+        },
+        {
+          label: 'Membresías',
+          route: '/admin/membership-plans',
           group: 'admin',
         },
         {

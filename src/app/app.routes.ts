@@ -30,6 +30,26 @@ const loadAdminServicesListPage = () =>
     (module) => module.AdminServicesListPageComponent,
   );
 
+const loadAdminCustomersListPage = () =>
+  import('./features/admin/customers/pages/admin-customers-list-page/admin-customers-list-page.component').then(
+    (module) => module.AdminCustomersListPageComponent,
+  );
+
+const loadAdminCustomerDetailPage = () =>
+  import('./features/admin/customers/pages/admin-customer-detail-page/admin-customer-detail-page.component').then(
+    (module) => module.AdminCustomerDetailPageComponent,
+  );
+
+const loadAdminMembershipPlansListPage = () =>
+  import(
+    './features/admin/membership-plans/pages/admin-membership-plans-list-page/admin-membership-plans-list-page.component'
+  ).then((module) => module.AdminMembershipPlansListPageComponent);
+
+const loadAdminMembershipDetailPage = () =>
+  import('./features/admin/memberships/pages/admin-membership-detail-page/admin-membership-detail-page.component').then(
+    (module) => module.AdminMembershipDetailPageComponent,
+  );
+
 const loadAdminRolesListPage = () =>
   import('./features/admin/roles/pages/admin-roles-list-page/admin-roles-list-page.component').then(
     (module) => module.AdminRolesListPageComponent,
@@ -89,6 +109,16 @@ const loadCustomerProfilePage = () =>
   import('./features/customer/profile/pages/customer-profile-page/customer-profile-page.component').then(
     (module) => module.CustomerProfilePageComponent,
   );
+
+const loadCustomerMembershipsPage = () =>
+  import('./features/customer/memberships/pages/customer-memberships-page/customer-memberships-page.component').then(
+    (module) => module.CustomerMembershipsPageComponent,
+  );
+
+const loadCustomerMembershipDetailPage = () =>
+  import(
+    './features/customer/memberships/pages/customer-membership-detail-page/customer-membership-detail-page.component'
+  ).then((module) => module.CustomerMembershipDetailPageComponent);
 
 const loadCustomerReviewsPage = () =>
   import('./features/customer/reviews/pages/customer-reviews-page/customer-reviews-page.component').then(
@@ -249,6 +279,24 @@ export const routes: Routes = [
     title: 'Mi perfil',
   },
   {
+    path: 'customer/memberships',
+    canActivate: [authGuard, roleGuard],
+    loadComponent: loadCustomerMembershipsPage,
+    data: {
+      roles: [ROLE_NAMES.customer],
+    },
+    title: 'Mis membresías',
+  },
+  {
+    path: 'customer/memberships/:membershipId',
+    canActivate: [authGuard, roleGuard],
+    loadComponent: loadCustomerMembershipDetailPage,
+    data: {
+      roles: [ROLE_NAMES.customer],
+    },
+    title: 'Mi membresía',
+  },
+  {
     path: 'customer/reviews',
     canActivate: [authGuard, roleGuard],
     loadComponent: loadCustomerReviewsPage,
@@ -326,6 +374,42 @@ export const routes: Routes = [
       roles: [ROLE_NAMES.admin],
     },
     title: 'Servicios',
+  },
+  {
+    path: 'admin/customers',
+    canActivate: [authGuard, roleGuard],
+    loadComponent: loadAdminCustomersListPage,
+    data: {
+      roles: [ROLE_NAMES.admin],
+    },
+    title: 'Clientes',
+  },
+  {
+    path: 'admin/customers/:customerId',
+    canActivate: [authGuard, roleGuard],
+    loadComponent: loadAdminCustomerDetailPage,
+    data: {
+      roles: [ROLE_NAMES.admin],
+    },
+    title: 'Cliente',
+  },
+  {
+    path: 'admin/membership-plans',
+    canActivate: [authGuard, roleGuard],
+    loadComponent: loadAdminMembershipPlansListPage,
+    data: {
+      roles: [ROLE_NAMES.admin],
+    },
+    title: 'Membresías',
+  },
+  {
+    path: 'admin/memberships/:membershipId',
+    canActivate: [authGuard, roleGuard],
+    loadComponent: loadAdminMembershipDetailPage,
+    data: {
+      roles: [ROLE_NAMES.admin],
+    },
+    title: 'Membresía',
   },
   {
     path: 'admin/income',

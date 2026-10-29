@@ -1,0 +1,191 @@
+:host {
+  display: block;
+  min-width: 0;
+}
+
+.sp {
+  display: grid;
+  gap: 0.85rem;
+  min-width: 0;
+}
+
+.sp__days {
+  display: flex;
+  gap: 0.45rem;
+  overflow-x: auto;
+  padding: 0.15rem 0.1rem 0.4rem;
+  scroll-snap-type: x proximity;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+.sp__day {
+  flex: none;
+  display: grid;
+  justify-items: center;
+  gap: 0.1rem;
+  min-width: 3.9rem;
+  padding: 0.55rem 0.6rem;
+  border: 1px solid var(--z-hairline-light);
+  border-radius: 0.85rem;
+  background: var(--color-surface);
+  color: var(--color-text);
+  font: inherit;
+  cursor: pointer;
+  scroll-snap-align: start;
+  transition:
+    background 140ms ease,
+    border-color 140ms ease,
+    color 140ms ease;
+
+  @media (hover: hover) {
+    &:not(:disabled):hover {
+      border-color: var(--z-brass);
+    }
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+  }
+}
+
+.sp__day-top {
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: capitalize;
+}
+
+.sp__day-bottom {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.sp__day--selected {
+  background: var(--btn-primary-bg);
+  border-color: var(--btn-primary-bg);
+  color: var(--btn-primary-text);
+
+  .sp__day-bottom {
+    color: inherit;
+    opacity: 0.85;
+  }
+}
+
+.sp__day--empty {
+  opacity: 0.4;
+  text-decoration: line-through;
+}
+
+.sp__other {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.sp__other-input {
+  flex: 0 1 11rem;
+  min-width: 0;
+  padding: 0.45rem 0.6rem;
+  border: 1px solid var(--z-hairline-light);
+  border-radius: 0.65rem;
+  background: var(--color-surface);
+  color: var(--color-text);
+  font: inherit;
+  font-size: 0.88rem;
+
+  &:focus {
+    outline: 2px solid var(--z-brass);
+    outline-offset: 2px;
+  }
+}
+
+.sp__slots-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding-top: 0.25rem;
+  border-top: 1px solid var(--z-hairline-light);
+
+  strong {
+    padding-top: 0.6rem;
+    font-size: 0.95rem;
+  }
+}
+
+.sp__link {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--color-text);
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.sp__msg {
+  margin: 0;
+  padding: 0.5rem 0;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  text-align: center;
+}
+
+.sp__msg--error {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.5rem;
+  color: var(--color-error);
+}
+
+.sp__slots {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(4.6rem, 1fr));
+  gap: 0.5rem;
+}
+
+.sp__slot {
+  padding: 0.6rem 0.4rem;
+  border: 1px solid var(--z-hairline-light);
+  border-radius: 999px;
+  background: var(--color-surface);
+  color: var(--color-text);
+  font: inherit;
+  font-size: 0.92rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background 140ms ease,
+    border-color 140ms ease,
+    color 140ms ease;
+
+  // Only real pointers: on touch screens :hover sticks to the last tapped button.
+  @media (hover: hover) {
+    &:not(:disabled):hover {
+      border-color: var(--z-brass);
+    }
+  }
+
+  &.sp__slot--selected,
+  &:not(:disabled):active {
+    background: var(--btn-primary-bg);
+    border-color: var(--btn-primary-bg);
+    color: var(--btn-primary-text);
+  }
+
+  &:disabled {
+    cursor: wait;
+    opacity: 0.6;
+  }
+}

@@ -95,6 +95,10 @@
   border: 1px solid var(--color-border, #e2e2e2);
   border-radius: 0.75rem;
   padding: 1rem;
+  // A grid item defaults to min-width: auto and would let a wide table spill past its border;
+  // allow it to shrink and scroll its own content instead.
+  min-width: 0;
+  overflow-x: auto;
 
   h2 {
     font-size: 1rem;
@@ -106,11 +110,17 @@
   width: 100%;
   border-collapse: collapse;
   margin-top: 0.75rem;
+  font-size: 0.875rem;
 
   th,
   td {
     text-align: left;
-    padding: 0.5rem 0.6rem;
+    padding: 0.5rem 0.3rem;
     border-bottom: 1px solid var(--color-border, #e2e2e2);
+  }
+
+  // Keep "$" next to its amount; only the name column wraps.
+  td:not(:first-child) {
+    white-space: nowrap;
   }
 }

@@ -1,0 +1,33 @@
+<div class="membership-modal__overlay" (click)="cancel()">
+  <div class="membership-modal__card" (click)="$event.stopPropagation()">
+    <h2>{{ title }}</h2>
+
+    <app-api-feedback severity="error" [message]="errorMessage" />
+
+    @if (message) {
+      <p class="membership-modal__hint">{{ message }}</p>
+    }
+
+    <label class="membership-modal__field">
+      <span>{{ reasonLabel }}</span>
+      <textarea name="reason" [attr.maxlength]="reasonMaxLength" [ngModel]="reason()" (ngModelChange)="reason.set($event)"></textarea>
+    </label>
+    @if (reason().length > 0 && !reasonIsValid()) {
+      <small class="membership-modal__error">Escribe al menos 3 caracteres.</small>
+    }
+
+    @if (confirmationText) {
+      <label class="membership-modal__check">
+        <input type="checkbox" [checked]="checked()" (change)="checked.set($any($event.target).checked)" />
+        <span>{{ confirmationText }}</span>
+      </label>
+    }
+
+    <div class="membership-modal__actions">
+      <button type="button" (click)="cancel()" [disabled]="isBusy">Cancelar</button>
+      <button type="button" [class.membership-modal__danger]="danger" (click)="confirm()" [disabled]="!canConfirm()">
+        {{ isBusy ? 'Procesando...' : confirmLabel }}
+      </button>
+    </div>
+  </div>
+</div>

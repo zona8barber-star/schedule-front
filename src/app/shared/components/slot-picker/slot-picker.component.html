@@ -1,0 +1,64 @@
+<div class="sp">
+  <div class="sp__days" role="listbox" aria-label="Elige el día">
+    @for (day of days(); track day.date) {
+      <button
+        class="sp__day"
+        type="button"
+        role="option"
+        [attr.data-date]="day.date"
+        [attr.aria-selected]="day.date === selectedDate()"
+        [class.sp__day--selected]="day.date === selectedDate()"
+        [class.sp__day--empty]="day.slotCount === 0"
+        [disabled]="day.slotCount === 0"
+        [attr.aria-label]="day.topLabel + ' ' + day.bottomLabel + (day.slotCount === 0 ? ', sin horarios' : '')"
+        (click)="selectDay(day.date)"
+      >
+        <span class="sp__day-top">{{ day.topLabel }}</span>
+        <span class="sp__day-bottom">{{ day.bottomLabel }}</span>
+      </button>
+    }
+  </div>
+
+  <label class="sp__other">
+    <span>¿Otra fecha?</span>
+    <input
+      class="sp__other-input"
+      type="date"
+      [min]="today()"
+      [value]="selectedDate()"
+      (change)="onOtherDate($event)"
+    />
+  </label>
+
+  <div class="sp__slots-head">
+    <strong>{{ selectedDateLabel() }}</strong>
+    @if (isOutsideWindow()) {
+      <button class="sp__link" type="button" (click)="selectDay(today())">Volver a hoy</button>
+    }
+  </div>
+
+  @if (errorMessage()) {
+    <div class="sp__msg sp__msg--error">
+      <span>{{ errorMessage() }}</span>
+      <button class="sp__link" type="button" (click)="reload()">Reintentar</button>
+    </div>
+  } @else if (selectedSlots() === null) {
+    <p class="sp__msg">Buscando horarios disponibles...</p>
+  } @else if (!selectedSlots()!.length) {
+    <p class="sp__msg">No hay horarios libres este día. Prueba con otro.</p>
+  } @else {
+    <div class="sp__slots">
+      @for (slot of selectedSlots(); track slot.startAtUtc) {
+        <button
+          class="sp__slot"
+          type="button"
+          [class.sp__slot--selected]="slot.startAtUtc === selectedStartAtUtc()"
+          [disabled]="disabled()"
+          (click)="pick(slot)"
+        >
+          {{ formatTime(slot) }}
+        </button>
+      }
+    </div>
+  }
+</div>

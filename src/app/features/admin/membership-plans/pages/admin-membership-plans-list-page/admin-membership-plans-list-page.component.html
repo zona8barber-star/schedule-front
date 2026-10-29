@@ -1,0 +1,71 @@
+<section class="plans">
+  <header class="plans__header">
+    <h1>Membresías</h1>
+    <button class="plans__create-btn" type="button" (click)="openCreate()">+ Nuevo tipo</button>
+  </header>
+
+  <app-api-feedback severity="error" [message]="errorMessage()" />
+
+  @if (isLoading()) {
+    <app-page-state kind="loading" message="Cargando tipos de membresía..." />
+  } @else if (!plans().length) {
+    <app-page-state message="Aún no hay tipos de membresía. Crea el primero." />
+  } @else {
+    <div class="plans__table-wrap">
+      <table class="plans__table">
+        <thead>
+          <tr>
+            <th>Nombre</th>
+            <th>Modalidad</th>
+            <th>Precio</th>
+            <th>Vigencia</th>
+            <th>Servicios</th>
+            <th>Obsequios</th>
+            <th>Estado</th>
+            <th aria-label="Acciones"></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (plan of plans(); track plan.id) {
+            <tr [class.plans__row--inactive]="!plan.isActive">
+              <td>
+                <!-- The name opens the editor, so it is reachable on phones without scrolling the table. -->
+                <button class="plans__name-btn" type="button" (click)="openEdit(plan.id)">{{ plan.name }}</button>
+              </td>
+              <td>{{ modeSummary(plan) }}</td>
+              <td class="plans__nowrap">$ {{ plan.price | number: '1.0-0' }}</td>
+              <td class="plans__nowrap">{{ plan.defaultDurationDays }} días</td>
+              <td class="plans__services">{{ servicesSummary(plan) }}</td>
+              <td>{{ plan.giftRules.length || '—' }}</td>
+              <td>{{ plan.isActive ? 'Activo' : 'Inactivo' }}</td>
+              <td class="plans__actions">
+                <button class="plans__action-btn" type="button" (click)="openEdit(plan.id)" [disabled]="busyId() === plan.id">
+                  Editar
+                </button>
+                <button class="plans__action-btn" type="button" (click)="toggleActive(plan)" [disabled]="busyId() === plan.id">
+                  {{ plan.isActive ? 'Desactivar' : 'Activar' }}
+                </button>
+                <button
+                  class="plans__action-btn plans__action-btn--delete"
+                  type="button"
+                  (click)="deletePlan(plan)"
+                  [disabled]="busyId() === plan.id"
+                >
+                  Eliminar
+                </button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</section>
+
+@if (isModalOpen()) {
+  <app-admin-membership-plan-form-modal
+    [planId]="editingPlanId()"
+    (saved)="onSaved($event)"
+    (cancelled)="closeModal()"
+  />
+}
