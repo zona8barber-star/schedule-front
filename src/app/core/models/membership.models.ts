@@ -5,7 +5,7 @@ export type MembershipStatus = 'PendingActivation' | 'Active' | 'Annulled';
 /** Stored status plus dates: an active membership can still be scheduled (not started) or expired. */
 export type MembershipDisplayStatus = 'PendingActivation' | 'Scheduled' | 'Active' | 'Expired' | 'Annulled';
 
-export type MembershipGiftStatus = 'Granted' | 'Blocked' | 'PendingDelivery' | 'NotDeliverable';
+export type MembershipGiftStatus = 'Granted' | 'Blocked' | 'PendingDelivery' | 'Delivered' | 'NotDeliverable';
 
 export type MembershipEventType =
   | 'Sold'
@@ -53,6 +53,26 @@ export interface MembershipGiftView {
   serviceName: string | null;
   description: string | null;
   status: MembershipGiftStatus;
+  /** The current (not reversed) delivery of a physical gift, if any. */
+  deliveryId: string | null;
+  deliveredOn: string | null;
+}
+
+export interface MembershipGiftDeliveryReversalView {
+  reason: string;
+  performedAt: string;
+  performedByName: string;
+}
+
+export interface MembershipGiftDeliveryView {
+  id: string;
+  giftId: string;
+  giftDescription: string;
+  quantity: number;
+  deliveredOn: string;
+  registeredAt: string;
+  registeredByName: string;
+  reversal: MembershipGiftDeliveryReversalView | null;
 }
 
 export interface MembershipLinkedPeerView {
@@ -139,6 +159,7 @@ export interface CustomerMembershipDetailView {
   income: MembershipIncomeView | null;
   events: MembershipEventView[];
   consumptions: MembershipConsumptionView[];
+  giftDeliveries: MembershipGiftDeliveryView[];
   createdAt: string;
 }
 
@@ -189,5 +210,15 @@ export interface MembershipConsumptionRequest {
 }
 
 export interface MembershipConsumptionReverseRequest {
+  reason: string;
+}
+
+/** A whole physical gift is handed over; `idempotencyKey` makes a retried request count once. */
+export interface MembershipGiftDeliveryRequest {
+  deliveredOn: string;
+  idempotencyKey: string;
+}
+
+export interface MembershipGiftDeliveryReverseRequest {
   reason: string;
 }

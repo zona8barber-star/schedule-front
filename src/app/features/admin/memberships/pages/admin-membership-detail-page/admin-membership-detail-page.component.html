@@ -180,8 +180,46 @@
               <span class="membership-detail__balance-label">{{ gift.kind === 'Service' ? 'Servicio' : 'Producto' }}</span>
               <strong>{{ gift.quantity }} × {{ gift.kind === 'Service' ? gift.serviceName : gift.description }}</strong>
               <span class="membership-detail__muted">
-                {{ giftStatusLabels[gift.status] }} · {{ conditionLabels[gift.condition] }}
+                {{ giftStatusLabels[gift.status] }}
+                @if (gift.deliveredOn) {
+                  el {{ gift.deliveredOn }}
+                }
+                · {{ conditionLabels[gift.condition] }}
               </span>
+              @if (canDeliver(gift)) {
+                <button class="membership-detail__btn membership-detail__btn--inline" type="button" (click)="openDelivery(gift)">
+                  Registrar entrega
+                </button>
+              } @else if (gift.deliveryId) {
+                <button class="membership-detail__btn membership-detail__btn--inline" type="button" (click)="openDeliveryReversal(gift)">
+                  Revertir entrega
+                </button>
+              }
+            </li>
+          }
+        </ul>
+      }
+      @if (m.giftDeliveries.length) {
+        <h3>Historial de entregas</h3>
+        <ul class="membership-detail__balances">
+          @for (delivery of m.giftDeliveries; track delivery.id) {
+            <li [class.membership-detail__reversed]="delivery.reversal">
+              <span class="membership-detail__balance-label">
+                Entregado el {{ delivery.deliveredOn }}
+                @if (delivery.reversal) {
+                  · Revertido
+                }
+              </span>
+              <strong>{{ delivery.quantity }} × {{ delivery.giftDescription }}</strong>
+              <span class="membership-detail__muted">
+                Registrado el {{ delivery.registeredAt | date: 'medium' }} por {{ delivery.registeredByName }}
+              </span>
+              @if (delivery.reversal; as reversal) {
+                <span>
+                  Revertido el {{ reversal.performedAt | date: 'medium' }} por {{ reversal.performedByName }} — Motivo:
+                  {{ reversal.reason }}
+                </span>
+              }
             </li>
           }
         </ul>
@@ -274,6 +312,28 @@
           [isBusy]="isBusy()"
           [errorMessage]="modalError()"
           (confirmed)="reverse($event)"
+          (cancelled)="closeModal()"
+        />
+      }
+      @case ('deliverGift') {
+        @if (selectedGift(); as gift) {
+          <app-admin-membership-gift-delivery-modal
+            [membership]="m"
+            [gift]="gift"
+            (delivered)="onDelivered($event)"
+            (cancelled)="closeModal()"
+          />
+        }
+      }
+      @case ('reverseDelivery') {
+        <app-admin-membership-reason-modal
+          title="Revertir entrega"
+          [message]="reverseDeliveryMessage(m)"
+          confirmLabel="Revertir entrega"
+          [danger]="true"
+          [isBusy]="isBusy()"
+          [errorMessage]="modalError()"
+          (confirmed)="reverseDelivery($event)"
           (cancelled)="closeModal()"
         />
       }

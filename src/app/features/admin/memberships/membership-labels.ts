@@ -16,6 +16,7 @@ export const MEMBERSHIP_GIFT_STATUS_LABELS: Record<MembershipGiftStatus, string>
   Granted: 'Otorgado',
   Blocked: 'Bloqueado por anulación',
   PendingDelivery: 'Pendiente de entrega',
+  Delivered: 'Entregado',
   NotDeliverable: 'No entregable por anulación',
 };
 

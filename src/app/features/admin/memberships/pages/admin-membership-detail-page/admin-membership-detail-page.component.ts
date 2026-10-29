@@ -8,6 +8,7 @@ import {
   CustomerMembershipDetailView,
   MembershipAllowanceView,
   MembershipConsumptionView,
+  MembershipGiftView,
 } from '../../../../../core/models/membership.models';
 import { AdminMembershipsApiService } from '../../../../../core/services/admin-memberships-api.service';
 import { ConfirmModalService } from '../../../../../core/services/confirm-modal.service';
@@ -17,6 +18,7 @@ import { ApiFeedbackComponent } from '../../../../../shared/components/api-feedb
 import { PageStateComponent } from '../../../../../shared/components/page-state/page-state.component';
 import { GIFT_CONDITION_LABELS } from '../../../membership-plans/membership-plan-defaults';
 import { AdminMembershipConsumeModalComponent } from '../../components/admin-membership-consume-modal/admin-membership-consume-modal.component';
+import { AdminMembershipGiftDeliveryModalComponent } from '../../components/admin-membership-gift-delivery-modal/admin-membership-gift-delivery-modal.component';
 import { AdminMembershipIncomeLinkModalComponent } from '../../components/admin-membership-income-link-modal/admin-membership-income-link-modal.component';
 import { AdminMembershipReasonModalComponent } from '../../components/admin-membership-reason-modal/admin-membership-reason-modal.component';
 import {
@@ -26,7 +28,15 @@ import {
   bogotaToday,
 } from '../../membership-labels';
 
-type MembershipModal = 'annul' | 'activateExpired' | 'link' | 'unlink' | 'consume' | 'reverse';
+type MembershipModal =
+  | 'annul'
+  | 'activateExpired'
+  | 'link'
+  | 'unlink'
+  | 'consume'
+  | 'reverse'
+  | 'deliverGift'
+  | 'reverseDelivery';
 
 @Component({
   selector: 'app-admin-membership-detail-page',
@@ -39,6 +49,7 @@ type MembershipModal = 'annul' | 'activateExpired' | 'link' | 'unlink' | 'consum
     AdminMembershipReasonModalComponent,
     AdminMembershipIncomeLinkModalComponent,
     AdminMembershipConsumeModalComponent,
+    AdminMembershipGiftDeliveryModalComponent,
   ],
   templateUrl: './admin-membership-detail-page.component.html',
   styleUrl: './admin-membership-detail-page.component.scss',
@@ -62,6 +73,7 @@ export class AdminMembershipDetailPageComponent implements OnInit {
   readonly isBusy = signal(false);
   readonly modalError = signal<string | null>(null);
   readonly reversing = signal<MembershipConsumptionView | null>(null);
+  readonly selectedGift = signal<MembershipGiftView | null>(null);
 
   /** Consumptions need an active membership that has started; an expired one still takes retroactive ones. */
   readonly canConsume = computed(() => {
@@ -189,6 +201,45 @@ export class AdminMembershipDetailPageComponent implements OnInit {
       ? `Se devolverán ${consumption.quantity} × ${consumption.serviceName} a los saldos de donde salieron. El registro original se conserva.`
       : '';
     return membership.status === 'Annulled' ? `${base} La membresía sigue anulada: esas unidades quedan bloqueadas.` : base;
+  }
+
+  /** Physical gifts are handed over once the membership is active, never on an annulled one. */
+  canDeliver(gift: MembershipGiftView): boolean {
+    return gift.kind === 'Physical' && gift.status === 'PendingDelivery' && this.membership()?.status === 'Active';
+  }
+
+  openDelivery(gift: MembershipGiftView): void {
+    this.selectedGift.set(gift);
+    this.open('deliverGift');
+  }
+
+  onDelivered(membership: CustomerMembershipDetailView): void {
+    this.membership.set(membership);
+    this.openModal.set(null);
+    this.toastService.success('Entrega registrada.');
+  }
+
+  openDeliveryReversal(gift: MembershipGiftView): void {
+    this.selectedGift.set(gift);
+    this.open('reverseDelivery');
+  }
+
+  async reverseDelivery(reason: string | null): Promise<void> {
+    const membership = this.membership();
+    const gift = this.selectedGift();
+    if (!membership || !gift?.deliveryId || !reason) return;
+    await this.run(
+      () => this.membershipsApi.reverseGiftDelivery(membership.id, gift.id, gift.deliveryId!, { reason }),
+      'Entrega revertida.',
+    );
+  }
+
+  reverseDeliveryMessage(membership: CustomerMembershipDetailView): string {
+    const gift = this.selectedGift();
+    const base = gift ? `La entrega de ${gift.quantity} × ${gift.description} se marcará como revertida; el registro se conserva.` : '';
+    return membership.status === 'Annulled'
+      ? `${base} La membresía está anulada: el obsequio quedará no entregable.`
+      : `${base} El obsequio volverá a quedar pendiente de entrega.`;
   }
 
   onLinked(membership: CustomerMembershipDetailView): void {

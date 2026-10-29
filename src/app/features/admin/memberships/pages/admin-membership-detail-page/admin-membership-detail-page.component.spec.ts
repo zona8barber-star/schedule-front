@@ -51,11 +51,12 @@ describe('AdminMembershipDetailPageComponent', () => {
       },
     ],
     gifts: [
-      { id: 'g-1', kind: 'Physical', condition: 'FirstPurchaseOfPlan', quantity: 1, serviceId: null, serviceName: null, description: 'Gorra', status: 'PendingDelivery' },
+      { id: 'g-1', kind: 'Physical', condition: 'FirstPurchaseOfPlan', quantity: 1, serviceId: null, serviceName: null, description: 'Gorra', status: 'PendingDelivery', deliveryId: null, deliveredOn: null },
     ],
     income: null,
     events: [],
     consumptions: [],
+    giftDeliveries: [],
     createdAt: '',
   };
 
@@ -241,5 +242,89 @@ describe('AdminMembershipDetailPageComponent', () => {
     expect(text).toContain('Anulada');
     const buttons = [...fixture.nativeElement.querySelectorAll('button')].map((button) => button.textContent.trim());
     expect(buttons).not.toContain('Revertir');
+  });
+
+  const delivery = {
+    id: 'd-1',
+    giftId: 'g-1',
+    giftDescription: 'Gorra',
+    quantity: 1,
+    deliveredOn: '2026-10-25',
+    registeredAt: '2026-10-28T20:00:00Z',
+    registeredByName: 'Admin Principal',
+    reversal: null,
+  };
+  const deliveredGift = { ...base.gifts[0], status: 'Delivered' as const, deliveryId: 'd-1', deliveredOn: '2026-10-25' };
+
+  it('offers delivering a pending physical gift only on an active membership', async () => {
+    const pending = await openPage(base);
+    let buttons = [...pending.nativeElement.querySelectorAll('button')].map((button) => button.textContent.trim());
+    expect(buttons).not.toContain('Registrar entrega');
+    httpMock.verify();
+    TestBed.resetTestingModule();
+
+    const active = await openPage({ ...base, status: 'Active', displayStatus: 'Active' });
+    buttons = [...active.nativeElement.querySelectorAll('button')].map((button) => button.textContent.trim());
+    expect(buttons).toContain('Registrar entrega');
+    expect(buttons).not.toContain('Revertir entrega');
+  });
+
+  it('shows a delivered gift with its date and history, and reverses it with a reason', async () => {
+    const fixture = await openPage({
+      ...base,
+      status: 'Active',
+      displayStatus: 'Active',
+      gifts: [deliveredGift],
+      giftDeliveries: [delivery],
+    });
+    const page = harness.routeDebugElement!.componentInstance as AdminMembershipDetailPageComponent;
+    const text = fixture.nativeElement.textContent as string;
+    expect(text).toContain('Entregado el 2026-10-25');
+    expect(text).toContain('Historial de entregas');
+    expect(text).toContain('Admin Principal');
+
+    page.openDeliveryReversal(page.membership()!.gifts[0]);
+    fixture.detectChanges();
+    expect(fixture.nativeElement.textContent).toContain('volverá a quedar pendiente de entrega');
+
+    const reversing = page.reverseDelivery('Se entregó al cliente equivocado');
+    const req = httpMock.expectOne(`${api}/admin/memberships/m-1/gifts/g-1/deliveries/d-1/reverse`);
+    expect(req.request.body).toEqual({ reason: 'Se entregó al cliente equivocado' });
+    req.flush({
+      ...page.membership()!,
+      gifts: [{ ...base.gifts[0], status: 'PendingDelivery' }],
+      giftDeliveries: [{ ...delivery, reversal: { reason: 'Se entregó al cliente equivocado', performedAt: '2026-10-28T21:00:00Z', performedByName: 'Admin Principal' } }],
+    });
+    await reversing;
+    fixture.detectChanges();
+
+    const after = fixture.nativeElement.textContent as string;
+    expect(after).toContain('Motivo: Se entregó al cliente equivocado');
+    expect(after).toContain('Pendiente de entrega');
+    const buttons = [...fixture.nativeElement.querySelectorAll('button')].map((button) => button.textContent.trim());
+    expect(buttons).toContain('Registrar entrega');
+  });
+
+  it('keeps delivered gifts delivered on an annulled membership, allows reversing them and never offers new deliveries', async () => {
+    const fixture = await openPage({
+      ...base,
+      status: 'Annulled',
+      displayStatus: 'Annulled',
+      annulmentReason: 'Retracto',
+      annulledAt: '2026-10-28T21:00:00Z',
+      gifts: [deliveredGift, { ...base.gifts[0], id: 'g-2', description: 'Llavero', status: 'NotDeliverable' }],
+      giftDeliveries: [delivery],
+    });
+    const page = harness.routeDebugElement!.componentInstance as AdminMembershipDetailPageComponent;
+    const text = fixture.nativeElement.textContent as string;
+    expect(text).toContain('Entregado el 2026-10-25');
+    expect(text).toContain('No entregable por anulación');
+    const buttons = [...fixture.nativeElement.querySelectorAll('button')].map((button) => button.textContent.trim());
+    expect(buttons).not.toContain('Registrar entrega');
+    expect(buttons).toContain('Revertir entrega');
+
+    page.openDeliveryReversal(page.membership()!.gifts[0]);
+    fixture.detectChanges();
+    expect(fixture.nativeElement.textContent).toContain('el obsequio quedará no entregable');
   });
 });

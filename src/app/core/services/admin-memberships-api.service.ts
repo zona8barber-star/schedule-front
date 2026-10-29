@@ -9,6 +9,8 @@ import {
   MembershipAnnulRequest,
   MembershipConsumptionRequest,
   MembershipConsumptionReverseRequest,
+  MembershipGiftDeliveryRequest,
+  MembershipGiftDeliveryReverseRequest,
   MembershipIncomeCandidateView,
   MembershipIncomeLinkRequest,
   MembershipIncomeUnlinkRequest,
@@ -83,6 +85,25 @@ export class AdminMembershipsApiService {
   reverseConsumption(membershipId: string, consumptionId: string, request: MembershipConsumptionReverseRequest) {
     return this.httpClient.post<CustomerMembershipDetailView>(
       this.buildUrl(`/admin/memberships/${membershipId}/consumptions/${consumptionId}/reverse`),
+      request,
+    );
+  }
+
+  deliverGift(membershipId: string, giftId: string, request: MembershipGiftDeliveryRequest) {
+    return this.httpClient.post<CustomerMembershipDetailView>(
+      this.buildUrl(`/admin/memberships/${membershipId}/gifts/${giftId}/deliveries`),
+      request,
+    );
+  }
+
+  reverseGiftDelivery(
+    membershipId: string,
+    giftId: string,
+    deliveryId: string,
+    request: MembershipGiftDeliveryReverseRequest,
+  ) {
+    return this.httpClient.post<CustomerMembershipDetailView>(
+      this.buildUrl(`/admin/memberships/${membershipId}/gifts/${giftId}/deliveries/${deliveryId}/reverse`),
       request,
     );
   }

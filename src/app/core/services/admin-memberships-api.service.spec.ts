@@ -69,6 +69,16 @@ describe('AdminMembershipsApiService', () => {
     expect(reverseReq.request.method).toBe('POST');
     expect(reverseReq.request.body).toEqual({ reason: 'Error' });
 
+    service.deliverGift('m-1', 'g-1', { deliveredOn: '2026-10-28', idempotencyKey: 'k-2' }).subscribe();
+    const deliverReq = httpMock.expectOne(`${api}/admin/memberships/m-1/gifts/g-1/deliveries`);
+    expect(deliverReq.request.method).toBe('POST');
+    expect(deliverReq.request.body).toEqual({ deliveredOn: '2026-10-28', idempotencyKey: 'k-2' });
+
+    service.reverseGiftDelivery('m-1', 'g-1', 'd-1', { reason: 'Error' }).subscribe();
+    const reverseDeliveryReq = httpMock.expectOne(`${api}/admin/memberships/m-1/gifts/g-1/deliveries/d-1/reverse`);
+    expect(reverseDeliveryReq.request.method).toBe('POST');
+    expect(reverseDeliveryReq.request.body).toEqual({ reason: 'Error' });
+
     service.incomeCandidates('2026-10-28').subscribe();
     expect(httpMock.expectOne(`${api}/admin/memberships/income-candidates?date=2026-10-28`).request.method).toBe('GET');
   });
