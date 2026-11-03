@@ -26,6 +26,16 @@ const loadAdminStaffAvailabilityPage = () =>
     './features/admin/staff/pages/admin-staff-availability-page/admin-staff-availability-page.component'
   ).then((module) => module.AdminStaffAvailabilityPageComponent);
 
+const loadOwnCustomerProfilePage = () =>
+  import(
+    './features/customer/customer-profile/pages/own-customer-profile-page/own-customer-profile-page.component'
+  ).then((module) => module.OwnCustomerProfilePageComponent);
+
+const loadAdminCustomerClaimsPage = () =>
+  import(
+    './features/admin/customer-claims/pages/admin-customer-claims-page/admin-customer-claims-page.component'
+  ).then((module) => module.AdminCustomerClaimsPageComponent);
+
 const loadAdminServiceRecordsPage = () =>
   import(
     './features/admin/service-records/pages/admin-service-records-page/admin-service-records-page.component'
@@ -295,6 +305,15 @@ export const routes: Routes = [
     title: 'Mi perfil',
   },
   {
+    path: 'customer/customer-profile',
+    canActivate: [authGuard, roleGuard],
+    loadComponent: loadOwnCustomerProfilePage,
+    data: {
+      roles: [ROLE_NAMES.customer],
+    },
+    title: 'Mi perfil de cliente',
+  },
+  {
     path: 'customer/memberships',
     canActivate: [authGuard, roleGuard],
     loadComponent: loadCustomerMembershipsPage,
@@ -427,6 +446,16 @@ export const routes: Routes = [
       roles: [ROLE_NAMES.admin],
     },
     title: 'Membresías',
+  },
+  {
+    // customers.claims.approve is critical: the API checks it against the database on every request.
+    path: 'admin/customer-claims',
+    canActivate: [authGuard, permissionGuard],
+    loadComponent: loadAdminCustomerClaimsPage,
+    data: {
+      permissions: [PERMISSION_CODES.customerClaimsApprove],
+    },
+    title: 'Reclamaciones de clientes',
   },
   {
     // service-records.approve is critical: the API checks it against the database on every request.

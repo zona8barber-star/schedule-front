@@ -1,0 +1,112 @@
+<section class="own-profile">
+  <header class="own-profile__hero">
+    <p class="own-profile__eyebrow">Cuenta</p>
+    <h1>Mi perfil de cliente</h1>
+    <p>Tu perfil de cliente reúne tus membresías y tu historial en la barbería.</p>
+  </header>
+
+  <app-api-feedback severity="error" [message]="errorMessage()" />
+  <app-api-feedback severity="info" [message]="successMessage()" />
+
+  @if (isLoading()) {
+    <article class="own-profile__panel">
+      <app-page-state kind="loading" message="Cargando..." />
+    </article>
+  } @else if (status(); as current) {
+    @if (current.profile; as profile) {
+      <article class="own-profile__panel">
+        <h2>{{ profile.fullName }}</h2>
+        <dl class="own-profile__facts">
+          <div><dt>Teléfono</dt><dd>{{ profile.phone }}</dd></div>
+          <div><dt>Correo</dt><dd>{{ profile.email }}</dd></div>
+          <div><dt>Vinculado a tu cuenta</dt><dd>{{ profile.linkedAt | date: 'mediumDate' }}</dd></div>
+        </dl>
+        <a class="own-profile__link" routerLink="/customer/memberships">Ver mis membresías</a>
+      </article>
+    } @else if (current.pendingClaim; as claim) {
+      <article class="own-profile__panel">
+        <h2>Solicitud en revisión</h2>
+        <p>
+          Enviaste tu solicitud el {{ claim.submittedAt | date: 'medium' }}. La próxima vez que vayas a la barbería, verificarán tu
+          identidad y vincularán tu perfil a esta cuenta.
+        </p>
+        <dl class="own-profile__facts">
+          <div><dt>Nombre</dt><dd>{{ claim.fullName }}</dd></div>
+          <div><dt>Teléfono</dt><dd>{{ claim.phone }}</dd></div>
+          <div><dt>Correo</dt><dd>{{ claim.email }}</dd></div>
+        </dl>
+      </article>
+    } @else if (!choice()) {
+      <div class="own-profile__choices">
+        <button type="button" class="own-profile__choice" (click)="choose('new')">
+          <strong>Soy cliente nuevo</strong>
+          <span>Nunca he sido atendido en la barbería o no tengo membresías. Creo mi perfil ahora.</span>
+        </button>
+        <button type="button" class="own-profile__choice" (click)="choose('existing')">
+          <strong>Ya soy cliente</strong>
+          <span>Ya me han atendido o tengo una membresía. Pido vincular mi perfil; la barbería lo verificará en persona.</span>
+        </button>
+      </div>
+    } @else {
+      <article class="own-profile__panel">
+        <h2>{{ choice() === 'new' ? 'Crear mi perfil de cliente' : 'Solicitar vincular mi perfil' }}</h2>
+        @if (choice() === 'existing') {
+          <p>Escribe los datos con los que te conocen en la barbería. No verás ningún perfil hasta que la barbería apruebe la solicitud.</p>
+        }
+        <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+          <fieldset [disabled]="isSaving()">
+            <label class="own-profile__field">
+              <span>Nombre completo</span>
+              <input type="text" formControlName="fullName" maxlength="120" autocomplete="name" />
+            </label>
+            @if (form.controls.fullName.touched && form.controls.fullName.invalid) {
+              <small class="own-profile__error">El nombre debe tener entre 2 y 120 caracteres.</small>
+            }
+            <label class="own-profile__field">
+              <span>Teléfono</span>
+              <input type="tel" formControlName="phone" maxlength="40" autocomplete="tel" />
+            </label>
+            @if (form.controls.phone.touched && form.controls.phone.invalid) {
+              <small class="own-profile__error">Ingresa un teléfono con al menos 7 dígitos.</small>
+            }
+            <label class="own-profile__field">
+              <span>Correo electrónico</span>
+              <input type="email" formControlName="email" maxlength="256" autocomplete="email" />
+            </label>
+            @if (form.controls.email.touched && form.controls.email.invalid) {
+              <small class="own-profile__error">Ingresa un correo electrónico válido.</small>
+            }
+            @if (choice() === 'existing') {
+              <label class="own-profile__field">
+                <span>Algo que ayude a encontrarte (opcional)</span>
+                <textarea formControlName="notes" maxlength="500" rows="2" placeholder="Por ejemplo: cliente desde 2024, me atiende Alex"></textarea>
+              </label>
+            }
+          </fieldset>
+          <div class="own-profile__actions">
+            <button type="button" class="own-profile__secondary" (click)="choose(null)" [disabled]="isSaving()">Volver</button>
+            <button type="submit" class="own-profile__primary" [disabled]="isSaving()">
+              {{ isSaving() ? 'Enviando...' : choice() === 'new' ? 'Crear mi perfil' : 'Enviar solicitud' }}
+            </button>
+          </div>
+        </form>
+      </article>
+    }
+
+    @if (current.claims.length && !current.pendingClaim) {
+      <article class="own-profile__panel">
+        <h2>Mis solicitudes</h2>
+        <ul class="own-profile__claims">
+          @for (claim of current.claims; track claim.id) {
+            <li>
+              <span>{{ claim.submittedAt | date: 'mediumDate' }} · {{ statusLabels[claim.status] }}</span>
+              @if (claim.rejectionReason) {
+                <small>Motivo: {{ claim.rejectionReason }}</small>
+              }
+            </li>
+          }
+        </ul>
+      </article>
+    }
+  }
+</section>

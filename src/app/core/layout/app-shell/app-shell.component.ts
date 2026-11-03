@@ -151,6 +151,11 @@ export class AppShellComponent {
           group: 'customer',
         },
         {
+          label: 'Mi perfil de cliente',
+          route: '/customer/customer-profile',
+          group: 'customer',
+        },
+        {
           label: 'Mi perfil',
           route: '/customer/profile',
           group: 'customer',
@@ -276,6 +281,14 @@ export class AppShellComponent {
           group: 'admin',
         },
       );
+    }
+
+    if (this.authService.hasPermission(PERMISSION_CODES.customerClaimsApprove)) {
+      links.push({
+        label: 'Reclamaciones de clientes',
+        route: '/admin/customer-claims',
+        group: 'admin',
+      });
     }
 
     if (this.authService.hasPermission(PERMISSION_CODES.serviceRecordsApprove)) {

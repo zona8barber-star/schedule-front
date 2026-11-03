@@ -73,6 +73,9 @@ export interface ServiceRecordView {
   rejectedByName: string | null;
   /** Concurrency token: send it back unchanged when reviewing. */
   version: number;
+  /** Profile now linked to the account that booked the appointment; a suggestion, never applied automatically. */
+  suggestedCustomerId?: string | null;
+  suggestedCustomerName?: string | null;
 }
 
 export interface ServiceRecordApproveRequest {

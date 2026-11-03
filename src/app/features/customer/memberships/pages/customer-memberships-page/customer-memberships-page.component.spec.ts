@@ -52,7 +52,8 @@ describe('CustomerMembershipsPageComponent', () => {
     const element = await render([]);
 
     expect(element.textContent).toContain('Aún no tienes membresías');
-    expect(element.textContent).toContain('pide en la barbería que la vinculen a tu cuenta');
+    expect(element.textContent).toContain('solicita vincular tu perfil de cliente');
+    expect(fixture.nativeElement.querySelector('a[href="/customer/customer-profile"]')).toBeTruthy();
   });
 
   it('lists each membership with its status, validity and paid and gifted balances', async () => {

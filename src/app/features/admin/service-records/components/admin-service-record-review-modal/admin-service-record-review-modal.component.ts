@@ -200,6 +200,14 @@ export class AdminServiceRecordReviewModalComponent implements OnInit {
     this.selectCustomer({ id: created.id, fullName: created.fullName, phoneHint: created.phoneHint ?? '', memberships: [] });
   }
 
+  /** The profile of the account that booked the appointment, linked after the registration; the reviewer decides. */
+  useSuggestedCustomer(): void {
+    const id = this.record.suggestedCustomerId;
+    if (id) {
+      this.selectCustomer({ id, fullName: this.record.suggestedCustomerName ?? 'Cliente', phoneHint: '', memberships: [] });
+    }
+  }
+
   clearCustomer(): void {
     this.customer.set(null);
     this.form.controls.customerMembershipId.setValue('');

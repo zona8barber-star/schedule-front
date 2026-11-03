@@ -193,3 +193,14 @@
   font-weight: 700;
   text-decoration: none;
 }
+
+.my-memberships__profile-link {
+  display: inline-block;
+  margin-top: 0.75rem;
+  padding: 0.65rem 1.1rem;
+  border-radius: 999px;
+  background: var(--btn-primary-bg);
+  color: var(--btn-primary-text);
+  font-weight: 700;
+  text-decoration: none;
+}

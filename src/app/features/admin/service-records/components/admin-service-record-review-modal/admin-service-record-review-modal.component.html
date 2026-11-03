@@ -132,6 +132,11 @@
                 }
               </ul>
             }
+            @if (record.suggestedCustomerId) {
+              <button type="button" class="review-modal__link" (click)="useSuggestedCustomer()">
+                Usar el perfil de la cuenta que reservó la cita: {{ record.suggestedCustomerName }}
+              </button>
+            }
             <button type="button" class="review-modal__link" (click)="openCreateCustomer()">Crear cliente nuevo</button>
             <small class="review-modal__muted">Opcional, salvo para consumos de membresía y para acumular puntos.</small>
           }

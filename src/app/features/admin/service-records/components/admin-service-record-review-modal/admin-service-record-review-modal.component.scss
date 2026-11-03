@@ -209,3 +209,14 @@ form > fieldset {
     padding-left: 1.2rem;
   }
 }
+
+// Also used by the customer claims review modal.
+.review-modal__chosen {
+  background: rgba(176, 138, 74, 0.15) !important;
+  font-weight: 600;
+}
+
+.review-modal__results button[disabled] {
+  opacity: 0.55;
+  cursor: not-allowed;
+}

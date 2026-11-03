@@ -1,0 +1,75 @@
+<section class="records">
+  <header class="records__header">
+    <h1>Reclamaciones de clientes</h1>
+    <p>Clientes con cuenta que piden vincular su perfil histórico. Verifica su identidad en persona antes de aprobar.</p>
+  </header>
+
+  <div class="records__tabs" role="tablist">
+    @for (tab of tabs; track tab.status) {
+      <button
+        type="button"
+        role="tab"
+        [attr.aria-selected]="status() === tab.status"
+        [class.records__tab--active]="status() === tab.status"
+        (click)="selectTab(tab.status)"
+      >
+        {{ tab.label }}
+      </button>
+    }
+  </div>
+
+  <app-api-feedback severity="error" [message]="errorMessage()" />
+  <app-api-feedback severity="info" [message]="successMessage()" />
+
+  @if (isLoading()) {
+    <app-page-state kind="loading" message="Cargando solicitudes..." />
+  } @else if (!claims().length) {
+    <app-page-state [message]="status() === 'Pending' ? 'No hay solicitudes pendientes.' : 'No hay solicitudes en esta lista.'" />
+  } @else {
+    <ul class="records__list">
+      @for (claim of claims(); track claim.id) {
+        <li class="records__card">
+          <div class="records__card-head">
+            <strong>{{ claim.fullName }}</strong>
+            <span class="records__date">{{ claim.submittedAt | date: 'mediumDate' }}</span>
+          </div>
+          <span class="records__meta">{{ claim.phone }} · {{ claim.email }}</span>
+          <span class="records__meta records__meta--small">
+            Cuenta: {{ claim.accountFullName }} · {{ claim.accountEmail }}
+            @if (!claim.accountIsActive) {
+              · inactiva
+            }
+          </span>
+          @if (claim.notes) {
+            <span class="records__meta">«{{ claim.notes }}»</span>
+          }
+          @if (claim.status === 'Approved') {
+            <span class="records__meta">Vinculada al perfil «{{ claim.approvedCustomerName }}»</span>
+          }
+          @if (claim.status === 'Rejected') {
+            <span class="records__meta">Motivo: {{ claim.decisionNotes }}</span>
+          }
+          @if (claim.decidedAt) {
+            <span class="records__meta records__meta--small">
+              Revisada por {{ claim.decidedByName }} el {{ claim.decidedAt | date: 'medium' }}
+            </span>
+          }
+          @if (claim.status === 'Pending') {
+            <div class="records__actions">
+              <button type="button" (click)="reviewing.set(claim)">Revisar</button>
+            </div>
+          }
+        </li>
+      }
+    </ul>
+  }
+</section>
+
+@if (reviewing(); as claim) {
+  <app-admin-customer-claim-review-modal
+    [claim]="claim"
+    (reviewed)="onReviewed($event)"
+    (cancelled)="reviewing.set(null)"
+    (staleDetected)="onStale()"
+  />
+}
