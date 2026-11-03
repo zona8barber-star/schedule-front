@@ -7,6 +7,7 @@ import {
   AuthStatus,
   AuthUserResponse,
   LoginRequest,
+  type PermissionCode,
   type RegisterRequest,
   type RoleName,
   ROLE_NAMES,
@@ -54,6 +55,8 @@ export class AuthService {
   readonly isLoading = this.loadingState.asReadonly();
   readonly error = this.errorState.asReadonly();
   readonly roles = computed<readonly RoleName[]>(() => this.currentUserState()?.roles ?? []);
+  // `?? []` also covers responses from an API version that did not send permissions yet.
+  readonly permissions = computed<readonly string[]>(() => this.currentUserState()?.permissions ?? []);
   readonly isAuthenticated = computed(
     () => this.statusState() === 'authenticated' && this.currentUserState() !== null,
   );
@@ -128,6 +131,14 @@ export class AuthService {
 
   hasAnyRole(roles: readonly RoleName[]): boolean {
     return roles.some((role) => this.hasRole(role));
+  }
+
+  hasPermission(permission: PermissionCode): boolean {
+    return this.permissions().includes(permission);
+  }
+
+  hasAnyPermission(permissions: readonly PermissionCode[]): boolean {
+    return permissions.some((permission) => this.hasPermission(permission));
   }
 
   resolvePostAuthUrl(returnUrl?: string | null): string {

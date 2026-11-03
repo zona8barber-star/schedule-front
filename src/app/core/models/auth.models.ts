@@ -6,6 +6,22 @@ export const ROLE_NAMES = {
 
 export type RoleName = (typeof ROLE_NAMES)[keyof typeof ROLE_NAMES];
 
+// Mirrors the backend catalog (Barbershop.Domain.Users.PermissionCodes).
+export const PERMISSION_CODES = {
+  salesRegister: 'sales.register',
+  serviceRecordsRegister: 'service-records.register',
+  serviceRecordsApprove: 'service-records.approve',
+  loyaltySettingsManage: 'loyalty.settings.manage',
+  loyaltyRewardsManage: 'loyalty.rewards.manage',
+  loyaltyRedemptionsApprove: 'loyalty.redemptions.approve',
+  loyaltyRedemptionsDeliver: 'loyalty.redemptions.deliver',
+  loyaltyPointsAdjust: 'loyalty.points.adjust',
+  membershipPaymentsConfirm: 'memberships.payments.confirm',
+  customerClaimsApprove: 'customers.claims.approve',
+} as const;
+
+export type PermissionCode = (typeof PERMISSION_CODES)[keyof typeof PERMISSION_CODES];
+
 export interface RegisterRequest {
   fullName: string;
   email: string;
@@ -34,6 +50,8 @@ export interface AuthUserResponse {
   roles: RoleName[];
   profilePhotoId: string | null;
   profilePhotoUrl: string | null;
+  /** Only for showing or hiding UI; the API authorizes every request on its own. */
+  permissions: string[];
 }
 
 export type CurrentUserResponse = AuthUserResponse;
