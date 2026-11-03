@@ -42,6 +42,14 @@
   margin: -0.5rem 0 0.75rem;
 }
 
+.service-modal__hint {
+  display: block;
+  margin: -0.4rem 0 0.75rem;
+  color: var(--text-muted);
+  font-size: 0.82rem;
+  line-height: 1.4;
+}
+
 .service-modal__actions {
   display: flex;
   justify-content: flex-end;

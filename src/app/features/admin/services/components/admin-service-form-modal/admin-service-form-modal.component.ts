@@ -17,8 +17,11 @@ import {
 } from '@angular/forms';
 import { firstValueFrom } from 'rxjs';
 
+import { PERMISSION_CODES } from '../../../../../core/models/auth.models';
+import { LOYALTY_MAX_POINTS_PER_ITEM } from '../../../../../core/models/loyalty.models';
 import { ServiceView } from '../../../../../core/models/service.models';
 import { AdminServicesApiService } from '../../../../../core/services/admin-services-api.service';
+import { AuthService } from '../../../../../core/services/auth.service';
 import { getApiErrorMessage } from '../../../../../core/utils/api-error.utils';
 import { ApiFeedbackComponent } from '../../../../../shared/components/api-feedback/api-feedback.component';
 
@@ -35,6 +38,7 @@ function integerValidator(control: AbstractControl): ValidationErrors | null {
 export class AdminServiceFormModalComponent implements OnInit {
   private readonly formBuilder = inject(FormBuilder);
   private readonly adminServicesApiService = inject(AdminServicesApiService);
+  private readonly authService = inject(AuthService);
 
   @Input() serviceId: string | null = null;
   @Output() readonly saved = new EventEmitter<ServiceView>();
@@ -45,11 +49,18 @@ export class AdminServiceFormModalComponent implements OnInit {
   readonly errorMessage = signal<string | null>(null);
 
   readonly isBusy = computed(() => this.isSaving() || this.isLoading());
+  readonly maxLoyaltyPoints = LOYALTY_MAX_POINTS_PER_ITEM;
+  /** Without the permission the points are shown read-only and never sent, so the API keeps them. */
+  readonly canManageLoyalty = this.authService.hasPermission(PERMISSION_CODES.loyaltySettingsManage);
 
   readonly form = this.formBuilder.nonNullable.group({
     name: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(120)]],
     basePrice: [0, [Validators.required, Validators.min(0), integerValidator]],
     businessPercentage: [0, [Validators.required, Validators.min(0), Validators.max(100), integerValidator]],
+    loyaltyPoints: [
+      { value: 0, disabled: !this.canManageLoyalty },
+      [Validators.required, Validators.min(0), Validators.max(LOYALTY_MAX_POINTS_PER_ITEM), integerValidator],
+    ],
   });
 
   get isEditing(): boolean {
@@ -68,6 +79,7 @@ export class AdminServiceFormModalComponent implements OnInit {
         name: service.name,
         basePrice: service.basePrice,
         businessPercentage: service.businessPercentage,
+        loyaltyPoints: service.loyaltyPoints,
       });
     } catch (error) {
       this.errorMessage.set(getApiErrorMessage(error));
@@ -89,6 +101,7 @@ export class AdminServiceFormModalComponent implements OnInit {
       name: this.form.controls.name.value.trim(),
       basePrice: Math.trunc(this.form.controls.basePrice.value),
       businessPercentage: Math.trunc(this.form.controls.businessPercentage.value),
+      ...(this.canManageLoyalty ? { loyaltyPoints: Math.trunc(this.form.controls.loyaltyPoints.value) } : {}),
     };
 
     try {

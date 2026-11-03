@@ -29,6 +29,7 @@ describe('AdminMembershipSellModalComponent', () => {
     ],
     createdAt: '',
     updatedAt: null,
+    loyaltyPoints: 0,
     ...overrides,
   });
 

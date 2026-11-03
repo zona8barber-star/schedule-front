@@ -2,8 +2,9 @@ import { Routes } from '@angular/router';
 
 import { authGuard } from './core/guards/auth.guard';
 import { guestGuard } from './core/guards/guest.guard';
+import { permissionGuard } from './core/guards/permission.guard';
 import { roleGuard } from './core/guards/role.guard';
-import { ROLE_NAMES } from './core/models/auth.models';
+import { PERMISSION_CODES, ROLE_NAMES } from './core/models/auth.models';
 
 const loadScaffoldSection = () =>
   import('./shared/components/scaffold-section/scaffold-section.component').then(
@@ -24,6 +25,11 @@ const loadAdminStaffAvailabilityPage = () =>
   import(
     './features/admin/staff/pages/admin-staff-availability-page/admin-staff-availability-page.component'
   ).then((module) => module.AdminStaffAvailabilityPageComponent);
+
+const loadAdminLoyaltySettingsPage = () =>
+  import(
+    './features/admin/loyalty/pages/admin-loyalty-settings-page/admin-loyalty-settings-page.component'
+  ).then((module) => module.AdminLoyaltySettingsPageComponent);
 
 const loadAdminServicesListPage = () =>
   import('./features/admin/services/pages/admin-services-list-page/admin-services-list-page.component').then(
@@ -401,6 +407,16 @@ export const routes: Routes = [
       roles: [ROLE_NAMES.admin],
     },
     title: 'Membresías',
+  },
+  {
+    // Guarded by the permission, not the Admin role: the API checks loyalty.settings.manage on every request.
+    path: 'admin/loyalty',
+    canActivate: [authGuard, permissionGuard],
+    loadComponent: loadAdminLoyaltySettingsPage,
+    data: {
+      permissions: [PERMISSION_CODES.loyaltySettingsManage],
+    },
+    title: 'Fidelización',
   },
   {
     path: 'admin/memberships/:membershipId',

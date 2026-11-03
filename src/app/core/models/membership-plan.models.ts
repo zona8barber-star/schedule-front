@@ -36,6 +36,8 @@ export interface MembershipPlanView {
   giftRules: MembershipPlanGiftRuleView[];
   createdAt: string;
   updatedAt: string | null;
+  /** Fixed loyalty points buying it grants; 0 grants none. */
+  loyaltyPoints: number;
 }
 
 export interface MembershipPlanServiceRequest {
@@ -64,6 +66,8 @@ export interface MembershipPlanUpsertRequest {
   specificConditions: string | null;
   services: MembershipPlanServiceRequest[];
   giftRules: MembershipPlanGiftRuleRequest[];
+  /** Sent only by users with loyalty.settings.manage; when omitted the API keeps the current points. */
+  loyaltyPoints?: number;
 }
 
 export interface MembershipPlanStatusUpdateRequest {

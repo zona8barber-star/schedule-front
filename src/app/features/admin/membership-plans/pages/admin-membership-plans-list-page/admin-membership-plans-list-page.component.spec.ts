@@ -30,6 +30,7 @@ describe('AdminMembershipPlansListPageComponent', () => {
       giftRules: [],
       createdAt: '',
       updatedAt: null,
+      loyaltyPoints: 0,
     },
     {
       id: 'p-2',
@@ -51,6 +52,7 @@ describe('AdminMembershipPlansListPageComponent', () => {
       ],
       createdAt: '',
       updatedAt: null,
+      loyaltyPoints: 0,
     },
   ];
 

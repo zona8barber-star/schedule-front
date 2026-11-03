@@ -36,6 +36,30 @@
           </small>
         }
 
+        <label class="service-modal__field">
+          <span>Puntos de fidelización</span>
+          <input
+            type="number"
+            formControlName="loyaltyPoints"
+            min="0"
+            [max]="maxLoyaltyPoints"
+            step="1"
+            inputmode="numeric"
+          />
+        </label>
+        @if (form.controls.loyaltyPoints.touched && form.controls.loyaltyPoints.invalid) {
+          <small class="service-modal__error">
+            Ingresa un número entero entre 0 y {{ maxLoyaltyPoints }}. Usa 0 si no otorga puntos.
+          </small>
+        }
+        <small class="service-modal__hint">
+          @if (canManageLoyalty) {
+            Puntos fijos que otorgará cada servicio pagado; 0 no otorga puntos. Cambiarlos no afecta los puntos ya acumulados.
+          } @else {
+            Solo quien administra la fidelización puede cambiar los puntos.
+          }
+        </small>
+
         <div class="service-modal__actions">
           <button type="button" (click)="cancel()" [disabled]="isSaving()">Cancelar</button>
           <button type="submit" [disabled]="isSaving()">

@@ -24,7 +24,7 @@ import {
   SOCIAL_PLATFORM_DEFINITIONS,
 } from '../../config/business-social-links.config';
 import { RuntimeConfigService } from '../../config/runtime-config.service';
-import { ROLE_NAMES } from '../../models/auth.models';
+import { PERMISSION_CODES, ROLE_NAMES } from '../../models/auth.models';
 import { AuthService } from '../../services/auth.service';
 import { ConnectivityService } from '../../services/connectivity.service';
 import { HttpActivityService } from '../../services/http-activity.service';
@@ -264,6 +264,14 @@ export class AppShellComponent {
           group: 'admin',
         },
       );
+    }
+
+    if (this.authService.hasPermission(PERMISSION_CODES.loyaltySettingsManage)) {
+      links.push({
+        label: 'Fidelización',
+        route: '/admin/loyalty',
+        group: 'admin',
+      });
     }
 
     return links;
