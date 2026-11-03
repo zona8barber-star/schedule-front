@@ -1,0 +1,100 @@
+<section class="records">
+  <header class="records__header">
+    <h1>Servicios realizados</h1>
+    <p>Valida los servicios que registran los profesionales: confirma el tipo de operación y el valor cobrado, o rechaza el registro.</p>
+  </header>
+
+  <div class="records__tabs" role="tablist">
+    @for (tab of tabs; track tab.status) {
+      <button
+        type="button"
+        role="tab"
+        [attr.aria-selected]="status() === tab.status"
+        [class.records__tab--active]="status() === tab.status"
+        (click)="selectTab(tab.status)"
+      >
+        {{ tab.label }}
+      </button>
+    }
+  </div>
+
+  <app-api-feedback severity="error" [message]="errorMessage()" />
+  <app-api-feedback severity="info" [message]="successMessage()" />
+
+  @if (isLoading()) {
+    <app-page-state kind="loading" message="Cargando servicios..." />
+  } @else if (!records().length) {
+    <app-page-state [message]="status() === 'Pending' ? 'No hay servicios pendientes de validación.' : 'No hay registros en esta lista.'" />
+  } @else {
+    <ul class="records__list">
+      @for (record of records(); track record.id) {
+        <li class="records__card">
+          <div class="records__card-head">
+            <strong>{{ record.approval?.serviceName ?? record.serviceName }}</strong>
+            <span class="records__date">{{ record.approval?.performedOn ?? record.performedOn }}</span>
+          </div>
+          <span class="records__meta">
+            {{ record.approval?.staffName ?? record.staffName }}
+            @if (record.approval?.customerName ?? record.customerName; as customer) {
+              · {{ customer }}
+            }
+            @if (record.appointmentId) {
+              · desde cita
+            }
+          </span>
+          <span class="records__meta records__meta--small">
+            Registrado por {{ record.registeredByName }} el {{ record.registeredAt | date: 'medium' }}
+          </span>
+          @if (record.notes) {
+            <span class="records__meta">Notas: {{ record.notes }}</span>
+          }
+
+          @if (record.approval; as approval) {
+            <span class="records__meta">
+              {{ operationLabels[approval.operationType] }}
+              @if (approval.chargedAmount) {
+                · $ {{ approval.chargedAmount | number: '1.0-0' }}
+              }
+              @if (approval.accruesLoyaltyPoints) {
+                · acumula {{ approval.loyaltyPointsSnapshot }} puntos
+              }
+            </span>
+            @if (approval.serviceId !== record.serviceId || approval.staffProfileId !== record.staffProfileId || approval.performedOn !== record.performedOn) {
+              <span class="records__meta records__meta--small">
+                Corregido al confirmar (registrado: {{ record.serviceName }} · {{ record.staffName }} · {{ record.performedOn }})
+              </span>
+            }
+            <span class="records__meta records__meta--small">
+              Confirmado por {{ approval.approvedByName }} el {{ approval.approvedAt | date: 'medium' }}
+            </span>
+          }
+
+          @if (record.status === 'Rejected') {
+            <span class="records__meta">Motivo: {{ record.rejectionReason }}</span>
+            <span class="records__meta records__meta--small">
+              Rechazado por {{ record.rejectedByName }} el {{ record.rejectedAt | date: 'medium' }}
+            </span>
+          }
+
+          @if (record.status === 'Pending') {
+            <div class="records__actions">
+              <button type="button" (click)="openReview(record)" [disabled]="!options()">Revisar</button>
+            </div>
+          }
+        </li>
+      }
+    </ul>
+  }
+</section>
+
+@if (reviewing(); as record) {
+  @if (options(); as loadedOptions) {
+    <app-admin-service-record-review-modal
+      [record]="record"
+      [options]="loadedOptions"
+      (reviewed)="onReviewed($event)"
+      (cancelled)="closeReview()"
+      (staleDetected)="onStale()"
+    />
+  }
+}

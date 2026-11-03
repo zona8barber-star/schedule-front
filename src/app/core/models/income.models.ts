@@ -22,6 +22,8 @@ export interface IncomeEntryView {
   occurredOn: string; // YYYY-MM-DD
   createdAt: string;
   updatedAt: string | null;
+  /** Set when a confirmed service record created this income; it is then not editable from Ingresos. */
+  serviceRecordId?: string | null;
 }
 
 export interface IncomeEntryCreateRequest {

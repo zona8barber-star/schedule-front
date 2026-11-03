@@ -1,0 +1,216 @@
+<div class="review-modal__overlay" (click)="cancel()">
+  <div class="review-modal__card" (click)="$event.stopPropagation()" role="dialog" aria-label="Revisar servicio realizado">
+    <h2>Revisar servicio realizado</h2>
+    <p class="review-modal__muted">
+      Registrado por {{ record.registeredByName ?? 'un profesional' }}: <strong>{{ record.serviceName }}</strong> ·
+      {{ record.staffName }} · {{ record.performedOn }}
+      @if (record.customerName) {
+        · {{ record.customerName }}
+      }
+      @if (record.appointmentId) {
+        · desde cita
+      }
+    </p>
+    @if (record.notes) {
+      <p class="review-modal__muted">Notas: {{ record.notes }}</p>
+    }
+
+    <app-api-feedback severity="error" [message]="errorMessage()" />
+
+    @if (hasRelated()) {
+      @if (related(); as warnings) {
+        <div class="review-modal__warnings" role="note">
+          <strong>Revisa posibles duplicados</strong>
+          <small>Son avisos: coincidir en profesional, servicio y fecha puede ser legítimo.</small>
+          <ul>
+            @if (warnings.appointmentStatus === 'Cancelled' || warnings.appointmentStatus === 'NoShow') {
+              <li>La cita de este registro ahora figura como {{ warnings.appointmentStatus === 'Cancelled' ? 'cancelada' : 'no asistió' }}.</li>
+            }
+            @for (income of warnings.manualIncomes; track income.id) {
+              <li>Ingreso manual del mismo profesional, servicio y día por $ {{ income.amount | number: '1.0-0' }}.</li>
+            }
+            @for (other of warnings.otherRecords; track other.id) {
+              <li>Otro registro del mismo profesional, servicio y día ({{ other.status === 'Approved' ? 'confirmado' : 'pendiente' }}).</li>
+            }
+            @for (consumption of warnings.membershipConsumptions; track consumption.id) {
+              <li>Consumo de membresía del mismo servicio y día{{ consumption.isFromServiceRecord ? ', confirmado desde otro registro' : ', registrado en la membresía' }}.</li>
+            }
+          </ul>
+        </div>
+      }
+    }
+
+    @if (hasConflict()) {
+      <button type="button" class="review-modal__secondary" (click)="reloadInbox()">Recargar bandeja</button>
+    }
+
+    <form [formGroup]="form" (ngSubmit)="approve()" novalidate>
+      <fieldset [disabled]="isSaving()">
+        <fieldset class="review-modal__section">
+          <legend>Tipo de operación</legend>
+          <div class="review-modal__choices" role="radiogroup" aria-label="Tipo de operación">
+            @for (operation of selectableOperations; track operation) {
+              <label>
+                <input type="radio" formControlName="operationType" [value]="operation" />
+                <span>{{ operationLabels[operation] }}</span>
+              </label>
+            }
+            <label class="review-modal__disabled" title="Llega con las redenciones de puntos">
+              <input type="radio" disabled />
+              <span>{{ operationLabels.LoyaltyReward }} <small>(disponible más adelante)</small></span>
+            </label>
+          </div>
+          <small class="review-modal__muted">
+            @switch (operation()) {
+              @case ('Paid') {
+                Genera un ingreso con los porcentajes actuales del servicio.
+              }
+              @case ('MembershipConsumption') {
+                Descuenta una unidad de la membresía; no genera ingreso, comisión ni puntos.
+              }
+              @case ('Courtesy') {
+                No genera ingreso, comisión ni puntos.
+              }
+            }
+          </small>
+        </fieldset>
+
+        <fieldset class="review-modal__section">
+          <legend>Servicio confirmado</legend>
+          <div class="review-modal__row">
+            <label class="review-modal__field">
+              <span>Servicio</span>
+              <select formControlName="serviceId">
+                @for (service of options.services; track service.id) {
+                  <option [value]="service.id">{{ service.name }}{{ service.isActive ? '' : ' (inactivo)' }}</option>
+                }
+              </select>
+            </label>
+            <label class="review-modal__field">
+              <span>Profesional</span>
+              <select formControlName="staffProfileId">
+                @for (member of options.staff; track member.id) {
+                  <option [value]="member.id">{{ member.displayName }}{{ member.isActive ? '' : ' (inactivo)' }}</option>
+                }
+              </select>
+            </label>
+          </div>
+          <div class="review-modal__row">
+            <label class="review-modal__field">
+              <span>Fecha</span>
+              <input type="date" formControlName="performedOn" [max]="today" />
+            </label>
+            @if (operation() === 'Paid') {
+              <label class="review-modal__field">
+                <span>Valor cobrado (COP)</span>
+                <input type="number" formControlName="chargedAmount" min="1" step="1" inputmode="numeric" />
+              </label>
+            }
+          </div>
+        </fieldset>
+
+        <fieldset class="review-modal__section">
+          <legend>Cliente</legend>
+          @if (customer(); as selected) {
+            <div class="review-modal__selected">
+              <span><strong>{{ selected.fullName }}</strong> {{ selected.phoneHint }}</span>
+              <button type="button" class="review-modal__link" (click)="clearCustomer()">Quitar</button>
+            </div>
+          } @else {
+            <div class="review-modal__search">
+              <input type="search" formControlName="customerQuery" placeholder="Nombre, teléfono o correo" (keydown.enter)="$event.preventDefault(); searchCustomers()" />
+              <button type="button" class="review-modal__secondary" (click)="searchCustomers()" [disabled]="isSearching()">Buscar</button>
+            </div>
+            @if (customerResults().length) {
+              <ul class="review-modal__results">
+                @for (option of customerResults(); track option.id) {
+                  <li>
+                    <button type="button" (click)="selectCustomer(option)">
+                      {{ option.fullName }} <small>{{ option.phoneHint }}</small>
+                    </button>
+                  </li>
+                }
+              </ul>
+            }
+            <button type="button" class="review-modal__link" (click)="openCreateCustomer()">Crear cliente nuevo</button>
+            <small class="review-modal__muted">Opcional, salvo para consumos de membresía y para acumular puntos.</small>
+          }
+
+          @if (operation() === 'MembershipConsumption' && customer(); as selected) {
+            <label class="review-modal__field">
+              <span>Membresía</span>
+              <select formControlName="customerMembershipId">
+                <option value="">Elige una membresía activa</option>
+                @for (membership of selected.memberships; track membership.id) {
+                  <option [value]="membership.id">{{ membership.planName }} · vence {{ membership.endsOn }}</option>
+                }
+              </select>
+            </label>
+            @if (!selected.memberships.length) {
+              <small class="review-modal__muted">El cliente no tiene membresías activas.</small>
+            }
+          }
+        </fieldset>
+
+        <fieldset class="review-modal__section">
+          <legend>Puntos de fidelización</legend>
+          <label class="review-modal__check">
+            <input type="checkbox" formControlName="accruesLoyaltyPoints" />
+            <span>
+              Acumula puntos
+              @if (!pointsBlocker()) {
+                ({{ selectedService()?.loyaltyPoints }} puntos)
+              }
+            </span>
+          </label>
+          @if (pointsBlocker(); as blocker) {
+            <small class="review-modal__muted">{{ blocker }}</small>
+          } @else {
+            <small class="review-modal__muted">Solo se guarda la decisión; los puntos se acreditarán cuando exista la billetera.</small>
+          }
+        </fieldset>
+
+        <label class="review-modal__field">
+          <span>Notas de la revisión (opcional)</span>
+          <textarea formControlName="notes" maxlength="500" rows="2"></textarea>
+        </label>
+
+        @if (submitted() && problems().length) {
+          <ul class="review-modal__problems">
+            @for (problem of problems(); track problem) {
+              <li>{{ problem }}</li>
+            }
+          </ul>
+        }
+
+        @if (rejecting()) {
+          <label class="review-modal__field">
+            <span>Motivo del rechazo</span>
+            <textarea formControlName="rejectionReason" maxlength="500" rows="2"></textarea>
+          </label>
+        }
+      </fieldset>
+
+      <div class="review-modal__actions">
+        <button type="button" (click)="cancel()" [disabled]="isSaving()">Cancelar</button>
+        @if (rejecting()) {
+          <button type="button" class="review-modal__danger" (click)="reject()" [disabled]="isSaving()">Confirmar rechazo</button>
+        } @else {
+          <button type="button" class="review-modal__danger" (click)="rejecting.set(true)" [disabled]="isSaving()">Rechazar</button>
+          <button type="submit" class="review-modal__primary" [disabled]="isSaving()">
+            {{ isSaving() ? 'Guardando...' : 'Confirmar servicio' }}
+          </button>
+        }
+      </div>
+    </form>
+  </div>
+</div>
+
+@if (creatingCustomer()) {
+  <app-admin-customer-form-modal
+    [source]="customerSource"
+    [initialName]="record.customerName ?? ''"
+    (createdFromSource)="onCustomerCreated($event)"
+    (cancelled)="creatingCustomer.set(false)"
+  />
+}

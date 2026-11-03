@@ -20,9 +20,15 @@
         Gestiona tus citas, registra turnos manuales y actualiza el estado de cada atencion.
       </p>
     </div>
-    <button class="agenda-page__btn-primary" type="button" (click)="openCreateModal()">
-      + Nueva cita
-    </button>
+    <div class="agenda-page__header-actions">
+      <button class="agenda-page__btn-primary" type="button" (click)="openCreateModal()">
+        + Nueva cita
+      </button>
+      @if (canRegisterServices()) {
+        <!-- Completed appointments leave the agenda; their services are registered from this page. -->
+        <a class="agenda-page__btn-ghost agenda-page__link" routerLink="/staff/service-records">Servicios realizados</a>
+      }
+    </div>
   </div>
 
   <app-api-feedback severity="error" [message]="errorMessage()" />
@@ -149,6 +155,15 @@
                   >
                     {{ isBusyFor(appointment.id, 'delete') ? 'Eliminando...' : 'Eliminar' }}
                   </button>
+                  @if (canRegisterServices() && hasStarted(appointment)) {
+                    <a
+                      class="appt-card__btn appt-card__btn--services"
+                      routerLink="/staff/service-records"
+                      [queryParams]="{ appointmentId: appointment.id }"
+                    >
+                      Registrar servicios
+                    </a>
+                  }
                 </div>
               }
 

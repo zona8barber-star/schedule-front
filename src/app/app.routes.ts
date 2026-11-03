@@ -26,6 +26,16 @@ const loadAdminStaffAvailabilityPage = () =>
     './features/admin/staff/pages/admin-staff-availability-page/admin-staff-availability-page.component'
   ).then((module) => module.AdminStaffAvailabilityPageComponent);
 
+const loadAdminServiceRecordsPage = () =>
+  import(
+    './features/admin/service-records/pages/admin-service-records-page/admin-service-records-page.component'
+  ).then((module) => module.AdminServiceRecordsPageComponent);
+
+const loadStaffServiceRecordsPage = () =>
+  import(
+    './features/staff/service-records/pages/staff-service-records-page/staff-service-records-page.component'
+  ).then((module) => module.StaffServiceRecordsPageComponent);
+
 const loadAdminLoyaltySettingsPage = () =>
   import(
     './features/admin/loyalty/pages/admin-loyalty-settings-page/admin-loyalty-settings-page.component'
@@ -330,6 +340,16 @@ export const routes: Routes = [
     title: 'Mi disponibilidad',
   },
   {
+    // By permission, not by role: the API checks service-records.register and the user's own professional profile.
+    path: 'staff/service-records',
+    canActivate: [authGuard, permissionGuard],
+    loadComponent: loadStaffServiceRecordsPage,
+    data: {
+      permissions: [PERMISSION_CODES.serviceRecordsRegister],
+    },
+    title: 'Servicios realizados',
+  },
+  {
     path: 'staff/appointments',
     canActivate: [authGuard, roleGuard],
     loadComponent: loadStaffAppointmentsPage,
@@ -407,6 +427,16 @@ export const routes: Routes = [
       roles: [ROLE_NAMES.admin],
     },
     title: 'Membresías',
+  },
+  {
+    // service-records.approve is critical: the API checks it against the database on every request.
+    path: 'admin/service-records',
+    canActivate: [authGuard, permissionGuard],
+    loadComponent: loadAdminServiceRecordsPage,
+    data: {
+      permissions: [PERMISSION_CODES.serviceRecordsApprove],
+    },
+    title: 'Servicios por aprobar',
   },
   {
     // Guarded by the permission, not the Admin role: the API checks loyalty.settings.manage on every request.

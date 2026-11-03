@@ -52,8 +52,12 @@
               <td>$ {{ entry.amount | number: '1.0-0' }}</td>
               <td>{{ entry.isPromo ? 'Sí' : '—' }}</td>
               <td class="income__actions">
-                <button type="button" (click)="openEdit(entry)" [disabled]="busyId() === entry.id">Editar</button>
-                <button type="button" (click)="deleteEntry(entry)" [disabled]="busyId() === entry.id">Eliminar</button>
+                @if (entry.serviceRecordId) {
+                  <span class="income__badge" title="Se gestiona desde Servicios por aprobar">Servicio confirmado</span>
+                } @else {
+                  <button type="button" (click)="openEdit(entry)" [disabled]="busyId() === entry.id">Editar</button>
+                  <button type="button" (click)="deleteEntry(entry)" [disabled]="busyId() === entry.id">Eliminar</button>
+                }
               </td>
             </tr>
           }

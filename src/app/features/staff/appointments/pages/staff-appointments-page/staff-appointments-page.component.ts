@@ -2,6 +2,7 @@ import { NgClass } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, HostListener, OnInit, computed, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 
 import {
@@ -10,6 +11,7 @@ import {
   AppointmentUpdateRequest,
   StaffManualAppointmentCreateRequest,
 } from '../../../../../core/models/appointment.models';
+import { ServiceRecordEligibilityService } from '../../../../../core/services/service-record-eligibility.service';
 import { ConfirmModalService } from '../../../../../core/services/confirm-modal.service';
 import { StaffAppointmentsApiService } from '../../../../../core/services/staff-appointments-api.service';
 import { getApiErrorMessage } from '../../../../../core/utils/api-error.utils';
@@ -26,6 +28,7 @@ import { PullToRefreshDirective } from '../../../../../shared/directives/pull-to
   imports: [
     NgClass,
     ReactiveFormsModule,
+    RouterLink,
     ApiFeedbackComponent,
     PageStateComponent,
     PullToRefreshDirective,
@@ -37,6 +40,8 @@ export class StaffAppointmentsPageComponent implements OnInit {
   private readonly formBuilder = inject(FormBuilder);
   private readonly staffAppointmentsApiService = inject(StaffAppointmentsApiService);
   private readonly confirmModal = inject(ConfirmModalService);
+  /** Permission plus an active professional profile; completed appointments are registered from that page. */
+  readonly canRegisterServices = inject(ServiceRecordEligibilityService).canRegister;
   private readonly dateFormatter = new Intl.DateTimeFormat('es-AR', { dateStyle: 'medium' });
   private readonly timeFormatter = new Intl.DateTimeFormat('es-AR', { timeStyle: 'short' });
   private readonly dateTimeFormatter = new Intl.DateTimeFormat('es-AR', {
@@ -274,6 +279,11 @@ export class StaffAppointmentsPageComponent implements OnInit {
   }
 
   // ── Guards / helpers ───────────────────────────────────────────────────
+  /** Services can be registered once the appointment started; registering never changes its status. */
+  hasStarted(appointment: AppointmentResponse): boolean {
+    return new Date(appointment.startsAtUtc).getTime() <= Date.now();
+  }
+
   canTransition(appointment: AppointmentResponse): boolean {
     return (
       appointment.status === APPOINTMENT_STATUS.pending ||

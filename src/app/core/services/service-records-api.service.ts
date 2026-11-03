@@ -1,0 +1,91 @@
+import { HttpClient, HttpParams } from '@angular/common/http';
+import { Injectable, inject } from '@angular/core';
+
+import { RuntimeConfigService } from '../config/runtime-config.service';
+import { CustomerCreateRequest } from '../models/customer.models';
+import {
+  ServiceRecordAppointmentOption,
+  ServiceRecordApproveRequest,
+  ServiceRecordCatalogItem,
+  ServiceRecordCustomerDuplicate,
+  ServiceRecordCustomerOption,
+  ServiceRecordEligibilityView,
+  ServiceRecordOptionsView,
+  ServiceRecordRelatedView,
+  ServiceRecordRegisterRequest,
+  ServiceRecordRejectRequest,
+  ServiceRecordStatus,
+  ServiceRecordView,
+} from '../models/service-record.models';
+
+/** Services performed: the professional's registration (staff routes) and the administrative review. */
+@Injectable({
+  providedIn: 'root',
+})
+export class ServiceRecordsApiService {
+  private readonly httpClient = inject(HttpClient);
+  private readonly runtimeConfigService = inject(RuntimeConfigService);
+
+  catalog() {
+    return this.httpClient.get<ServiceRecordCatalogItem[]>(this.buildUrl('/staff/service-records/catalog'));
+  }
+
+  eligibility() {
+    return this.httpClient.get<ServiceRecordEligibilityView>(this.buildUrl('/staff/service-records/eligibility'));
+  }
+
+  appointments() {
+    return this.httpClient.get<ServiceRecordAppointmentOption[]>(this.buildUrl('/staff/service-records/appointments'));
+  }
+
+  mine() {
+    return this.httpClient.get<ServiceRecordView[]>(this.buildUrl('/staff/service-records'));
+  }
+
+  register(request: ServiceRecordRegisterRequest) {
+    return this.httpClient.post<ServiceRecordView[]>(this.buildUrl('/staff/service-records'), request);
+  }
+
+  list(status: ServiceRecordStatus) {
+    return this.httpClient.get<ServiceRecordView[]>(this.buildUrl('/admin/service-records'), {
+      params: new HttpParams().set('status', status),
+    });
+  }
+
+  options() {
+    return this.httpClient.get<ServiceRecordOptionsView>(this.buildUrl('/admin/service-records/options'));
+  }
+
+  customerOptions(query: string) {
+    const params = query.trim() ? new HttpParams().set('q', query.trim()) : undefined;
+    return this.httpClient.get<ServiceRecordCustomerOption[]>(this.buildUrl('/admin/service-records/customer-options'), { params });
+  }
+
+  related(serviceRecordId: string) {
+    return this.httpClient.get<ServiceRecordRelatedView>(this.buildUrl(`/admin/service-records/${serviceRecordId}/related`));
+  }
+
+  /** Same creation and duplicate check as the customers module, available to approvers without the Admin role. */
+  createCustomer(request: CustomerCreateRequest) {
+    return this.httpClient.post<ServiceRecordCustomerOption>(this.buildUrl('/admin/service-records/customers'), request);
+  }
+
+  findCustomerDuplicates(email: string, phone: string) {
+    return this.httpClient.get<ServiceRecordCustomerDuplicate[]>(this.buildUrl('/admin/service-records/customer-duplicates'), {
+      params: new HttpParams().set('email', email).set('phone', phone),
+    });
+  }
+
+  approve(serviceRecordId: string, request: ServiceRecordApproveRequest) {
+    return this.httpClient.post<ServiceRecordView>(this.buildUrl(`/admin/service-records/${serviceRecordId}/approve`), request);
+  }
+
+  reject(serviceRecordId: string, request: ServiceRecordRejectRequest) {
+    return this.httpClient.post<ServiceRecordView>(this.buildUrl(`/admin/service-records/${serviceRecordId}/reject`), request);
+  }
+
+  private buildUrl(path: string): string {
+    const apiBaseUrl = this.runtimeConfigService.config().apiBaseUrl.replace(/\/$/, '');
+    return `${apiBaseUrl}${path}`;
+  }
+}

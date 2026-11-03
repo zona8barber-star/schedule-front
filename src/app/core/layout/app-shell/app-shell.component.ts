@@ -26,6 +26,7 @@ import {
 import { RuntimeConfigService } from '../../config/runtime-config.service';
 import { PERMISSION_CODES, ROLE_NAMES } from '../../models/auth.models';
 import { AuthService } from '../../services/auth.service';
+import { ServiceRecordEligibilityService } from '../../services/service-record-eligibility.service';
 import { ConnectivityService } from '../../services/connectivity.service';
 import { HttpActivityService } from '../../services/http-activity.service';
 import { InstallPromptService } from '../../services/install-prompt.service';
@@ -72,6 +73,7 @@ interface FooterSocialLink {
 export class AppShellComponent {
   readonly configService = inject(RuntimeConfigService);
   readonly authService = inject(AuthService);
+  private readonly serviceRecordEligibility = inject(ServiceRecordEligibilityService);
   readonly httpActivityService = inject(HttpActivityService);
   readonly installPromptService = inject(InstallPromptService);
   readonly pushNotificationService = inject(PushNotificationService);
@@ -176,6 +178,16 @@ export class AppShellComponent {
       );
     }
 
+    // By permission and an active professional profile, not by role: an administrator who also works as a
+    // professional registers their services too.
+    if (this.serviceRecordEligibility.canRegister()) {
+      links.push({
+        label: 'Servicios realizados',
+        route: '/staff/service-records',
+        group: 'staff',
+      });
+    }
+
     if (this.authService.hasRole(this.roleNames.admin)) {
       links.push(
         {
@@ -264,6 +276,14 @@ export class AppShellComponent {
           group: 'admin',
         },
       );
+    }
+
+    if (this.authService.hasPermission(PERMISSION_CODES.serviceRecordsApprove)) {
+      links.push({
+        label: 'Servicios por aprobar',
+        route: '/admin/service-records',
+        group: 'admin',
+      });
     }
 
     if (this.authService.hasPermission(PERMISSION_CODES.loyaltySettingsManage)) {
