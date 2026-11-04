@@ -57,6 +57,11 @@
               }
               @if (approval.accruesLoyaltyPoints) {
                 · acumula {{ approval.loyaltyPointsSnapshot }} puntos
+                @if (record.loyaltyAccrualStatus === 'Credited') {
+                  (acreditados)
+                } @else if (record.loyaltyAccrualStatus === 'PredatesWallet') {
+                  (sin acreditar: aprobado antes de la billetera)
+                }
               }
             </span>
             @if (approval.serviceId !== record.serviceId || approval.staffProfileId !== record.staffProfileId || approval.performedOn !== record.performedOn) {

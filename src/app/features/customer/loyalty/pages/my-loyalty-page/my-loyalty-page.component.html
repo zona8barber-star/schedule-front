@@ -1,0 +1,84 @@
+<section class="my-memberships">
+  <header class="my-memberships__hero">
+    <p class="my-memberships__eyebrow">Cuenta</p>
+    <h1>Mis puntos</h1>
+    <p>Consulta tus puntos de fidelización disponibles y cuándo vencen.</p>
+  </header>
+
+  <app-api-feedback severity="error" [message]="errorMessage()" />
+
+  @if (isLoading()) {
+    <article class="my-memberships__panel">
+      <app-page-state kind="loading" message="Cargando puntos..." />
+    </article>
+  } @else if (view(); as points) {
+    @if (!points.hasProfile) {
+      <article class="my-memberships__panel">
+        <app-page-state
+          kind="empty"
+          title="Aún no tienes perfil de cliente"
+          message="Tus puntos se guardan en tu perfil de cliente. Créalo o solicita vincular tu perfil histórico."
+        />
+        <a class="my-memberships__profile-link" routerLink="/customer/customer-profile">Ir a mi perfil de cliente</a>
+      </article>
+    } @else {
+      <article class="my-memberships__card">
+        @if (!points.programEnabled) {
+          <p class="my-memberships__notice">El programa de fidelización no está acumulando puntos por ahora.</p>
+        }
+        <dl class="my-memberships__facts">
+          <div>
+            <dt>Disponibles</dt>
+            <dd>{{ points.availablePoints }}</dd>
+          </div>
+          <div>
+            <dt>Vencen en los próximos 30 días</dt>
+            <dd>{{ points.expiringSoonPoints }}</dd>
+          </div>
+          <div>
+            <dt>Próximo vencimiento</dt>
+            <dd>{{ points.nextExpiresOn ? (points.nextExpiresOn | date: 'mediumDate') : '—' }}</dd>
+          </div>
+          @if (points.debtPoints) {
+            <div>
+              <dt>Puntos pendientes por compensar</dt>
+              <dd>{{ points.debtPoints }}</dd>
+            </div>
+          }
+        </dl>
+      </article>
+
+      <article class="my-memberships__card">
+        <h2>Tus puntos por vencimiento</h2>
+        @if (!points.lots.length) {
+          <p class="my-memberships__muted">Aún no tienes puntos disponibles.</p>
+        } @else {
+          <ul class="my-memberships__lines">
+            @for (lot of points.lots; track $index) {
+              <li>
+                <strong>{{ lot.usablePoints }} pts</strong>
+                <span>{{ lot.sourceLabel }}</span>
+                <span class="my-memberships__muted">Vencen el {{ lot.expiresOn | date: 'mediumDate' }}</span>
+              </li>
+            }
+          </ul>
+        }
+      </article>
+
+      @if (points.movements.length) {
+        <article class="my-memberships__card">
+          <h2>Movimientos recientes</h2>
+          <ul class="my-memberships__lines">
+            @for (movement of points.movements; track $index) {
+              <li>
+                <strong>{{ isPositive(movement.type) ? '+' : '−' }}{{ movement.points }}</strong>
+                <span>{{ movementLabel(movement.type) }}</span>
+                <span class="my-memberships__muted">{{ movement.performedAt | date: 'mediumDate' }}</span>
+              </li>
+            }
+          </ul>
+        </article>
+      }
+    }
+  }
+</section>

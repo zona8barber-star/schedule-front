@@ -10,7 +10,9 @@ import {
   MembershipConsumptionView,
   MembershipGiftView,
 } from '../../../../../core/models/membership.models';
+import { PERMISSION_CODES } from '../../../../../core/models/auth.models';
 import { AdminMembershipsApiService } from '../../../../../core/services/admin-memberships-api.service';
+import { AuthService } from '../../../../../core/services/auth.service';
 import { ConfirmModalService } from '../../../../../core/services/confirm-modal.service';
 import { ToastService } from '../../../../../core/services/toast.service';
 import { getApiErrorMessage } from '../../../../../core/utils/api-error.utils';
@@ -60,6 +62,17 @@ export class AdminMembershipDetailPageComponent implements OnInit {
   private readonly membershipsApi = inject(AdminMembershipsApiService);
   private readonly confirmModal = inject(ConfirmModalService);
   private readonly toastService = inject(ToastService);
+  private readonly authService = inject(AuthService);
+
+  /** The first income link credits the membership's points, so it needs memberships.payments.confirm (critical). */
+  readonly canConfirmPayment = this.authService.hasPermission(PERMISSION_CODES.membershipPaymentsConfirm);
+  readonly loyaltyDecisionLabels: Record<string, string> = {
+    Accrued: 'Acumuló sus puntos al vincular el primer ingreso',
+    NotAccruedProgramDisabled: 'No acumuló: el programa estaba deshabilitado al vincular el primer ingreso',
+    NotAccruedNoPoints: 'No acumuló: el tipo de membresía no tenía puntos',
+    NotAccruedPredatesWallet: 'No acumula: vendida antes de existir la billetera de puntos',
+    NotAccruedAnnulled: 'No acumuló: estaba anulada al vincular el primer ingreso',
+  };
 
   readonly statusLabels = MEMBERSHIP_STATUS_LABELS;
   readonly giftStatusLabels = MEMBERSHIP_GIFT_STATUS_LABELS;

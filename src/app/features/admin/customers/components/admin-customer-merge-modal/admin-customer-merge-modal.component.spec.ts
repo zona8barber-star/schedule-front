@@ -81,6 +81,8 @@ describe('AdminCustomerMergeModalComponent', () => {
       blockingReasons: ['Ambos clientes tienen cuentas vinculadas distintas.'],
       warnings: [],
       accountToTransfer: null,
+      loyalty: null,
+      previewToken: 'tok-1',
     });
 
     component.confirmed.set(true);
@@ -99,6 +101,8 @@ describe('AdminCustomerMergeModalComponent', () => {
       blockingReasons: [],
       warnings: ['Se conservan los datos del cliente destino.'],
       accountToTransfer: null,
+      loyalty: null,
+      previewToken: 'tok-1',
     });
 
     expect(component.canConfirm()).toBe(false);
@@ -107,10 +111,39 @@ describe('AdminCustomerMergeModalComponent', () => {
 
     const confirming = component.confirm();
     const req = httpMock.expectOne(`${base}/c-1/merge`);
-    expect(req.request.body).toEqual({ sourceCustomerId: 'c-2' });
+    expect(req.request.body).toEqual({ sourceCustomerId: 'c-2', previewToken: 'tok-1' });
     req.flush(target);
     await confirming;
 
     expect(merged).toEqual([target]);
+  });
+
+  it('shows the points that move with their original expiry and the result after settling debts', async () => {
+    await searchAndChoose({
+      target: targetItem,
+      source: sourceItem,
+      canMerge: true,
+      blockingReasons: [],
+      warnings: [],
+      accountToTransfer: null,
+      loyalty: {
+        sourceAvailablePoints: 20,
+        sourceDebtPoints: 15,
+        targetAvailablePoints: 30,
+        targetDebtPoints: 0,
+        resultAvailablePoints: 35,
+        resultDebtPoints: 0,
+        sourceExpiredPointsNotMoved: 5,
+        lotsToTransfer: [{ lotId: 'l-1', sourceLabel: 'Ajuste manual', points: 20, expiresOn: '2026-11-12', expiresSoon: true }],
+      },
+      previewToken: 'tok-2',
+    });
+    fixture.detectChanges();
+
+    const text = fixture.nativeElement.textContent as string;
+    expect(text).toContain('35 disponibles · 0 de deuda');
+    expect(text).toContain('20 pts · Ajuste manual');
+    expect(text).toContain('(vence pronto)');
+    expect(text).toContain('5 punto(s) vencido(s) no se traspasan');
   });
 });

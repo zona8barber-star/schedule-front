@@ -76,6 +76,8 @@ export interface ServiceRecordView {
   /** Profile now linked to the account that booked the appointment; a suggestion, never applied automatically. */
   suggestedCustomerId?: string | null;
   suggestedCustomerName?: string | null;
+  /** Approved records marked to accrue: 'Credited', or 'PredatesWallet' if approved before the wallet existed. */
+  loyaltyAccrualStatus?: 'Credited' | 'PredatesWallet' | null;
 }
 
 export interface ServiceRecordApproveRequest {

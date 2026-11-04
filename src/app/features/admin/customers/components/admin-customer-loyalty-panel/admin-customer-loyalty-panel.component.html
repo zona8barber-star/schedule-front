@@ -1,0 +1,130 @@
+<article class="loyalty-panel">
+  <div class="loyalty-panel__header">
+    <h2>Puntos de fidelización</h2>
+    @if (wallet(); as w) {
+      @if (!w.programEnabled) {
+        <span class="loyalty-panel__badge">Programa deshabilitado</span>
+      }
+    }
+  </div>
+
+  <app-api-feedback severity="error" [message]="errorMessage()" />
+
+  @if (wallet(); as w) {
+    @if (w.isMerged) {
+      <p class="loyalty-panel__muted">Este perfil fue fusionado: sus puntos utilizables pasaron al perfil que se conserva.</p>
+    }
+
+    <dl class="loyalty-panel__summary">
+      <div>
+        <dt>Disponibles</dt>
+        <dd>{{ w.availablePoints }}</dd>
+      </div>
+      <div>
+        <dt>Deuda</dt>
+        <dd>{{ w.debtPoints }}</dd>
+      </div>
+      <div>
+        <dt>Vencen en 30 días</dt>
+        <dd>{{ w.expiringSoonPoints }}</dd>
+      </div>
+      <div>
+        <dt>Próximo vencimiento</dt>
+        <dd>{{ w.nextExpiresOn ? (w.nextExpiresOn | date: 'mediumDate') : '—' }}</dd>
+      </div>
+    </dl>
+
+    @if (w.lots.length) {
+      <h3>Lotes</h3>
+      <ul class="loyalty-panel__list">
+        @for (lot of w.lots; track lot.id) {
+          <li [class.loyalty-panel__closed]="lot.usablePoints === 0">
+            <strong>{{ lot.usablePoints }} / {{ lot.initialPoints }} pts</strong>
+            <span>{{ lot.sourceLabel }}</span>
+            <span class="loyalty-panel__muted">
+              Acumulado {{ lot.accruedOn | date: 'mediumDate' }} · vence {{ lot.expiresOn | date: 'mediumDate' }}
+              @if (lot.isExpired && lot.remainingPoints > 0) {
+                · vencido
+              }
+              @if (lot.originLotId) {
+                · recibido por fusión
+              }
+            </span>
+          </li>
+        }
+      </ul>
+    } @else {
+      <p class="loyalty-panel__muted">Sin puntos acumulados.</p>
+    }
+
+    @if (w.debts.length) {
+      <h3>Deudas</h3>
+      <ul class="loyalty-panel__list">
+        @for (debt of w.debts; track debt.id) {
+          <li>
+            <strong>{{ debt.outstandingPoints }} / {{ debt.amount }} pts pendientes</strong>
+            <span class="loyalty-panel__muted">
+              {{ debt.origin === 'MergeTransfer' ? 'Recibida por fusión' : 'Deuda' }} · originada {{ debt.incurredAt | date: 'mediumDate' }}
+              @if (debt.origin === 'MergeTransfer') {
+                · traspasada {{ debt.createdAt | date: 'mediumDate' }}
+              }
+            </span>
+          </li>
+        }
+      </ul>
+    }
+
+    @if (w.movements.length) {
+      <button type="button" class="loyalty-panel__link" (click)="showHistory.set(!showHistory())">
+        {{ showHistory() ? 'Ocultar historial' : 'Ver historial (' + w.movements.length + ')' }}
+      </button>
+      @if (showHistory()) {
+        <ul class="loyalty-panel__list loyalty-panel__history">
+          @for (movement of w.movements; track movement.id) {
+            <li>
+              <strong>{{ isPositive(movement.type) ? '+' : '−' }}{{ movement.points }}</strong>
+              <span>{{ movementLabel(movement.type) }}</span>
+              <span class="loyalty-panel__muted">
+                {{ movement.performedAt | date: 'short' }}
+                @if (movement.performedByName) {
+                  · {{ movement.performedByName }}
+                }
+                @if (movement.reason) {
+                  · «{{ movement.reason }}»
+                }
+              </span>
+            </li>
+          }
+        </ul>
+      }
+    }
+
+    @if (canAdjust && !w.isMerged) {
+      <form class="loyalty-panel__adjust" (ngSubmit)="adjust()">
+        <h3>Ajuste manual</h3>
+        <app-api-feedback severity="error" [message]="adjustError()" />
+        <div class="loyalty-panel__fields">
+          <label>
+            <span>Tipo</span>
+            <select name="direction" [(ngModel)]="direction" [disabled]="isSaving()">
+              <option value="Credit">Abonar puntos</option>
+              <option value="Debit">Descontar puntos</option>
+            </select>
+          </label>
+          <label>
+            <span>Puntos</span>
+            <input type="number" name="points" min="1" step="1" [(ngModel)]="points" [disabled]="isSaving()" required />
+          </label>
+        </div>
+        <label>
+          <span>Motivo</span>
+          <textarea name="reason" rows="2" maxlength="500" [(ngModel)]="reason" [disabled]="isSaving()" required></textarea>
+        </label>
+        <small class="loyalty-panel__muted">Un descuento nunca supera los puntos disponibles ni genera deuda.</small>
+        <button type="submit" class="loyalty-panel__primary" [disabled]="isSaving()">
+          {{ isSaving() ? 'Guardando...' : 'Registrar ajuste' }}
+        </button>
+      </form>
+    }
+  }
+</article>

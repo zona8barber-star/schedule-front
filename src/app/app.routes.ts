@@ -31,6 +31,11 @@ const loadOwnCustomerProfilePage = () =>
     './features/customer/customer-profile/pages/own-customer-profile-page/own-customer-profile-page.component'
   ).then((module) => module.OwnCustomerProfilePageComponent);
 
+const loadMyLoyaltyPage = () =>
+  import('./features/customer/loyalty/pages/my-loyalty-page/my-loyalty-page.component').then(
+    (module) => module.MyLoyaltyPageComponent,
+  );
+
 const loadAdminCustomerClaimsPage = () =>
   import(
     './features/admin/customer-claims/pages/admin-customer-claims-page/admin-customer-claims-page.component'
@@ -312,6 +317,15 @@ export const routes: Routes = [
       roles: [ROLE_NAMES.customer],
     },
     title: 'Mi perfil de cliente',
+  },
+  {
+    path: 'customer/loyalty',
+    canActivate: [authGuard, roleGuard],
+    loadComponent: loadMyLoyaltyPage,
+    data: {
+      roles: [ROLE_NAMES.customer],
+    },
+    title: 'Mis puntos',
   },
   {
     path: 'customer/memberships',

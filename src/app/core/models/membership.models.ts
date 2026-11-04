@@ -161,6 +161,27 @@ export interface CustomerMembershipDetailView {
   consumptions: MembershipConsumptionView[];
   giftDeliveries: MembershipGiftDeliveryView[];
   createdAt: string;
+  loyalty?: MembershipLoyaltyView | null;
+}
+
+export type MembershipLoyaltyDecision =
+  | 'Accrued'
+  | 'NotAccruedProgramDisabled'
+  | 'NotAccruedNoPoints'
+  | 'NotAccruedPredatesWallet'
+  | 'NotAccruedAnnulled';
+
+/**
+ * Loyalty side of a membership. `pointsSnapshot` is null only for memberships sold before the wallet existed
+ * (`predatesWallet`); `decision` is taken once, at the first income link (null: no income linked yet).
+ */
+export interface MembershipLoyaltyView {
+  pointsSnapshot: number | null;
+  predatesWallet: boolean;
+  decision: MembershipLoyaltyDecision | null;
+  decidedAt: string | null;
+  accruedPoints: number;
+  withdrawnPoints: number;
 }
 
 export interface MembershipIncomeCandidateView {

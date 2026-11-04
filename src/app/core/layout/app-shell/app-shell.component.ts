@@ -151,6 +151,11 @@ export class AppShellComponent {
           group: 'customer',
         },
         {
+          label: 'Mis puntos',
+          route: '/customer/loyalty',
+          group: 'customer',
+        },
+        {
           label: 'Mi perfil de cliente',
           route: '/customer/customer-profile',
           group: 'customer',

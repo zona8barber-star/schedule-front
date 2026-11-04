@@ -6,6 +6,7 @@ import { RouterTestingHarness } from '@angular/router/testing';
 
 import { environment } from '../../../../../../environments/environment';
 import { CustomerDetailView } from '../../../../../core/models/customer.models';
+import { LoyaltyWalletView } from '../../../../../core/models/loyalty-wallet.models';
 import { CustomerMembershipSummaryView } from '../../../../../core/models/membership.models';
 import { AdminCustomerDetailPageComponent } from './admin-customer-detail-page.component';
 
@@ -79,6 +80,10 @@ describe('AdminCustomerDetailPageComponent', () => {
     httpMock.expectOne(`${base}/${customer.id}/memberships`).flush(memberships);
     await new Promise<void>((resolve) => setTimeout(resolve, 0));
     harness.detectChanges();
+    // ...and the points panel loads its wallet.
+    httpMock.match(`${base}/${customer.id}/loyalty`).forEach((request) => request.flush(emptyWallet(customer.id)));
+    await new Promise<void>((resolve) => setTimeout(resolve, 0));
+    harness.detectChanges();
     return harness.fixture;
   }
 
@@ -95,6 +100,19 @@ describe('AdminCustomerDetailPageComponent', () => {
     expect(text).toContain('Desvincular cuenta');
     expect(text).toContain('Cuenta vinculada');
     expect(text).toContain('Fusionar perfil duplicado');
+  });
+
+  it('reloads the memberships and the points after a merge brings the duplicate over', async () => {
+    const fixture = await openPage(linkedCustomer);
+    const page = harness.routeDebugElement!.componentInstance as AdminCustomerDetailPageComponent;
+
+    page.onUpdated(linkedCustomer, 'Perfiles fusionados.');
+    httpMock.expectOne(`${base}/${linkedCustomer.id}/memberships`).flush([]);
+    httpMock.expectOne(`${base}/${linkedCustomer.id}/loyalty`).flush({ ...emptyWallet(linkedCustomer.id), availablePoints: 60 });
+    await new Promise<void>((resolve) => setTimeout(resolve, 0));
+    harness.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('.loyalty-panel__summary')?.textContent).toContain('60');
   });
 
   it('lists the customer memberships with their status and offers selling one', async () => {
@@ -168,3 +186,19 @@ describe('AdminCustomerDetailPageComponent', () => {
     expect(text).not.toContain('No tenía una cuenta');
   });
 });
+
+function emptyWallet(customerId: string): LoyaltyWalletView {
+  return {
+    customerId,
+    liveCustomerId: customerId,
+    isMerged: false,
+    programEnabled: true,
+    availablePoints: 0,
+    debtPoints: 0,
+    expiringSoonPoints: 0,
+    nextExpiresOn: null,
+    lots: [],
+    debts: [],
+    movements: [],
+  };
+}

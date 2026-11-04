@@ -84,10 +84,10 @@ describe('AdminCustomersApiService', () => {
     expect(previewReq.request.method).toBe('GET');
     previewReq.flush({});
 
-    service.merge('c-1', { sourceCustomerId: 'c-2' }).subscribe();
+    service.merge('c-1', { sourceCustomerId: 'c-2', previewToken: 'tok-1' }).subscribe();
     const mergeReq = httpMock.expectOne(`${base}/c-1/merge`);
     expect(mergeReq.request.method).toBe('POST');
-    expect(mergeReq.request.body).toEqual({ sourceCustomerId: 'c-2' });
+    expect(mergeReq.request.body).toEqual({ sourceCustomerId: 'c-2', previewToken: 'tok-1' });
     mergeReq.flush({});
   });
 

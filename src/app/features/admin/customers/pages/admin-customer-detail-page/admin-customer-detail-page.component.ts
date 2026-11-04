@@ -1,5 +1,5 @@
 import { DatePipe, DecimalPipe } from '@angular/common';
-import { Component, DestroyRef, OnInit, inject, signal } from '@angular/core';
+import { Component, DestroyRef, OnInit, inject, signal, viewChild } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
@@ -17,6 +17,7 @@ import { getApiErrorMessage } from '../../../../../core/utils/api-error.utils';
 import { ApiFeedbackComponent } from '../../../../../shared/components/api-feedback/api-feedback.component';
 import { PageStateComponent } from '../../../../../shared/components/page-state/page-state.component';
 import { AdminCustomerFormModalComponent } from '../../components/admin-customer-form-modal/admin-customer-form-modal.component';
+import { AdminCustomerLoyaltyPanelComponent } from '../../components/admin-customer-loyalty-panel/admin-customer-loyalty-panel.component';
 import { AdminCustomerLinkAccountModalComponent } from '../../components/admin-customer-link-account-modal/admin-customer-link-account-modal.component';
 import { AdminCustomerMergeModalComponent } from '../../components/admin-customer-merge-modal/admin-customer-merge-modal.component';
 import { AdminCustomerUnlinkAccountModalComponent } from '../../components/admin-customer-unlink-account-modal/admin-customer-unlink-account-modal.component';
@@ -44,6 +45,7 @@ const EVENT_LABELS: Record<CustomerEventType, string> = {
     AdminCustomerLinkAccountModalComponent,
     AdminCustomerUnlinkAccountModalComponent,
     AdminCustomerMergeModalComponent,
+    AdminCustomerLoyaltyPanelComponent,
     AdminMembershipSellModalComponent,
     DecimalPipe,
   ],
@@ -66,6 +68,7 @@ export class AdminCustomerDetailPageComponent implements OnInit {
   readonly errorMessage = signal<string | null>(null);
   readonly customer = signal<CustomerDetailView | null>(null);
   readonly openModal = signal<CustomerModal | null>(null);
+  private readonly loyaltyPanel = viewChild(AdminCustomerLoyaltyPanelComponent);
 
   ngOnInit(): void {
     // Subscribing (not the snapshot) so following the "merged into" link reloads this same page.
@@ -89,8 +92,9 @@ export class AdminCustomerDetailPageComponent implements OnInit {
     this.customer.set(customer);
     this.openModal.set(null);
     this.toastService.success(message);
-    // A merge brings the duplicate's memberships over to this profile.
+    // A merge brings the duplicate's memberships and usable points over to this profile.
     void this.loadMemberships(customer.id);
+    void this.loyaltyPanel()?.load();
   }
 
   onSold(membership: CustomerMembershipDetailView): void {

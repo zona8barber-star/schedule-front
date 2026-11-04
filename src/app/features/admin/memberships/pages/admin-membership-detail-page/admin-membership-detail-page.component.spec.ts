@@ -5,7 +5,9 @@ import { provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 
 import { environment } from '../../../../../../environments/environment';
+import { PERMISSION_CODES, PermissionCode } from '../../../../../core/models/auth.models';
 import { CustomerMembershipDetailView } from '../../../../../core/models/membership.models';
+import { AuthService } from '../../../../../core/services/auth.service';
 import { AdminMembershipDetailPageComponent } from './admin-membership-detail-page.component';
 
 describe('AdminMembershipDetailPageComponent', () => {
@@ -60,6 +62,8 @@ describe('AdminMembershipDetailPageComponent', () => {
     createdAt: '',
   };
 
+  let permissions: PermissionCode[] = [PERMISSION_CODES.membershipPaymentsConfirm];
+
   async function flushMicrotasks(): Promise<void> {
     await new Promise<void>((resolve) => setTimeout(resolve, 0));
   }
@@ -70,6 +74,7 @@ describe('AdminMembershipDetailPageComponent', () => {
         provideHttpClient(),
         provideHttpClientTesting(),
         provideRouter([{ path: 'admin/memberships/:membershipId', component: AdminMembershipDetailPageComponent }]),
+        { provide: AuthService, useValue: { hasPermission: (code: PermissionCode) => permissions.includes(code) } },
       ],
     });
     httpMock = TestBed.inject(HttpTestingController);
@@ -102,6 +107,38 @@ describe('AdminMembershipDetailPageComponent', () => {
     const buttons = [...fixture.nativeElement.querySelectorAll('button')].map((button) => button.textContent.trim());
     expect(buttons).toContain('Activar');
     expect(buttons).toContain('Anular');
+  });
+
+  it('hides the income link without the payment permission and shows the points decided by the first link', async () => {
+    permissions = [];
+    const fixture = await openPage({
+      ...base,
+      loyalty: {
+        pointsSnapshot: 40,
+        predatesWallet: false,
+        decision: 'NotAccruedProgramDisabled',
+        decidedAt: '2026-11-03T15:00:00Z',
+        accruedPoints: 0,
+        withdrawnPoints: 0,
+      },
+    });
+    const text = fixture.nativeElement.textContent as string;
+    permissions = [PERMISSION_CODES.membershipPaymentsConfirm];
+
+    expect(text).not.toContain('Vincular ingreso');
+    expect(text).toContain('requiere el permiso para confirmar pagos');
+    expect(text).toContain('Puntos del plan al vender');
+    expect(text).toContain('el programa estaba deshabilitado');
+    expect(text).toContain('La decisión es definitiva');
+  });
+
+  it('marks a membership sold before the wallet', async () => {
+    const fixture = await openPage({
+      ...base,
+      loyalty: { pointsSnapshot: null, predatesWallet: true, decision: null, decidedAt: null, accruedPoints: 0, withdrawnPoints: 0 },
+    });
+
+    expect(fixture.nativeElement.textContent).toContain('Vendida antes de existir la billetera de puntos');
   });
 
   it('asks for confirmation and a reason to activate an expired membership', async () => {
