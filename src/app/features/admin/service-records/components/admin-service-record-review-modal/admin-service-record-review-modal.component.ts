@@ -321,7 +321,8 @@ export class AdminServiceRecordReviewModalComponent implements OnInit {
 
     this.redemptionOptionsKey = key;
     this.redemptionOptions.set(null);
-    this.form.controls.loyaltyRedemptionId.setValue('', { emitEvent: false });
+    // Emitted, so `problems` (computed from the form value) sees it; re-entering here returns at once (same key).
+    this.form.controls.loyaltyRedemptionId.setValue('');
     if (!key || !customerId) {
       return;
     }
@@ -332,7 +333,7 @@ export class AdminServiceRecordReviewModalComponent implements OnInit {
         this.redemptionOptions.set(options);
         const usable = options.filter((option) => !option.isPastDeadline);
         if (usable.length === 1) {
-          this.form.controls.loyaltyRedemptionId.setValue(usable[0].id, { emitEvent: false });
+          this.form.controls.loyaltyRedemptionId.setValue(usable[0].id);
         }
       }
     } catch (error) {

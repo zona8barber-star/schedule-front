@@ -192,13 +192,10 @@
               }
             </span>
           </label>
-          @if (!pointsBlocker()) {
-            <small class="review-modal__muted">Al confirmar se acreditan en la billetera del cliente, con la vigencia actual del programa.</small>
-          }
           @if (pointsBlocker(); as blocker) {
             <small class="review-modal__muted">{{ blocker }}</small>
           } @else {
-            <small class="review-modal__muted">Solo se guarda la decisión; los puntos se acreditarán cuando exista la billetera.</small>
+            <small class="review-modal__muted">Al confirmar se acreditan en la billetera del cliente, con la vigencia actual del programa.</small>
           }
         </fieldset>
 

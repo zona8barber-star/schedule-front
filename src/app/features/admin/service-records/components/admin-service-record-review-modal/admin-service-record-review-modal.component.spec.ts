@@ -97,6 +97,49 @@ describe('AdminServiceRecordReviewModalComponent', () => {
     expect(fixture.nativeElement.textContent).toContain('requiere permiso para entregar recompensas');
   });
 
+  it('after a failed confirmation, choosing a reward with a single redemption confirms without selecting it again', async () => {
+    await open(true, [PERMISSION_CODES.loyaltyRedemptionsDeliver]);
+    component.selectCustomer(carla);
+
+    // 1. A failed confirmation: a paid service without a charged amount. The problems become visible.
+    component.form.controls.chargedAmount.setValue(null);
+    await component.approve();
+    fixture.detectChanges();
+    expect(component.submitted()).toBe(true);
+    expect(component.problems().length).toBeGreaterThan(0);
+
+    // 2. Choosing the reward loads the customer's redemptions; 3. the only one is selected automatically.
+    component.form.controls.operationType.setValue('LoyaltyReward');
+    fixture.detectChanges();
+    httpMock.expectOne((request) => request.url === `${base}/redemption-options`).flush([
+      {
+        id: 'd-1', rewardName: 'Corte gratis', serviceId: 's-cut', serviceName: 'Corte', pointsCost: 80,
+        approvedAt: '2026-11-04T15:00:00Z', deliverBy: '2026-12-03', isPastDeadline: false,
+      },
+    ]);
+    await fixture.whenStable();
+    fixture.detectChanges();
+    expect(component.form.controls.loyaltyRedemptionId.value).toBe('d-1');
+    expect(component.problems()).toEqual([]);
+    expect(fixture.nativeElement.textContent).not.toContain('Elige el canje aprobado');
+
+    // 4. Confirming works without choosing the redemption again.
+    const approving = component.approve();
+    const req = httpMock.expectOne(`${base}/r-1/approve`);
+    expect(req.request.body).toEqual(expect.objectContaining({ operationType: 'LoyaltyReward', loyaltyRedemptionId: 'd-1' }));
+    req.flush({ ...record, status: 'Approved' });
+    await approving;
+  });
+
+  it('describes what accruing points does now that the wallet exists', async () => {
+    await open(true, []);
+    component.selectCustomer(carla);
+    fixture.detectChanges();
+    const text = fixture.nativeElement.textContent as string;
+    expect(text).toContain('Al confirmar se acreditan en la billetera del cliente');
+    expect(text).not.toContain('cuando exista la billetera');
+  });
+
   it('confirms a reward delivering the approved redemption of the customer for that service', async () => {
     await open(true, [PERMISSION_CODES.loyaltyRedemptionsDeliver]);
     component.selectCustomer(carla);
