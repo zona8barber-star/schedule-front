@@ -21,6 +21,10 @@
         <dd>{{ w.availablePoints }}</dd>
       </div>
       <div>
+        <dt>Reservados</dt>
+        <dd>{{ w.reservedPoints }}</dd>
+      </div>
+      <div>
         <dt>Deuda</dt>
         <dd>{{ w.debtPoints }}</dd>
       </div>
@@ -49,6 +53,9 @@
               @if (lot.originLotId) {
                 · recibido por fusión
               }
+              @if (lot.reservedPoints) {
+                · {{ lot.reservedPoints }} reservados para canjes
+              }
             </span>
           </li>
         }
@@ -74,6 +81,63 @@
       </ul>
     }
 
+    @if (w.redemptions?.length) {
+      <h3>Canjes</h3>
+      <ul class="loyalty-panel__list">
+        @for (redemption of w.redemptions; track redemption.id) {
+          <li>
+            <strong>{{ redemption.rewardName }} · {{ redemption.pointsCost }} pts</strong>
+            <span>{{ statusLabel(redemption.status) }}{{ redemption.isPastDeadline ? ' (plazo vencido)' : '' }}</span>
+            <span class="loyalty-panel__muted">
+              Pedido {{ redemption.requestedAt | date: 'mediumDate' }}{{ redemption.channel === 'Counter' ? ' en mostrador' : '' }}
+              @if (redemption.status === 'Requested') {
+                · aprobar hasta {{ redemption.approveBy | date: 'mediumDate' }}
+              }
+              @if (redemption.status === 'Approved') {
+                · entregar hasta {{ redemption.deliverBy | date: 'mediumDate' }}
+              }
+              @if (redemption.rejectionReason) {
+                · «{{ redemption.rejectionReason }}»
+              }
+              @if (redemption.cancellationReason) {
+                · «{{ redemption.cancellationReason }}»
+              }
+            </span>
+          </li>
+        }
+      </ul>
+    }
+
+    @if (canRegisterAtCounter && !w.isMerged) {
+      <form class="loyalty-panel__adjust" (ngSubmit)="registerAtCounter()">
+        <h3>Canje en mostrador</h3>
+        <app-api-feedback severity="error" [message]="counterError()" />
+        <label>
+          <span>Recompensa</span>
+          <select name="counterRewardId" [(ngModel)]="counterRewardId" [disabled]="isRegistering()">
+            <option value="">Elige una recompensa</option>
+            @for (reward of counterRewards(); track reward.id) {
+              <option [value]="reward.id" [disabled]="reward.pointsCost > w.availablePoints">
+                {{ reward.name }} · {{ reward.pointsCost }} pts
+              </option>
+            }
+          </select>
+        </label>
+        <label class="loyalty-panel__check">
+          <input type="checkbox" name="counterVerified" [(ngModel)]="counterVerified" [disabled]="isRegistering()" />
+          <span>Verifiqué en persona la identidad del cliente</span>
+        </label>
+        <label class="loyalty-panel__check">
+          <input type="checkbox" name="counterApproveNow" [(ngModel)]="counterApproveNow" [disabled]="isRegistering()" />
+          <span>Aprobar en este mismo paso</span>
+        </label>
+        <small class="loyalty-panel__muted">Los puntos quedan reservados hasta la entrega.</small>
+        <button type="submit" class="loyalty-panel__primary" [disabled]="isRegistering()">
+          {{ isRegistering() ? 'Registrando...' : 'Registrar canje' }}
+        </button>
+      </form>
+    }
+
     @if (w.movements.length) {
       <button type="button" class="loyalty-panel__link" (click)="showHistory.set(!showHistory())">
         {{ showHistory() ? 'Ocultar historial' : 'Ver historial (' + w.movements.length + ')' }}
@@ -82,7 +146,7 @@
         <ul class="loyalty-panel__list loyalty-panel__history">
           @for (movement of w.movements; track movement.id) {
             <li>
-              <strong>{{ isPositive(movement.type) ? '+' : '−' }}{{ movement.points }}</strong>
+              <strong>{{ movementSign(movement.type) }}{{ movement.points }}</strong>
               <span>{{ movementLabel(movement.type) }}</span>
               <span class="loyalty-panel__muted">
                 {{ movement.performedAt | date: 'short' }}

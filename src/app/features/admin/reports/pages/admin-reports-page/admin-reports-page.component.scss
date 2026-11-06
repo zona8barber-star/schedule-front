@@ -124,3 +124,9 @@
     white-space: nowrap;
   }
 }
+
+.reports__note {
+  margin: 0 0 0.75rem;
+  font-size: 0.85rem;
+  color: var(--text-muted, #6b6b6b);
+}

@@ -51,6 +51,16 @@ const loadStaffServiceRecordsPage = () =>
     './features/staff/service-records/pages/staff-service-records-page/staff-service-records-page.component'
   ).then((module) => module.StaffServiceRecordsPageComponent);
 
+const loadAdminLoyaltyRewardsPage = () =>
+  import('./features/admin/loyalty/pages/admin-loyalty-rewards-page/admin-loyalty-rewards-page.component').then(
+    (module) => module.AdminLoyaltyRewardsPageComponent,
+  );
+
+const loadAdminLoyaltyRedemptionsPage = () =>
+  import('./features/admin/loyalty/pages/admin-loyalty-redemptions-page/admin-loyalty-redemptions-page.component').then(
+    (module) => module.AdminLoyaltyRedemptionsPageComponent,
+  );
+
 const loadAdminLoyaltySettingsPage = () =>
   import(
     './features/admin/loyalty/pages/admin-loyalty-settings-page/admin-loyalty-settings-page.component'
@@ -490,6 +500,26 @@ export const routes: Routes = [
       permissions: [PERMISSION_CODES.loyaltySettingsManage],
     },
     title: 'Fidelización',
+  },
+  {
+    // loyalty.rewards.manage is checked with the token claim (not critical, ADR-0005).
+    path: 'admin/loyalty/rewards',
+    canActivate: [authGuard, permissionGuard],
+    loadComponent: loadAdminLoyaltyRewardsPage,
+    data: {
+      permissions: [PERMISSION_CODES.loyaltyRewardsManage],
+    },
+    title: 'Recompensas',
+  },
+  {
+    // Approve and deliver are critical: the API checks them against the database on every request.
+    path: 'admin/loyalty/redemptions',
+    canActivate: [authGuard, permissionGuard],
+    loadComponent: loadAdminLoyaltyRedemptionsPage,
+    data: {
+      permissions: [PERMISSION_CODES.loyaltyRedemptionsApprove, PERMISSION_CODES.loyaltyRedemptionsDeliver],
+    },
+    title: 'Canjes de puntos',
   },
   {
     path: 'admin/memberships/:membershipId',

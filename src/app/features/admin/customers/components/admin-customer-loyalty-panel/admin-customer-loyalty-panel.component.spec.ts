@@ -38,6 +38,7 @@ describe('AdminCustomerLoyaltyPanelComponent', () => {
         isExpired: false,
         originLotId: 'l-0',
         originCustomerId: 'c-2',
+        reservedPoints: 10,
       },
     ],
     debts: [],
@@ -52,8 +53,11 @@ describe('AdminCustomerLoyaltyPanelComponent', () => {
         relatedCustomerId: 'c-2',
         performedByName: 'Admin',
         performedAt: '2026-11-03T15:00:00Z',
+        redemptionId: null,
       },
     ],
+    reservedPoints: 10,
+    redemptions: [],
   };
 
   async function render(permissions: PermissionCode[]): Promise<void> {
@@ -89,12 +93,42 @@ describe('AdminCustomerLoyaltyPanelComponent', () => {
     expect(text).toContain('20 / 40 pts');
     expect(text).toContain('Membresía: Oro');
     expect(text).toContain('recibido por fusión');
+    expect(text).toContain('Reservados');
+    expect(text).toContain('10 reservados para canjes');
     expect(fixture.nativeElement.querySelector('form')).toBeNull();
 
     component.showHistory.set(true);
     fixture.detectChanges();
     expect(fixture.nativeElement.textContent).toContain('+40');
     expect(fixture.nativeElement.textContent).toContain('Recibido por fusión');
+  });
+
+  it('registers a counter redemption only after the in-person verification, and reloads the wallet', async () => {
+    await render([PERMISSION_CODES.loyaltyRedemptionsApprove]);
+    httpMock.expectOne(`${environment.defaultApiBaseUrl}/admin/loyalty/redemptions/rewards`).flush([
+      {
+        id: 'r-1', name: 'Gorra', description: null, kind: 'Other', serviceId: null, serviceName: null, pointsCost: 30,
+        isActive: true, version: 1, createdAt: '2026-11-04T15:00:00Z', updatedAt: null, updatedByName: null,
+      },
+    ]);
+    await fixture.whenStable();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.textContent).toContain('Canje en mostrador');
+
+    component.counterRewardId = 'r-1';
+    await component.registerAtCounter();
+    expect(component.counterError()).toContain('verificaste en persona');
+
+    component.counterVerified = true;
+    const registering = component.registerAtCounter();
+    const request = httpMock.expectOne(`${environment.defaultApiBaseUrl}/admin/loyalty/redemptions/customers/c-1`);
+    expect(request.request.body).toEqual(expect.objectContaining({ rewardId: 'r-1', inPersonVerified: true, approveNow: true }));
+    request.flush({});
+    await new Promise<void>((resolve) => setTimeout(resolve, 0));
+    httpMock.expectOne(url).flush({ ...wallet, availablePoints: 20, reservedPoints: 40 });
+    await registering;
+    expect(component.wallet()?.reservedPoints).toBe(40);
+    expect(component.counterVerified).toBe(false);
   });
 
   it('keeps the idempotency key while retrying an adjustment and renews it after a success', async () => {

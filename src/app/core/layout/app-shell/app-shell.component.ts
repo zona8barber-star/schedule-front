@@ -312,6 +312,27 @@ export class AppShellComponent {
       });
     }
 
+    if (this.authService.hasPermission(PERMISSION_CODES.loyaltyRewardsManage)) {
+      links.push({
+        label: 'Recompensas',
+        route: '/admin/loyalty/rewards',
+        group: 'admin',
+      });
+    }
+
+    if (
+      this.authService.hasAnyPermission([
+        PERMISSION_CODES.loyaltyRedemptionsApprove,
+        PERMISSION_CODES.loyaltyRedemptionsDeliver,
+      ])
+    ) {
+      links.push({
+        label: 'Canjes de puntos',
+        route: '/admin/loyalty/redemptions',
+        group: 'admin',
+      });
+    }
+
     return links;
   });
 

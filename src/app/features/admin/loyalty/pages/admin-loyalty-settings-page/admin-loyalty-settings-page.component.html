@@ -54,6 +54,46 @@
               los ya acumulados conservan la vigencia con la que se otorgaron.
             </span>
           </div>
+
+          <div class="admin-content-page__field">
+            <label for="redemptionApprovalDays">Plazo para aprobar un canje (días calendario)</label>
+            <input
+              id="redemptionApprovalDays"
+              type="number"
+              formControlName="redemptionApprovalDays"
+              [min]="minRedemptionDays"
+              [max]="maxRedemptionDays"
+              step="1"
+              inputmode="numeric"
+            />
+            @if (form.controls.redemptionApprovalDays.touched && form.controls.redemptionApprovalDays.invalid) {
+              <p class="admin-content-page__error">
+                Ingresa un número entero de días entre {{ minRedemptionDays }} y {{ maxRedemptionDays }}.
+              </p>
+            }
+          </div>
+
+          <div class="admin-content-page__field">
+            <label for="redemptionDeliveryDays">Plazo para entregar un canje aprobado (días calendario)</label>
+            <input
+              id="redemptionDeliveryDays"
+              type="number"
+              formControlName="redemptionDeliveryDays"
+              [min]="minRedemptionDays"
+              [max]="maxRedemptionDays"
+              step="1"
+              inputmode="numeric"
+            />
+            @if (form.controls.redemptionDeliveryDays.touched && form.controls.redemptionDeliveryDays.invalid) {
+              <p class="admin-content-page__error">
+                Ingresa un número entero de días entre {{ minRedemptionDays }} y {{ maxRedemptionDays }}.
+              </p>
+            }
+            <span class="admin-content-page__hint">
+              El día de la solicitud (o de la aprobación) cuenta como el primero y el plazo termina al acabar el último día,
+              hora de Bogotá. Cada canje conserva los plazos con los que se pidió; cambiarlos solo afecta los canjes nuevos.
+            </span>
+          </div>
         </fieldset>
 
         @if (settings()?.updatedAt) {
@@ -78,7 +118,7 @@
       <li>Cada servicio y cada tipo de membresía otorga una cantidad fija de puntos (entero, 0 o mayor). Con 0 no otorga puntos.</li>
       <li>No otorgan puntos el consumo de una membresía, las cortesías, los servicios gratuitos ni las redenciones.</li>
       <li>Cambiar los puntos de un servicio o de una membresía no modifica los puntos ya acumulados.</li>
-      <li>La acumulación de puntos todavía no está activa: esta pantalla deja lista la configuración.</li>
+      <li>Al pedir un canje sus puntos quedan reservados, empezando por los que vencen antes; se descuentan al entregarlo y vuelven si se rechaza, se cancela o vence (los que ya vencieron no vuelven a estar disponibles).</li>
     </ul>
   </article>
 
@@ -100,6 +140,12 @@
             }
             @if (change.previousPointsValidityDays !== change.newPointsValidityDays) {
               <span>Vigencia: {{ change.previousPointsValidityDays }} → {{ change.newPointsValidityDays }} días</span>
+            }
+            @if (change.newRedemptionApprovalDays !== null && change.previousRedemptionApprovalDays !== change.newRedemptionApprovalDays) {
+              <span>Plazo para aprobar canjes: {{ change.previousRedemptionApprovalDays }} → {{ change.newRedemptionApprovalDays }} días</span>
+            }
+            @if (change.newRedemptionDeliveryDays !== null && change.previousRedemptionDeliveryDays !== change.newRedemptionDeliveryDays) {
+              <span>Plazo para entregar canjes: {{ change.previousRedemptionDeliveryDays }} → {{ change.newRedemptionDeliveryDays }} días</span>
             }
           </li>
         }

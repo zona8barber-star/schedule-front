@@ -2,6 +2,9 @@
 export const LOYALTY_MIN_VALIDITY_DAYS = 1;
 export const LOYALTY_MAX_VALIDITY_DAYS = 3650;
 export const LOYALTY_MAX_POINTS_PER_ITEM = 100000;
+/** Calendar days to approve and to deliver a redemption (ADR-0015 R7). */
+export const LOYALTY_MIN_REDEMPTION_DAYS = 1;
+export const LOYALTY_MAX_REDEMPTION_DAYS = 365;
 
 export interface LoyaltySettingsView {
   isEnabled: boolean;
@@ -11,12 +14,17 @@ export interface LoyaltySettingsView {
   version: number;
   updatedAt: string | null;
   updatedByName: string | null;
+  /** Each redemption keeps the deadlines applied when it was requested. */
+  redemptionApprovalDays: number;
+  redemptionDeliveryDays: number;
 }
 
 export interface LoyaltySettingsUpdateRequest {
   isEnabled: boolean;
   pointsValidityDays: number;
   version: number;
+  redemptionApprovalDays?: number;
+  redemptionDeliveryDays?: number;
 }
 
 export interface LoyaltySettingsChangeView {
@@ -28,4 +36,9 @@ export interface LoyaltySettingsChangeView {
   newIsEnabled: boolean;
   previousPointsValidityDays: number;
   newPointsValidityDays: number;
+  /** Null in changes recorded before the redemption deadlines existed. */
+  previousRedemptionApprovalDays: number | null;
+  newRedemptionApprovalDays: number | null;
+  previousRedemptionDeliveryDays: number | null;
+  newRedemptionDeliveryDays: number | null;
 }

@@ -55,10 +55,12 @@
                 <span>{{ operationLabels[operation] }}</span>
               </label>
             }
-            <label class="review-modal__disabled" title="Llega con las redenciones de puntos">
-              <input type="radio" disabled />
-              <span>{{ operationLabels.LoyaltyReward }} <small>(disponible más adelante)</small></span>
-            </label>
+            @if (!canDeliverRewards) {
+              <label class="review-modal__disabled" title="Necesitas el permiso para entregar recompensas">
+                <input type="radio" disabled />
+                <span>{{ operationLabels.LoyaltyReward }} <small>(requiere permiso para entregar recompensas)</small></span>
+              </label>
+            }
           </div>
           <small class="review-modal__muted">
             @switch (operation()) {
@@ -70,6 +72,9 @@
               }
               @case ('Courtesy') {
                 No genera ingreso, comisión ni puntos.
+              }
+              @case ('LoyaltyReward') {
+                Entrega un canje aprobado: no genera ingreso ni puntos; la barbería asume la comisión del profesional.
               }
             }
           </small>
@@ -139,6 +144,25 @@
             }
             <button type="button" class="review-modal__link" (click)="openCreateCustomer()">Crear cliente nuevo</button>
             <small class="review-modal__muted">Opcional, salvo para consumos de membresía y para acumular puntos.</small>
+          }
+
+          @if (operation() === 'LoyaltyReward' && customer()) {
+            <label class="review-modal__field">
+              <span>Canje que se entrega</span>
+              <select formControlName="loyaltyRedemptionId">
+                <option value="">Elige un canje aprobado</option>
+                @for (option of redemptionOptions() ?? []; track option.id) {
+                  <option [value]="option.id" [disabled]="option.isPastDeadline">
+                    {{ option.rewardName }} · {{ option.pointsCost }} pts · entregar hasta {{ option.deliverBy }}{{ option.isPastDeadline ? ' (vencido)' : '' }}
+                  </option>
+                }
+              </select>
+            </label>
+            @if (redemptionOptions() === null) {
+              <small class="review-modal__muted">Buscando canjes aprobados...</small>
+            } @else if (!redemptionOptions()!.length) {
+              <small class="review-modal__muted">El cliente no tiene canjes aprobados de este servicio.</small>
+            }
           }
 
           @if (operation() === 'MembershipConsumption' && customer(); as selected) {

@@ -11,6 +11,7 @@ import {
   ServiceRecordCustomerOption,
   ServiceRecordEligibilityView,
   ServiceRecordOptionsView,
+  ServiceRecordRedemptionOption,
   ServiceRecordRelatedView,
   ServiceRecordRegisterRequest,
   ServiceRecordRejectRequest,
@@ -63,6 +64,18 @@ export class ServiceRecordsApiService {
 
   related(serviceRecordId: string) {
     return this.httpClient.get<ServiceRecordRelatedView>(this.buildUrl(`/admin/service-records/${serviceRecordId}/related`));
+  }
+
+  /** Approved service redemptions of the customer that a 'LoyaltyReward' confirmation can deliver. */
+  getRedemptionOptions(customerId: string, serviceId: string | null) {
+    let params = new HttpParams().set('customerId', customerId);
+    if (serviceId) {
+      params = params.set('serviceId', serviceId);
+    }
+
+    return this.httpClient.get<ServiceRecordRedemptionOption[]>(this.buildUrl('/admin/service-records/redemption-options'), {
+      params,
+    });
   }
 
   /** Same creation and duplicate check as the customers module, available to approvers without the Admin role. */

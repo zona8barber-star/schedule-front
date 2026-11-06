@@ -50,6 +50,12 @@ export interface ServiceRecordApprovalView {
   reviewNotes: string | null;
   approvedAt: string;
   approvedByName: string | null;
+  /** For a loyalty reward: the redemption it delivered and the commission the business covers (informative). */
+  loyaltyRedemptionId?: string | null;
+  rewardName?: string | null;
+  rewardBasePriceSnapshot?: number | null;
+  rewardBusinessPercentageSnapshot?: number | null;
+  rewardProfessionalCommission?: number | null;
 }
 
 export interface ServiceRecordView {
@@ -91,6 +97,20 @@ export interface ServiceRecordApproveRequest {
   customerMembershipId: string | null;
   accruesLoyaltyPoints: boolean;
   notes: string | null;
+  /** Required for 'LoyaltyReward' (needs loyalty.redemptions.deliver too); omitted otherwise. */
+  loyaltyRedemptionId?: string | null;
+}
+
+/** An approved service redemption that confirming a record as 'LoyaltyReward' delivers. */
+export interface ServiceRecordRedemptionOption {
+  id: string;
+  rewardName: string;
+  serviceId: string;
+  serviceName: string;
+  pointsCost: number;
+  approvedAt: string;
+  deliverBy: string;
+  isPastDeadline: boolean;
 }
 
 export interface ServiceRecordRejectRequest {

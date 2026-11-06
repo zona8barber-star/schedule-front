@@ -37,4 +37,16 @@ export interface ReportSummaryView {
   trend: ReportTrendPointView[];
   membershipSalesIncome: number;
   membershipSalesCount: number;
+  /** Informative: commissions the business covers for rewards delivered as services. Not a payment, not in any total. */
+  rewardCommissions?: ReportRewardCommissionView[] | null;
+  rewardCommissionsTotal?: number;
+}
+
+export interface ReportRewardCommissionView {
+  staffProfileId: string;
+  staffName: string;
+  rewardCount: number;
+  basePriceTotal: number;
+  businessShareTotal: number;
+  professionalCommissionTotal: number;
 }

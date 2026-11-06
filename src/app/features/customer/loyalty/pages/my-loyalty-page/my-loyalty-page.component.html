@@ -2,10 +2,11 @@
   <header class="my-memberships__hero">
     <p class="my-memberships__eyebrow">Cuenta</p>
     <h1>Mis puntos</h1>
-    <p>Consulta tus puntos de fidelización disponibles y cuándo vencen.</p>
+    <p>Consulta tus puntos de fidelización, cuándo vencen y canjéalos por recompensas.</p>
   </header>
 
   <app-api-feedback severity="error" [message]="errorMessage()" />
+  <app-api-feedback severity="error" [message]="actionError()" />
 
   @if (isLoading()) {
     <article class="my-memberships__panel">
@@ -31,6 +32,12 @@
             <dt>Disponibles</dt>
             <dd>{{ points.availablePoints }}</dd>
           </div>
+          @if (points.reservedPoints) {
+            <div>
+              <dt>Reservados para canjes</dt>
+              <dd>{{ points.reservedPoints }}</dd>
+            </div>
+          }
           <div>
             <dt>Vencen en los próximos 30 días</dt>
             <dd>{{ points.expiringSoonPoints }}</dd>
@@ -65,13 +72,83 @@
         }
       </article>
 
+      @if (catalog(); as rewards) {
+        <article class="my-memberships__card">
+          <h2>Recompensas</h2>
+          @if (!rewards.programEnabled) {
+            <p class="my-memberships__notice">Por ahora no se reciben canjes nuevos.</p>
+          }
+          @if (!rewards.rewards.length) {
+            <p class="my-memberships__muted">Aún no hay recompensas disponibles.</p>
+          } @else {
+            <ul class="my-memberships__lines">
+              @for (reward of rewards.rewards; track reward.id) {
+                <li>
+                  <strong>{{ reward.pointsCost }} pts</strong>
+                  <span>{{ reward.name }}{{ reward.serviceName ? ' · ' + reward.serviceName : '' }}</span>
+                  @if (reward.description) {
+                    <span class="my-memberships__muted">{{ reward.description }}</span>
+                  }
+                  @if (confirming()?.id === reward.id) {
+                    <span class="my-memberships__muted">
+                      Se reservarán {{ reward.pointsCost }} puntos hasta que la barbería te entregue la recompensa.
+                    </span>
+                    <span>
+                      <button type="button" class="my-memberships__action" (click)="redeem()" [disabled]="busyId() === reward.id">
+                        {{ busyId() === reward.id ? 'Enviando...' : 'Confirmar canje' }}
+                      </button>
+                      <button type="button" class="my-memberships__link" (click)="dismiss()" [disabled]="busyId() === reward.id">No, volver</button>
+                    </span>
+                  } @else {
+                    <button type="button" class="my-memberships__action" (click)="askToRedeem(reward)" [disabled]="!reward.canAfford || !!busyId()">
+                      {{ reward.canAfford ? 'Canjear' : 'Puntos insuficientes' }}
+                    </button>
+                  }
+                </li>
+              }
+            </ul>
+          }
+        </article>
+      }
+
+      @if (redemptions().length) {
+        <article class="my-memberships__card">
+          <h2>Mis canjes</h2>
+          <ul class="my-memberships__lines">
+            @for (redemption of redemptions(); track redemption.id) {
+              <li>
+                <strong>{{ redemption.rewardName }}</strong>
+                <span>{{ statusLabel(redemption.status) }} · {{ redemption.pointsCost }} pts</span>
+                <span class="my-memberships__muted">
+                  Pedido el {{ redemption.requestedAt | date: 'mediumDate' }}
+                  @if (redemption.status === 'Requested') {
+                    · se aprueba hasta el {{ redemption.approveBy | date: 'mediumDate' }}
+                  }
+                  @if (redemption.status === 'Approved') {
+                    · recógelo hasta el {{ redemption.deliverBy | date: 'mediumDate' }}
+                  }
+                  @if (redemption.rejectionReason) {
+                    · {{ redemption.rejectionReason }}
+                  }
+                </span>
+                @if (redemption.canCancel) {
+                  <button type="button" class="my-memberships__link" (click)="cancel(redemption)" [disabled]="busyId() === redemption.id">
+                    {{ busyId() === redemption.id ? 'Cancelando...' : 'Cancelar canje' }}
+                  </button>
+                }
+              </li>
+            }
+          </ul>
+        </article>
+      }
+
       @if (points.movements.length) {
         <article class="my-memberships__card">
           <h2>Movimientos recientes</h2>
           <ul class="my-memberships__lines">
             @for (movement of points.movements; track $index) {
               <li>
-                <strong>{{ isPositive(movement.type) ? '+' : '−' }}{{ movement.points }}</strong>
+                <strong>{{ movementSign(movement.type) }}{{ movement.points }}</strong>
                 <span>{{ movementLabel(movement.type) }}</span>
                 <span class="my-memberships__muted">{{ movement.performedAt | date: 'mediumDate' }}</span>
               </li>

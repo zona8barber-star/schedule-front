@@ -197,6 +197,8 @@ function emptyWallet(customerId: string): LoyaltyWalletView {
     debtPoints: 0,
     expiringSoonPoints: 0,
     nextExpiresOn: null,
+    reservedPoints: 0,
+    redemptions: [],
     lots: [],
     debts: [],
     movements: [],

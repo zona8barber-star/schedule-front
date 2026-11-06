@@ -5,14 +5,17 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { AbstractControl, FormBuilder, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import { firstValueFrom, map, startWith } from 'rxjs';
 
+import { PERMISSION_CODES } from '../../../../../core/models/auth.models';
 import {
   SERVICE_RECORD_OPERATION_LABELS,
   ServiceRecordCustomerOption,
   ServiceRecordOperationType,
   ServiceRecordOptionsView,
+  ServiceRecordRedemptionOption,
   ServiceRecordRelatedView,
   ServiceRecordView,
 } from '../../../../../core/models/service-record.models';
+import { AuthService } from '../../../../../core/services/auth.service';
 import { ServiceRecordsApiService } from '../../../../../core/services/service-records-api.service';
 import { getApiErrorMessage } from '../../../../../core/utils/api-error.utils';
 import { bogotaToday } from '../../../../../core/utils/bogota-date.utils';
@@ -37,6 +40,7 @@ function integerOrNullValidator(control: AbstractControl): ValidationErrors | nu
 export class AdminServiceRecordReviewModalComponent implements OnInit {
   private readonly formBuilder = inject(FormBuilder);
   private readonly api = inject(ServiceRecordsApiService);
+  private readonly authService = inject(AuthService);
 
   @Input({ required: true }) record!: ServiceRecordView;
   @Input({ required: true }) options!: ServiceRecordOptionsView;
@@ -46,7 +50,14 @@ export class AdminServiceRecordReviewModalComponent implements OnInit {
   @Output() readonly staleDetected = new EventEmitter<void>();
 
   readonly operationLabels = SERVICE_RECORD_OPERATION_LABELS;
-  readonly selectableOperations: ServiceRecordOperationType[] = ['Paid', 'MembershipConsumption', 'Courtesy'];
+  /** Confirming a reward delivers a redemption: it also needs loyalty.redemptions.deliver (checked again by the API). */
+  readonly canDeliverRewards = this.authService.hasPermission(PERMISSION_CODES.loyaltyRedemptionsDeliver);
+  readonly selectableOperations: ServiceRecordOperationType[] = this.canDeliverRewards
+    ? ['Paid', 'MembershipConsumption', 'Courtesy', 'LoyaltyReward']
+    : ['Paid', 'MembershipConsumption', 'Courtesy'];
+  /** Approved service redemptions of the selected customer and service; null while not applicable or loading. */
+  readonly redemptionOptions = signal<ServiceRecordRedemptionOption[] | null>(null);
+  private redemptionOptionsKey: string | null = null;
   readonly today = bogotaToday();
 
   readonly isSaving = signal(false);
@@ -100,6 +111,7 @@ export class AdminServiceRecordReviewModalComponent implements OnInit {
     performedOn: ['', [Validators.required]],
     chargedAmount: this.formBuilder.control<number | null>(null, [integerOrNullValidator]),
     customerMembershipId: [''],
+    loyaltyRedemptionId: [''],
     accruesLoyaltyPoints: [false],
     notes: ['', [Validators.maxLength(500)]],
     customerQuery: [''],
@@ -146,6 +158,13 @@ export class AdminServiceRecordReviewModalComponent implements OnInit {
         problems.push('Elige la membresía de la que se descuenta el servicio.');
       }
     }
+    if (this.operation() === 'LoyaltyReward') {
+      if (!this.customer()) {
+        problems.push('Elige el cliente que canjeó la recompensa.');
+      } else if (!this.form.controls.loyaltyRedemptionId.value) {
+        problems.push('Elige el canje aprobado que se entrega con este servicio.');
+      }
+    }
     if (this.form.controls.performedOn.value > this.today) {
       problems.push('La fecha del servicio no puede ser futura.');
     }
@@ -161,7 +180,10 @@ export class AdminServiceRecordReviewModalComponent implements OnInit {
       chargedAmount: service?.basePrice ?? null,
     });
     // The form-level stream, not the controls': it emits after the form value (and so pointsBlocker) is updated.
-    this.form.valueChanges.subscribe(() => this.applyPointsRule());
+    this.form.valueChanges.subscribe(() => {
+      this.applyPointsRule();
+      void this.refreshRedemptionOptions();
+    });
     void this.loadRelated();
 
     if (this.record.customerId) {
@@ -188,6 +210,7 @@ export class AdminServiceRecordReviewModalComponent implements OnInit {
     this.customerResults.set([]);
     this.form.controls.customerMembershipId.setValue(option.memberships.length === 1 ? option.memberships[0].id : '');
     this.applyPointsRule();
+    void this.refreshRedemptionOptions();
   }
 
   openCreateCustomer(): void {
@@ -212,6 +235,7 @@ export class AdminServiceRecordReviewModalComponent implements OnInit {
     this.customer.set(null);
     this.form.controls.customerMembershipId.setValue('');
     this.applyPointsRule();
+    void this.refreshRedemptionOptions();
   }
 
   async approve(): Promise<void> {
@@ -235,6 +259,7 @@ export class AdminServiceRecordReviewModalComponent implements OnInit {
         customerMembershipId: operation === 'MembershipConsumption' ? value.customerMembershipId || null : null,
         accruesLoyaltyPoints: operation === 'Paid' && !this.pointsBlocker() && value.accruesLoyaltyPoints,
         notes: value.notes.trim() || null,
+        ...(operation === 'LoyaltyReward' ? { loyaltyRedemptionId: value.loyaltyRedemptionId || null } : {}),
       }),
     );
   }
@@ -268,7 +293,7 @@ export class AdminServiceRecordReviewModalComponent implements OnInit {
       this.hasConflict.set(error instanceof HttpErrorResponse && error.status === 409);
       this.errorMessage.set(
         error instanceof HttpErrorResponse && error.status === 403
-          ? 'Ya no tienes permiso para aprobar servicios realizados.'
+          ? 'Ya no tienes permiso para aprobar servicios realizados o para entregar recompensas.'
           : getApiErrorMessage(error),
       );
     } finally {
@@ -282,6 +307,37 @@ export class AdminServiceRecordReviewModalComponent implements OnInit {
     } catch {
       // Warnings are a help, not a requirement: the review works without them.
       this.related.set(null);
+    }
+  }
+
+  /** Loads the approved redemptions of the customer for the confirmed service when the operation is a reward. */
+  private async refreshRedemptionOptions(): Promise<void> {
+    const customerId = this.customer()?.id;
+    const serviceId = this.form.controls.serviceId.value;
+    const key = this.operation() === 'LoyaltyReward' && customerId ? `${customerId}|${serviceId}` : null;
+    if (key === this.redemptionOptionsKey) {
+      return;
+    }
+
+    this.redemptionOptionsKey = key;
+    this.redemptionOptions.set(null);
+    this.form.controls.loyaltyRedemptionId.setValue('', { emitEvent: false });
+    if (!key || !customerId) {
+      return;
+    }
+
+    try {
+      const options = await firstValueFrom(this.api.getRedemptionOptions(customerId, serviceId || null));
+      if (this.redemptionOptionsKey === key) {
+        this.redemptionOptions.set(options);
+        const usable = options.filter((option) => !option.isPastDeadline);
+        if (usable.length === 1) {
+          this.form.controls.loyaltyRedemptionId.setValue(usable[0].id, { emitEvent: false });
+        }
+      }
+    } catch (error) {
+      this.errorMessage.set(getApiErrorMessage(error));
+      this.redemptionOptions.set([]);
     }
   }
 

@@ -18,6 +18,8 @@ describe('AdminLoyaltySettingsPageComponent', () => {
     version: 700,
     updatedAt: null,
     updatedByName: null,
+    redemptionApprovalDays: 30,
+    redemptionDeliveryDays: 30,
   };
 
   const change: LoyaltySettingsChangeView = {
@@ -29,6 +31,10 @@ describe('AdminLoyaltySettingsPageComponent', () => {
     newIsEnabled: true,
     previousPointsValidityDays: 365,
     newPointsValidityDays: 90,
+    previousRedemptionApprovalDays: null,
+    newRedemptionApprovalDays: null,
+    previousRedemptionDeliveryDays: null,
+    newRedemptionDeliveryDays: null,
   };
 
   async function flushMicrotasks(): Promise<void> {
@@ -59,9 +65,14 @@ describe('AdminLoyaltySettingsPageComponent', () => {
   it('shows the current global settings and an empty history', async () => {
     await open();
 
-    expect(component.form.getRawValue()).toEqual({ isEnabled: false, pointsValidityDays: 365 });
+    expect(component.form.getRawValue()).toEqual({
+      isEnabled: false,
+      pointsValidityDays: 365,
+      redemptionApprovalDays: 30,
+      redemptionDeliveryDays: 30,
+    });
     expect(fixture.nativeElement.textContent).toContain('Aún no se ha modificado la configuración.');
-    expect(fixture.nativeElement.textContent).toContain('La acumulación de puntos todavía no está activa');
+    expect(fixture.nativeElement.textContent).toContain('sus puntos quedan reservados, empezando por los que vencen antes');
   });
 
   it('saves the validity and status with the version it loaded, then refreshes the history', async () => {
@@ -71,7 +82,13 @@ describe('AdminLoyaltySettingsPageComponent', () => {
     const submitting = component.submit();
     const req = httpMock.expectOne(settingsUrl);
     expect(req.request.method).toBe('PUT');
-    expect(req.request.body).toEqual({ isEnabled: true, pointsValidityDays: 90, version: 700 });
+    expect(req.request.body).toEqual({
+      isEnabled: true,
+      pointsValidityDays: 90,
+      version: 700,
+      redemptionApprovalDays: 30,
+      redemptionDeliveryDays: 30,
+    });
     req.flush({ ...defaults, isEnabled: true, pointsValidityDays: 90, version: 701, updatedAt: change.changedAt, updatedByName: 'Admin' });
     await flushMicrotasks();
     httpMock.expectOne(`${settingsUrl}/changes`).flush([change]);

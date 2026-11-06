@@ -143,3 +143,15 @@
     cursor: default;
   }
 }
+
+.loyalty-panel__adjust label.loyalty-panel__check {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.5rem;
+
+  input {
+    width: auto;
+    margin: 0;
+  }
+}

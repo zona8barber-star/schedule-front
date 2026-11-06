@@ -204,3 +204,36 @@
   font-weight: 700;
   text-decoration: none;
 }
+
+// Redeem / confirm buttons of "Mis puntos" (ADR-0015).
+.my-memberships__action {
+  display: inline-flex;
+  width: fit-content;
+  align-items: center;
+  min-height: 2.6rem;
+  margin-right: 0.5rem;
+  padding: 0.65rem 1.1rem;
+  border: 0;
+  border-radius: 999px;
+  background: var(--btn-primary-bg);
+  color: var(--btn-primary-text);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+
+  &:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+  }
+}
+
+button.my-memberships__link {
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+
+  &:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+  }
+}

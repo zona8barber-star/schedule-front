@@ -3,6 +3,8 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { environment } from '../../../../../../environments/environment';
+import { PERMISSION_CODES, PermissionCode } from '../../../../../core/models/auth.models';
+import { AuthService } from '../../../../../core/services/auth.service';
 import {
   ServiceRecordCustomerOption,
   ServiceRecordOptionsView,
@@ -64,10 +66,14 @@ describe('AdminServiceRecordReviewModalComponent', () => {
     related = { manualIncomes: [], otherRecords: [], membershipConsumptions: [], appointmentStatus: null };
   });
 
-  async function open(loyaltyProgramEnabled = true): Promise<void> {
+  async function open(loyaltyProgramEnabled = true, permissions: PermissionCode[] = []): Promise<void> {
     await TestBed.configureTestingModule({
       imports: [AdminServiceRecordReviewModalComponent],
-      providers: [provideHttpClient(), provideHttpClientTesting()],
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        { provide: AuthService, useValue: { hasPermission: (code: PermissionCode) => permissions.includes(code) } },
+      ],
     }).compileComponents();
 
     fixture = TestBed.createComponent(AdminServiceRecordReviewModalComponent);
@@ -83,6 +89,39 @@ describe('AdminServiceRecordReviewModalComponent', () => {
 
   afterEach(() => {
     httpMock.verify();
+  });
+
+  it('offers the reward type only with the deliver permission', async () => {
+    await open(true, []);
+    expect(component.selectableOperations).not.toContain('LoyaltyReward');
+    expect(fixture.nativeElement.textContent).toContain('requiere permiso para entregar recompensas');
+  });
+
+  it('confirms a reward delivering the approved redemption of the customer for that service', async () => {
+    await open(true, [PERMISSION_CODES.loyaltyRedemptionsDeliver]);
+    component.selectCustomer(carla);
+    component.form.controls.operationType.setValue('LoyaltyReward');
+    const options = httpMock.expectOne((request) => request.url === `${base}/redemption-options`);
+    expect(options.request.params.get('customerId')).toBe('c-1');
+    expect(options.request.params.get('serviceId')).toBe('s-cut');
+    options.flush([
+      {
+        id: 'd-1', rewardName: 'Corte gratis', serviceId: 's-cut', serviceName: 'Corte', pointsCost: 80,
+        approvedAt: '2026-11-04T15:00:00Z', deliverBy: '2026-12-03', isPastDeadline: false,
+      },
+    ]);
+    await fixture.whenStable();
+    fixture.detectChanges();
+    expect(component.form.controls.loyaltyRedemptionId.value).toBe('d-1');
+    expect(component.problems()).toEqual([]);
+
+    const approving = component.approve();
+    const req = httpMock.expectOne(`${base}/r-1/approve`);
+    expect(req.request.body).toEqual(
+      expect.objectContaining({ operationType: 'LoyaltyReward', customerId: 'c-1', chargedAmount: null, loyaltyRedemptionId: 'd-1', accruesLoyaltyPoints: false }),
+    );
+    req.flush({ ...record, status: 'Approved' });
+    await approving;
   });
 
   it('confirms a paid service with the corrected professional and the charged amount (prefilled with the base price)', async () => {

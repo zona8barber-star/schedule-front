@@ -1,4 +1,6 @@
-/** Mirrors `LoyaltyWalletContracts` in the API (ADR-0013, ADR-0014). */
+/** Mirrors `LoyaltyWalletContracts` in the API (ADR-0013, ADR-0014, ADR-0015). */
+
+import { LoyaltyRedemptionView } from './loyalty-redemption.models';
 
 export type LoyaltyAdjustmentDirection = 'Credit' | 'Debit';
 
@@ -17,6 +19,8 @@ export interface LoyaltyLotView {
   isExpired: boolean;
   originLotId: string | null;
   originCustomerId: string | null;
+  /** Held for pending redemptions: out of the free balance, and they do not expire while held. */
+  reservedPoints: number;
 }
 
 export interface LoyaltyDebtView {
@@ -42,6 +46,7 @@ export interface LoyaltyMovementView {
   relatedCustomerId: string | null;
   performedByName: string | null;
   performedAt: string;
+  redemptionId: string | null;
 }
 
 export interface LoyaltyWalletView {
@@ -57,6 +62,8 @@ export interface LoyaltyWalletView {
   lots: LoyaltyLotView[];
   debts: LoyaltyDebtView[];
   movements: LoyaltyMovementView[];
+  reservedPoints: number;
+  redemptions: LoyaltyRedemptionView[] | null;
 }
 
 export interface LoyaltyAdjustmentRequest {
@@ -89,6 +96,8 @@ export interface MyLoyaltyView {
   nextExpiresOn: string | null;
   lots: MyLoyaltyLotView[];
   movements: MyLoyaltyMovementView[];
+  /** Held for pending redemptions; not part of the available points. */
+  reservedPoints: number;
 }
 
 export interface MergeLoyaltyLotPreview {
@@ -123,10 +132,25 @@ export const LOYALTY_MOVEMENT_LABELS: Record<string, string> = {
   DebtMergeTransferOut: 'Deuda traspasada por fusión',
   DebtMergeTransferIn: 'Deuda recibida por fusión',
   DebtOpened: 'Deuda',
+  RedemptionHold: 'Reservado para un canje',
+  RedemptionRelease: 'Liberado de un canje',
+  RedemptionConsumed: 'Canje entregado (usa los puntos ya reservados)',
 };
 
 /** Movement types that add points to the wallet (shown with a plus sign). */
-export const LOYALTY_POSITIVE_MOVEMENTS = new Set(['Accrual', 'MergeTransferIn', 'AdjustmentCredit']);
+export const LOYALTY_POSITIVE_MOVEMENTS = new Set(['Accrual', 'MergeTransferIn', 'AdjustmentCredit', 'RedemptionRelease']);
+
+/**
+ * Sign shown for a movement: '+' adds to the available points, '−' takes from them, '' changes neither (a delivery
+ * consumes points that were already taken out when they were reserved).
+ */
+export function loyaltyMovementSign(type: string): string {
+  if (type === 'RedemptionConsumed') {
+    return '';
+  }
+
+  return LOYALTY_POSITIVE_MOVEMENTS.has(type) ? '+' : '−';
+}
 
 export function loyaltyMovementLabel(type: string): string {
   return LOYALTY_MOVEMENT_LABELS[type] ?? type;

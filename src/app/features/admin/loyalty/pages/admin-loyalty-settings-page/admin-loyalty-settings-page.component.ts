@@ -5,7 +5,9 @@ import { AbstractControl, FormBuilder, ReactiveFormsModule, ValidationErrors, Va
 import { firstValueFrom } from 'rxjs';
 
 import {
+  LOYALTY_MAX_REDEMPTION_DAYS,
   LOYALTY_MAX_VALIDITY_DAYS,
+  LOYALTY_MIN_REDEMPTION_DAYS,
   LOYALTY_MIN_VALIDITY_DAYS,
   LoyaltySettingsChangeView,
   LoyaltySettingsView,
@@ -33,6 +35,8 @@ export class AdminLoyaltySettingsPageComponent implements OnInit {
 
   readonly minValidityDays = LOYALTY_MIN_VALIDITY_DAYS;
   readonly maxValidityDays = LOYALTY_MAX_VALIDITY_DAYS;
+  readonly minRedemptionDays = LOYALTY_MIN_REDEMPTION_DAYS;
+  readonly maxRedemptionDays = LOYALTY_MAX_REDEMPTION_DAYS;
 
   readonly isLoading = signal(true);
   readonly isSubmitting = signal(false);
@@ -57,6 +61,14 @@ export class AdminLoyaltySettingsPageComponent implements OnInit {
         Validators.max(LOYALTY_MAX_VALIDITY_DAYS),
         integerValidator,
       ],
+    ],
+    redemptionApprovalDays: [
+      30,
+      [Validators.required, Validators.min(LOYALTY_MIN_REDEMPTION_DAYS), Validators.max(LOYALTY_MAX_REDEMPTION_DAYS), integerValidator],
+    ],
+    redemptionDeliveryDays: [
+      30,
+      [Validators.required, Validators.min(LOYALTY_MIN_REDEMPTION_DAYS), Validators.max(LOYALTY_MAX_REDEMPTION_DAYS), integerValidator],
     ],
   });
 
@@ -88,6 +100,8 @@ export class AdminLoyaltySettingsPageComponent implements OnInit {
           isEnabled: value.isEnabled,
           pointsValidityDays: value.pointsValidityDays,
           version: current.version,
+          redemptionApprovalDays: value.redemptionApprovalDays,
+          redemptionDeliveryDays: value.redemptionDeliveryDays,
         }),
       );
       this.applySettings(saved);
@@ -144,6 +158,11 @@ export class AdminLoyaltySettingsPageComponent implements OnInit {
   private applySettings(settings: LoyaltySettingsView): void {
     this.settings.set(settings);
     this.hasConflict.set(false);
-    this.form.reset({ isEnabled: settings.isEnabled, pointsValidityDays: settings.pointsValidityDays });
+    this.form.reset({
+      isEnabled: settings.isEnabled,
+      pointsValidityDays: settings.pointsValidityDays,
+      redemptionApprovalDays: settings.redemptionApprovalDays,
+      redemptionDeliveryDays: settings.redemptionDeliveryDays,
+    });
   }
 }

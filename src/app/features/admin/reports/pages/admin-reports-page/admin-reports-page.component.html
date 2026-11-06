@@ -87,6 +87,32 @@
         </table>
       </div>
 
+      @if (s.rewardCommissions?.length) {
+        <div class="reports__panel">
+          <h2>Comisiones por recompensas</h2>
+          <p class="reports__note">
+            Informativo: comisión de los profesionales por servicios entregados como recompensa de puntos, que asume la
+            barbería. No es un pago registrado y no suma ni resta en los totales de este reporte.
+          </p>
+          <table class="reports__table">
+            <thead>
+              <tr><th>Profesional</th><th># Recompensas</th><th>Precio base</th><th>Comisión</th></tr>
+            </thead>
+            <tbody>
+              @for (row of s.rewardCommissions; track row.staffProfileId) {
+                <tr>
+                  <td>{{ row.staffName }}</td>
+                  <td>{{ row.rewardCount }}</td>
+                  <td>$ {{ row.basePriceTotal | number: '1.0-0' }}</td>
+                  <td>$ {{ row.professionalCommissionTotal | number: '1.0-0' }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+          <p class="reports__note">Total: $ {{ s.rewardCommissionsTotal ?? 0 | number: '1.0-0' }}</p>
+        </div>
+      }
+
       <div class="reports__panel">
         <h2>Promo, normal y membresías</h2>
         <div class="reports__chart-canvas">
