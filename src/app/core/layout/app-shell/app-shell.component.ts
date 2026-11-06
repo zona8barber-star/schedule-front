@@ -3,6 +3,8 @@ import {
   Component,
   ElementRef,
   HostListener,
+  Injector,
+  afterNextRender,
   computed,
   effect,
   inject,
@@ -11,12 +13,13 @@ import {
   viewChildren,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { NavigationEnd, Router, RouterLink, RouterOutlet } from '@angular/router';
 import { SwUpdate, VersionReadyEvent } from '@angular/service-worker';
 import { filter, fromEvent, interval } from 'rxjs';
 
 import { ConfirmModalComponent } from '../../../shared/components/confirm-modal/confirm-modal.component';
 import { NotificationBellComponent } from '../notification-bell/notification-bell.component';
+import { NavMenuComponent } from '../nav-menu/nav-menu.component';
 import { ToastOutletComponent } from '../../../shared/components/toast-outlet/toast-outlet.component';
 import { BUSINESS_CONTACT } from '../../config/business-contact.config';
 import {
@@ -24,9 +27,9 @@ import {
   SOCIAL_PLATFORM_DEFINITIONS,
 } from '../../config/business-social-links.config';
 import { RuntimeConfigService } from '../../config/runtime-config.service';
-import { PERMISSION_CODES, ROLE_NAMES } from '../../models/auth.models';
+import { NavGroupId } from '../../navigation/navigation.models';
+import { NavigationService } from '../../navigation/navigation.service';
 import { AuthService } from '../../services/auth.service';
-import { ServiceRecordEligibilityService } from '../../services/service-record-eligibility.service';
 import { ConnectivityService } from '../../services/connectivity.service';
 import { HttpActivityService } from '../../services/http-activity.service';
 import { InstallPromptService } from '../../services/install-prompt.service';
@@ -35,37 +38,24 @@ import { PushNotificationService } from '../../services/push-notification.servic
 import { ToastService } from '../../services/toast.service';
 import { TabHighlightStyle, computeTabHighlightStyle } from '../../utils/tab-highlight.utils';
 
-interface NavLink {
-  label: string;
-  route: string;
-  exact?: boolean;
-  group: 'public' | 'customer' | 'staff' | 'admin';
-}
-
-type BottomNavIcon = 'home' | 'staff' | 'appointments' | 'profile' | 'booking';
-
-interface BottomNavLink {
-  label: string;
-  route: string;
-  exact?: boolean;
-  icon: BottomNavIcon;
-}
-
 interface FooterSocialLink {
   label: string;
   href: string;
   icon: string;
 }
 
+/** Width from which the side menu (or the header links) replace the drop-down panel. Mirrors the SCSS breakpoint. */
+const WIDE_LAYOUT_MIN_WIDTH = 1024;
+
 @Component({
   selector: 'app-shell',
   imports: [
     RouterLink,
-    RouterLinkActive,
     RouterOutlet,
     ToastOutletComponent,
     ConfirmModalComponent,
     NotificationBellComponent,
+    NavMenuComponent,
   ],
   templateUrl: './app-shell.component.html',
   styleUrl: './app-shell.component.scss',
@@ -73,7 +63,7 @@ interface FooterSocialLink {
 export class AppShellComponent {
   readonly configService = inject(RuntimeConfigService);
   readonly authService = inject(AuthService);
-  private readonly serviceRecordEligibility = inject(ServiceRecordEligibilityService);
+  readonly navigation = inject(NavigationService);
   readonly httpActivityService = inject(HttpActivityService);
   readonly installPromptService = inject(InstallPromptService);
   readonly pushNotificationService = inject(PushNotificationService);
@@ -82,6 +72,7 @@ export class AppShellComponent {
   private readonly swUpdate = inject(SwUpdate);
   private readonly toastService = inject(ToastService);
   private readonly publicContentApiService = inject(PublicContentApiService);
+  private readonly injector = inject(Injector);
 
   // Teléfono de contacto de la barbería, cargado una vez al iniciar el shell.
   // Alimenta el botón flotante de WhatsApp visible en toda la app.
@@ -92,9 +83,10 @@ export class AppShellComponent {
     return digits ? `https://wa.me/+57${digits}` : null;
   });
 
-  readonly roleNames = ROLE_NAMES;
   readonly isSigningOut = signal(false);
 
+  // The display mode only tunes page details (hidden footers, safe areas). The navigation follows the screen width
+  // alone, so the browser and the installed app behave the same.
   private readonly standaloneQuery =
     globalThis.window !== undefined
       ? globalThis.window.matchMedia('(display-mode: standalone)')
@@ -111,284 +103,34 @@ export class AppShellComponent {
   readonly isInstallPrompting = signal(false);
   readonly isMobileMenuOpen = signal(false);
   readonly isUserMenuOpen = signal(false);
+  readonly openHeaderGroupId = signal<NavGroupId | null>(null);
 
-  // Sliding "glass" highlight behind the active bottom-nav tab.
+  readonly menu = this.navigation.menu;
+
+  readonly isSidebarLayout = computed(() => this.menu().layout === 'sidebar');
+
+  /** Header links on wide screens for visitors and customers: one group is shown flat, several as drop-downs. */
+  readonly headerGroups = computed(() => (this.isSidebarLayout() ? [] : this.menu().groups));
+
+  // Sliding "glass" highlight behind the active shortcut tab.
   private readonly bottomNav = viewChild<ElementRef<HTMLElement>>('bottomNav');
   private readonly bottomNavTabRefs = viewChildren<ElementRef<HTMLElement>>('bottomNavTab');
-  readonly activeBottomNavTabIndex = signal<number | null>(null);
+  private readonly menuToggle = viewChild<ElementRef<HTMLButtonElement>>('menuToggle');
+  private readonly mobilePanel = viewChild<ElementRef<HTMLElement>>('mobilePanel');
+
+  readonly activeShortcutIndex = computed<number | null>(() => {
+    const shortcuts = this.menu().shortcuts;
+    const activeId =
+      this.navigation.currentPath() === '/' ? 'home' : this.navigation.activeItemId();
+    const index = shortcuts.findIndex((shortcut) => shortcut.id === activeId);
+    return index >= 0 ? index : null;
+  });
+
   readonly bottomNavHighlightStyle = signal<TabHighlightStyle | null>(null);
 
   private readonly router = inject(Router);
   private readonly document = inject(DOCUMENT);
   private readonly elementRef = inject(ElementRef);
-
-  readonly navigationLinks = computed<NavLink[]>(() => {
-    const links: NavLink[] = [
-      {
-        label: 'Inicio',
-        route: '/',
-        exact: true,
-        group: 'public',
-      },
-      {
-        label: 'Profesionales',
-        route: '/staff',
-        exact: true,
-        group: 'public',
-      },
-    ];
-
-    if (this.authService.hasRole(this.roleNames.customer)) {
-      links.push(
-        {
-          label: 'Mis citas',
-          route: '/customer/appointments',
-          group: 'customer',
-        },
-        {
-          label: 'Mis membresías',
-          route: '/customer/memberships',
-          group: 'customer',
-        },
-        {
-          label: 'Mis puntos',
-          route: '/customer/loyalty',
-          group: 'customer',
-        },
-        {
-          label: 'Mi perfil de cliente',
-          route: '/customer/customer-profile',
-          group: 'customer',
-        },
-        {
-          label: 'Mi perfil',
-          route: '/customer/profile',
-          group: 'customer',
-        },
-      );
-    }
-
-    if (this.authService.hasRole(this.roleNames.staff)) {
-      links.push(
-        {
-          label: 'Mi perfil',
-          route: '/staff/profile',
-          group: 'staff',
-        },
-        {
-          label: 'Mi disponibilidad',
-          route: '/staff/availability',
-          group: 'staff',
-        },
-        {
-          label: 'Mi agenda',
-          route: '/staff/appointments',
-          group: 'staff',
-        },
-      );
-    }
-
-    // By permission and an active professional profile, not by role: an administrator who also works as a
-    // professional registers their services too.
-    if (this.serviceRecordEligibility.canRegister()) {
-      links.push({
-        label: 'Servicios realizados',
-        route: '/staff/service-records',
-        group: 'staff',
-      });
-    }
-
-    if (this.authService.hasRole(this.roleNames.admin)) {
-      links.push(
-        {
-          label: 'Gestion de profesionales',
-          route: '/admin/staff',
-          group: 'admin',
-        },
-        {
-          label: 'Citas',
-          route: '/admin/appointments',
-          group: 'admin',
-        },
-        {
-          label: 'Clientes',
-          route: '/admin/customers',
-          group: 'admin',
-        },
-        {
-          label: 'Membresías',
-          route: '/admin/membership-plans',
-          group: 'admin',
-        },
-        {
-          label: 'Servicios',
-          route: '/admin/services',
-          group: 'admin',
-        },
-        {
-          label: 'Ingresos',
-          route: '/admin/income',
-          group: 'admin',
-        },
-        {
-          label: 'Gastos',
-          route: '/admin/expenses',
-          group: 'admin',
-        },
-        {
-          label: 'Reportes',
-          route: '/admin/reports',
-          group: 'admin',
-        },
-        // {
-        //   label: 'Archivos',
-        //   route: '/admin/media',
-        //   group: 'admin',
-        // },
-        {
-          label: 'Landing',
-          route: '/admin/content/landing',
-          group: 'admin',
-        },
-        // {
-        //   label: 'Marca',
-        //   route: '/admin/content/branding',
-        //   group: 'admin',
-        // },
-        {
-          label: 'Banners',
-          route: '/admin/content/banners',
-          group: 'admin',
-        },
-        {
-          label: 'Ticker',
-          route: '/admin/content/ticker-items',
-          group: 'admin',
-        },
-        {
-          label: 'Horario de atención',
-          route: '/admin/content/business-hours',
-          group: 'admin',
-        },
-        {
-          label: 'Notificaciones',
-          route: '/admin/notifications',
-          group: 'admin',
-        },
-        {
-          label: 'Roles',
-          route: '/admin/roles',
-          group: 'admin',
-        },
-        {
-          label: 'Usuarios',
-          route: '/admin/users',
-          group: 'admin',
-        },
-      );
-    }
-
-    if (this.authService.hasPermission(PERMISSION_CODES.customerClaimsApprove)) {
-      links.push({
-        label: 'Reclamaciones de clientes',
-        route: '/admin/customer-claims',
-        group: 'admin',
-      });
-    }
-
-    if (this.authService.hasPermission(PERMISSION_CODES.serviceRecordsApprove)) {
-      links.push({
-        label: 'Servicios por aprobar',
-        route: '/admin/service-records',
-        group: 'admin',
-      });
-    }
-
-    if (this.authService.hasPermission(PERMISSION_CODES.loyaltySettingsManage)) {
-      links.push({
-        label: 'Fidelización',
-        route: '/admin/loyalty',
-        group: 'admin',
-      });
-    }
-
-    if (this.authService.hasPermission(PERMISSION_CODES.loyaltyRewardsManage)) {
-      links.push({
-        label: 'Recompensas',
-        route: '/admin/loyalty/rewards',
-        group: 'admin',
-      });
-    }
-
-    if (
-      this.authService.hasAnyPermission([
-        PERMISSION_CODES.loyaltyRedemptionsApprove,
-        PERMISSION_CODES.loyaltyRedemptionsDeliver,
-      ])
-    ) {
-      links.push({
-        label: 'Canjes de puntos',
-        route: '/admin/loyalty/redemptions',
-        group: 'admin',
-      });
-    }
-
-    return links;
-  });
-
-  readonly primaryMobileLinks = computed(() =>
-    this.navigationLinks().filter((link) => link.group !== 'admin'),
-  );
-
-  readonly adminMobileLinks = computed(() =>
-    this.navigationLinks().filter((link) => link.group === 'admin'),
-  );
-
-  // Curated set for the mobile bottom tab bar: a stable, role-aware shortlist of the
-  // sections people reach for constantly. Anything else stays in the "Menu" drawer.
-  readonly bottomNavLinks = computed<BottomNavLink[]>(() => {
-    const standalone = this.isStandalone();
-
-    const links: BottomNavLink[] = [
-      { label: 'Inicio', route: '/', exact: true, icon: 'home' },
-    ];
-
-    // En modo instalado "Reservar" se accede desde el home nativo; se omite
-    // para liberar espacio para los enlaces de rol del usuario.
-    if (!standalone) {
-      links.push({ label: 'Reservar', route: '/booking', exact: true, icon: 'booking' });
-    }
-
-    links.push({ label: 'Equipo', route: '/staff', exact: true, icon: 'staff' });
-
-    if (this.authService.hasRole(this.roleNames.customer)) {
-      links.push(
-        { label: 'Mis citas', route: '/customer/appointments', icon: 'appointments' },
-        { label: 'Mi perfil', route: '/customer/profile', icon: 'profile' },
-      );
-    } else if (this.authService.hasRole(this.roleNames.staff)) {
-      links.push(
-        { label: 'Mi agenda', route: '/staff/appointments', icon: 'appointments' },
-        { label: 'Mi perfil', route: '/staff/profile', icon: 'profile' },
-      );
-    }
-
-    // Standalone: hasta 4 ítems (sin "Reservar" hay espacio para los de rol).
-    // Browser: 3 ítems (comportamiento original).
-    return links.slice(0, standalone ? 4 : 3);
-  });
-
-  readonly userDropdownCustomerLinks = computed(() =>
-    this.navigationLinks().filter((link) => link.group === 'customer'),
-  );
-
-  readonly userDropdownStaffLinks = computed(() =>
-    this.navigationLinks().filter((link) => link.group === 'staff'),
-  );
-
-  readonly userDropdownAdminLinks = computed(() =>
-    this.navigationLinks().filter((link) => link.group === 'admin'),
-  );
 
   readonly identitySubtitle = computed(
     () => this.authService.currentUser()?.email ?? 'Cuenta activa',
@@ -427,6 +169,7 @@ export class AppShellComponent {
       .subscribe(() => {
         this.closeMobileMenu();
         this.closeUserMenu();
+        this.closeHeaderGroup();
       });
 
     if (this.standaloneQuery) {
@@ -451,16 +194,13 @@ export class AppShellComponent {
     effect(() => {
       // Re-read so the effect reruns on every active-tab change, even though
       // the actual measurement happens in repositionBottomNavHighlight().
-      this.activeBottomNavTabIndex();
+      this.activeShortcutIndex();
       this.bottomNavTabRefs();
       requestAnimationFrame(() => this.repositionBottomNavHighlight());
     });
 
-    // The bottom nav is `display: none` outside standalone/mobile mode, so the
-    // very first position computation can land on a 0×0 box before the nav
-    // becomes visible (e.g. while `isStandalone` is still resolving). A
-    // ResizeObserver re-measures whenever the container's real size appears,
-    // instead of relying on a single one-shot measurement.
+    // The shortcut bar is `display: none` outside phone widths, so the first position computation can land on a
+    // 0×0 box. A ResizeObserver re-measures whenever the container's real size appears.
     effect((onCleanup) => {
       const navEl = this.bottomNav()?.nativeElement;
       if (!navEl) {
@@ -496,37 +236,41 @@ export class AppShellComponent {
 
   @HostListener('document:keydown.escape')
   handleEscapeKey(): void {
-    this.closeMobileMenu();
+    this.closeMobileMenu({ restoreFocus: true });
     this.closeUserMenu();
+    this.closeHeaderGroup();
   }
 
   @HostListener('document:click', ['$event'])
   handleDocumentClick(event: Event): void {
-    const userMenuEl = this.elementRef.nativeElement.querySelector('.app-shell__user-menu');
-    if (userMenuEl && !userMenuEl.contains(event.target)) {
+    const host = this.elementRef.nativeElement as HTMLElement;
+    const target = event.target as Node | null;
+
+    const userMenuEl = host.querySelector('.app-shell__user-menu');
+    if (userMenuEl && !userMenuEl.contains(target)) {
       this.closeUserMenu();
+    }
+
+    const headerNavEl = host.querySelector('.app-shell__header-nav');
+    if (!headerNavEl || !headerNavEl.contains(target)) {
+      this.closeHeaderGroup();
     }
   }
 
   @HostListener('window:resize')
   handleWindowResize(): void {
-    if (globalThis.innerWidth > 980) {
+    if (globalThis.innerWidth >= WIDE_LAYOUT_MIN_WIDTH) {
       this.closeMobileMenu();
     }
 
     this.repositionBottomNavHighlight();
   }
 
-  onBottomNavTabActiveChange(index: number, isActive: boolean): void {
-    if (isActive) {
-      this.activeBottomNavTabIndex.set(index);
-    }
-  }
-
   private repositionBottomNavHighlight(): void {
-    const index = this.activeBottomNavTabIndex();
+    const index = this.activeShortcutIndex();
     const refs = this.bottomNavTabRefs();
     if (index === null || !refs[index]) {
+      this.bottomNavHighlightStyle.set(null);
       return;
     }
 
@@ -540,25 +284,53 @@ export class AppShellComponent {
       return;
     }
 
+    this.closeUserMenu();
     this.isMobileMenuOpen.set(true);
     this.setScrollLock(true);
+
+    // Move the focus into the panel, so keyboard and screen-reader users land on the menu they opened.
+    afterNextRender(
+      () => {
+        const panel = this.mobilePanel()?.nativeElement;
+        const target =
+          panel?.querySelector<HTMLElement>('[aria-current="page"]') ??
+          panel?.querySelector<HTMLElement>('a, button');
+        target?.focus();
+      },
+      { injector: this.injector },
+    );
   }
 
-  closeMobileMenu(): void {
+  closeMobileMenu(options: { restoreFocus?: boolean } = {}): void {
     if (!this.isMobileMenuOpen()) {
       return;
     }
 
     this.isMobileMenuOpen.set(false);
     this.setScrollLock(false);
+
+    if (options.restoreFocus) {
+      this.menuToggle()?.nativeElement.focus();
+    }
   }
 
   toggleUserMenu(): void {
+    this.closeHeaderGroup();
+    this.closeMobileMenu();
     this.isUserMenuOpen.update((open) => !open);
   }
 
   closeUserMenu(): void {
     this.isUserMenuOpen.set(false);
+  }
+
+  toggleHeaderGroup(groupId: NavGroupId): void {
+    this.closeUserMenu();
+    this.openHeaderGroupId.update((current) => (current === groupId ? null : groupId));
+  }
+
+  closeHeaderGroup(): void {
+    this.openHeaderGroupId.set(null);
   }
 
   async installApp(): Promise<void> {
@@ -598,6 +370,7 @@ export class AppShellComponent {
 
     try {
       this.closeMobileMenu();
+      this.closeUserMenu();
       await this.authService.logout();
       await this.router.navigateByUrl('/auth/login', { replaceUrl: true });
     } finally {
