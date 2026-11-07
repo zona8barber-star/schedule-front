@@ -53,7 +53,7 @@ describe('AdminLoyaltySettingsPageComponent', () => {
     fixture.detectChanges();
 
     httpMock.expectOne(settingsUrl).flush(settings);
-    httpMock.expectOne(`${settingsUrl}/changes`).flush(changes);
+    httpMock.expectOne(`${settingsUrl}/changes?page=1&pageSize=25`).flush(pagedChanges(changes));
     await flushMicrotasks();
     fixture.detectChanges();
   }
@@ -61,6 +61,11 @@ describe('AdminLoyaltySettingsPageComponent', () => {
   afterEach(() => {
     httpMock.verify();
   });
+
+  /** The change log is paginated on the server (newest first). */
+  function pagedChanges<T>(items: T[]) {
+    return { items, page: 1, pageSize: 25, totalCount: items.length };
+  }
 
   it('shows the current global settings and an empty history', async () => {
     await open();
@@ -91,7 +96,7 @@ describe('AdminLoyaltySettingsPageComponent', () => {
     });
     req.flush({ ...defaults, isEnabled: true, pointsValidityDays: 90, version: 701, updatedAt: change.changedAt, updatedByName: 'Admin' });
     await flushMicrotasks();
-    httpMock.expectOne(`${settingsUrl}/changes`).flush([change]);
+    httpMock.expectOne(`${settingsUrl}/changes?page=1&pageSize=25`).flush(pagedChanges([change]));
     await submitting;
     fixture.detectChanges();
 
@@ -138,7 +143,7 @@ describe('AdminLoyaltySettingsPageComponent', () => {
     expect(reloadButton).toBeTruthy();
     reloadButton!.click();
     httpMock.expectOne(settingsUrl).flush({ ...defaults, pointsValidityDays: 120, version: 705 });
-    httpMock.expectOne(`${settingsUrl}/changes`).flush([]);
+    httpMock.expectOne(`${settingsUrl}/changes?page=1&pageSize=25`).flush(pagedChanges([]));
     await flushMicrotasks();
 
     expect(component.hasConflict()).toBe(false);
@@ -171,7 +176,7 @@ describe('AdminLoyaltySettingsPageComponent', () => {
     fixture.detectChanges();
 
     httpMock.expectOne(settingsUrl).flush(null, { status: 403, statusText: 'Forbidden' });
-    httpMock.expectOne(`${settingsUrl}/changes`).flush(null, { status: 403, statusText: 'Forbidden' });
+    httpMock.expectOne(`${settingsUrl}/changes?page=1&pageSize=25`).flush(null, { status: 403, statusText: 'Forbidden' });
     await flushMicrotasks();
     fixture.detectChanges();
 

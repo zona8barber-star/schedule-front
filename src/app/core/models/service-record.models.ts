@@ -1,3 +1,5 @@
+import { PageQuery } from './paged-result.models';
+
 export type ServiceRecordStatus = 'Pending' | 'Approved' | 'Rejected';
 export type ServiceRecordOperationType = 'Paid' | 'MembershipConsumption' | 'Courtesy' | 'LoyaltyReward';
 
@@ -17,9 +19,12 @@ export const SERVICE_RECORD_OPERATION_LABELS: Record<ServiceRecordOperationType,
 /** Same limit as the backend (`ServiceRecord.MaxServicesPerRegistration`). */
 export const SERVICE_RECORD_MAX_SERVICES = 10;
 
+/** A general service the professional can register (ADR-0016 B4). */
 export interface ServiceRecordCatalogItem {
   id: string;
   name: string;
+  categoryId: string;
+  categoryName: string;
 }
 
 export interface ServiceRecordRegisterRequest {
@@ -27,7 +32,7 @@ export interface ServiceRecordRegisterRequest {
   /** Required without an appointment; with one, the appointment's date is used. */
   performedOn: string | null;
   customerName: string | null;
-  serviceIds: string[];
+  generalServiceIds: string[];
   notes: string | null;
   idempotencyKey: string;
 }
@@ -36,6 +41,8 @@ export interface ServiceRecordApprovalView {
   operationType: ServiceRecordOperationType;
   serviceId: string;
   serviceName: string;
+  generalServiceId?: string | null;
+  generalServiceName?: string | null;
   staffProfileId: string;
   staffName: string | null;
   customerId: string | null;
@@ -65,8 +72,12 @@ export interface ServiceRecordView {
   appointmentStartsAt: string | null;
   staffProfileId: string;
   staffName: string | null;
-  serviceId: string;
+  /** Settlement rate; null on records registered by general service until they are approved (ADR-0016 B4). */
+  serviceId: string | null;
+  /** Registered name. */
   serviceName: string;
+  generalServiceId?: string | null;
+  generalServiceName?: string | null;
   performedOn: string;
   customerId: string | null;
   customerName: string | null;
@@ -89,6 +100,8 @@ export interface ServiceRecordView {
 export interface ServiceRecordApproveRequest {
   version: number;
   operationType: ServiceRecordOperationType;
+  /** General service performed; the rate must belong to it (409 otherwise). */
+  generalServiceId: string;
   serviceId: string;
   staffProfileId: string;
   customerId: string | null;
@@ -124,6 +137,15 @@ export interface ServiceRecordServiceOption {
   basePrice: number;
   loyaltyPoints: number;
   isActive: boolean;
+  generalServiceId: string;
+  generalServiceName: string;
+}
+
+export interface ServiceRecordGeneralServiceOption {
+  id: string;
+  name: string;
+  categoryName: string;
+  isActive: boolean;
 }
 
 export interface ServiceRecordStaffOption {
@@ -136,6 +158,7 @@ export interface ServiceRecordOptionsView {
   services: ServiceRecordServiceOption[];
   staff: ServiceRecordStaffOption[];
   loyaltyProgramEnabled: boolean;
+  generalServices: ServiceRecordGeneralServiceOption[];
 }
 
 export interface ServiceRecordMembershipOption {
@@ -177,8 +200,11 @@ export interface ServiceRecordAppointmentOption {
   startsAt: string;
   customerName: string;
   status: string;
-  /** Services already registered there and not rejected; they cannot be registered again. */
-  registeredServiceIds: string[];
+  /** General services already registered there and not rejected; they cannot be registered again. */
+  registeredGeneralServiceIds: string[];
+  /** Service booked with the appointment, if any (ADR-0016 B3). */
+  generalServiceId: string | null;
+  generalServiceName: string | null;
 }
 
 /** Possible duplicates found through real relations; warnings only, never a block. */
@@ -193,4 +219,13 @@ export interface ServiceRecordRelatedView {
     isFromServiceRecord: boolean;
   }[];
   appointmentStatus: string | null;
+}
+
+/** Filters of GET /admin/service-records (ADR-0016 B7). Status defaults to Pending. */
+export interface ServiceRecordListQuery extends PageQuery {
+  status?: ServiceRecordStatus | null;
+  from?: string | null;
+  to?: string | null;
+  staffProfileId?: string | null;
+  generalServiceId?: string | null;
 }

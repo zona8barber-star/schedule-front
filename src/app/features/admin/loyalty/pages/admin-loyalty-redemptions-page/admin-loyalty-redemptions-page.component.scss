@@ -17,3 +17,13 @@
 .redemptions__danger {
   color: var(--color-error, #b4533c);
 }
+
+.records__link {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+  font: inherit;
+}

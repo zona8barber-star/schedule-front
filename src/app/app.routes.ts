@@ -5,6 +5,7 @@ import { guestGuard } from './core/guards/guest.guard';
 import { permissionGuard } from './core/guards/permission.guard';
 import { roleGuard } from './core/guards/role.guard';
 import { PERMISSION_CODES, ROLE_NAMES } from './core/models/auth.models';
+import { customerClaimsQueryGuard } from './features/admin/customer-claims/customer-claims-query.guard';
 
 const loadScaffoldSection = () =>
   import('./shared/components/scaffold-section/scaffold-section.component').then(
@@ -69,6 +70,41 @@ const loadAdminLoyaltySettingsPage = () =>
 const loadAdminServicesListPage = () =>
   import('./features/admin/services/pages/admin-services-list-page/admin-services-list-page.component').then(
     (module) => module.AdminServicesListPageComponent,
+  );
+
+const loadAdminServiceCategoriesPage = () =>
+  import(
+    './features/admin/service-catalog/pages/admin-service-categories-page/admin-service-categories-page.component'
+  ).then((module) => module.AdminServiceCategoriesPageComponent);
+
+const loadAdminGeneralServicesPage = () =>
+  import(
+    './features/admin/service-catalog/pages/admin-general-services-page/admin-general-services-page.component'
+  ).then((module) => module.AdminGeneralServicesPageComponent);
+
+const loadAdminProductCategoriesPage = () =>
+  import(
+    './features/admin/product-catalog/pages/admin-product-categories-page/admin-product-categories-page.component'
+  ).then((module) => module.AdminProductCategoriesPageComponent);
+
+const loadAdminProductsPage = () =>
+  import('./features/admin/product-catalog/pages/admin-products-page/admin-products-page.component').then(
+    (module) => module.AdminProductsPageComponent,
+  );
+
+const loadPublicProductCategoriesPage = () =>
+  import(
+    './features/public/products/pages/public-product-categories-page/public-product-categories-page.component'
+  ).then((module) => module.PublicProductCategoriesPageComponent);
+
+const loadPublicProductCategoryPage = () =>
+  import(
+    './features/public/products/pages/public-product-category-page/public-product-category-page.component'
+  ).then((module) => module.PublicProductCategoryPageComponent);
+
+const loadPublicProductDetailPage = () =>
+  import('./features/public/products/pages/public-product-detail-page/public-product-detail-page.component').then(
+    (module) => module.PublicProductDetailPageComponent,
   );
 
 const loadAdminCustomersListPage = () =>
@@ -413,6 +449,23 @@ export const routes: Routes = [
     title: 'Profesionales',
   },
   {
+    // Public product catalog (ADR-0016 B6): stable, anonymous URLs built on immutable public codes.
+    path: 'productos',
+    pathMatch: 'full',
+    loadComponent: loadPublicProductCategoriesPage,
+    title: 'Productos',
+  },
+  {
+    path: 'productos/:categoryCode',
+    loadComponent: loadPublicProductCategoryPage,
+    title: 'Productos',
+  },
+  {
+    path: 'productos/:categoryCode/:productCode',
+    loadComponent: loadPublicProductDetailPage,
+    title: 'Producto',
+  },
+  {
     path: 'admin',
     pathMatch: 'full',
     redirectTo: 'admin/staff',
@@ -442,7 +495,43 @@ export const routes: Routes = [
     data: {
       roles: [ROLE_NAMES.admin],
     },
-    title: 'Servicios',
+    title: 'Tarifas de liquidación',
+  },
+  {
+    path: 'admin/service-categories',
+    canActivate: [authGuard, roleGuard],
+    loadComponent: loadAdminServiceCategoriesPage,
+    data: {
+      roles: [ROLE_NAMES.admin],
+    },
+    title: 'Categorías de servicio',
+  },
+  {
+    path: 'admin/general-services',
+    canActivate: [authGuard, roleGuard],
+    loadComponent: loadAdminGeneralServicesPage,
+    data: {
+      roles: [ROLE_NAMES.admin],
+    },
+    title: 'Servicios generales',
+  },
+  {
+    path: 'admin/product-categories',
+    canActivate: [authGuard, roleGuard],
+    loadComponent: loadAdminProductCategoriesPage,
+    data: {
+      roles: [ROLE_NAMES.admin],
+    },
+    title: 'Categorías de productos',
+  },
+  {
+    path: 'admin/products',
+    canActivate: [authGuard, roleGuard],
+    loadComponent: loadAdminProductsPage,
+    data: {
+      roles: [ROLE_NAMES.admin],
+    },
+    title: 'Productos',
   },
   {
     path: 'admin/customers',
@@ -474,7 +563,9 @@ export const routes: Routes = [
   {
     // customers.claims.approve is critical: the API checks it against the database on every request.
     path: 'admin/customer-claims',
-    canActivate: [authGuard, permissionGuard],
+    // The tab and the page live in the URL; the query guard keeps it canonical on every query change.
+    canActivate: [authGuard, permissionGuard, customerClaimsQueryGuard],
+    runGuardsAndResolvers: 'paramsOrQueryParamsChange',
     loadComponent: loadAdminCustomerClaimsPage,
     data: {
       permissions: [PERMISSION_CODES.customerClaimsApprove],

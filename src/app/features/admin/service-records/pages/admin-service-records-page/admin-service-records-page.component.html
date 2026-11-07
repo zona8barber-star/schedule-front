@@ -18,6 +18,46 @@
     }
   </div>
 
+  <div class="records__filters" role="group" aria-label="Filtros de servicios realizados">
+    <label>
+      <span>Desde</span>
+      <input type="date" [value]="range()?.from ?? ''" (change)="onFromChange($any($event.target).value)" />
+    </label>
+    <label>
+      <span>Hasta</span>
+      <input type="date" [value]="range()?.to ?? ''" (change)="onToChange($any($event.target).value)" />
+    </label>
+    <label>
+      <span>Profesional</span>
+      <select [value]="staffProfileId()" (change)="onFilterChange({ staffProfileId: $any($event.target).value })">
+        <option value="">Todos</option>
+        @for (member of options()?.staff ?? []; track member.id) {
+          <option [value]="member.id" [selected]="member.id === staffProfileId()">{{ member.displayName }}</option>
+        }
+      </select>
+    </label>
+    <label>
+      <span>Servicio general</span>
+      <select [value]="generalServiceId()" (change)="onFilterChange({ generalServiceId: $any($event.target).value })">
+        <option value="">Todos</option>
+        @for (service of options()?.generalServices ?? []; track service.id) {
+          <option [value]="service.id" [selected]="service.id === generalServiceId()">{{ service.name }}</option>
+        }
+      </select>
+    </label>
+  </div>
+
+  <p class="records__hint">
+    @if (status() === 'Pending') {
+      Los pendientes se muestran todos, sin importar su fecha; las fechas son opcionales (hasta 30 días).
+      @if (range()) {
+        <button type="button" class="records__link" (click)="clearDates()">Ver todos los pendientes</button>
+      }
+    } @else {
+      {{ rangeHint }}
+    }
+  </p>
+  <app-api-feedback severity="error" [message]="rangeError()" />
   <app-api-feedback severity="error" [message]="errorMessage()" />
   <app-api-feedback severity="info" [message]="successMessage()" />
 
@@ -90,6 +130,15 @@
       }
     </ul>
   }
+
+  <app-paginator
+    label="Paginación de servicios realizados"
+    [page]="page()"
+    [pageSize]="pageSize()"
+    [totalCount]="totalCount()"
+    [disabled]="isLoading()"
+    (pageChange)="onPageChange($event)"
+  />
 </section>
 
 @if (reviewing(); as record) {

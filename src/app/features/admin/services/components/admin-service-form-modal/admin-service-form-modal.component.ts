@@ -19,11 +19,18 @@ import { firstValueFrom } from 'rxjs';
 
 import { PERMISSION_CODES } from '../../../../../core/models/auth.models';
 import { LOYALTY_MAX_POINTS_PER_ITEM } from '../../../../../core/models/loyalty.models';
+import { GeneralServiceView } from '../../../../../core/models/service-catalog.models';
 import { ServiceView } from '../../../../../core/models/service.models';
+import { AdminServiceCatalogApiService } from '../../../../../core/services/admin-service-catalog-api.service';
 import { AdminServicesApiService } from '../../../../../core/services/admin-services-api.service';
 import { AuthService } from '../../../../../core/services/auth.service';
 import { getApiErrorMessage } from '../../../../../core/utils/api-error.utils';
 import { ApiFeedbackComponent } from '../../../../../shared/components/api-feedback/api-feedback.component';
+
+export interface GeneralServiceOptionGroup {
+  categoryName: string;
+  options: GeneralServiceView[];
+}
 
 function integerValidator(control: AbstractControl): ValidationErrors | null {
   return Number.isInteger(control.value) ? null : { integer: true };
@@ -38,6 +45,7 @@ function integerValidator(control: AbstractControl): ValidationErrors | null {
 export class AdminServiceFormModalComponent implements OnInit {
   private readonly formBuilder = inject(FormBuilder);
   private readonly adminServicesApiService = inject(AdminServicesApiService);
+  private readonly catalogApi = inject(AdminServiceCatalogApiService);
   private readonly authService = inject(AuthService);
 
   @Input() serviceId: string | null = null;
@@ -49,11 +57,34 @@ export class AdminServiceFormModalComponent implements OnInit {
   readonly errorMessage = signal<string | null>(null);
 
   readonly isBusy = computed(() => this.isSaving() || this.isLoading());
+
+  private readonly generalServices = signal<GeneralServiceView[]>([]);
+  /** The rate's current general service, kept selectable even if it is inactive now. */
+  private readonly currentGeneralServiceId = signal<string | null>(null);
+
+  /** Active general services (plus the current one), grouped by category in the catalog order. */
+  readonly generalServiceGroups = computed<GeneralServiceOptionGroup[]>(() => {
+    const currentId = this.currentGeneralServiceId();
+    const groups: GeneralServiceOptionGroup[] = [];
+    for (const service of this.generalServices()) {
+      if (!service.isActive && service.id !== currentId) {
+        continue;
+      }
+      const last = groups.at(-1);
+      if (last && last.categoryName === service.categoryName) {
+        last.options.push(service);
+      } else {
+        groups.push({ categoryName: service.categoryName, options: [service] });
+      }
+    }
+    return groups;
+  });
   readonly maxLoyaltyPoints = LOYALTY_MAX_POINTS_PER_ITEM;
   /** Without the permission the points are shown read-only and never sent, so the API keeps them. */
   readonly canManageLoyalty = this.authService.hasPermission(PERMISSION_CODES.loyaltySettingsManage);
 
   readonly form = this.formBuilder.nonNullable.group({
+    generalServiceId: ['', [Validators.required]],
     name: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(120)]],
     basePrice: [0, [Validators.required, Validators.min(0), integerValidator]],
     businessPercentage: [0, [Validators.required, Validators.min(0), Validators.max(100), integerValidator]],
@@ -68,14 +99,20 @@ export class AdminServiceFormModalComponent implements OnInit {
   }
 
   async ngOnInit(): Promise<void> {
-    if (!this.serviceId) {
-      return;
-    }
-
     this.isLoading.set(true);
     try {
-      const service = await firstValueFrom(this.adminServicesApiService.getById(this.serviceId));
+      const [generalServices, service] = await Promise.all([
+        firstValueFrom(this.catalogApi.listGeneralServices()),
+        this.serviceId ? firstValueFrom(this.adminServicesApiService.getById(this.serviceId)) : Promise.resolve(null),
+      ]);
+      this.generalServices.set(generalServices);
+      if (!service) {
+        return;
+      }
+
+      this.currentGeneralServiceId.set(service.generalServiceId);
       this.form.patchValue({
+        generalServiceId: service.generalServiceId,
         name: service.name,
         basePrice: service.basePrice,
         businessPercentage: service.businessPercentage,
@@ -98,6 +135,7 @@ export class AdminServiceFormModalComponent implements OnInit {
     this.errorMessage.set(null);
 
     const payload = {
+      generalServiceId: this.form.controls.generalServiceId.value,
       name: this.form.controls.name.value.trim(),
       basePrice: Math.trunc(this.form.controls.basePrice.value),
       businessPercentage: Math.trunc(this.form.controls.businessPercentage.value),

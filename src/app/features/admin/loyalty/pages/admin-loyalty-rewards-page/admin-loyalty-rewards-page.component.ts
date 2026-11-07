@@ -12,8 +12,10 @@ import {
   LoyaltyRewardServiceOption,
   LoyaltyRewardView,
 } from '../../../../../core/models/loyalty-redemption.models';
+import { DEFAULT_PAGE_SIZE } from '../../../../../core/models/paged-result.models';
 import { LoyaltyRedemptionApiService } from '../../../../../core/services/loyalty-redemption-api.service';
 import { getApiErrorMessage } from '../../../../../core/utils/api-error.utils';
+import { PaginatorComponent } from '../../../../../shared/components/paginator/paginator.component';
 import { ApiFeedbackComponent } from '../../../../../shared/components/api-feedback/api-feedback.component';
 import { PageStateComponent } from '../../../../../shared/components/page-state/page-state.component';
 
@@ -24,7 +26,7 @@ import { PageStateComponent } from '../../../../../shared/components/page-state/
  */
 @Component({
   selector: 'app-admin-loyalty-rewards-page',
-  imports: [DatePipe, ReactiveFormsModule, ApiFeedbackComponent, PageStateComponent],
+  imports: [DatePipe, ReactiveFormsModule, ApiFeedbackComponent, PageStateComponent, PaginatorComponent],
   templateUrl: './admin-loyalty-rewards-page.component.html',
   styleUrls: [
     '../admin-loyalty-settings-page/admin-loyalty-settings-page.component.scss',
@@ -48,6 +50,10 @@ export class AdminLoyaltyRewardsPageComponent implements OnInit {
   readonly editing = signal<LoyaltyRewardView | null>(null);
   readonly historyFor = signal<string | null>(null);
   readonly history = signal<LoyaltyRewardChangeView[]>([]);
+  /** The change log of one reward is paginated on the server (newest first). */
+  readonly historyTotal = signal(0);
+  readonly historyPage = signal(1);
+  readonly historyPageSize = DEFAULT_PAGE_SIZE;
 
   readonly form = this.formBuilder.nonNullable.group({
     name: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(120)]],
@@ -60,6 +66,11 @@ export class AdminLoyaltyRewardsPageComponent implements OnInit {
 
   async ngOnInit(): Promise<void> {
     await this.load();
+  }
+
+  /** "Servicio general · Tarifa" (ADR-0016 B4). */
+  serviceOptionLabel(service: LoyaltyRewardServiceOption): string {
+    return service.generalServiceName ? `${service.generalServiceName} · ${service.name}` : service.name;
   }
 
   edit(reward: LoyaltyRewardView): void {
@@ -89,8 +100,25 @@ export class AdminLoyaltyRewardsPageComponent implements OnInit {
 
     this.historyFor.set(reward.id);
     this.history.set([]);
+    this.historyTotal.set(0);
+    await this.loadHistory(reward.id, 1);
+  }
+
+  async onHistoryPageChange(page: number): Promise<void> {
+    const rewardId = this.historyFor();
+    if (rewardId) {
+      await this.loadHistory(rewardId, page);
+    }
+  }
+
+  private async loadHistory(rewardId: string, page: number): Promise<void> {
+    this.historyPage.set(page);
     try {
-      this.history.set(await firstValueFrom(this.api.getRewardChanges(reward.id)));
+      const result = await firstValueFrom(this.api.getRewardChanges(rewardId, { page, pageSize: this.historyPageSize }));
+      if (this.historyFor() === rewardId) {
+        this.history.set(result.items);
+        this.historyTotal.set(result.totalCount);
+      }
     } catch (error) {
       this.errorMessage.set(getApiErrorMessage(error));
     }

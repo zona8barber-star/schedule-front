@@ -30,7 +30,7 @@
     </div>
 
   <!-- Sin citas -->
-  } @else if (!appointments().length) {
+  } @else if (!hasAnyAppointment()) {
     <div class="my-appts__panel my-appts__panel--empty">
       <app-page-state
         kind="empty"
@@ -41,6 +41,7 @@
         <a class="my-appts__btn my-appts__btn--primary" routerLink="/staff">
           Agendar mi primera cita
         </a>
+        <button type="button" class="my-appts__btn" (click)="setTab('history')">Ver citas anteriores</button>
       </div>
     </div>
 
@@ -55,8 +56,8 @@
         (click)="setTab('upcoming')"
       >
         Próximas
-        @if (upcomingAppointments().length) {
-          <span class="my-appts__tab-badge">{{ upcomingAppointments().length }}</span>
+        @if (upcomingTotal()) {
+          <span class="my-appts__tab-badge">{{ upcomingTotal() }}</span>
         }
       </button>
 
@@ -100,6 +101,13 @@
             </article>
           }
         </div>
+        <app-paginator
+          label="Paginación de próximas citas"
+          [page]="page()"
+          [pageSize]="pageSize"
+          [totalCount]="upcomingTotal()"
+          (pageChange)="onPageChange($event)"
+        />
       }
     }
 
@@ -120,9 +128,41 @@
     }
 
     @if (activeTab() === 'history') {
+      <label class="my-appts__filter">
+        <span>Desde</span>
+        <input
+          type="date"
+          data-testid="history-from"
+          [value]="historyRange().from"
+          (change)="onHistoryFromChange($any($event.target).value)"
+        />
+      </label>
+      <label class="my-appts__filter">
+        <span>Hasta</span>
+        <input
+          type="date"
+          data-testid="history-to"
+          [value]="historyRange().to"
+          (change)="onHistoryToChange($any($event.target).value)"
+        />
+      </label>
+      <label class="my-appts__filter">
+        <span>Estado</span>
+        <select data-testid="history-status-filter" [value]="historyStatus()" (change)="onHistoryStatusChange($any($event.target).value)">
+          <option value="">Todos</option>
+          @for (status of statuses; track status) {
+            <option [value]="status" [selected]="status === historyStatus()">{{ statusLabel(status) }}</option>
+          }
+        </select>
+      </label>
+      <p class="my-appts__hint" data-testid="history-date-note">
+        Las fechas filtran por el día programado de cada cita: una cita cancelada aparece en la fecha para la que estaba
+        agendada, aunque la hayas cancelado antes. {{ rangeHint }}
+      </p>
+      <app-api-feedback severity="error" [message]="rangeError()" />
       @if (!historyAppointments().length) {
         <div class="my-appts__panel">
-          <app-page-state kind="empty" message="Tu historial está vacío." />
+          <app-page-state kind="empty" [message]="historyStatus() ? 'No hay citas con este estado en estas fechas.' : 'No hay citas en estas fechas.'" />
         </div>
       } @else {
         <div class="my-appts__list">
@@ -132,6 +172,13 @@
             </article>
           }
         </div>
+        <app-paginator
+          label="Paginación del historial de citas"
+          [page]="page()"
+          [pageSize]="pageSize"
+          [totalCount]="historyTotal()"
+          (pageChange)="onPageChange($event)"
+        />
       }
     }
 
@@ -176,6 +223,10 @@
       </svg>
       <span class="my-appts__barber-name">{{ appt.staffName ?? 'Profesional' }}</span>
     </div>
+
+    @if (serviceLabel(appt); as label) {
+      <p class="my-appts__service" data-testid="appointment-service">{{ label }}</p>
+    }
 
     <!-- Reseña ya enviada -->
     @if (isReviewed(appt)) {
@@ -411,6 +462,9 @@
         <div class="my-appts__modal-appt-info">
           Ahora: {{ formatDate(appt.startsAtUtc) }} a las {{ formatTime(appt.startsAtUtc) }}
           con <strong>{{ appt.staffName ?? 'tu barbero' }}</strong>
+          @if (serviceLabel(appt); as label) {
+            <br />{{ label }}
+          }
         </div>
       </div>
 
@@ -450,6 +504,7 @@
       <div [hidden]="!!rescheduleSlot()">
         <app-slot-picker
           [staffProfileId]="appt.staffProfileId"
+          [durationMinutes]="rescheduleDurationMinutes(appt)"
           [initialDate]="rescheduleInitialDate(appt)"
           [disabled]="isRescheduling()"
           (slotSelected)="onRescheduleSlot($event)"

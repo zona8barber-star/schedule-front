@@ -1,3 +1,5 @@
+import { PageQuery } from './paged-result.models';
+
 /** Mirrors `LoyaltyRedemptionContracts` in the API (ADR-0015). */
 
 export type LoyaltyRewardKind = 'Service' | 'Other';
@@ -53,6 +55,9 @@ export interface LoyaltyRewardServiceOption {
   id: string;
   name: string;
   isActive: boolean;
+  /** General service the rate belongs to (ADR-0016 B4); null only for unexpected legacy data. */
+  generalServiceId?: string | null;
+  generalServiceName?: string | null;
 }
 
 export interface LoyaltyRedemptionAllocationView {
@@ -167,4 +172,12 @@ export function redemptionStatusLabel(status: string): string {
 /** One key per intended operation, kept for retries and renewed only after a success. */
 export function newIdempotencyKey(): string {
   return crypto.randomUUID();
+}
+
+/** Filters of GET /admin/loyalty/redemptions (ADR-0016 B7); dates are inclusive Bogotá days of the request. */
+export interface LoyaltyRedemptionListQuery extends PageQuery {
+  status?: LoyaltyRedemptionStatus | null;
+  customerId?: string | null;
+  from?: string | null;
+  to?: string | null;
 }

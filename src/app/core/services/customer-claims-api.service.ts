@@ -14,6 +14,8 @@ import {
   OwnCustomerProfileView,
   OwnCustomerStatusView,
 } from '../models/customer-claim.models';
+import { PageQuery, PagedResult } from '../models/paged-result.models';
+import { toHttpParams } from '../utils/list-query.utils';
 
 /** The customer's own profile and claims (customer routes) and their review (customers.claims.approve). */
 @Injectable({
@@ -35,9 +37,10 @@ export class CustomerClaimsApiService {
     return this.httpClient.post<OwnCustomerClaimView>(this.buildUrl('/customer/customer-profile/claims'), request);
   }
 
-  list(status: CustomerClaimStatus) {
-    return this.httpClient.get<CustomerClaimView[]>(this.buildUrl('/admin/customer-claims'), {
-      params: new HttpParams().set('status', status),
+  /** Claims in one status, paginated: pending ones oldest first (never filtered by date), decided ones newest first. */
+  list(status: CustomerClaimStatus, query: PageQuery = {}) {
+    return this.httpClient.get<PagedResult<CustomerClaimView>>(this.buildUrl('/admin/customer-claims'), {
+      params: toHttpParams({ status, page: query.page, pageSize: query.pageSize }),
     });
   }
 

@@ -255,7 +255,7 @@ describe('AppShellComponent navigation', () => {
     const links = Array.from(element.querySelectorAll('.app-shell__header-nav [data-nav-item]')).map((link) =>
       link.getAttribute('data-nav-item'),
     );
-    expect(links).toEqual(['home', 'booking', 'staff-directory']);
+    expect(links).toEqual(['home', 'booking', 'staff-directory', 'product-catalog']);
     expect(element.querySelector('a[href="/auth/login"]')!.textContent!.trim()).toBe('Ingresar');
     expect(element.querySelector('[data-testid="account-toggle"]')).toBeNull();
   });

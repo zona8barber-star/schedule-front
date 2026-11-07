@@ -17,9 +17,9 @@ describe('AdminMembershipPlanFormModalComponent', () => {
   const api = environment.defaultApiBaseUrl;
 
   const catalog: ServiceView[] = [
-    { id: 's-cut', name: 'Corte', basePrice: 25000, businessPercentage: 30, isActive: true, createdAt: '', updatedAt: null, loyaltyPoints: 0 },
-    { id: 's-beard', name: 'Barba', basePrice: 15000, businessPercentage: 30, isActive: true, createdAt: '', updatedAt: null, loyaltyPoints: 0 },
-    { id: 's-old', name: 'Tinte', basePrice: 40000, businessPercentage: 30, isActive: false, createdAt: '', updatedAt: null, loyaltyPoints: 0 },
+    { id: 's-cut', name: 'Corte', basePrice: 25000, businessPercentage: 30, isActive: true, createdAt: '', updatedAt: null, loyaltyPoints: 0, generalServiceId: 'g-cut', generalServiceName: 'Corte', generalServiceIsActive: true, categoryId: 'c-barber', categoryName: 'Barbería' },
+    { id: 's-beard', name: 'Barba', basePrice: 15000, businessPercentage: 30, isActive: true, createdAt: '', updatedAt: null, loyaltyPoints: 0, generalServiceId: 'g-cut', generalServiceName: 'Corte', generalServiceIsActive: true, categoryId: 'c-barber', categoryName: 'Barbería' },
+    { id: 's-old', name: 'Tinte', basePrice: 40000, businessPercentage: 30, isActive: false, createdAt: '', updatedAt: null, loyaltyPoints: 0, generalServiceId: 'g-cut', generalServiceName: 'Corte', generalServiceIsActive: true, categoryId: 'c-barber', categoryName: 'Barbería' },
   ];
 
   const existingPlan: MembershipPlanView = {
@@ -74,7 +74,7 @@ describe('AdminMembershipPlanFormModalComponent', () => {
     httpMock = TestBed.inject(HttpTestingController);
     fixture.detectChanges();
 
-    httpMock.expectOne(`${api}/admin/services`).flush(catalog);
+    httpMock.expectOne(`${api}/admin/services/options`).flush(catalog);
     if (planId) {
       httpMock.expectOne(`${api}/admin/membership-plans/${planId}`).flush(existingPlan);
     }
@@ -254,5 +254,14 @@ describe('AdminMembershipPlanFormModalComponent', () => {
     expect(component.form.controls.loyaltyPoints.value).toBe(existingPlan.loyaltyPoints);
     expect('loyaltyPoints' in component.buildRequest()).toBe(false);
     expect(fixture.nativeElement.textContent).toContain('Solo quien administra la fidelización puede cambiar los puntos.');
+  });
+
+  it('labels the rates "Servicio general · Tarifa"', async () => {
+    await open('p-1');
+
+    expect(component.serviceName('s-beard')).toBe('Corte · Barba');
+    expect(component.serviceName('s-old')).toBe('Corte · Tinte');
+    // Rates already in the plan (s-cut, s-old) cannot be added again.
+    expect(component.addableServices().map((service) => service.name)).toEqual(['Corte · Barba']);
   });
 });

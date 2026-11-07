@@ -1,21 +1,56 @@
 <section class="services">
   <header class="services__header">
-    <h1>Servicios</h1>
-    <button class="services__create-btn" type="button" (click)="openCreate()">+ Nuevo servicio</button>
+    <div>
+      <h1>Tarifas de liquidación</h1>
+      <p class="services__lead">
+        Precio, porcentaje del negocio y puntos con los que se liquida cada servicio realizado. Cada tarifa pertenece a un
+        servicio general.
+      </p>
+    </div>
+    <button class="services__create-btn" type="button" (click)="openCreate()">+ Nueva tarifa</button>
   </header>
+
+  <form class="services__filters" role="search" (submit)="$event.preventDefault(); onSearch(searchInput.value)">
+    <label class="services__filter">
+      <span>Buscar</span>
+      <input #searchInput type="search" placeholder="Nombre de la tarifa" [value]="query()" (change)="onSearch(searchInput.value)" />
+    </label>
+    <label class="services__filter">
+      <span>Servicio general</span>
+      <select data-testid="rate-filter" [value]="generalServiceFilter()" (change)="onFilterChange($event)">
+        <option value="">Todos</option>
+        @for (option of generalServices(); track option.id) {
+          <option [value]="option.id" [selected]="option.id === generalServiceFilter()">
+            {{ option.categoryName }} · {{ option.name }}
+          </option>
+        }
+      </select>
+    </label>
+    <label class="services__filter">
+      <span>Estado</span>
+      <select data-testid="rate-status" [value]="statusFilter()" (change)="onStatusChange($event)">
+        <option value="">Todos</option>
+        <option value="Active" [selected]="statusFilter() === 'Active'">Activas</option>
+        <option value="Inactive" [selected]="statusFilter() === 'Inactive'">Inactivas</option>
+      </select>
+    </label>
+  </form>
 
   <app-api-feedback severity="error" [message]="errorMessage()" />
 
   @if (isLoading()) {
-    <p class="services__state">Cargando servicios...</p>
+    <p class="services__state">Cargando tarifas...</p>
   } @else if (!services().length) {
-    <p class="services__state">Aún no hay servicios. Crea el primero.</p>
+    <p class="services__state">
+      {{ hasFilters() ? 'Ninguna tarifa coincide con los filtros.' : 'Aún no hay tarifas. Crea la primera.' }}
+    </p>
   } @else {
     <div class="services__table-wrap">
       <table class="services__table">
         <thead>
           <tr>
-            <th>Nombre</th>
+            <th>Tarifa</th>
+            <th>Servicio general</th>
             <th>Precio</th>
             <th>% Negocio</th>
             <th>% Profesional</th>
@@ -28,6 +63,13 @@
           @for (service of services(); track service.id) {
             <tr [class.services__row--inactive]="!service.isActive">
               <td>{{ service.name }}</td>
+              <td>
+                {{ service.generalServiceName }}
+                <small class="services__muted">{{ service.categoryName }}</small>
+                @if (!service.generalServiceIsActive) {
+                  <small class="services__tag">Servicio general inactivo</small>
+                }
+              </td>
               <td>$ {{ service.basePrice | number: '1.0-0' }}</td>
               <td>{{ service.businessPercentage }}%</td>
               <td>{{ 100 - service.businessPercentage }}%</td>
@@ -65,12 +107,21 @@
       </table>
     </div>
   }
+
+  <app-paginator
+    label="Paginación de tarifas"
+    [page]="page()"
+    [pageSize]="pageSize()"
+    [totalCount]="totalCount()"
+    [disabled]="isLoading()"
+    (pageChange)="onPageChange($event)"
+  />
 </section>
 
 @if (isModalOpen()) {
   <app-admin-service-form-modal
     [serviceId]="editingServiceId()"
-    (saved)="onSaved($event)"
+    (saved)="onSaved()"
     (cancelled)="closeModal()"
   />
 }

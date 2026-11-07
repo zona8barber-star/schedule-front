@@ -1,11 +1,13 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { Router, provideRouter } from '@angular/router';
 
 import { environment } from '../../../../../../environments/environment';
 import { PERMISSION_CODES, PermissionCode } from '../../../../../core/models/auth.models';
 import { LoyaltyRedemptionView } from '../../../../../core/models/loyalty-redemption.models';
 import { AuthService } from '../../../../../core/services/auth.service';
+import { defaultHistoryRange } from '../../../../../core/utils/history-range.utils';
 import { AdminLoyaltyRedemptionsPageComponent } from './admin-loyalty-redemptions-page.component';
 
 describe('AdminLoyaltyRedemptionsPageComponent', () => {
@@ -75,6 +77,7 @@ describe('AdminLoyaltyRedemptionsPageComponent', () => {
     await TestBed.configureTestingModule({
       imports: [AdminLoyaltyRedemptionsPageComponent],
       providers: [
+        provideRouter([]),
         provideHttpClient(),
         provideHttpClientTesting(),
         { provide: AuthService, useValue: { hasPermission: (code: PermissionCode) => permissions.includes(code) } },
@@ -87,6 +90,13 @@ describe('AdminLoyaltyRedemptionsPageComponent', () => {
     fixture.detectChanges();
   }
 
+  // The queues never send dates, so an old pending redemption is never hidden.
+  const requestedUrl = `${api}?status=Requested&page=1&pageSize=25`;
+
+  function pageOf(items: LoyaltyRedemptionView[]) {
+    return { items, page: 1, pageSize: 25, totalCount: items.length };
+  }
+
   function text(): string {
     return (fixture.nativeElement as HTMLElement).textContent ?? '';
   }
@@ -97,7 +107,7 @@ describe('AdminLoyaltyRedemptionsPageComponent', () => {
 
   it('approves a request with the version read and reloads the inbox', async () => {
     await render([PERMISSION_CODES.loyaltyRedemptionsApprove]);
-    httpMock.expectOne(`${api}?status=Requested`).flush([requested]);
+    httpMock.expectOne(requestedUrl).flush(pageOf([requested]));
     await settle();
     expect(component.tabs.map((tab) => tab.id)).toEqual(['Requested', 'History']);
     expect(text()).toContain('Gorra · 30 pts');
@@ -108,7 +118,7 @@ describe('AdminLoyaltyRedemptionsPageComponent', () => {
     expect(request.request.body).toEqual({ version: 11 });
     request.flush({ ...requested, status: 'Approved' });
     await settle();
-    httpMock.expectOne(`${api}?status=Requested`).flush([]);
+    httpMock.expectOne(requestedUrl).flush(pageOf([]));
     await approving;
     await settle();
     expect(component.successMessage()).toBe('Canje aprobado.');
@@ -116,7 +126,7 @@ describe('AdminLoyaltyRedemptionsPageComponent', () => {
 
   it('requires a reason to reject and sends it', async () => {
     await render([PERMISSION_CODES.loyaltyRedemptionsApprove]);
-    httpMock.expectOne(`${api}?status=Requested`).flush([requested]);
+    httpMock.expectOne(requestedUrl).flush(pageOf([requested]));
     await settle();
 
     component.startReason(requested, 'reject');
@@ -130,7 +140,7 @@ describe('AdminLoyaltyRedemptionsPageComponent', () => {
     expect(request.request.body).toEqual({ version: 11, reason: 'Sin existencias' });
     request.flush({ ...requested, status: 'Rejected' });
     await settle();
-    httpMock.expectOne(`${api}?status=Requested`).flush([]);
+    httpMock.expectOne(requestedUrl).flush(pageOf([]));
     await rejecting;
   });
 
@@ -138,7 +148,7 @@ describe('AdminLoyaltyRedemptionsPageComponent', () => {
     await render([PERMISSION_CODES.loyaltyRedemptionsDeliver]);
     expect(component.tabs.map((tab) => tab.id)).toEqual(['Deliveries']);
     const approvedOther = { ...requested, id: 'd-3', status: 'Approved' as const, deliverBy: '2026-12-03', version: 13 };
-    httpMock.expectOne(`${api}/deliveries`).flush([approvedService, approvedOther]);
+    httpMock.expectOne(`${api}/deliveries?page=1&pageSize=25`).flush(pageOf([approvedService, approvedOther]));
     await settle();
 
     const buttons = Array.from(fixture.nativeElement.querySelectorAll('button') as NodeListOf<HTMLButtonElement>)
@@ -152,13 +162,48 @@ describe('AdminLoyaltyRedemptionsPageComponent', () => {
     expect(request.request.body).toEqual({ version: 13 });
     request.flush({ ...approvedOther, status: 'Delivered' });
     await settle();
-    httpMock.expectOne(`${api}/deliveries`).flush([approvedService]);
+    httpMock.expectOne(`${api}/deliveries?page=1&pageSize=25`).flush(pageOf([approvedService]));
     await delivering;
+  });
+
+  it('pages the history with its status and date filters kept in the URL', async () => {
+    await render([PERMISSION_CODES.loyaltyRedemptionsApprove]);
+    httpMock.expectOne(requestedUrl).flush(pageOf([requested]));
+    await settle();
+
+    component.selectTab('History');
+    await settle();
+    const router = TestBed.inject(Router);
+    expect(router.url).toBe('/?tab=History');
+    // The history asks for the last 30 days by default.
+    const { from, to } = defaultHistoryRange();
+    httpMock.expectOne(`${api}?from=${from}&to=${to}&page=1&pageSize=25`).flush({ items: [requested], page: 1, pageSize: 25, totalCount: 60 });
+    await settle();
+    expect(text()).toContain('Página 1 de 3');
+
+    component.onFilterChange({ status: 'Expired', from: '2026-11-01' });
+    await settle();
+    expect(router.url).toBe('/?tab=History&status=Expired&from=2026-11-01');
+    httpMock.expectOne(`${api}?status=Expired&from=2026-11-01&to=2026-11-30&page=1&pageSize=25`).flush(pageOf([]));
+    await settle();
+    expect(text()).toContain('No hay canjes para estos filtros.');
+
+    // A pending status chosen in the history is a queue again: no dates.
+    component.onFilterChange({ status: 'Approved', from: null });
+    await settle();
+    httpMock.expectOne(`${api}?status=Approved&page=1&pageSize=25`).flush(pageOf([]));
+    await settle();
+
+    // A hand-written range of 31 days is explained instead of being sent.
+    await router.navigateByUrl('/?tab=History&from=2026-01-01&to=2026-01-31');
+    await settle();
+    httpMock.expectNone((request) => request.url === api);
+    expect(component.rangeError()).toContain('30 días');
   });
 
   it('explains a revoked permission', async () => {
     await render([PERMISSION_CODES.loyaltyRedemptionsApprove]);
-    httpMock.expectOne(`${api}?status=Requested`).flush([requested]);
+    httpMock.expectOne(requestedUrl).flush(pageOf([requested]));
     await settle();
 
     const approving = component.approve(requested);

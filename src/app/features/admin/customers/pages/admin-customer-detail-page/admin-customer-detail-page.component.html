@@ -79,9 +79,56 @@
         }
       </div>
       <app-api-feedback severity="error" [message]="membershipsError()" />
+      <div class="customer-detail__filters" role="group" aria-label="Filtros de membresías">
+        <label>
+          <span>Estado</span>
+          <select
+            data-testid="membership-status-filter"
+            [value]="membershipStatus()"
+            (change)="onMembershipFilterChange({ membershipStatus: $any($event.target).value })"
+          >
+            <option value="">Todos</option>
+            @for (status of membershipStatuses; track status) {
+              <option [value]="status" [selected]="status === membershipStatus()">{{ membershipStatusLabels[status] }}</option>
+            }
+          </select>
+        </label>
+        <label>
+          <span>Plan</span>
+          <select
+            [value]="membershipPlanId()"
+            (change)="onMembershipFilterChange({ membershipPlanId: $any($event.target).value })"
+          >
+            <option value="">Todos</option>
+            @for (plan of plans(); track plan.id) {
+              <option [value]="plan.id" [selected]="plan.id === membershipPlanId()">{{ plan.name }}</option>
+            }
+          </select>
+        </label>
+        <label>
+          <span>Vendida desde</span>
+          <input
+            type="date"
+            [value]="membershipSoldFrom()"
+            (change)="onMembershipFilterChange({ membershipSoldFrom: $any($event.target).value })"
+          />
+        </label>
+        <label>
+          <span>Vendida hasta</span>
+          <input
+            type="date"
+            [value]="membershipSoldTo()"
+            (change)="onMembershipFilterChange({ membershipSoldTo: $any($event.target).value })"
+          />
+        </label>
+      </div>
       @if (!memberships().length) {
         <p class="customer-detail__muted">
-          {{ c.mergedIntoCustomerId ? 'Sus membresías pasaron al perfil que se conserva.' : 'Este cliente aún no tiene membresías.' }}
+          @if (membershipStatus() || membershipPlanId() || membershipSoldFrom() || membershipSoldTo()) {
+            Ninguna membresía coincide con los filtros.
+          } @else {
+            {{ c.mergedIntoCustomerId ? 'Sus membresías pasaron al perfil que se conserva.' : 'Este cliente aún no tiene membresías.' }}
+          }
         </p>
       } @else {
         <ul class="customer-detail__memberships">
@@ -101,6 +148,13 @@
           }
         </ul>
       }
+      <app-paginator
+        label="Paginación de membresías"
+        [page]="membershipsPage()"
+        [pageSize]="membershipsPageSize"
+        [totalCount]="membershipsTotal()"
+        (pageChange)="onMembershipsPageChange($event)"
+      />
     </article>
 
     <app-admin-customer-loyalty-panel [customerId]="c.id" />

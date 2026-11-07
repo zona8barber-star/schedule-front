@@ -1,5 +1,6 @@
 import { DatePipe, LowerCasePipe } from '@angular/common';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
@@ -13,17 +14,25 @@ import {
   ServiceRecordCatalogItem,
   ServiceRecordView,
 } from '../../../../../core/models/service-record.models';
+import { DEFAULT_PAGE_SIZE } from '../../../../../core/models/paged-result.models';
 import { ServiceRecordsApiService } from '../../../../../core/services/service-records-api.service';
 import { getApiErrorMessage } from '../../../../../core/utils/api-error.utils';
 import { bogotaToday } from '../../../../../core/utils/bogota-date.utils';
+import { PaginatorComponent } from '../../../../../shared/components/paginator/paginator.component';
 import { ApiFeedbackComponent } from '../../../../../shared/components/api-feedback/api-feedback.component';
 import { PageStateComponent } from '../../../../../shared/components/page-state/page-state.component';
 
 type RegistrationMode = 'appointment' | 'walkIn';
 
+export interface ServiceRecordCatalogGroup {
+  categoryId: string;
+  categoryName: string;
+  services: ServiceRecordCatalogItem[];
+}
+
 @Component({
   selector: 'app-staff-service-records-page',
-  imports: [DatePipe, LowerCasePipe, ReactiveFormsModule, ApiFeedbackComponent, PageStateComponent],
+  imports: [DatePipe, LowerCasePipe, ReactiveFormsModule, ApiFeedbackComponent, PageStateComponent, PaginatorComponent],
   templateUrl: './staff-service-records-page.component.html',
   styleUrl: './staff-service-records-page.component.scss',
 })
@@ -42,12 +51,30 @@ export class StaffServiceRecordsPageComponent implements OnInit {
   readonly errorMessage = signal<string | null>(null);
   readonly successMessage = signal<string | null>(null);
   readonly mode = signal<RegistrationMode>('walkIn');
+  /** General services the professional can register (ADR-0016 B4), in the order the API returns them. */
   readonly catalog = signal<ServiceRecordCatalogItem[]>([]);
+  readonly catalogGroups = computed<ServiceRecordCatalogGroup[]>(() => {
+    const groups: ServiceRecordCatalogGroup[] = [];
+    for (const service of this.catalog()) {
+      let group = groups.find((item) => item.categoryId === service.categoryId);
+      if (!group) {
+        group = { categoryId: service.categoryId, categoryName: service.categoryName, services: [] };
+        groups.push(group);
+      }
+      group.services.push(service);
+    }
+    return groups;
+  });
   /** Own recent appointments (completed included), from the service records routes: no Staff role needed. */
   readonly appointments = signal<ServiceRecordAppointmentOption[]>([]);
   /** False when the user has the permission but no active professional profile. */
   readonly hasStaffProfile = signal(true);
   readonly records = signal<ServiceRecordView[]>([]);
+  /** Own records are paginated on the server (pending first), so every record stays reachable. */
+  readonly recordsTotal = signal(0);
+  readonly recordsPage = signal(1);
+  readonly recordsPageSize = DEFAULT_PAGE_SIZE;
+  readonly recordsLoading = signal(false);
   readonly selectedServiceIds = signal<string[]>([]);
   readonly submitted = signal(false);
 
@@ -60,6 +87,13 @@ export class StaffServiceRecordsPageComponent implements OnInit {
     customerName: ['', [Validators.maxLength(120)]],
     notes: ['', [Validators.maxLength(500)]],
   });
+
+  constructor() {
+    // Choosing an appointment preselects the service booked with it, unless it is already registered there.
+    this.form.controls.appointmentId.valueChanges.pipe(takeUntilDestroyed()).subscribe((appointmentId) => {
+      this.prefillFromAppointment(appointmentId);
+    });
+  }
 
   readonly selectionProblem = computed(() => {
     const count = this.selectedServiceIds().length;
@@ -77,14 +111,13 @@ export class StaffServiceRecordsPageComponent implements OnInit {
         return;
       }
 
-      const [catalog, appointments, records] = await Promise.all([
+      const [catalog, appointments] = await Promise.all([
         firstValueFrom(this.serviceRecordsApi.catalog()),
         firstValueFrom(this.serviceRecordsApi.appointments()),
-        firstValueFrom(this.serviceRecordsApi.mine()),
+        this.loadRecords(),
       ]);
       this.catalog.set(catalog);
       this.appointments.set(appointments);
-      this.records.set(records);
 
       const requested = this.route.snapshot.queryParamMap.get('appointmentId');
       if (requested && this.appointments().some((appointment) => appointment.id === requested)) {
@@ -117,7 +150,6 @@ export class StaffServiceRecordsPageComponent implements OnInit {
   registerFrom(appointmentId: string): void {
     this.setMode('appointment');
     this.form.controls.appointmentId.setValue(appointmentId);
-    this.selectedServiceIds.set([]);
     this.successMessage.set(null);
   }
 
@@ -127,7 +159,7 @@ export class StaffServiceRecordsPageComponent implements OnInit {
       return false;
     }
     const appointment = this.appointments().find((item) => item.id === this.form.controls.appointmentId.value);
-    return appointment?.registeredServiceIds.includes(serviceId) ?? false;
+    return appointment?.registeredGeneralServiceIds.includes(serviceId) ?? false;
   }
 
   statusLabel(status: string): string {
@@ -178,16 +210,26 @@ export class StaffServiceRecordsPageComponent implements OnInit {
           appointmentId: fromAppointment ? value.appointmentId : null,
           performedOn: fromAppointment ? null : value.performedOn,
           customerName: fromAppointment ? null : value.customerName.trim() || null,
-          serviceIds: this.selectedServiceIds(),
+          generalServiceIds: this.selectedServiceIds(),
           notes: value.notes.trim() || null,
           idempotencyKey: this.idempotencyKey,
         }),
       );
-      this.records.update((list) => [...created, ...list.filter((record) => !created.some((item) => item.id === record.id))]);
+      // New records are pending, so they belong at the top of the first page: reload it from the server.
+      this.recordsPage.set(1);
+      await this.loadRecords().catch(() => {
+        this.records.update((list) => [...created, ...list.filter((record) => !created.some((item) => item.id === record.id))]);
+      });
       this.appointments.update((list) =>
         list.map((appointment) =>
           appointment.id === value.appointmentId && fromAppointment
-            ? { ...appointment, registeredServiceIds: [...appointment.registeredServiceIds, ...created.map((record) => record.serviceId)] }
+            ? {
+                ...appointment,
+                registeredGeneralServiceIds: [
+                  ...appointment.registeredGeneralServiceIds,
+                  ...created.map((record) => record.generalServiceId).filter((id): id is string => !!id),
+                ],
+              }
             : appointment,
         ),
       );
@@ -204,6 +246,16 @@ export class StaffServiceRecordsPageComponent implements OnInit {
     }
   }
 
+  private prefillFromAppointment(appointmentId: string): void {
+    const appointment = this.appointments().find((item) => item.id === appointmentId);
+    const booked = appointment?.generalServiceId;
+    const canPrefill =
+      !!booked &&
+      !appointment.registeredGeneralServiceIds.includes(booked) &&
+      this.catalog().some((service) => service.id === booked);
+    this.selectedServiceIds.set(canPrefill ? [booked] : []);
+  }
+
   private resetForm(): void {
     this.idempotencyKey = crypto.randomUUID();
     this.selectedServiceIds.set([]);
@@ -211,4 +263,24 @@ export class StaffServiceRecordsPageComponent implements OnInit {
     this.form.reset({ appointmentId: '', performedOn: this.today, customerName: '', notes: '' });
   }
 
+
+  async onRecordsPageChange(page: number): Promise<void> {
+    this.recordsPage.set(page);
+    this.recordsLoading.set(true);
+    try {
+      await this.loadRecords();
+    } catch (error) {
+      this.errorMessage.set(getApiErrorMessage(error));
+    } finally {
+      this.recordsLoading.set(false);
+    }
+  }
+
+  private async loadRecords(): Promise<void> {
+    const result = await firstValueFrom(
+      this.serviceRecordsApi.mine({ page: this.recordsPage(), pageSize: this.recordsPageSize }),
+    );
+    this.records.set(result.items);
+    this.recordsTotal.set(result.totalCount);
+  }
 }

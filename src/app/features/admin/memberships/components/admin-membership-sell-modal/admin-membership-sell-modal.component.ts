@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { firstValueFrom } from 'rxjs';
 
 import { CustomerMembershipDetailView } from '../../../../../core/models/membership.models';
-import { MembershipPlanView } from '../../../../../core/models/membership-plan.models';
+import { MembershipPlanView, planRateLabel } from '../../../../../core/models/membership-plan.models';
 import { AdminMembershipPlansApiService } from '../../../../../core/services/admin-membership-plans-api.service';
 import { AdminMembershipsApiService } from '../../../../../core/services/admin-memberships-api.service';
 import { getApiErrorMessage } from '../../../../../core/utils/api-error.utils';
@@ -31,6 +31,8 @@ export class AdminMembershipSellModalComponent implements OnInit {
   @Output() readonly cancelled = new EventEmitter<void>();
 
   readonly conditionLabels = GIFT_CONDITION_LABELS;
+  /** "Servicio general · Tarifa" for the plan's rates (ADR-0016 T10). */
+  readonly rateLabel = planRateLabel;
   readonly today = bogotaToday();
 
   readonly plans = signal<MembershipPlanView[]>([]);

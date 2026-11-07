@@ -1,0 +1,224 @@
+<section class="catalog">
+  <header class="catalog__header">
+    <div>
+      <h1>Productos</h1>
+      <p class="catalog__lead">
+        Productos del catálogo público, con su precio en pesos. Cada uno pertenece a una
+        <a routerLink="/admin/product-categories">categoría de productos</a>. Solo se muestran al público los
+        productos activos de categorías activas.
+      </p>
+    </div>
+    <button class="catalog__create-btn" type="button" [disabled]="isLoading()" (click)="openCreate()">
+      + Nuevo producto
+    </button>
+  </header>
+
+  <app-api-feedback severity="error" [message]="errorMessage()" />
+
+  <form class="catalog__filters" role="search" (submit)="$event.preventDefault(); onSearch(searchInput.value)">
+    <label class="catalog__filter">
+      <span>Buscar</span>
+      <input #searchInput type="search" placeholder="Nombre del producto" [value]="query()" (change)="onSearch(searchInput.value)" />
+    </label>
+    @if (categories().length > 1) {
+      <label class="catalog__filter">
+        <span>Categoría</span>
+        <select data-testid="category-filter" [value]="categoryFilter()" (change)="onFilterChange($event)">
+          <option value="">Todas</option>
+          @for (category of categories(); track category.id) {
+            <option [value]="category.id" [selected]="category.id === categoryFilter()">{{ category.name }}</option>
+          }
+        </select>
+      </label>
+    }
+    <label class="catalog__filter">
+      <span>Estado</span>
+      <select data-testid="product-status" [value]="statusFilter()" (change)="onStatusChange($event)">
+        <option value="">Todos</option>
+        <option value="Active" [selected]="statusFilter() === 'Active'">Activos</option>
+        <option value="Inactive" [selected]="statusFilter() === 'Inactive'">Inactivos</option>
+      </select>
+    </label>
+  </form>
+
+  @if (isLoading()) {
+    <p class="catalog__state">Cargando productos...</p>
+  } @else if (!categories().length) {
+    <p class="catalog__state">
+      Primero crea una <a routerLink="/admin/product-categories">categoría de productos</a>.
+    </p>
+  } @else if (!visibleProducts().length) {
+    <p class="catalog__state">No hay productos{{ categoryFilter() || query() || statusFilter() ? ' con estos filtros' : '' }}.</p>
+  } @else {
+    <div class="catalog__table-wrap">
+      <table class="catalog__table">
+        <thead>
+          <tr>
+            <th>Imagen</th>
+            <th>Producto</th>
+            <th>Categoría</th>
+            <th>Precio</th>
+            <th>Orden</th>
+            <th>Código</th>
+            <th>Estado</th>
+            <th aria-label="Acciones"></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (product of visibleProducts(); track product.id) {
+            <tr [class.catalog__row--inactive]="!product.isActive" [attr.data-product]="product.id">
+              <td>
+                @if (product.imageUrl) {
+                  <img class="catalog__thumb" [src]="product.imageUrl" [alt]="product.name" loading="lazy" />
+                } @else {
+                  <span class="catalog__thumb" aria-hidden="true"></span>
+                }
+              </td>
+              <td>
+                {{ product.name }}
+                @if (product.description) {
+                  <small class="catalog__muted">{{ product.description }}</small>
+                }
+              </td>
+              <td>
+                {{ product.categoryName }}
+                @if (!product.categoryIsActive) {
+                  <small class="catalog__tag">Categoría inactiva</small>
+                }
+              </td>
+              <td class="catalog__price">{{ formatPrice(product.price) }}</td>
+              <td>{{ product.sortOrder }}</td>
+              <td><span class="catalog__code">{{ product.publicCode }}</span></td>
+              <td>{{ product.isActive ? 'Activo' : 'Inactivo' }}</td>
+              <td class="catalog__actions">
+                <button class="catalog__action-btn" type="button" [disabled]="busyId() === product.id" (click)="openEdit(product)">
+                  Editar
+                </button>
+                <button class="catalog__action-btn" type="button" [disabled]="busyId() === product.id" (click)="toggleActive(product)">
+                  {{ product.isActive ? 'Desactivar' : 'Activar' }}
+                </button>
+                <button
+                  class="catalog__action-btn catalog__action-btn--delete"
+                  type="button"
+                  [disabled]="busyId() === product.id"
+                  (click)="remove(product)"
+                >
+                  Eliminar
+                </button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+
+  <app-paginator
+    label="Paginación de productos"
+    [page]="page()"
+    [pageSize]="pageSize()"
+    [totalCount]="totalCount()"
+    [disabled]="isLoading()"
+    (pageChange)="onPageChange($event)"
+  />
+</section>
+
+@if (isModalOpen()) {
+  <div class="catalog-modal__overlay" (click)="closeModal()">
+    <div class="catalog-modal__card" role="dialog" aria-modal="true" aria-labelledby="product-modal-title" (click)="$event.stopPropagation()">
+      <h2 id="product-modal-title">{{ modalTitle() }}</h2>
+
+      <app-api-feedback severity="error" [message]="formError()" />
+
+      <form [formGroup]="form" (ngSubmit)="save()">
+        <label class="catalog-modal__field">
+          <span>Categoría</span>
+          <select formControlName="categoryId">
+            <option value="" disabled>Elige la categoría</option>
+            @for (category of categoryOptions(); track category.id) {
+              <option [value]="category.id">{{ category.name }}{{ category.isActive ? '' : ' (inactiva)' }}</option>
+            }
+          </select>
+        </label>
+        @if (form.controls.categoryId.touched && form.controls.categoryId.invalid) {
+          <small class="catalog-modal__error">Elige una categoría.</small>
+        }
+
+        <label class="catalog-modal__field">
+          <span>Nombre</span>
+          <input type="text" formControlName="name" maxlength="120" autocomplete="off" />
+        </label>
+        @if (form.controls.name.touched && form.controls.name.invalid) {
+          <small class="catalog-modal__error">El nombre debe tener entre 2 y 120 caracteres.</small>
+        }
+        <small class="catalog-modal__hint">
+          No puede repetirse dentro de la misma categoría (sin distinguir mayúsculas); sí en categorías distintas.
+        </small>
+
+        <label class="catalog-modal__field">
+          <span>Precio (COP)</span>
+          <input type="number" formControlName="price" min="0" step="1" inputmode="numeric" />
+        </label>
+        @if (form.controls.price.touched && form.controls.price.invalid) {
+          <small class="catalog-modal__error">Usa un número entero de pesos, igual o mayor que 0.</small>
+        }
+
+        <label class="catalog-modal__field">
+          <span>Descripción (opcional)</span>
+          <textarea formControlName="description" maxlength="1000"></textarea>
+        </label>
+
+        <label class="catalog-modal__field">
+          <span>Orden dentro de la categoría</span>
+          <input type="number" formControlName="sortOrder" min="0" [max]="maxSortOrder" step="1" inputmode="numeric" />
+        </label>
+        @if (form.controls.sortOrder.touched && form.controls.sortOrder.invalid) {
+          <small class="catalog-modal__error">Usa un número entero entre 0 y {{ maxSortOrder }}.</small>
+        }
+
+        @if (editing(); as current) {
+          <div class="catalog-modal__field">
+            <span>Imagen (opcional)</span>
+            <div class="catalog-modal__image">
+              @if (imagePreviewUrl() || current.imageUrl) {
+                <img data-testid="product-image-preview" [src]="imagePreviewUrl() ?? current.imageUrl" [alt]="current.name" />
+              }
+              <button
+                class="catalog__action-btn"
+                type="button"
+                data-testid="product-image-upload"
+                [disabled]="imageUploading()"
+                (click)="imageInput.click()"
+              >
+                {{ imageUploading() ? 'Subiendo...' : current.imageUrl ? 'Cambiar imagen' : 'Subir imagen' }}
+              </button>
+              @if (current.imageUrl) {
+                <button
+                  class="catalog__action-btn catalog__action-btn--delete"
+                  type="button"
+                  [disabled]="imageUploading()"
+                  (click)="removeImage()"
+                >
+                  Quitar imagen
+                </button>
+              }
+              <input #imageInput class="catalog__file-hidden" type="file" accept="image/*" (change)="onImageSelected($event)" />
+            </div>
+          </div>
+          <app-api-feedback severity="error" [message]="imageError()" />
+          <small class="catalog-modal__hint">
+            Cualquier imagen, máx. 10 MB (se convierte a JPEG). Se guarda al subirla, sin esperar a «Guardar».
+          </small>
+          <small class="catalog-modal__hint">Código público: <span class="catalog__code">{{ current.publicCode }}</span> (no cambia).</small>
+        } @else {
+          <small class="catalog-modal__hint">Podrás añadir la imagen después de crear el producto.</small>
+        }
+
+        <div class="catalog-modal__actions">
+          <button type="button" [disabled]="isSaving() || imageUploading()" (click)="closeModal()">Cancelar</button>
+          <button type="submit" [disabled]="isSaving() || imageUploading()">{{ isSaving() ? 'Guardando...' : 'Guardar' }}</button>
+        </div>
+      </form>
+    </div>
+  </div>
+}

@@ -61,7 +61,7 @@ describe('AdminCustomerMergeModalComponent', () => {
   async function searchAndChoose(preview: CustomerMergePreview): Promise<void> {
     component.query.set('carlos');
     const searching = component.search();
-    httpMock.expectOne(`${base}?q=carlos`).flush([targetItem, sourceItem]);
+    httpMock.expectOne(`${base}?q=carlos`).flush({ items: [targetItem, sourceItem], page: 1, pageSize: 20, totalCount: 2 });
     await searching;
 
     // The surviving profile is never offered as the duplicate.

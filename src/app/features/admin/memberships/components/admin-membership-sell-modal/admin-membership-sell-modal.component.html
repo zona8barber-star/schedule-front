@@ -29,7 +29,7 @@
           </p>
           <ul>
             @for (service of p.services; track service.serviceId) {
-              <li>{{ p.mode === 'PerService' ? service.quantity + ' × ' : '' }}{{ service.serviceName }}</li>
+              <li>{{ p.mode === 'PerService' ? service.quantity + ' × ' : '' }}{{ rateLabel(service.generalServiceName, service.serviceName) }}</li>
             }
           </ul>
           @if (p.giftRules.length) {
@@ -37,7 +37,7 @@
             <ul>
               @for (gift of p.giftRules; track gift.id) {
                 <li>
-                  {{ gift.quantity }} × {{ gift.kind === 'Service' ? gift.serviceName : gift.description }}
+                  {{ gift.quantity }} × {{ gift.kind === 'Service' ? rateLabel(gift.generalServiceName, gift.serviceName) : gift.description }}
                   <small>({{ conditionLabels[gift.condition] }})</small>
                 </li>
               }

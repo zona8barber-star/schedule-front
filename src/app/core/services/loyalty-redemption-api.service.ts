@@ -1,9 +1,10 @@
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 
 import { RuntimeConfigService } from '../config/runtime-config.service';
 import {
   LoyaltyCounterRedemptionRequest,
+  LoyaltyRedemptionListQuery,
   LoyaltyRedemptionView,
   LoyaltyRewardChangeView,
   LoyaltyRewardServiceOption,
@@ -12,6 +13,8 @@ import {
   MyLoyaltyCatalogView,
   MyLoyaltyRedemptionView,
 } from '../models/loyalty-redemption.models';
+import { PageQuery, PagedResult } from '../models/paged-result.models';
+import { toHttpParams } from '../utils/list-query.utils';
 
 /**
  * Rewards and redemptions (ADR-0015). The catalog needs loyalty.rewards.manage; approving, rejecting, cancelling and
@@ -31,8 +34,11 @@ export class LoyaltyRedemptionApiService {
     return this.httpClient.get<MyLoyaltyCatalogView>(this.buildUrl('/customer/loyalty/rewards'));
   }
 
-  getMyRedemptions() {
-    return this.httpClient.get<MyLoyaltyRedemptionView[]>(this.buildUrl('/customer/loyalty/redemptions'));
+  /** Own redemptions, paginated: pending ones first, then newest request first. */
+  getMyRedemptions(query: PageQuery = {}) {
+    return this.httpClient.get<PagedResult<MyLoyaltyRedemptionView>>(this.buildUrl('/customer/loyalty/redemptions'), {
+      params: toHttpParams({ page: query.page, pageSize: query.pageSize }),
+    });
   }
 
   request(rewardId: string, idempotencyKey: string) {
@@ -67,23 +73,27 @@ export class LoyaltyRedemptionApiService {
     return this.httpClient.put<LoyaltyRewardView>(this.buildUrl(`/admin/loyalty/rewards/${rewardId}`), request);
   }
 
-  getRewardChanges(rewardId: string) {
-    return this.httpClient.get<LoyaltyRewardChangeView[]>(this.buildUrl(`/admin/loyalty/rewards/${rewardId}/changes`));
+  /** Paginated, newest first. */
+  getRewardChanges(rewardId: string, query: PageQuery = {}) {
+    return this.httpClient.get<PagedResult<LoyaltyRewardChangeView>>(
+      this.buildUrl(`/admin/loyalty/rewards/${rewardId}/changes`),
+      { params: toHttpParams({ page: query.page, pageSize: query.pageSize }) },
+    );
   }
 
   // ── Redemptions ─────────────────────────────────────────────────────────────────────────────
 
-  getRedemptions(status: string | null, customerId: string | null = null) {
-    let params = new HttpParams();
-    if (status) {
-      params = params.set('status', status);
-    }
-
-    if (customerId) {
-      params = params.set('customerId', customerId);
-    }
-
-    return this.httpClient.get<LoyaltyRedemptionView[]>(this.buildUrl('/admin/loyalty/redemptions'), { params });
+  /** Paginated (ADR-0016 B7): a pending status lists oldest first, any other view newest first. */
+  getRedemptions(query: LoyaltyRedemptionListQuery = {}) {
+    const params = toHttpParams({
+      status: query.status,
+      customerId: query.customerId,
+      from: query.from,
+      to: query.to,
+      page: query.page,
+      pageSize: query.pageSize,
+    });
+    return this.httpClient.get<PagedResult<LoyaltyRedemptionView>>(this.buildUrl('/admin/loyalty/redemptions'), { params });
   }
 
   /** Active rewards for a counter request (needs loyalty.redemptions.approve, not the catalog permission). */
@@ -91,8 +101,11 @@ export class LoyaltyRedemptionApiService {
     return this.httpClient.get<LoyaltyRewardView[]>(this.buildUrl('/admin/loyalty/redemptions/rewards'));
   }
 
-  getDeliveries() {
-    return this.httpClient.get<LoyaltyRedemptionView[]>(this.buildUrl('/admin/loyalty/redemptions/deliveries'));
+  /** Approved redemptions waiting for delivery, oldest deadline first; paginated, never filtered by date. */
+  getDeliveries(query: PageQuery = {}) {
+    return this.httpClient.get<PagedResult<LoyaltyRedemptionView>>(this.buildUrl('/admin/loyalty/redemptions/deliveries'), {
+      params: toHttpParams({ page: query.page, pageSize: query.pageSize }),
+    });
   }
 
   approve(redemptionId: string, version: number) {

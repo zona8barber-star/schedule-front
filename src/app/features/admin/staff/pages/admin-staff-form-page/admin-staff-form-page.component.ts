@@ -16,12 +16,13 @@ import { AuthService } from '../../../../../core/services/auth.service';
 import { ConfirmModalService } from '../../../../../core/services/confirm-modal.service';
 import { getApiErrorMessage } from '../../../../../core/utils/api-error.utils';
 import { ApiFeedbackComponent } from '../../../../../shared/components/api-feedback/api-feedback.component';
+import { AdminStaffOfferingsSectionComponent } from '../../components/admin-staff-offerings-section/admin-staff-offerings-section.component';
 
 const MAX_FILE_BYTES = 10_485_760; // 10 MB
 
 @Component({
   selector: 'app-admin-staff-form-page',
-  imports: [ReactiveFormsModule, RouterLink, ApiFeedbackComponent],
+  imports: [ReactiveFormsModule, RouterLink, ApiFeedbackComponent, AdminStaffOfferingsSectionComponent],
   templateUrl: './admin-staff-form-page.component.html',
   styleUrl: './admin-staff-form-page.component.scss',
 })

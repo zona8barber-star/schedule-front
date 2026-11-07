@@ -1,6 +1,7 @@
 /** Mirrors `LoyaltyWalletContracts` in the API (ADR-0013, ADR-0014, ADR-0015). */
 
 import { LoyaltyRedemptionView } from './loyalty-redemption.models';
+import { PageQuery } from './paged-result.models';
 
 export type LoyaltyAdjustmentDirection = 'Credit' | 'Debit';
 
@@ -154,4 +155,11 @@ export function loyaltyMovementSign(type: string): string {
 
 export function loyaltyMovementLabel(type: string): string {
   return LOYALTY_MOVEMENT_LABELS[type] ?? type;
+}
+
+/** Filters of the paginated movement lists (ADR-0016 B7); dates are inclusive Bogotá days. */
+export interface LoyaltyMovementListQuery extends PageQuery {
+  from?: string | null;
+  to?: string | null;
+  type?: string | null;
 }

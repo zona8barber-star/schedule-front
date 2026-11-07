@@ -8,6 +8,7 @@ import {
   CustomerMembershipSummaryView,
   MembershipIncomeCandidateView,
 } from '../../../../../core/models/membership.models';
+import { MAX_PAGE_SIZE } from '../../../../../core/models/paged-result.models';
 import { AdminMembershipsApiService } from '../../../../../core/services/admin-memberships-api.service';
 import { getApiErrorMessage } from '../../../../../core/utils/api-error.utils';
 import { ApiFeedbackComponent } from '../../../../../shared/components/api-feedback/api-feedback.component';
@@ -130,8 +131,11 @@ export class AdminMembershipIncomeLinkModalComponent implements OnInit {
 
   private async loadSiblings(): Promise<void> {
     try {
-      const all = await firstValueFrom(this.membershipsApi.listForCustomer(this.membership.customerId));
-      this.siblings.set(all.filter((sibling) => sibling.id !== this.membership.id && !sibling.incomeEntryId));
+      // The largest page the API allows: one customer never has that many memberships.
+      const all = await firstValueFrom(
+        this.membershipsApi.listForCustomer(this.membership.customerId, { pageSize: MAX_PAGE_SIZE }),
+      );
+      this.siblings.set(all.items.filter((sibling) => sibling.id !== this.membership.id && !sibling.incomeEntryId));
     } catch {
       // Without siblings the admin can still link this membership alone.
       this.siblings.set([]);

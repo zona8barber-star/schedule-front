@@ -79,6 +79,8 @@
 
 .records__actions {
   display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
   justify-content: flex-end;
   margin-top: 0.35rem;
 
@@ -97,4 +99,43 @@
       cursor: wait;
     }
   }
+}
+
+.records__filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 0.75rem;
+
+  label {
+    display: inline-flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    font-size: 0.85rem;
+  }
+
+  input,
+  select {
+    padding: 0.4rem 0.55rem;
+    border: 1px solid var(--border-soft, #ccc);
+    border-radius: 0.5rem;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+  }
+}
+
+.records__hint {
+  margin: 0 0 0.75rem;
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+}
+
+.records__link {
+  margin-left: 0.35rem;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  text-decoration: underline;
+  cursor: pointer;
 }

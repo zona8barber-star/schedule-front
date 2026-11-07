@@ -51,7 +51,13 @@ export interface PublicAvailabilitySlotsResponse {
   to: string;
   slotDurationMinutes: number;
   slots: PublicAvailabilitySlotResponse[];
+  generalServiceId?: string | null;
+  /** Slots start every `slotStepMinutes`, so consecutive slots may overlap. */
+  slotStepMinutes?: number;
 }
+
+/** What the slots are computed for: a general service the professional offers, or a plain duration (rescheduling). */
+export type PublicAvailabilitySlotsQuery = { generalServiceId: string } | { durationMinutes: number };
 
 export interface AvailabilityDayOption {
   dayOfWeek: number;

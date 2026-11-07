@@ -84,13 +84,27 @@
           <legend>Servicio confirmado</legend>
           <div class="review-modal__row">
             <label class="review-modal__field">
-              <span>Servicio</span>
-              <select formControlName="serviceId">
-                @for (service of options.services; track service.id) {
-                  <option [value]="service.id">{{ service.name }}{{ service.isActive ? '' : ' (inactivo)' }}</option>
+              <span>Servicio general</span>
+              <select formControlName="generalServiceId">
+                <option value="">Elige el servicio</option>
+                @for (service of generalServiceOptions(); track service.id) {
+                  <option [value]="service.id">
+                    {{ service.categoryName }} · {{ service.name }}{{ service.isActive ? '' : ' (inactivo)' }}
+                  </option>
                 }
               </select>
             </label>
+            <label class="review-modal__field">
+              <span>Tarifa</span>
+              <select formControlName="serviceId">
+                <option value="">{{ rateOptions().length ? 'Elige la tarifa' : 'Sin tarifas para este servicio' }}</option>
+                @for (service of rateOptions(); track service.id) {
+                  <option [value]="service.id">{{ rateLabel(service) }}</option>
+                }
+              </select>
+            </label>
+          </div>
+          <div class="review-modal__row">
             <label class="review-modal__field">
               <span>Profesional</span>
               <select formControlName="staffProfileId">

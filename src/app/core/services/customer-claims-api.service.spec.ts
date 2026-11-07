@@ -33,7 +33,9 @@ describe('CustomerClaimsApiService', () => {
 
   it('uses the admin routes to review claims', () => {
     service.list('Pending').subscribe();
-    expect(httpMock.expectOne((request) => request.url === `${api}/admin/customer-claims`).request.params.get('status')).toBe('Pending');
+    const claims = httpMock.expectOne((request) => request.url === `${api}/admin/customer-claims`);
+    expect(claims.request.params.get('status')).toBe('Pending');
+    claims.flush({ items: [], page: 1, pageSize: 25, totalCount: 0 });
 
     service.approve('k-1', { version: 3, customerId: 'c-1', identityVerified: true, notes: null }).subscribe();
     expect(httpMock.expectOne(`${api}/admin/customer-claims/k-1/approve`).request.body.identityVerified).toBe(true);

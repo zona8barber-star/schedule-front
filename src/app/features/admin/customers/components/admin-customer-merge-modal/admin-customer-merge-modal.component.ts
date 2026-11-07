@@ -42,8 +42,9 @@ export class AdminCustomerMergeModalComponent {
     this.isBusy.set(true);
     this.errorMessage.set(null);
     try {
+      // A picker: the first page of matches is enough; typing more narrows it.
       const found = await firstValueFrom(this.adminCustomersApiService.search(this.query()));
-      this.results.set(found.filter((candidate) => candidate.id !== this.customer.id));
+      this.results.set(found.items.filter((candidate) => candidate.id !== this.customer.id));
       this.hasSearched.set(true);
     } catch (error) {
       this.errorMessage.set(getApiErrorMessage(error));

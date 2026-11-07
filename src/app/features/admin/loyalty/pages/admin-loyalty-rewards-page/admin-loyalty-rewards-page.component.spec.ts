@@ -34,7 +34,9 @@ describe('AdminLoyaltyRewardsPageComponent', () => {
 
   function flushLoad(rewards: LoyaltyRewardView[]): void {
     httpMock.expectOne(api).flush(rewards);
-    httpMock.expectOne(`${api}/service-options`).flush([{ id: 's-1', name: 'Corte', isActive: true }]);
+    httpMock.expectOne(`${api}/service-options`).flush([
+      { id: 's-1', name: 'Corte', isActive: true, generalServiceId: 'g-cut', generalServiceName: 'Corte clásico' },
+    ]);
   }
 
   beforeEach(async () => {
@@ -52,6 +54,10 @@ describe('AdminLoyaltyRewardsPageComponent', () => {
   afterEach(() => {
     httpMock.verify();
   });
+
+  function pagedChanges<T>(items: T[]) {
+    return { items, page: 1, pageSize: 25, totalCount: items.length };
+  }
 
   it('lists the catalog and creates an "other" reward without a service', async () => {
     flushLoad([reward]);
@@ -105,16 +111,25 @@ describe('AdminLoyaltyRewardsPageComponent', () => {
     await settle();
 
     const loading = component.toggleHistory(reward);
-    httpMock.expectOne(`${api}/r-1/changes`).flush([
+    // The change log is paginated on the server.
+    httpMock.expectOne(`${api}/r-1/changes?page=1&pageSize=25`).flush(pagedChanges([
       {
         id: 'h-1', changeType: 'Updated', changedAt: '2026-11-04T16:00:00Z', changedByName: 'Admin',
         previousName: 'Corte gratis', newName: 'Corte gratis', previousDescription: null, newDescription: null,
         previousKind: 'Service', newKind: 'Service', previousServiceName: 'Corte', newServiceName: 'Corte',
         previousPointsCost: 60, newPointsCost: 80, previousIsActive: true, newIsActive: true,
       },
-    ]);
+    ]));
     await loading;
     fixture.detectChanges();
     expect(fixture.nativeElement.textContent).toContain('coste 60 → 80 pts');
+  });
+
+  it('labels the service options "Servicio general · Tarifa"', async () => {
+    flushLoad([reward]);
+    await settle();
+
+    expect(component.serviceOptionLabel(component.services()[0])).toBe('Corte clásico · Corte');
+    expect(component.serviceOptionLabel({ id: 's-2', name: 'Barba', isActive: true })).toBe('Barba');
   });
 });

@@ -2,7 +2,7 @@ import { DecimalPipe } from '@angular/common';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 
-import { MembershipPlanView } from '../../../../../core/models/membership-plan.models';
+import { MembershipPlanView, planRateLabel } from '../../../../../core/models/membership-plan.models';
 import { AdminMembershipPlansApiService } from '../../../../../core/services/admin-membership-plans-api.service';
 import { ConfirmModalService } from '../../../../../core/services/confirm-modal.service';
 import { getApiErrorMessage } from '../../../../../core/utils/api-error.utils';
@@ -64,9 +64,13 @@ export class AdminMembershipPlansListPageComponent implements OnInit {
     return `Por servicio: ${total} en total`;
   }
 
+  /** Included rates labelled "Servicio general · Tarifa" (ADR-0016 T10); the plan still references the rates. */
   servicesSummary(plan: MembershipPlanView): string {
     return plan.services
-      .map((service) => (plan.mode === 'PerService' ? `${service.quantity} × ${service.serviceName}` : service.serviceName))
+      .map((service) => {
+        const label = planRateLabel(service.generalServiceName, service.serviceName);
+        return plan.mode === 'PerService' ? `${service.quantity} × ${label}` : label;
+      })
       .join(', ');
   }
 

@@ -5,6 +5,8 @@ export type MembershipGiftCondition = 'EveryPurchase' | 'FirstPurchaseOfPlan';
 export interface MembershipPlanServiceView {
   serviceId: string;
   serviceName: string;
+  /** General service of the rate (ADR-0016 B4). */
+  generalServiceName?: string | null;
   serviceBasePrice: number;
   serviceIsActive: boolean;
   /** Units for per-service plans; null for pool plans. */
@@ -16,6 +18,7 @@ export interface MembershipPlanGiftRuleView {
   kind: MembershipGiftKind;
   serviceId: string | null;
   serviceName: string | null;
+  generalServiceName?: string | null;
   description: string | null;
   quantity: number;
   condition: MembershipGiftCondition;
@@ -72,4 +75,13 @@ export interface MembershipPlanUpsertRequest {
 
 export interface MembershipPlanStatusUpdateRequest {
   isActive: boolean;
+}
+
+/**
+ * "Servicio general · Tarifa" (ADR-0016 T10), so rates with the same name under different general services can be told
+ * apart; just the rate when the general service is unknown. Plans keep referencing rates: only the label changes.
+ */
+export function planRateLabel(generalServiceName: string | null | undefined, rateName: string | null | undefined): string {
+  const rate = rateName ?? '';
+  return generalServiceName ? `${generalServiceName} · ${rate}` : rate;
 }

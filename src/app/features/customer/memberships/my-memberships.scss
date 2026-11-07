@@ -237,3 +237,34 @@ button.my-memberships__link {
     cursor: not-allowed;
   }
 }
+
+.my-memberships__filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 0.75rem;
+  margin-bottom: 1rem;
+
+  label {
+    display: inline-flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    font-size: 0.85rem;
+  }
+
+  input,
+  select {
+    padding: 0.4rem 0.55rem;
+    border: 1px solid var(--color-border, #ccc);
+    border-radius: 0.5rem;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+  }
+}
+
+button.my-memberships__profile-link {
+  border: 0;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}

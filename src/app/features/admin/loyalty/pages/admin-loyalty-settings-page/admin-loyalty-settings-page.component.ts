@@ -12,8 +12,10 @@ import {
   LoyaltySettingsChangeView,
   LoyaltySettingsView,
 } from '../../../../../core/models/loyalty.models';
+import { DEFAULT_PAGE_SIZE } from '../../../../../core/models/paged-result.models';
 import { AdminLoyaltyApiService } from '../../../../../core/services/admin-loyalty-api.service';
 import { getApiErrorMessage } from '../../../../../core/utils/api-error.utils';
+import { PaginatorComponent } from '../../../../../shared/components/paginator/paginator.component';
 import { ApiFeedbackComponent } from '../../../../../shared/components/api-feedback/api-feedback.component';
 import { PageStateComponent } from '../../../../../shared/components/page-state/page-state.component';
 
@@ -25,7 +27,7 @@ function integerValidator(control: AbstractControl): ValidationErrors | null {
 
 @Component({
   selector: 'app-admin-loyalty-settings-page',
-  imports: [DatePipe, ReactiveFormsModule, ApiFeedbackComponent, PageStateComponent],
+  imports: [DatePipe, ReactiveFormsModule, ApiFeedbackComponent, PageStateComponent, PaginatorComponent],
   templateUrl: './admin-loyalty-settings-page.component.html',
   styleUrl: './admin-loyalty-settings-page.component.scss',
 })
@@ -46,6 +48,10 @@ export class AdminLoyaltySettingsPageComponent implements OnInit {
   readonly hasConflict = signal(false);
   readonly settings = signal<LoyaltySettingsView | null>(null);
   readonly changes = signal<LoyaltySettingsChangeView[]>([]);
+  /** The change log is paginated on the server (newest first), so every change stays reachable. */
+  readonly changesTotal = signal(0);
+  readonly changesPage = signal(1);
+  readonly changesPageSize = DEFAULT_PAGE_SIZE;
   /** The history could not be read, so "no changes yet" would be misleading. */
   readonly historyUnavailable = signal(false);
   readonly isBusy = computed(() => this.isLoading() || this.isSubmitting());
@@ -108,6 +114,7 @@ export class AdminLoyaltySettingsPageComponent implements OnInit {
       this.successMessage.set(
         saved.version === current.version ? 'No había cambios para guardar.' : 'Configuración guardada.',
       );
+      this.changesPage.set(1);
       await this.loadChanges();
     } catch (error) {
       this.hasConflict.set(error instanceof HttpErrorResponse && error.status === 409);
@@ -129,10 +136,11 @@ export class AdminLoyaltySettingsPageComponent implements OnInit {
     try {
       const [settings, changes] = await Promise.all([
         firstValueFrom(this.loyaltyApiService.getSettings()),
-        firstValueFrom(this.loyaltyApiService.listSettingsChanges()),
+        firstValueFrom(this.loyaltyApiService.listSettingsChanges({ page: this.changesPage(), pageSize: this.changesPageSize })),
       ]);
       this.applySettings(settings);
-      this.changes.set(changes);
+      this.changes.set(changes.items);
+      this.changesTotal.set(changes.totalCount);
       this.historyUnavailable.set(false);
     } catch (error) {
       this.historyUnavailable.set(true);
@@ -147,9 +155,18 @@ export class AdminLoyaltySettingsPageComponent implements OnInit {
     return error instanceof HttpErrorResponse && error.status === 403 ? FORBIDDEN_MESSAGE : getApiErrorMessage(error);
   }
 
+  async onChangesPageChange(page: number): Promise<void> {
+    this.changesPage.set(page);
+    await this.loadChanges();
+  }
+
   private async loadChanges(): Promise<void> {
     try {
-      this.changes.set(await firstValueFrom(this.loyaltyApiService.listSettingsChanges()));
+      const result = await firstValueFrom(
+        this.loyaltyApiService.listSettingsChanges({ page: this.changesPage(), pageSize: this.changesPageSize }),
+      );
+      this.changes.set(result.items);
+      this.changesTotal.set(result.totalCount);
     } catch {
       // The settings were saved; a failed history refresh is not worth an error over the success message.
     }

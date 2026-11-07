@@ -15,6 +15,8 @@ import {
   CustomerUnlinkAccountRequest,
   CustomerUpdateRequest,
 } from '../models/customer.models';
+import { PageQuery, PagedResult } from '../models/paged-result.models';
+import { toHttpParams } from '../utils/list-query.utils';
 
 @Injectable({
   providedIn: 'root',
@@ -23,9 +25,10 @@ export class AdminCustomersApiService {
   private readonly httpClient = inject(HttpClient);
   private readonly runtimeConfigService = inject(RuntimeConfigService);
 
-  search(query?: string) {
-    const params = query?.trim() ? new HttpParams().set('q', query.trim()) : undefined;
-    return this.httpClient.get<CustomerListItem[]>(this.buildUrl('/admin/customers'), { params });
+  /** Live customers matching the text, paginated in alphabetical order (ADR-0016 B7). */
+  search(query?: string, page?: PageQuery) {
+    const params = toHttpParams({ q: query?.trim(), page: page?.page, pageSize: page?.pageSize });
+    return this.httpClient.get<PagedResult<CustomerListItem>>(this.buildUrl('/admin/customers'), { params });
   }
 
   getById(customerId: string) {

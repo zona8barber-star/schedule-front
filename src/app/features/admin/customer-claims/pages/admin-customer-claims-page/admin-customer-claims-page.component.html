@@ -62,6 +62,14 @@
         </li>
       }
     </ul>
+    <app-paginator
+      label="Paginación de solicitudes"
+      [page]="page()"
+      [pageSize]="pageSize"
+      [totalCount]="totalCount()"
+      [disabled]="isLoading()"
+      (pageChange)="onPageChange($event)"
+    />
   }
 </section>
 

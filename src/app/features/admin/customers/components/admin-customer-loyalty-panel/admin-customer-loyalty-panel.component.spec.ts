@@ -1,11 +1,13 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { Router, provideRouter } from '@angular/router';
 
 import { environment } from '../../../../../../environments/environment';
 import { PERMISSION_CODES, PermissionCode } from '../../../../../core/models/auth.models';
 import { LoyaltyWalletView } from '../../../../../core/models/loyalty-wallet.models';
 import { AuthService } from '../../../../../core/services/auth.service';
+import { defaultHistoryRange } from '../../../../../core/utils/history-range.utils';
 import { AdminCustomerLoyaltyPanelComponent } from './admin-customer-loyalty-panel.component';
 
 describe('AdminCustomerLoyaltyPanelComponent', () => {
@@ -64,6 +66,7 @@ describe('AdminCustomerLoyaltyPanelComponent', () => {
     await TestBed.configureTestingModule({
       imports: [AdminCustomerLoyaltyPanelComponent],
       providers: [
+        provideRouter([]),
         provideHttpClient(),
         provideHttpClientTesting(),
         { provide: AuthService, useValue: { hasPermission: (code: PermissionCode) => permissions.includes(code) } },
@@ -97,10 +100,40 @@ describe('AdminCustomerLoyaltyPanelComponent', () => {
     expect(text).toContain('10 reservados para canjes');
     expect(fixture.nativeElement.querySelector('form')).toBeNull();
 
-    component.showHistory.set(true);
+    component.toggleHistory();
+    const history = httpMock.expectOne((request) => request.url === `${url}/movements`);
+    expect(history.request.params.get('page')).toBe('1');
+    // The movement history is a history: the last 30 days by default; the balance above does not depend on it.
+    expect(history.request.params.get('from')).toBe(defaultHistoryRange().from);
+    expect(history.request.params.get('to')).toBe(defaultHistoryRange().to);
+    history.flush({ items: wallet.movements, page: 1, pageSize: 25, totalCount: wallet.movements.length });
+    await fixture.whenStable();
     fixture.detectChanges();
     expect(fixture.nativeElement.textContent).toContain('+40');
     expect(fixture.nativeElement.textContent).toContain('Recibido por fusión');
+  });
+
+  it('filters the paginated history by type through the URL', async () => {
+    await render([]);
+    component.toggleHistory();
+    httpMock
+      .expectOne((request) => request.url === `${url}/movements`)
+      .flush({ items: wallet.movements, page: 1, pageSize: 25, totalCount: 60 });
+    await fixture.whenStable();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.textContent).toContain('Página 1 de 3');
+
+    component.onMovementTypeChange('AdjustmentDebit');
+    await fixture.whenStable();
+
+    expect(TestBed.inject(Router).url).toBe('/?movementType=AdjustmentDebit');
+    const filtered = httpMock.expectOne((request) => request.url === `${url}/movements`);
+    expect(filtered.request.params.get('type')).toBe('AdjustmentDebit');
+    expect(filtered.request.params.get('page')).toBe('1');
+    filtered.flush({ items: [], page: 1, pageSize: 25, totalCount: 0 });
+    await fixture.whenStable();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.textContent).toContain('Sin movimientos para estos filtros.');
   });
 
   it('registers a counter redemption only after the in-person verification, and reloads the wallet', async () => {

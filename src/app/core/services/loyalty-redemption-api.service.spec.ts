@@ -28,14 +28,32 @@ describe('LoyaltyRedemptionApiService', () => {
     request.flush({});
     await requesting;
 
+    const mine = firstValueFrom(service.getMyRedemptions({ page: 9, pageSize: 25 }));
+    httpMock
+      .expectOne(`${api}/customer/loyalty/redemptions?page=9&pageSize=25`)
+      .flush({ items: [], page: 9, pageSize: 25, totalCount: 201 });
+    expect((await mine).totalCount).toBe(201);
+
+    const deliveries = firstValueFrom(service.getDeliveries({ page: 2 }));
+    httpMock.expectOne(`${api}/admin/loyalty/redemptions/deliveries?page=2`).flush({ items: [], page: 2, pageSize: 25, totalCount: 30 });
+    await deliveries;
+
+    const changes = firstValueFrom(service.getRewardChanges('r-1', { page: 3, pageSize: 10 }));
+    httpMock.expectOne(`${api}/admin/loyalty/rewards/r-1/changes?page=3&pageSize=10`).flush({ items: [], page: 3, pageSize: 10, totalCount: 21 });
+    await changes;
+
     const cancelling = firstValueFrom(service.cancelMine('d-1', null));
     httpMock.expectOne(`${api}/customer/loyalty/redemptions/d-1/cancel`).flush({});
     await cancelling;
   });
 
   it('filters the admin inbox and posts decisions with the version', async () => {
-    const listing = firstValueFrom(service.getRedemptions('Requested', 'c-1'));
-    httpMock.expectOne(`${api}/admin/loyalty/redemptions?status=Requested&customerId=c-1`).flush([]);
+    const listing = firstValueFrom(
+      service.getRedemptions({ status: 'Requested', customerId: 'c-1', from: '2026-11-01', to: '2026-11-06', page: 2, pageSize: 20 }),
+    );
+    httpMock
+      .expectOne(`${api}/admin/loyalty/redemptions?status=Requested&customerId=c-1&from=2026-11-01&to=2026-11-06&page=2&pageSize=20`)
+      .flush({ items: [], page: 2, pageSize: 20, totalCount: 0 });
     await listing;
 
     const cancelling = firstValueFrom(service.cancel('d-1', 7, 'Cliente lo pidió'));

@@ -57,4 +57,18 @@ describe('AdminStaffApiService', () => {
     expect(req.request.method).toBe('DELETE');
     req.flush({});
   });
+
+  it('reads and fully replaces the offerings of a professional', () => {
+    service.getOfferings(staffId).subscribe();
+    const get = httpMock.expectOne(`${base}/offerings`);
+    expect(get.request.method).toBe('GET');
+    get.flush({ staffProfileId: staffId, defaultAppointmentDurationMinutes: 30, offerings: [] });
+
+    const body = { offerings: [{ generalServiceId: 'g-cut', durationMinutes: 45, isActive: true }] };
+    service.updateOfferings(staffId, body).subscribe();
+    const put = httpMock.expectOne(`${base}/offerings`);
+    expect(put.request.method).toBe('PUT');
+    expect(put.request.body).toEqual(body);
+    put.flush({ staffProfileId: staffId, defaultAppointmentDurationMinutes: 30, offerings: [] });
+  });
 });

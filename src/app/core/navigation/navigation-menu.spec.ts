@@ -12,6 +12,9 @@ import {
   resolveActiveItemId,
 } from './navigation-menu';
 import { NavContext, NavigationMenu } from './navigation.models';
+import { customerClaimsQueryGuard } from '../../features/admin/customer-claims/customer-claims-query.guard';
+
+const URL_ONLY_GUARDS: unknown[] = [customerClaimsQueryGuard];
 
 const ALL_PERMISSIONS = Object.values(PERMISSION_CODES);
 
@@ -70,7 +73,7 @@ describe('buildNavigation', () => {
   it('shows a visitor only the public pages, flat in the header, with three shortcuts', () => {
     const menu = buildNavigation(anonymous);
 
-    expect(itemIdsByGroup(menu)).toEqual({ explore: ['home', 'booking', 'staff-directory'] });
+    expect(itemIdsByGroup(menu)).toEqual({ explore: ['home', 'booking', 'staff-directory', 'product-catalog'] });
     expect(menu.accountItems).toEqual([]);
     expect(menu.layout).toBe('header');
     expect(menu.shortcuts.map((shortcut) => shortcut.id)).toEqual(['home', 'booking', 'staff-directory']);
@@ -80,7 +83,7 @@ describe('buildNavigation', () => {
     const menu = buildNavigation(customer);
 
     expect(itemIdsByGroup(menu)).toEqual({
-      explore: ['home', 'booking', 'staff-directory'],
+      explore: ['home', 'booking', 'staff-directory', 'product-catalog'],
       customer: ['customer-appointments', 'customer-memberships', 'customer-loyalty', 'customer-reviews'],
     });
     expect(menu.accountItems.map((item) => item.id)).toEqual([
@@ -133,7 +136,14 @@ describe('buildNavigation', () => {
     expect(itemIdsByGroup(menu)).toEqual({
       operation: ['admin-appointments', 'admin-service-records', 'admin-staff'],
       customers: ['admin-customers', 'admin-customer-claims'],
-      catalogs: ['admin-services', 'admin-membership-plans'],
+      catalogs: [
+        'admin-service-categories',
+        'admin-general-services',
+        'admin-services',
+        'admin-product-categories',
+        'admin-products',
+        'admin-membership-plans',
+      ],
       loyalty: ['admin-loyalty-settings', 'admin-loyalty-rewards', 'admin-loyalty-redemptions'],
       finance: ['admin-income', 'admin-expenses', 'admin-reports'],
       content: ['admin-landing', 'admin-banners', 'admin-ticker', 'admin-business-hours', 'admin-notifications'],
@@ -197,7 +207,7 @@ describe('buildNavigation', () => {
   it('ignores permissions and roles of a session that is not authenticated', () => {
     const menu = buildNavigation({ ...fullAdmin, isAuthenticated: false });
 
-    expect(itemIdsByGroup(menu)).toEqual({ explore: ['home', 'booking', 'staff-directory'] });
+    expect(itemIdsByGroup(menu)).toEqual({ explore: ['home', 'booking', 'staff-directory', 'product-catalog'] });
   });
 });
 
@@ -213,6 +223,8 @@ describe('resolveActiveItemId', () => {
     ['/admin/memberships/9f2e', 'admin-customers'],
     ['/admin/expenses/fixed', 'admin-expenses'],
     ['/admin/staff/12/availability', 'admin-staff'],
+    ['/admin/products', 'admin-products'],
+    ['/admin/product-categories', 'admin-product-categories'],
     ['/staff/profile', 'staff-profile'],
     ['/staff/appointments/', 'staff-appointments'],
     ['/account/notifications#top', 'account-notifications'],
@@ -225,6 +237,8 @@ describe('resolveActiveItemId', () => {
     ['/booking/confirm?staffProfileId=1', 'booking'],
     ['/staff', 'staff-directory'],
     ['/staff/0f9a', 'staff-directory'],
+    ['/productos', 'product-catalog'],
+    ['/productos/ceras001/cera0001', 'product-catalog'],
     ['/customer/memberships/77', 'customer-memberships'],
     ['/customer/profile', 'customer-profile'],
   ])('resolves %s for a customer', (url, expected) => {
@@ -276,7 +290,8 @@ describe('NAVIGATION_GROUPS', () => {
     'grants %s to the same users as its route guard',
     (_route, item) => {
       const route = findRoute(item.route)!;
-      const guards = route.canActivate ?? [];
+      // Guards that only keep the URL canonical do not decide access, so they are left out of the comparison.
+      const guards = (route.canActivate ?? []).filter((guard) => !URL_ONLY_GUARDS.includes(guard));
       const data = route.data ?? {};
 
       switch (item.access.kind) {

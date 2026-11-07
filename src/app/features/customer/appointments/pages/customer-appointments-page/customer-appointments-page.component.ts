@@ -1,13 +1,16 @@
-import { Component, OnInit, computed, inject, signal, viewChild } from '@angular/core';
+import { Component, DestroyRef, OnInit, computed, inject, signal, viewChild } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NgTemplateOutlet } from '@angular/common';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { ActivatedRoute, ParamMap, Router, RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 
 import {
   APPOINTMENT_STATUS,
   AppointmentResponse,
+  AppointmentStatus,
 } from '../../../../../core/models/appointment.models';
+import { DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE } from '../../../../../core/models/paged-result.models';
 import { PublicAvailabilitySlotResponse } from '../../../../../core/models/availability.models';
 import {
   CustomerReviewResponse,
@@ -18,9 +21,29 @@ import { CustomerAppointmentsApiService } from '../../../../../core/services/cus
 import { CustomerReviewsApiService } from '../../../../../core/services/customer-reviews-api.service';
 import { ToastService } from '../../../../../core/services/toast.service';
 import { getApiErrorMessage } from '../../../../../core/utils/api-error.utils';
-import { BOGOTA_TIME_ZONE, bogotaDateKey } from '../../../../../core/utils/bogota-date.utils';
+import {
+  QueryValue,
+  readDateParam,
+  readOptionParam,
+  readPageParam,
+  toQueryParams,
+} from '../../../../../core/utils/list-query.utils';
+import {
+  HISTORY_RANGE_HINT,
+  HistoryRange,
+  historyRangeError,
+  rangeWithFrom,
+  rangeWithTo,
+  resolveHistoryRange,
+} from '../../../../../core/utils/history-range.utils';
+import {
+  getAppointmentDurationMinutes,
+  getAppointmentServiceLabel,
+} from '../../../../../core/utils/appointment-labels.utils';
+import { BOGOTA_TIME_ZONE, bogotaDateKey, bogotaToday } from '../../../../../core/utils/bogota-date.utils';
 import { ApiFeedbackComponent } from '../../../../../shared/components/api-feedback/api-feedback.component';
 import { PageStateComponent } from '../../../../../shared/components/page-state/page-state.component';
+import { PaginatorComponent } from '../../../../../shared/components/paginator/paginator.component';
 import { SlotPickerComponent } from '../../../../../shared/components/slot-picker/slot-picker.component';
 import { PullToRefreshDirective } from '../../../../../shared/directives/pull-to-refresh.directive';
 
@@ -28,6 +51,11 @@ import { PullToRefreshDirective } from '../../../../../shared/directives/pull-to
 const REVIEW_WINDOW_MS = 7 * 24 * 60 * 60 * 1000;
 
 type AppointmentTab = 'upcoming' | 'pending-review' | 'history';
+
+const TABS: readonly AppointmentTab[] = ['upcoming', 'pending-review', 'history'];
+const STATUSES: readonly AppointmentStatus[] = Object.values(APPOINTMENT_STATUS);
+/** Days back that can still hold an appointment to review (the window is 7 days from its end). */
+const REVIEW_LOOKBACK_DAYS = 8;
 
 type ReviewFormGroup = FormGroup<{
   stars: FormControl<ReviewStars | null>;
@@ -44,6 +72,7 @@ type ReviewFormGroup = FormGroup<{
     NgTemplateOutlet,
     PullToRefreshDirective,
     SlotPickerComponent,
+    PaginatorComponent,
   ],
   templateUrl: './customer-appointments-page.component.html',
   styleUrl: './customer-appointments-page.component.scss',
@@ -52,6 +81,10 @@ export class CustomerAppointmentsPageComponent implements OnInit {
   private readonly customerAppointmentsApiService = inject(CustomerAppointmentsApiService);
   private readonly customerReviewsApiService = inject(CustomerReviewsApiService);
   private readonly toastService = inject(ToastService);
+  private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
+  private readonly destroyRef = inject(DestroyRef);
+  private loadSequence = 0;
 
   private readonly dateFormatter = new Intl.DateTimeFormat('es-CO', {
     weekday: 'long',
@@ -73,7 +106,37 @@ export class CustomerAppointmentsPageComponent implements OnInit {
   readonly APPOINTMENT_STATUS = APPOINTMENT_STATUS;
   readonly reviewStarsValues = REVIEW_STARS_VALUES;
 
-  readonly appointments = signal<AppointmentResponse[]>([]);
+  // ADR-0016 B7: "Próximas" and "Historial" are paginated on the server (the page and the history status live in the
+  // URL). "Por calificar" reads the appointments of the review window only, which is short, in one request.
+  readonly upcoming = signal<AppointmentResponse[]>([]);
+  readonly upcomingTotal = signal(0);
+  readonly reviewCandidates = signal<AppointmentResponse[]>([]);
+  readonly history = signal<AppointmentResponse[]>([]);
+  readonly historyTotal = signal(0);
+  readonly page = signal(1);
+  readonly pageSize = DEFAULT_PAGE_SIZE;
+  readonly statuses = STATUSES;
+  readonly historyStatus = signal<AppointmentStatus | ''>('');
+  readonly historyFrom = signal('');
+  readonly historyTo = signal('');
+  readonly rangeHint = HISTORY_RANGE_HINT;
+  /** The window the history queries: the last 30 days by default, at most 30 days, any period. */
+  readonly historyRange = computed<HistoryRange>(() =>
+    resolveHistoryRange(this.historyFrom(), this.historyTo(), bogotaToday()),
+  );
+  readonly rangeError = computed(() => historyRangeError(this.historyRange().from, this.historyRange().to));
+  /** False only when the customer has never booked (drives the first-booking empty state). */
+  // The history only covers one window, so once the customer opens it (or filters it) its controls stay visible even
+  // when that window is empty.
+  readonly hasAnyAppointment = computed(
+    () =>
+      this.upcomingTotal() > 0 ||
+      this.historyTotal() > 0 ||
+      !!this.historyStatus() ||
+      !!this.historyFrom() ||
+      !!this.historyTo() ||
+      this.activeTab() === 'history',
+  );
   readonly reviewsByAppointmentId = signal<Record<string, CustomerReviewResponse>>({});
   readonly isLoading = signal(true);
   readonly errorMessage = signal<string | null>(null);
@@ -102,35 +165,58 @@ export class CustomerAppointmentsPageComponent implements OnInit {
     comment: new FormControl('', { nonNullable: true, validators: [Validators.maxLength(2000)] }),
   });
 
-  /** Tab 1: pendientes/confirmadas con fecha futura, orden ascendente */
-  readonly upcomingAppointments = computed(() =>
-    this.appointments()
-      .filter(isUpcoming)
-      .sort((a, b) => a.startsAtUtc.localeCompare(b.startsAtUtc)),
-  );
+  /** Tab 1: pendientes/confirmadas con fecha futura, orden ascendente (lo ordena el servidor) */
+  readonly upcomingAppointments = computed(() => this.upcoming());
 
   /** Tab 2: citas que cumplen la lógica de calificación pendiente */
   readonly pendingReviewAppointments = computed(() =>
-    this.appointments()
+    this.reviewCandidates()
       .filter((a) => this.canReview(a))
       .sort((a, b) => b.endsAtUtc.localeCompare(a.endsAtUtc)),
   );
 
-  /** Tab 3: todo lo que no está en las primeras dos tabs, orden descendente */
-  readonly historyAppointments = computed(() =>
-    this.appointments()
-      .filter((a) => !isUpcoming(a) && !this.canReview(a))
-      .sort((a, b) => b.startsAtUtc.localeCompare(a.startsAtUtc)),
-  );
+  /** Tab 3: todas las citas pasadas, canceladas o no asistidas, de la más reciente a la más antigua (paginado) */
+  readonly historyAppointments = computed(() => this.history());
 
   readonly pendingReviewCount = computed(() => this.pendingReviewAppointments().length);
 
   setTab(tab: AppointmentTab): void {
-    this.activeTab.set(tab);
+    this.navigate({ tab: tab === 'upcoming' ? null : tab, page: 1 });
+  }
+
+  onHistoryStatusChange(status: string): void {
+    this.navigate({ status, page: 1 });
+  }
+
+  onHistoryFromChange(value: string): void {
+    this.navigate({ ...rangeWithFrom(value, this.historyRange()), page: 1 });
+  }
+
+  onHistoryToChange(value: string): void {
+    this.navigate({ ...rangeWithTo(value, this.historyRange()), page: 1 });
+  }
+
+  onPageChange(page: number): void {
+    this.navigate({ page });
   }
 
   ngOnInit(): void {
-    void this.loadAppointments();
+    this.route.queryParamMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
+      this.applyQuery(params);
+      void this.loadAppointments();
+    });
+  }
+
+  private applyQuery(params: ParamMap): void {
+    this.activeTab.set(readOptionParam(params, 'tab', TABS) || 'upcoming');
+    this.historyStatus.set(readOptionParam(params, 'status', STATUSES));
+    this.historyFrom.set(readDateParam(params, 'from'));
+    this.historyTo.set(readDateParam(params, 'to'));
+    this.page.set(readPageParam(params));
+  }
+
+  private navigate(patch: Record<string, QueryValue>): void {
+    void this.router.navigate([], { relativeTo: this.route, queryParams: toQueryParams(patch), queryParamsHandling: 'merge' });
   }
 
   /** Formatea la fecha: "Lunes 19 de mayo de 2026" */
@@ -210,6 +296,15 @@ export class CustomerAppointmentsPageComponent implements OnInit {
   /** Día en que abre el selector: el de la cita actual. */
   rescheduleInitialDate(appointment: AppointmentResponse): string {
     return bogotaDateKey(appointment.startsAtUtc);
+  }
+
+  /** Rescheduling keeps the service and duration: free times are computed for that duration. */
+  rescheduleDurationMinutes(appointment: AppointmentResponse): number {
+    return getAppointmentDurationMinutes(appointment);
+  }
+
+  serviceLabel(appointment: AppointmentResponse): string | null {
+    return getAppointmentServiceLabel(appointment);
   }
 
   openReschedule(appointment: AppointmentResponse): void {
@@ -377,13 +472,45 @@ export class CustomerAppointmentsPageComponent implements OnInit {
   // ── Carga ─────────────────────────────────────────────────────────────────
 
   async loadAppointments(): Promise<void> {
+    const sequence = ++this.loadSequence;
     this.isLoading.set(true);
     this.errorMessage.set(null);
 
     let reviews: CustomerReviewResponse[] = [];
 
     try {
-      const appointments = await firstValueFrom(this.customerAppointmentsApiService.list());
+      const tab = this.activeTab();
+      const [upcoming, recentPast, history] = await Promise.all([
+        firstValueFrom(
+          this.customerAppointmentsApiService.list({
+            scope: 'Upcoming',
+            page: tab === 'upcoming' ? this.page() : 1,
+            pageSize: this.pageSize,
+          }),
+        ),
+        firstValueFrom(
+          this.customerAppointmentsApiService.list({
+            scope: 'Past',
+            from: bogotaDateKey(new Date(Date.now() - REVIEW_LOOKBACK_DAYS * 24 * 60 * 60 * 1000)),
+            pageSize: MAX_PAGE_SIZE,
+          }),
+        ),
+        // An invalid range (only possible by editing the URL) is explained instead of asking the API (it would 422).
+        this.rangeError()
+          ? Promise.resolve({ items: [], page: 1, pageSize: this.pageSize, totalCount: 0 })
+          : firstValueFrom(
+              this.customerAppointmentsApiService.list({
+                scope: 'Past',
+                ...this.historyRange(),
+                status: this.historyStatus() || null,
+                page: tab === 'history' ? this.page() : 1,
+                pageSize: this.pageSize,
+              }),
+            ),
+      ]);
+      if (sequence !== this.loadSequence) {
+        return;
+      }
 
       try {
         reviews = await firstValueFrom(this.customerReviewsApiService.list());
@@ -391,11 +518,19 @@ export class CustomerAppointmentsPageComponent implements OnInit {
         reviews = [];
       }
 
-      this.appointments.set(appointments);
+      this.upcoming.set(upcoming.items);
+      this.upcomingTotal.set(upcoming.totalCount);
+      this.reviewCandidates.set(recentPast.items);
+      this.history.set(history.items);
+      this.historyTotal.set(history.totalCount);
       this.reviewsByAppointmentId.set(indexReviewsByAppointmentId(reviews));
     } catch (error) {
       this.errorMessage.set(getApiErrorMessage(error));
-      this.appointments.set([]);
+      this.upcoming.set([]);
+      this.upcomingTotal.set(0);
+      this.reviewCandidates.set([]);
+      this.history.set([]);
+      this.historyTotal.set(0);
       this.reviewsByAppointmentId.set({});
     } finally {
       this.isLoading.set(false);
@@ -404,13 +539,6 @@ export class CustomerAppointmentsPageComponent implements OnInit {
 }
 
 // ── Helpers de módulo ───────────────────────────────────────────────────────
-
-function isUpcoming(appointment: AppointmentResponse): boolean {
-  const activeStatus =
-    appointment.status === APPOINTMENT_STATUS.pending ||
-    appointment.status === APPOINTMENT_STATUS.confirmed;
-  return activeStatus && Date.parse(appointment.startsAtUtc) > Date.now();
-}
 
 function indexReviewsByAppointmentId(
   reviews: CustomerReviewResponse[],

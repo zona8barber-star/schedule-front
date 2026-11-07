@@ -259,6 +259,18 @@ fieldset {
   gap: 0.45rem;
 }
 
+.records__group {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.records__group-name {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
 .records__chip--done {
   opacity: 0.6;
   cursor: not-allowed;

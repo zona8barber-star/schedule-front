@@ -1,6 +1,6 @@
 <div class="service-modal__overlay" (click)="cancel()">
   <div class="service-modal__card" (click)="$event.stopPropagation()">
-    <h2>{{ isEditing ? 'Editar servicio' : 'Nuevo servicio' }}</h2>
+    <h2>{{ isEditing ? 'Editar tarifa' : 'Nueva tarifa' }}</h2>
 
     <app-api-feedback severity="error" [message]="errorMessage()" />
 
@@ -9,7 +9,31 @@
     } @else {
       <form [formGroup]="form" (ngSubmit)="submit()">
         <label class="service-modal__field">
-          <span>Nombre</span>
+          <span>Servicio general</span>
+          <select formControlName="generalServiceId" data-testid="rate-general-service">
+            <option value="" disabled>Elige el servicio general</option>
+            @for (group of generalServiceGroups(); track group.categoryName) {
+              <optgroup [label]="group.categoryName">
+                @for (option of group.options; track option.id) {
+                  <option [value]="option.id">
+                    {{ option.name }}{{ option.isActive ? '' : ' (inactivo)' }}
+                  </option>
+                }
+              </optgroup>
+            }
+          </select>
+        </label>
+        @if (form.controls.generalServiceId.touched && form.controls.generalServiceId.invalid) {
+          <small class="service-modal__error">Elige el servicio general al que pertenece la tarifa.</small>
+        }
+        @if (!generalServiceGroups().length) {
+          <small class="service-modal__hint">
+            No hay servicios generales activos. Crea o activa uno en «Servicios generales».
+          </small>
+        }
+
+        <label class="service-modal__field">
+          <span>Nombre de la tarifa</span>
           <input type="text" formControlName="name" maxlength="120" autocomplete="off" />
         </label>
         @if (form.controls.name.touched && form.controls.name.invalid) {

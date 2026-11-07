@@ -44,7 +44,7 @@ describe('AdminMembershipPlansListPageComponent', () => {
       specificConditions: null,
       isActive: false,
       services: [
-        { serviceId: 's-1', serviceName: 'Corte', serviceBasePrice: 25000, serviceIsActive: true, quantity: 8 },
+        { serviceId: 's-1', serviceName: 'Corte', generalServiceName: 'Barbería', serviceBasePrice: 25000, serviceIsActive: true, quantity: 8 },
         { serviceId: 's-2', serviceName: 'Barba', serviceBasePrice: 15000, serviceIsActive: true, quantity: 4 },
       ],
       giftRules: [
@@ -84,7 +84,8 @@ describe('AdminMembershipPlansListPageComponent', () => {
     expect(rows[0].textContent).toContain('Bolsa común: 10 servicios');
     expect(rows[0].textContent).toContain('Corte, Barba');
     expect(rows[1].textContent).toContain('Por servicio: 12 en total');
-    expect(rows[1].textContent).toContain('8 × Corte, 4 × Barba');
+    // "Servicio general · Tarifa" when the plan's rate carries its general service; just the rate otherwise.
+    expect(rows[1].textContent).toContain('8 × Barbería · Corte, 4 × Barba');
     expect(rows[1].textContent).toContain('Inactivo');
   });
 

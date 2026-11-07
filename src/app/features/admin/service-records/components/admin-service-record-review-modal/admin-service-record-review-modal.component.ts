@@ -13,6 +13,7 @@ import {
   ServiceRecordOptionsView,
   ServiceRecordRedemptionOption,
   ServiceRecordRelatedView,
+  ServiceRecordServiceOption,
   ServiceRecordView,
 } from '../../../../../core/models/service-record.models';
 import { AuthService } from '../../../../../core/services/auth.service';
@@ -28,6 +29,15 @@ import {
 
 function integerOrNullValidator(control: AbstractControl): ValidationErrors | null {
   return control.value === null || control.value === '' || Number.isInteger(control.value) ? null : { integer: true };
+}
+
+function ratesOf(services: ServiceRecordServiceOption[], generalServiceId: string): ServiceRecordServiceOption[] {
+  return generalServiceId ? services.filter((service) => service.generalServiceId === generalServiceId) : [];
+}
+
+function singleActiveRate(services: ServiceRecordServiceOption[], generalServiceId: string): ServiceRecordServiceOption | null {
+  const active = ratesOf(services, generalServiceId).filter((service) => service.isActive);
+  return active.length === 1 ? active[0] : null;
 }
 
 /** Confirms (with corrections) or rejects one pending service record. */
@@ -106,6 +116,9 @@ export class AdminServiceRecordReviewModalComponent implements OnInit {
 
   readonly form = this.formBuilder.nonNullable.group({
     operationType: this.formBuilder.nonNullable.control<ServiceRecordOperationType>('Paid'),
+    /** General service performed (ADR-0016 B4); the rate must belong to it. */
+    generalServiceId: ['', [Validators.required]],
+    /** Settlement rate ("Tarifa"). */
     serviceId: ['', [Validators.required]],
     staffProfileId: ['', [Validators.required]],
     performedOn: ['', [Validators.required]],
@@ -125,6 +138,20 @@ export class AdminServiceRecordReviewModalComponent implements OnInit {
   readonly selectedService = computed(() => {
     const serviceId = this.formValue()?.serviceId;
     return this.options.services.find((service) => service.id === serviceId) ?? null;
+  });
+
+  /** General services to choose from: active ones, plus the current one even if it is inactive. */
+  readonly generalServiceOptions = computed(() => {
+    const currentId = this.formValue()?.generalServiceId;
+    return (this.options.generalServices ?? []).filter((service) => service.isActive || service.id === currentId);
+  });
+
+  /** Rates of the chosen general service, plus the current rate even if it is inactive. */
+  readonly rateOptions = computed(() => {
+    const value = this.formValue();
+    return ratesOf(this.options.services, value?.generalServiceId ?? '').filter(
+      (service) => service.isActive || service.id === value?.serviceId,
+    );
   });
 
   /** Why the points checkbox is unavailable, or null when the service may accrue. */
@@ -147,6 +174,9 @@ export class AdminServiceRecordReviewModalComponent implements OnInit {
   readonly problems = computed(() => {
     this.formValue();
     const problems: string[] = [];
+    if (!this.form.controls.generalServiceId.value || !this.form.controls.serviceId.value) {
+      problems.push('Elige el servicio general y la tarifa con la que se liquida.');
+    }
     const amount = this.form.controls.chargedAmount.value;
     if (this.operation() === 'Paid' && !(typeof amount === 'number' && amount > 0 && Number.isInteger(amount))) {
       problems.push('Indica el valor cobrado: un número entero mayor que cero. Si no se cobró, elige Cortesía.');
@@ -172,13 +202,21 @@ export class AdminServiceRecordReviewModalComponent implements OnInit {
   });
 
   async ngOnInit(): Promise<void> {
-    const service = this.options.services.find((candidate) => candidate.id === this.record.serviceId);
+    const registeredRate = this.options.services.find((candidate) => candidate.id === this.record.serviceId);
+    const generalServiceId = this.record.generalServiceId ?? registeredRate?.generalServiceId ?? '';
+    const service =
+      registeredRate && registeredRate.generalServiceId === generalServiceId
+        ? registeredRate
+        : singleActiveRate(this.options.services, generalServiceId);
     this.form.patchValue({
-      serviceId: this.record.serviceId,
+      generalServiceId,
+      serviceId: service?.id ?? '',
       staffProfileId: this.record.staffProfileId,
       performedOn: this.record.performedOn,
       chargedAmount: service?.basePrice ?? null,
     });
+    // Another general service: keep the rate only if it belongs to it; pick the rate when there is a single one.
+    this.form.controls.generalServiceId.valueChanges.subscribe((selected) => this.syncRate(selected));
     // The form-level stream, not the controls': it emits after the form value (and so pointsBlocker) is updated.
     this.form.valueChanges.subscribe(() => {
       this.applyPointsRule();
@@ -251,6 +289,7 @@ export class AdminServiceRecordReviewModalComponent implements OnInit {
       this.api.approve(this.record.id, {
         version: this.record.version,
         operationType: operation,
+        generalServiceId: value.generalServiceId,
         serviceId: value.serviceId,
         staffProfileId: value.staffProfileId,
         customerId: this.customer()?.id ?? null,
@@ -339,6 +378,25 @@ export class AdminServiceRecordReviewModalComponent implements OnInit {
     } catch (error) {
       this.errorMessage.set(getApiErrorMessage(error));
       this.redemptionOptions.set([]);
+    }
+  }
+
+  /** "Servicio general · Tarifa". */
+  rateLabel(service: ServiceRecordServiceOption): string {
+    const label = service.generalServiceName ? `${service.generalServiceName} · ${service.name}` : service.name;
+    return service.isActive ? label : `${label} (inactiva)`;
+  }
+
+  private syncRate(generalServiceId: string): void {
+    const current = this.options.services.find((service) => service.id === this.form.controls.serviceId.value);
+    if (current && current.generalServiceId === generalServiceId) {
+      return;
+    }
+
+    const single = singleActiveRate(this.options.services, generalServiceId);
+    this.form.controls.serviceId.setValue(single?.id ?? '');
+    if (single && this.form.controls.chargedAmount.value === null) {
+      this.form.controls.chargedAmount.setValue(single.basePrice);
     }
   }
 

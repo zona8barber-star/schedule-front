@@ -111,10 +111,10 @@
         </article>
       }
 
-      @if (redemptions().length) {
+      @if (redemptionsTotal() > 0) {
         <article class="my-memberships__card">
           <h2>Mis canjes</h2>
-          <ul class="my-memberships__lines">
+          <ul class="my-memberships__lines" data-testid="my-redemptions" [attr.aria-busy]="redemptionsLoading()">
             @for (redemption of redemptions(); track redemption.id) {
               <li>
                 <strong>{{ redemption.rewardName }}</strong>
@@ -139,10 +139,18 @@
               </li>
             }
           </ul>
+          <app-paginator
+            label="Paginación de mis canjes"
+            [page]="redemptionsPage()"
+            [pageSize]="redemptionsPageSize"
+            [totalCount]="redemptionsTotal()"
+            [disabled]="redemptionsLoading()"
+            (pageChange)="onRedemptionsPageChange($event)"
+          />
         </article>
       }
 
-      @if (points.movements.length) {
+      @if (points.movements.length || showHistory()) {
         <article class="my-memberships__card">
           <h2>Movimientos recientes</h2>
           <ul class="my-memberships__lines">
@@ -154,6 +162,52 @@
               </li>
             }
           </ul>
+          <button type="button" class="my-memberships__profile-link" [attr.aria-expanded]="showHistory()" (click)="toggleHistory()">
+            {{ showHistory() ? 'Ocultar historial completo' : 'Ver historial completo' }}
+          </button>
+          @if (showHistory()) {
+            <div class="my-memberships__filters" role="group" aria-label="Filtros del historial de puntos">
+              <label>
+                <span>Tipo</span>
+                <select [value]="historyType()" (change)="onHistoryFilterChange({ movementType: $any($event.target).value })">
+                  <option value="">Todos</option>
+                  @for (type of movementTypes; track type) {
+                    <option [value]="type" [selected]="type === historyType()">{{ movementLabel(type) }}</option>
+                  }
+                </select>
+              </label>
+              <label>
+                <span>Desde</span>
+                <input type="date" [value]="historyRange().from" (change)="onHistoryFromChange($any($event.target).value)" />
+              </label>
+              <label>
+                <span>Hasta</span>
+                <input type="date" [value]="historyRange().to" (change)="onHistoryToChange($any($event.target).value)" />
+              </label>
+            </div>
+            <p class="my-memberships__muted">{{ rangeHint }} Tu saldo no depende de estas fechas.</p>
+            <app-api-feedback severity="error" [message]="historyError()" />
+            @if (!historyLoading() && !history().length && !historyError()) {
+              <p class="my-memberships__muted">Sin movimientos para estos filtros.</p>
+            }
+            <ul class="my-memberships__lines" data-testid="loyalty-history" [attr.aria-busy]="historyLoading()">
+              @for (movement of history(); track $index) {
+                <li>
+                  <strong>{{ movementSign(movement.type) }}{{ movement.points }}</strong>
+                  <span>{{ movementLabel(movement.type) }}</span>
+                  <span class="my-memberships__muted">{{ movement.performedAt | date: 'mediumDate' }}</span>
+                </li>
+              }
+            </ul>
+            <app-paginator
+              label="Paginación del historial de puntos"
+              [page]="historyPage()"
+              [pageSize]="historyPageSize"
+              [totalCount]="historyTotal()"
+              [disabled]="historyLoading()"
+              (pageChange)="onHistoryPageChange($event)"
+            />
+          }
         </article>
       }
     }

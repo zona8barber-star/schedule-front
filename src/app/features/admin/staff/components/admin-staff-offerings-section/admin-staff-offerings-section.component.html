@@ -1,0 +1,94 @@
+<section class="offerings" aria-labelledby="offerings-title">
+  <div class="offerings__head">
+    <h2 id="offerings-title">Servicios que ofrece</h2>
+    <p>
+      Marca los servicios que este profesional atiende y cuánto dura cada uno. Los clientes solo podrán reservar
+      estos servicios con él.
+    </p>
+  </div>
+
+  <app-api-feedback severity="error" [message]="errorMessage()" />
+  <app-api-feedback severity="info" [message]="successMessage()" />
+
+  @if (isLoading()) {
+    <p class="offerings__muted">Cargando servicios...</p>
+  } @else {
+    @if (!groups().length) {
+      <p class="offerings__muted" data-testid="offerings-empty">
+        No hay servicios generales activos. Créalos en el catálogo de servicios.
+      </p>
+    }
+
+    @for (group of groups(); track group.categoryId) {
+      <fieldset class="offerings__group" [disabled]="isSaving()">
+        <legend>{{ group.categoryName }}</legend>
+        @for (row of group.rows; track row.generalServiceId) {
+          <div class="offerings__row" [class.offerings__row--checked]="row.checked">
+            <label class="offerings__check">
+              <input
+                type="checkbox"
+                [attr.data-service-id]="row.generalServiceId"
+                [checked]="row.checked"
+                (change)="toggle(row.generalServiceId, $event)"
+              />
+              <span>{{ row.name }}</span>
+            </label>
+            <label class="offerings__duration">
+              <input
+                type="number"
+                inputmode="numeric"
+                [attr.data-duration-for]="row.generalServiceId"
+                [attr.aria-label]="'Duración de ' + row.name + ' en minutos'"
+                [min]="durationRange.min"
+                [max]="durationRange.max"
+                step="5"
+                [value]="row.durationMinutes ?? ''"
+                [disabled]="!row.checked"
+                (input)="setDuration(row.generalServiceId, $event)"
+              />
+              <span>min</span>
+            </label>
+            @if (showDurationError(row)) {
+              <p class="offerings__error">
+                Entre {{ durationRange.min }} y {{ durationRange.max }} minutos.
+              </p>
+            }
+          </div>
+        }
+      </fieldset>
+    }
+
+    @if (inactiveOfferings().length) {
+      <div class="offerings__group offerings__group--inactive" data-testid="inactive-offerings">
+        <p class="offerings__muted">
+          Estos servicios siguen asignados pero no se pueden reservar. Se conservan al guardar.
+        </p>
+        @for (offering of inactiveOfferings(); track offering.generalServiceId) {
+          <div class="offerings__row">
+            <span>{{ offering.categoryName }} · {{ offering.generalServiceName }}</span>
+            <span class="offerings__muted">
+              {{ offering.durationMinutes }} min ·
+              {{ offering.generalServiceIsActive ? 'Categoría inactiva' : 'Servicio general inactivo' }}
+            </span>
+          </div>
+        }
+      </div>
+    }
+
+    <div class="offerings__actions">
+      <span class="offerings__muted">
+        {{ checkedCount() }} {{ checkedCount() === 1 ? 'servicio marcado' : 'servicios marcados' }} · duración por
+        defecto {{ defaultDuration() }} min
+      </span>
+      <button
+        type="button"
+        class="offerings__save"
+        data-testid="save-offerings"
+        [disabled]="isSaving() || isLoading()"
+        (click)="save()"
+      >
+        {{ isSaving() ? 'Guardando...' : 'Guardar servicios' }}
+      </button>
+    </div>
+  }
+</section>

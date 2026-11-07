@@ -7,6 +7,8 @@ import {
   LoyaltySettingsUpdateRequest,
   LoyaltySettingsView,
 } from '../models/loyalty.models';
+import { PageQuery, PagedResult } from '../models/paged-result.models';
+import { toHttpParams } from '../utils/list-query.utils';
 
 @Injectable({
   providedIn: 'root',
@@ -23,8 +25,11 @@ export class AdminLoyaltyApiService {
     return this.httpClient.put<LoyaltySettingsView>(this.buildUrl('/admin/loyalty/settings'), request);
   }
 
-  listSettingsChanges() {
-    return this.httpClient.get<LoyaltySettingsChangeView[]>(this.buildUrl('/admin/loyalty/settings/changes'));
+  /** Change log of the settings, newest first, paginated. */
+  listSettingsChanges(query: PageQuery = {}) {
+    return this.httpClient.get<PagedResult<LoyaltySettingsChangeView>>(this.buildUrl('/admin/loyalty/settings/changes'), {
+      params: toHttpParams({ page: query.page, pageSize: query.pageSize }),
+    });
   }
 
   private buildUrl(path: string): string {

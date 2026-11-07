@@ -19,6 +19,7 @@ import {
   MembershipPlanMode,
   MembershipPlanUpsertRequest,
   MembershipPlanView,
+  planRateLabel,
 } from '../../../../../core/models/membership-plan.models';
 import { ServiceView } from '../../../../../core/models/service.models';
 import { AdminMembershipPlansApiService } from '../../../../../core/services/admin-membership-plans-api.service';
@@ -151,7 +152,7 @@ export class AdminMembershipPlanFormModalComponent implements OnInit {
 
     try {
       const [catalog, plan] = await Promise.all([
-        firstValueFrom(this.servicesApiService.list()),
+        firstValueFrom(this.servicesApiService.options()),
         this.planId ? firstValueFrom(this.membershipPlansApiService.getById(this.planId)) : Promise.resolve(null),
       ]);
       this.serviceOptions.set(this.buildOptions(catalog, plan));
@@ -330,11 +331,16 @@ export class AdminMembershipPlanFormModalComponent implements OnInit {
   }
 
   private buildOptions(catalog: ServiceView[], plan: MembershipPlanView | null): ServiceOption[] {
-    const options = catalog.map((service) => ({ id: service.id, name: service.name, isActive: service.isActive }));
+    // Rates are labelled "Servicio general · Tarifa" (ADR-0016 B4).
+    const options = catalog.map((service) => ({
+      id: service.id,
+      name: planRateLabel(service.generalServiceName, service.name),
+      isActive: service.isActive,
+    }));
     // Keep services the plan already has even if they are no longer in the active catalog.
     for (const service of plan?.services ?? []) {
       if (!options.some((option) => option.id === service.serviceId)) {
-        options.push({ id: service.serviceId, name: service.serviceName, isActive: false });
+        options.push({ id: service.serviceId, name: planRateLabel(service.generalServiceName, service.serviceName), isActive: false });
       }
     }
     return options.sort((a, b) => a.name.localeCompare(b.name, 'es'));

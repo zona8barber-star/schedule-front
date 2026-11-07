@@ -28,6 +28,8 @@ describe('AdminServiceRecordReviewModalComponent', () => {
     staffName: 'Alex',
     serviceId: 's-cut',
     serviceName: 'Corte',
+    generalServiceId: 'g-cut',
+    generalServiceName: 'Corte',
     performedOn: '2026-11-02',
     customerId: null,
     customerName: null,
@@ -43,8 +45,15 @@ describe('AdminServiceRecordReviewModalComponent', () => {
 
   const options = (loyaltyProgramEnabled = true): ServiceRecordOptionsView => ({
     services: [
-      { id: 's-cut', name: 'Corte', basePrice: 25000, loyaltyPoints: 10, isActive: true },
-      { id: 's-beard', name: 'Barba', basePrice: 15000, loyaltyPoints: 0, isActive: true },
+      { id: 's-cut', name: 'Corte', basePrice: 25000, loyaltyPoints: 10, isActive: true, generalServiceId: 'g-cut', generalServiceName: 'Corte' },
+      { id: 's-beard', name: 'Barba', basePrice: 15000, loyaltyPoints: 0, isActive: true, generalServiceId: 'g-beard', generalServiceName: 'Barba' },
+      { id: 's-cut-vip', name: 'VIP', basePrice: 40000, loyaltyPoints: 20, isActive: true, generalServiceId: 'g-cut', generalServiceName: 'Corte' },
+      { id: 's-color', name: 'Estándar', basePrice: 60000, loyaltyPoints: 0, isActive: true, generalServiceId: 'g-color', generalServiceName: 'Color' },
+    ],
+    generalServices: [
+      { id: 'g-cut', name: 'Corte', categoryName: 'Barbería', isActive: true },
+      { id: 'g-beard', name: 'Barba', categoryName: 'Barbería', isActive: true },
+      { id: 'g-color', name: 'Color', categoryName: 'Color', isActive: true },
     ],
     staff: [
       { id: 'st-alex', displayName: 'Alex', isActive: true },
@@ -66,7 +75,11 @@ describe('AdminServiceRecordReviewModalComponent', () => {
     related = { manualIncomes: [], otherRecords: [], membershipConsumptions: [], appointmentStatus: null };
   });
 
-  async function open(loyaltyProgramEnabled = true, permissions: PermissionCode[] = []): Promise<void> {
+  async function open(
+    loyaltyProgramEnabled = true,
+    permissions: PermissionCode[] = [],
+    recordOverride: Partial<ServiceRecordView> = {},
+  ): Promise<void> {
     await TestBed.configureTestingModule({
       imports: [AdminServiceRecordReviewModalComponent],
       providers: [
@@ -78,7 +91,7 @@ describe('AdminServiceRecordReviewModalComponent', () => {
 
     fixture = TestBed.createComponent(AdminServiceRecordReviewModalComponent);
     component = fixture.componentInstance;
-    component.record = record;
+    component.record = { ...record, ...recordOverride };
     component.options = options(loyaltyProgramEnabled);
     httpMock = TestBed.inject(HttpTestingController);
     fixture.detectChanges();
@@ -179,6 +192,7 @@ describe('AdminServiceRecordReviewModalComponent', () => {
     expect(req.request.body).toEqual({
       version: 41,
       operationType: 'Paid',
+      generalServiceId: 'g-cut',
       serviceId: 's-cut',
       staffProfileId: 'st-beto',
       customerId: null,
@@ -330,5 +344,58 @@ describe('AdminServiceRecordReviewModalComponent', () => {
     fixture.detectChanges();
     expect(component.creatingCustomer()).toBe(false);
     expect(component.customer()).toEqual({ id: 'c-new', fullName: 'Nuevo', phoneHint: '•••4321', memberships: [] });
+  });
+
+  describe('general service and rate (ADR-0016 B4)', () => {
+    function optionTexts(selector: string): string[] {
+      const select = fixture.nativeElement.querySelector(selector) as HTMLSelectElement;
+      return Array.from(select.options).map((option) => option.textContent?.trim() ?? '');
+    }
+
+    it('prefills the general service and offers only its rates, labelled "Servicio general · Tarifa"', async () => {
+      await open();
+
+      expect(component.form.controls.generalServiceId.value).toBe('g-cut');
+      expect(component.form.controls.serviceId.value).toBe('s-cut');
+      expect(component.rateOptions().map((rate) => rate.id)).toEqual(['s-cut', 's-cut-vip']);
+      expect(optionTexts('select[formcontrolname="serviceId"]')).toEqual(['Elige la tarifa', 'Corte · Corte', 'Corte · VIP']);
+    });
+
+    it('auto-selects the single rate of a general service and clears a rate that does not belong', async () => {
+      await open();
+
+      component.form.controls.generalServiceId.setValue('g-color');
+      expect(component.form.controls.serviceId.value).toBe('s-color');
+
+      component.form.controls.generalServiceId.setValue('g-cut');
+      // Two rates: the reviewer must choose.
+      expect(component.form.controls.serviceId.value).toBe('');
+      await component.approve();
+      expect(component.problems()).toContain('Elige el servicio general y la tarifa con la que se liquida.');
+      httpMock.expectNone(`${base}/r-1/approve`);
+    });
+
+    it('keeps the rate when it belongs to the chosen general service', async () => {
+      await open();
+      component.form.controls.serviceId.setValue('s-cut-vip');
+
+      component.form.controls.generalServiceId.setValue('g-cut');
+
+      expect(component.form.controls.serviceId.value).toBe('s-cut-vip');
+    });
+
+    it('prefills a record registered by general service (no rate yet) and sends generalServiceId on approve', async () => {
+      await open(true, [], { serviceId: null, serviceName: 'Color', generalServiceId: 'g-color', generalServiceName: 'Color' });
+
+      expect(component.form.controls.generalServiceId.value).toBe('g-color');
+      expect(component.form.controls.serviceId.value).toBe('s-color');
+      expect(component.form.controls.chargedAmount.value).toBe(60000);
+
+      const approving = component.approve();
+      const req = httpMock.expectOne(`${base}/r-1/approve`);
+      expect(req.request.body).toEqual(expect.objectContaining({ generalServiceId: 'g-color', serviceId: 's-color' }));
+      req.flush({ ...record, status: 'Approved' });
+      await approving;
+    });
   });
 });

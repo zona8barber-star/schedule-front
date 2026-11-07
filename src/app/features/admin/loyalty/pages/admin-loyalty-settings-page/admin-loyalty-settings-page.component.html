@@ -150,6 +150,13 @@
           </li>
         }
       </ul>
+      <app-paginator
+        label="Paginación del historial de cambios"
+        [page]="changesPage()"
+        [pageSize]="changesPageSize"
+        [totalCount]="changesTotal()"
+        (pageChange)="onChangesPageChange($event)"
+      />
     }
   </article>
 </section>

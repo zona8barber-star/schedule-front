@@ -6,8 +6,11 @@ import {
   ServiceCreateRequest,
   ServiceStatusUpdateRequest,
   ServiceUpdateRequest,
+  ServiceListQuery,
   ServiceView,
 } from '../models/service.models';
+import { PagedResult } from '../models/paged-result.models';
+import { toHttpParams } from '../utils/list-query.utils';
 
 @Injectable({
   providedIn: 'root',
@@ -16,8 +19,22 @@ export class AdminServicesApiService {
   private readonly httpClient = inject(HttpClient);
   private readonly runtimeConfigService = inject(RuntimeConfigService);
 
-  list() {
-    return this.httpClient.get<ServiceView[]>(this.buildUrl('/admin/services'));
+  /** Paginated admin list of rates (ADR-0016 B7). */
+  list(query: ServiceListQuery = {}) {
+    const params = toHttpParams({
+      q: query.q,
+      generalServiceId: query.generalServiceId,
+      categoryId: query.categoryId,
+      status: query.status,
+      page: query.page,
+      pageSize: query.pageSize,
+    });
+    return this.httpClient.get<PagedResult<ServiceView>>(this.buildUrl('/admin/services'), { params });
+  }
+
+  /** Every rate, for selectors (not paginated). */
+  options() {
+    return this.httpClient.get<ServiceView[]>(this.buildUrl('/admin/services/options'));
   }
 
   getById(serviceId: string) {

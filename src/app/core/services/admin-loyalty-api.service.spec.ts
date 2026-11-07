@@ -39,10 +39,10 @@ describe('AdminLoyaltyApiService', () => {
     req.flush({} as LoyaltySettingsView);
   });
 
-  it('listSettingsChanges calls GET on the changes URL', () => {
-    service.listSettingsChanges().subscribe();
-    const req = httpMock.expectOne(`${base}/changes`);
+  it('listSettingsChanges asks for one page of the changes', () => {
+    service.listSettingsChanges({ page: 2, pageSize: 25 }).subscribe();
+    const req = httpMock.expectOne(`${base}/changes?page=2&pageSize=25`);
     expect(req.request.method).toBe('GET');
-    req.flush([] as LoyaltySettingsChangeView[]);
+    req.flush({ items: [] as LoyaltySettingsChangeView[], page: 2, pageSize: 25, totalCount: 0 });
   });
 });

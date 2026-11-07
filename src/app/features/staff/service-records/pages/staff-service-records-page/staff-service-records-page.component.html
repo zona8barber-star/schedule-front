@@ -62,26 +62,32 @@
 
           <div class="records__services">
             <span class="records__label">Servicios realizados</span>
-            <div class="records__chips">
-              @for (service of catalog(); track service.id) {
-                <label
-                  class="records__chip"
-                  [class.records__chip--selected]="isSelected(service.id)"
-                  [class.records__chip--done]="isAlreadyRegistered(service.id)"
-                >
-                  <input
-                    type="checkbox"
-                    [checked]="isSelected(service.id) || isAlreadyRegistered(service.id)"
-                    [disabled]="isAlreadyRegistered(service.id)"
-                    (change)="toggleService(service.id)"
-                  />
-                  {{ service.name }}
-                  @if (isAlreadyRegistered(service.id)) {
-                    <small>(ya registrado)</small>
+            @for (group of catalogGroups(); track group.categoryId) {
+              <div class="records__group">
+                <span class="records__group-name">{{ group.categoryName }}</span>
+                <div class="records__chips">
+                  @for (service of group.services; track service.id) {
+                    <label
+                      class="records__chip"
+                      [class.records__chip--selected]="isSelected(service.id)"
+                      [class.records__chip--done]="isAlreadyRegistered(service.id)"
+                    >
+                      <input
+                        type="checkbox"
+                        [attr.data-service-id]="service.id"
+                        [checked]="isSelected(service.id) || isAlreadyRegistered(service.id)"
+                        [disabled]="isAlreadyRegistered(service.id)"
+                        (change)="toggleService(service.id)"
+                      />
+                      {{ service.name }}
+                      @if (isAlreadyRegistered(service.id)) {
+                        <small>(ya registrado)</small>
+                      }
+                    </label>
                   }
-                </label>
-              }
-            </div>
+                </div>
+              </div>
+            }
             @if (submitted() && selectionProblem()) {
               <p class="admin-content-page__error">{{ selectionProblem() }}</p>
             }
@@ -111,8 +117,11 @@
               <strong>{{ appointmentLabel(appointment) }}</strong>
               <span class="records__meta">
                 {{ statusLabel(appointment.status) }}
-                @if (appointment.registeredServiceIds.length) {
-                  · {{ appointment.registeredServiceIds.length }} servicio(s) registrado(s)
+                @if (appointment.generalServiceName) {
+                  · {{ appointment.generalServiceName }}
+                }
+                @if (appointment.registeredGeneralServiceIds.length) {
+                  · {{ appointment.registeredGeneralServiceIds.length }} servicio(s) registrado(s)
                 }
               </span>
             </div>
@@ -125,10 +134,13 @@
 
   <article class="admin-content-page__panel">
     <h2>Mis registros</h2>
-    @if (!isLoading() && !records().length) {
+    @if (!isLoading() && !recordsTotal()) {
       <p>Aún no has registrado servicios.</p>
     }
-    <ul class="records__list">
+    @if (recordsTotal()) {
+      <p class="records__meta records__meta--small">Primero los pendientes de revisión; luego los revisados, del más reciente al más antiguo.</p>
+    }
+    <ul class="records__list" data-testid="own-records" [attr.aria-busy]="recordsLoading()">
       @for (record of records(); track record.id) {
         <li class="records__item">
           <div class="records__item-head">
@@ -154,5 +166,13 @@
         </li>
       }
     </ul>
+    <app-paginator
+      label="Paginación de mis registros"
+      [page]="recordsPage()"
+      [pageSize]="recordsPageSize"
+      [totalCount]="recordsTotal()"
+      [disabled]="recordsLoading()"
+      (pageChange)="onRecordsPageChange($event)"
+    />
   </article>
 </section>

@@ -4,5 +4,6 @@
   "appUrl": "https://<app-host-placeholder>",
   "assetsBaseUrl": "https://<assets-host-placeholder>/assets",
   "environmentName": "<environment-name-placeholder>",
-  "vapidPublicKey": "<vapid-public-key-placeholder>"
+  "vapidPublicKey": "<vapid-public-key-placeholder>",
+  "publicSiteUrl": "https://<public-site-host-placeholder>"
 }

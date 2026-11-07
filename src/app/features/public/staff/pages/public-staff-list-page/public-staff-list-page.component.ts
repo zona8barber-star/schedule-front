@@ -4,7 +4,7 @@ import { Router, RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 
 import { PublicAvailabilitySlotResponse } from '../../../../../core/models/availability.models';
-import { PublicStaffListItemResponse } from '../../../../../core/models/content.models';
+import { PublicStaffListItemResponse, PublicStaffServiceResponse } from '../../../../../core/models/content.models';
 import { PublicAvailabilityApiService } from '../../../../../core/services/public-availability-api.service';
 import { PublicStaffApiService } from '../../../../../core/services/public-staff-api.service';
 import { getApiErrorMessage } from '../../../../../core/utils/api-error.utils';
@@ -50,6 +50,8 @@ export class PublicStaffListPageComponent implements OnInit {
   readonly slotsLoading = signal(false);
   readonly slotsError = signal<string | null>(null);
   readonly slotsLoaded = signal(false);
+  /** General service the free times are computed for (ADR-0016 B3). */
+  readonly selectedServiceId = signal<string | null>(null);
 
   readonly searchButtonLabel = computed(() => (this.isLoading() ? 'Buscando...' : 'Buscar'));
 
@@ -68,14 +70,13 @@ export class PublicStaffListPageComponent implements OnInit {
 
   staffRoleSummary(member: PublicStaffListItemResponse): string {
     return member.services
-      .filter((s) => s.isActive)
       .slice(0, 2)
       .map((s) => s.name)
       .join(' · ');
   }
 
   visibleServices(staffMember: PublicStaffListItemResponse) {
-    return staffMember.services.filter((service) => service.isActive).slice(0, 3);
+    return staffMember.services.slice(0, 3);
   }
 
   formatRating(value: number): string {
@@ -93,10 +94,24 @@ export class PublicStaffListPageComponent implements OnInit {
   openAvailabilityModal(staffMember: PublicStaffListItemResponse): void {
     this.activeStaff.set(staffMember);
     this.selectedDate.set(todayIso());
+    this.selectedServiceId.set(staffMember.services[0]?.generalServiceId ?? null);
     this.slots.set([]);
     this.slotsLoaded.set(false);
     this.slotsError.set(null);
     void this.loadSlots(staffMember.staffProfileId);
+  }
+
+  onServiceChange(event: Event): void {
+    const value = (event.target as HTMLSelectElement).value;
+    const staffProfileId = this.activeStaff()?.staffProfileId;
+    if (!value || !staffProfileId) return;
+    this.selectedServiceId.set(value);
+    this.slotsLoaded.set(false);
+    void this.loadSlots(staffProfileId);
+  }
+
+  formatServiceOption(service: PublicStaffServiceResponse): string {
+    return `${service.name} · ${service.durationMinutes} min`;
   }
 
   closeAvailabilityModal(): void {
@@ -116,18 +131,26 @@ export class PublicStaffListPageComponent implements OnInit {
   selectSlot(slot: PublicAvailabilitySlotResponse): void {
     const staffProfileId = this.activeStaff()?.staffProfileId;
     if (!staffProfileId) return;
+    const generalServiceId = this.selectedServiceId();
+    if (!generalServiceId) return;
     void this.router.navigate(['/booking/confirm'], {
-      queryParams: { staffProfileId, startsAt: slot.startAtUtc },
+      queryParams: { staffProfileId, startsAt: slot.startAtUtc, generalServiceId },
     });
   }
 
   private async loadSlots(staffProfileId: string): Promise<void> {
     const date = this.selectedDate();
+    const generalServiceId = this.selectedServiceId();
+    if (!generalServiceId) {
+      this.slots.set([]);
+      return;
+    }
+
     this.slotsLoading.set(true);
     this.slotsError.set(null);
     try {
       const response = await firstValueFrom(
-        this.publicAvailabilityApiService.getSlots(staffProfileId, date, date),
+        this.publicAvailabilityApiService.getSlots(staffProfileId, date, date, { generalServiceId }),
       );
       this.slots.set(response.slots);
       this.slotsLoaded.set(true);

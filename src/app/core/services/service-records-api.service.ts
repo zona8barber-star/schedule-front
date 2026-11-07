@@ -15,9 +15,11 @@ import {
   ServiceRecordRelatedView,
   ServiceRecordRegisterRequest,
   ServiceRecordRejectRequest,
-  ServiceRecordStatus,
+  ServiceRecordListQuery,
   ServiceRecordView,
 } from '../models/service-record.models';
+import { PageQuery, PagedResult } from '../models/paged-result.models';
+import { toHttpParams } from '../utils/list-query.utils';
 
 /** Services performed: the professional's registration (staff routes) and the administrative review. */
 @Injectable({
@@ -39,18 +41,29 @@ export class ServiceRecordsApiService {
     return this.httpClient.get<ServiceRecordAppointmentOption[]>(this.buildUrl('/staff/service-records/appointments'));
   }
 
-  mine() {
-    return this.httpClient.get<ServiceRecordView[]>(this.buildUrl('/staff/service-records'));
+  /** Own records, paginated: pending ones first (oldest first), then the reviewed ones, newest first. */
+  mine(query: PageQuery = {}) {
+    return this.httpClient.get<PagedResult<ServiceRecordView>>(this.buildUrl('/staff/service-records'), {
+      params: toHttpParams({ page: query.page, pageSize: query.pageSize }),
+    });
   }
 
   register(request: ServiceRecordRegisterRequest) {
     return this.httpClient.post<ServiceRecordView[]>(this.buildUrl('/staff/service-records'), request);
   }
 
-  list(status: ServiceRecordStatus) {
-    return this.httpClient.get<ServiceRecordView[]>(this.buildUrl('/admin/service-records'), {
-      params: new HttpParams().set('status', status),
+  /** Admin review list, paginated (ADR-0016 B7). */
+  list(query: ServiceRecordListQuery = {}) {
+    const params = toHttpParams({
+      status: query.status,
+      from: query.from,
+      to: query.to,
+      staffProfileId: query.staffProfileId,
+      generalServiceId: query.generalServiceId,
+      page: query.page,
+      pageSize: query.pageSize,
     });
+    return this.httpClient.get<PagedResult<ServiceRecordView>>(this.buildUrl('/admin/service-records'), { params });
   }
 
   options() {

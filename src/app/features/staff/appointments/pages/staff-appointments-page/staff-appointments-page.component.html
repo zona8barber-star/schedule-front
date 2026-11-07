@@ -45,11 +45,12 @@
         role="tab"
         type="button"
         [class.agenda-page__tab--active]="activeTab() === 'today'"
-        (click)="activeTab.set('today')"
+        [attr.aria-selected]="activeTab() === 'today'"
+        (click)="setTab('today')"
       >
         Hoy
-        @if (todayAppointments().length > 0) {
-          <span class="agenda-page__tab-badge">{{ todayAppointments().length }}</span>
+        @if (activeTab() === 'today' && totalCount() > 0) {
+          <span class="agenda-page__tab-badge">{{ totalCount() }}</span>
         }
       </button>
       <button
@@ -57,14 +58,51 @@
         role="tab"
         type="button"
         [class.agenda-page__tab--active]="activeTab() === 'upcoming'"
-        (click)="activeTab.set('upcoming')"
+        [attr.aria-selected]="activeTab() === 'upcoming'"
+        (click)="setTab('upcoming')"
       >
         Proximas
-        @if (upcomingAppointments().length > 0) {
-          <span class="agenda-page__tab-badge">{{ upcomingAppointments().length }}</span>
+        @if (activeTab() === 'upcoming' && totalCount() > 0) {
+          <span class="agenda-page__tab-badge">{{ totalCount() }}</span>
         }
       </button>
+      <button
+        class="agenda-page__tab"
+        role="tab"
+        type="button"
+        [class.agenda-page__tab--active]="activeTab() === 'history'"
+        [attr.aria-selected]="activeTab() === 'history'"
+        (click)="setTab('history')"
+      >
+        Historial
+      </button>
     </div>
+
+    @if (activeTab() === 'history') {
+      <div class="agenda-page__filters" role="group" aria-label="Filtros del historial">
+        <label>
+          <span>Desde</span>
+          <input type="date" [value]="historyRange().from" (change)="onHistoryFromChange($any($event.target).value)" />
+        </label>
+        <label>
+          <span>Hasta</span>
+          <input type="date" [value]="historyRange().to" (change)="onHistoryToChange($any($event.target).value)" />
+        </label>
+        <label>
+          <span>Estado</span>
+          <select [value]="historyStatus()" (change)="onHistoryFilterChange({ status: $any($event.target).value })">
+            <option value="">Todos</option>
+            @for (status of statuses; track status) {
+              <option [value]="status" [selected]="status === historyStatus()">{{ statusLabel(status) }}</option>
+            }
+          </select>
+        </label>
+      </div>
+      <p class="agenda-page__hint">
+        Las fechas filtran por el día programado de cada cita (también las canceladas). {{ rangeHint }}
+      </p>
+      <app-api-feedback severity="error" [message]="rangeError()" />
+    }
 
     <!-- â”€â”€ Appointments panel â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ -->
     <div class="agenda-page__panel">
@@ -72,8 +110,10 @@
         <div class="agenda-page__empty">
           @if (activeTab() === 'today') {
             No hay citas programadas para hoy.
-          } @else {
+          } @else if (activeTab() === 'upcoming') {
             No hay citas futuras registradas.
+          } @else {
+            No hay citas para estos filtros.
           }
         </div>
       } @else {
@@ -100,6 +140,12 @@
                   <span class="appt-card__info-label">Cliente</span>
                   <span class="appt-card__info-value">{{ appointment.customerName }}</span>
                 </div>
+                @if (serviceLabel(appointment); as label) {
+                  <div class="appt-card__info-item">
+                    <span class="appt-card__info-label">Servicio</span>
+                    <span class="appt-card__info-value" data-testid="appointment-service">{{ label }}</span>
+                  </div>
+                }
                 @if (appointment.customerPhone) {
                   <div class="appt-card__info-item">
                     <span class="appt-card__info-label">Telefono</span>
@@ -188,13 +234,18 @@
                           }
                         </div>
                         <div class="agenda-page__field">
-                          <label for="editEndsAt">
-                            Fin <span class="agenda-page__required">*</span>
-                          </label>
-                          <input id="editEndsAt" type="datetime-local" formControlName="endsAt" />
-                          @if (showEditError('endsAt', 'required')) {
-                            <p class="agenda-page__error">Selecciona fecha y hora de fin.</p>
-                          }
+                          <label for="editService">Servicio</label>
+                          <select id="editService" formControlName="generalServiceId">
+                            @if (!appointment.generalServiceId) {
+                              <option value="">Sin servicio (mantener)</option>
+                            }
+                            @for (option of editServiceOptions(appointment); track option.generalServiceId) {
+                              <option [value]="option.generalServiceId">{{ formatServiceOption(option) }}</option>
+                            }
+                          </select>
+                          <p class="agenda-page__hint" data-testid="edit-duration">
+                            Duración: {{ editDurationMinutes(appointment) }} min
+                          </p>
                         </div>
                         <div class="agenda-page__field">
                           <label for="editCustomerName">
@@ -254,6 +305,13 @@
           }
         </div>
       }
+      <app-paginator
+        label="Paginación de la agenda"
+        [page]="page()"
+        [pageSize]="pageSize()"
+        [totalCount]="totalCount()"
+        (pageChange)="onPageChange($event)"
+      />
     </div>
   }
 </section>
@@ -305,6 +363,33 @@
               @if (showCreateError('startsAt', 'required')) {
                 <p class="agenda-page__error">Selecciona fecha y hora de inicio.</p>
               }
+            </div>
+            <div class="agenda-page__field">
+              <label for="createService">
+                Servicio <span class="agenda-page__required">*</span>
+              </label>
+              <select id="createService" formControlName="generalServiceId">
+                <option value="">Selecciona un servicio</option>
+                @for (option of serviceOptions(); track option.generalServiceId) {
+                  <option [value]="option.generalServiceId">{{ formatServiceOption(option) }}</option>
+                }
+              </select>
+              @if (showCreateError('generalServiceId', 'required')) {
+                <p class="agenda-page__error">Selecciona el servicio.</p>
+              }
+              @if (serviceOptionsError()) {
+                <p class="agenda-page__error">{{ serviceOptionsError() }}</p>
+              }
+            </div>
+            <div class="agenda-page__field">
+              <label for="createDuration">Duración (min)</label>
+              <input
+                id="createDuration"
+                type="number"
+                readonly
+                [value]="createDurationMinutes() ?? ''"
+                placeholder="Según el servicio"
+              />
             </div>
             <div class="agenda-page__field">
               <label for="createCustomerName">

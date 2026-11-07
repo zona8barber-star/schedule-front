@@ -73,7 +73,10 @@ describe('MyLoyaltyPageComponent', () => {
   function flushAll(view: MyLoyaltyView, rewards: MyLoyaltyCatalogView, redemptions: MyLoyaltyRedemptionView[]): void {
     httpMock.expectOne(`${api}/customer/loyalty`).flush(view);
     httpMock.expectOne(`${api}/customer/loyalty/rewards`).flush(rewards);
-    httpMock.expectOne(`${api}/customer/loyalty/redemptions`).flush(redemptions);
+    // Own redemptions are paginated on the server (pending first).
+    httpMock
+      .expectOne(`${api}/customer/loyalty/redemptions?page=1&pageSize=25`)
+      .flush({ items: redemptions, page: 1, pageSize: 25, totalCount: redemptions.length });
   }
 
   function text(): string {

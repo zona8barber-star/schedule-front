@@ -36,7 +36,7 @@
             <select id="rewardService" formControlName="serviceId">
               <option value="">Elige un servicio</option>
               @for (service of services(); track service.id) {
-                <option [value]="service.id">{{ service.name }}{{ service.isActive ? '' : ' (inactivo)' }}</option>
+                <option [value]="service.id">{{ serviceOptionLabel(service) }}{{ service.isActive ? '' : ' (inactivo)' }}</option>
               }
             </select>
             <span class="admin-content-page__hint">Se entrega al confirmar el servicio realizado con el tipo «Recompensa».</span>
@@ -120,6 +120,13 @@
                   </li>
                 }
               </ul>
+              <app-paginator
+                label="Paginación del historial de la recompensa"
+                [page]="historyPage()"
+                [pageSize]="historyPageSize"
+                [totalCount]="historyTotal()"
+                (pageChange)="onHistoryPageChange($event)"
+              />
             }
           </li>
         }

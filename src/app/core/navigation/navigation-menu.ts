@@ -50,6 +50,8 @@ export const NAVIGATION_GROUPS: readonly NavGroupDefinition[] = [
         access: PUBLIC,
         shortcut: { order: 90, icon: 'staff' },
       },
+      // The public product catalog (ADR-0016 B6), also reachable from a printed QR.
+      { id: 'product-catalog', label: 'Productos', route: '/productos', access: PUBLIC },
     ],
   },
   {
@@ -152,7 +154,11 @@ export const NAVIGATION_GROUPS: readonly NavGroupDefinition[] = [
     label: 'Catálogos',
     kind: 'back-office',
     items: [
-      { id: 'admin-services', label: 'Servicios', route: '/admin/services', access: ADMIN },
+      { id: 'admin-service-categories', label: 'Categorías de servicio', route: '/admin/service-categories', access: ADMIN },
+      { id: 'admin-general-services', label: 'Servicios generales', route: '/admin/general-services', access: ADMIN },
+      { id: 'admin-services', label: 'Tarifas de liquidación', route: '/admin/services', access: ADMIN },
+      { id: 'admin-product-categories', label: 'Categorías de productos', route: '/admin/product-categories', access: ADMIN },
+      { id: 'admin-products', label: 'Productos', route: '/admin/products', access: ADMIN },
       { id: 'admin-membership-plans', label: 'Planes de membresía', route: '/admin/membership-plans', access: ADMIN },
     ],
   },

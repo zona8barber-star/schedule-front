@@ -1,7 +1,7 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { Router, provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 
 import { environment } from '../../../../../../environments/environment';
@@ -74,10 +74,12 @@ describe('AdminCustomerDetailPageComponent', () => {
     const navigation = harness.navigateByUrl(`/admin/customers/${customer.id}`);
     await new Promise<void>((resolve) => setTimeout(resolve, 0));
     httpMock.expectOne(`${base}/${customer.id}`).flush(customer);
+    // The plans of the membership filter.
+    httpMock.match(`${environment.defaultApiBaseUrl}/admin/membership-plans`).forEach((request) => request.flush([]));
     await navigation;
     await new Promise<void>((resolve) => setTimeout(resolve, 0));
     // The page then loads the customer's memberships.
-    httpMock.expectOne(`${base}/${customer.id}/memberships`).flush(memberships);
+    flushMemberships(customer.id, memberships);
     await new Promise<void>((resolve) => setTimeout(resolve, 0));
     harness.detectChanges();
     // ...and the points panel loads its wallet.
@@ -87,8 +89,32 @@ describe('AdminCustomerDetailPageComponent', () => {
     return harness.fixture;
   }
 
+  function flushMemberships(customerId: string, items: CustomerMembershipSummaryView[], params: Record<string, string> = {}): void {
+    const request = httpMock.expectOne((candidate) => candidate.url === `${base}/${customerId}/memberships`);
+    for (const [key, value] of Object.entries(params)) {
+      expect(request.request.params.get(key)).toBe(value);
+    }
+    request.flush({ items, page: 1, pageSize: 20, totalCount: items.length });
+  }
+
   afterEach(() => {
     httpMock.verify();
+  });
+
+  it('filters the memberships by status through the URL', async () => {
+    await openPage(linkedCustomer);
+
+    const select = harness.fixture.nativeElement.querySelector('[data-testid="membership-status-filter"]') as HTMLSelectElement;
+    select.value = 'Expired';
+    select.dispatchEvent(new Event('change'));
+    await new Promise<void>((resolve) => setTimeout(resolve, 0));
+
+    expect(TestBed.inject(Router).url).toBe(`/admin/customers/${linkedCustomer.id}?membershipStatus=Expired`);
+    flushMemberships(linkedCustomer.id, [], { status: 'Expired', page: '1' });
+    await new Promise<void>((resolve) => setTimeout(resolve, 0));
+    harness.detectChanges();
+
+    expect(harness.fixture.nativeElement.textContent).toContain('Ninguna membresía coincide con los filtros.');
   });
 
   it('shows the linked account, the unlink action and the history', async () => {
@@ -107,7 +133,7 @@ describe('AdminCustomerDetailPageComponent', () => {
     const page = harness.routeDebugElement!.componentInstance as AdminCustomerDetailPageComponent;
 
     page.onUpdated(linkedCustomer, 'Perfiles fusionados.');
-    httpMock.expectOne(`${base}/${linkedCustomer.id}/memberships`).flush([]);
+    flushMemberships(linkedCustomer.id, []);
     httpMock.expectOne(`${base}/${linkedCustomer.id}/loyalty`).flush({ ...emptyWallet(linkedCustomer.id), availablePoints: 60 });
     await new Promise<void>((resolve) => setTimeout(resolve, 0));
     harness.detectChanges();

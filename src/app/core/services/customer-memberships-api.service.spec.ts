@@ -27,6 +27,14 @@ describe('CustomerMembershipsApiService', () => {
     const list = httpMock.expectOne(`${api}/customer/memberships`);
     expect(list.request.method).toBe('GET');
 
+    service.list({ status: 'Active', soldFrom: '2026-01-01', soldTo: '2026-06-30', page: 2 }).subscribe();
+    const filtered = httpMock.expectOne((request) => request.url === `${api}/customer/memberships`);
+    expect(filtered.request.params.get('status')).toBe('Active');
+    expect(filtered.request.params.get('soldFrom')).toBe('2026-01-01');
+    expect(filtered.request.params.get('soldTo')).toBe('2026-06-30');
+    expect(filtered.request.params.get('page')).toBe('2');
+    expect(filtered.request.params.has('customerId')).toBe(false);
+
     service.getById('m-1').subscribe();
     const detail = httpMock.expectOne(`${api}/customer/memberships/m-1`);
     expect(detail.request.method).toBe('GET');
