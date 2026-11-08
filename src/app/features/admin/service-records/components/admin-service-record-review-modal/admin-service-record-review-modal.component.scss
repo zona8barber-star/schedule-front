@@ -1,0 +1,222 @@
+// Same look as the other admin modals (membership types, services).
+.review-modal__overlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.5);
+  padding: 1rem;
+  z-index: 1000;
+}
+
+.review-modal__card {
+  width: 100%;
+  max-width: 640px;
+  max-height: calc(100vh - 2rem);
+  overflow-y: auto;
+  background: var(--color-surface, #fff);
+  color: inherit;
+  border-radius: 0.75rem;
+  padding: 1.5rem;
+
+  h2 {
+    margin: 0 0 0.5rem;
+  }
+}
+
+form > fieldset {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  min-width: 0;
+}
+
+.review-modal__section {
+  margin: 0 0 1rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--color-border, #e2e2e2);
+  border-radius: 0.5rem;
+  min-width: 0;
+
+  legend {
+    padding: 0 0.35rem;
+    font-weight: 700;
+  }
+}
+
+.review-modal__field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin-bottom: 0.75rem;
+  min-width: 0;
+
+  input,
+  textarea,
+  select {
+    padding: 0.5rem 0.65rem;
+    border: 1px solid var(--color-border, #ccc);
+    border-radius: 0.5rem;
+    font: inherit;
+    min-width: 0;
+  }
+
+  textarea {
+    resize: vertical;
+  }
+}
+
+.review-modal__row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+  gap: 0 0.75rem;
+}
+
+.review-modal__choices {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+
+  label {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    padding: 0.6rem 0.75rem;
+    border: 1px solid var(--color-border, #e2e2e2);
+    border-radius: 0.5rem;
+    cursor: pointer;
+  }
+}
+
+.review-modal__disabled {
+  opacity: 0.55;
+  cursor: not-allowed !important;
+}
+
+.review-modal__muted {
+  display: block;
+  margin: 0 0 0.5rem;
+  opacity: 0.75;
+  font-size: 0.9rem;
+}
+
+.review-modal__search {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+
+  input {
+    flex: 1;
+    min-width: 0;
+    padding: 0.5rem 0.65rem;
+    border: 1px solid var(--color-border, #ccc);
+    border-radius: 0.5rem;
+    font: inherit;
+  }
+}
+
+.review-modal__results {
+  list-style: none;
+  margin: 0 0 0.5rem;
+  padding: 0;
+  border: 1px solid var(--color-border, #e2e2e2);
+  border-radius: 0.5rem;
+
+  button {
+    width: 100%;
+    padding: 0.5rem 0.75rem;
+    border: 0;
+    border-bottom: 1px solid var(--color-border, #e2e2e2);
+    background: none;
+    color: inherit;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+  }
+
+  li:last-child button {
+    border-bottom: 0;
+  }
+}
+
+.review-modal__selected {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.review-modal__check {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  margin-bottom: 0.35rem;
+}
+
+.review-modal__problems {
+  margin: 0 0 0.75rem;
+  padding-left: 1.2rem;
+  color: #c0392b;
+}
+
+.review-modal__link {
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.review-modal__actions {
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.review-modal__primary {
+  font-weight: 700;
+}
+
+.review-modal__danger {
+  color: #92382d;
+}
+
+.review-modal__secondary {
+  margin-bottom: 0.5rem;
+}
+
+.review-modal__warnings {
+  display: grid;
+  gap: 0.25rem;
+  margin: 0 0 1rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid rgba(176, 138, 74, 0.5);
+  border-radius: 0.5rem;
+  background: rgba(176, 138, 74, 0.1);
+
+  small {
+    opacity: 0.8;
+  }
+
+  ul {
+    margin: 0.25rem 0 0;
+    padding-left: 1.2rem;
+  }
+}
+
+// Also used by the customer claims review modal.
+.review-modal__chosen {
+  background: rgba(176, 138, 74, 0.15) !important;
+  font-weight: 600;
+}
+
+.review-modal__results button[disabled] {
+  opacity: 0.55;
+  cursor: not-allowed;
+}

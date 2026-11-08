@@ -4,7 +4,9 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { environment } from '../../../../../../environments/environment';
 import { MembershipPlanView } from '../../../../../core/models/membership-plan.models';
+import { PERMISSION_CODES, PermissionCode } from '../../../../../core/models/auth.models';
 import { ServiceView } from '../../../../../core/models/service.models';
+import { AuthService } from '../../../../../core/services/auth.service';
 import { DEFAULT_MEMBERSHIP_TERMS } from '../../membership-plan-defaults';
 import { AdminMembershipPlanFormModalComponent } from './admin-membership-plan-form-modal.component';
 
@@ -15,9 +17,9 @@ describe('AdminMembershipPlanFormModalComponent', () => {
   const api = environment.defaultApiBaseUrl;
 
   const catalog: ServiceView[] = [
-    { id: 's-cut', name: 'Corte', basePrice: 25000, businessPercentage: 30, isActive: true, createdAt: '', updatedAt: null },
-    { id: 's-beard', name: 'Barba', basePrice: 15000, businessPercentage: 30, isActive: true, createdAt: '', updatedAt: null },
-    { id: 's-old', name: 'Tinte', basePrice: 40000, businessPercentage: 30, isActive: false, createdAt: '', updatedAt: null },
+    { id: 's-cut', name: 'Corte', basePrice: 25000, businessPercentage: 30, isActive: true, createdAt: '', updatedAt: null, loyaltyPoints: 0, generalServiceId: 'g-cut', generalServiceName: 'Corte', generalServiceIsActive: true, categoryId: 'c-barber', categoryName: 'Barbería' },
+    { id: 's-beard', name: 'Barba', basePrice: 15000, businessPercentage: 30, isActive: true, createdAt: '', updatedAt: null, loyaltyPoints: 0, generalServiceId: 'g-cut', generalServiceName: 'Corte', generalServiceIsActive: true, categoryId: 'c-barber', categoryName: 'Barbería' },
+    { id: 's-old', name: 'Tinte', basePrice: 40000, businessPercentage: 30, isActive: false, createdAt: '', updatedAt: null, loyaltyPoints: 0, generalServiceId: 'g-cut', generalServiceName: 'Corte', generalServiceIsActive: true, categoryId: 'c-barber', categoryName: 'Barbería' },
   ];
 
   const existingPlan: MembershipPlanView = {
@@ -48,6 +50,7 @@ describe('AdminMembershipPlanFormModalComponent', () => {
     ],
     createdAt: '',
     updatedAt: null,
+    loyaltyPoints: 40,
   };
 
   /** ngOnInit awaits Promise.all over two requests; each await hop needs the microtask queue drained. */
@@ -55,10 +58,14 @@ describe('AdminMembershipPlanFormModalComponent', () => {
     await new Promise<void>((resolve) => setTimeout(resolve, 0));
   }
 
-  async function open(planId: string | null): Promise<void> {
+  async function open(planId: string | null, permissions: PermissionCode[] = []): Promise<void> {
     await TestBed.configureTestingModule({
       imports: [AdminMembershipPlanFormModalComponent],
-      providers: [provideHttpClient(), provideHttpClientTesting()],
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        { provide: AuthService, useValue: { hasPermission: (code: PermissionCode) => permissions.includes(code) } },
+      ],
     }).compileComponents();
 
     fixture = TestBed.createComponent(AdminMembershipPlanFormModalComponent);
@@ -67,7 +74,7 @@ describe('AdminMembershipPlanFormModalComponent', () => {
     httpMock = TestBed.inject(HttpTestingController);
     fixture.detectChanges();
 
-    httpMock.expectOne(`${api}/admin/services`).flush(catalog);
+    httpMock.expectOne(`${api}/admin/services/options`).flush(catalog);
     if (planId) {
       httpMock.expectOne(`${api}/admin/membership-plans/${planId}`).flush(existingPlan);
     }
@@ -219,5 +226,42 @@ describe('AdminMembershipPlanFormModalComponent', () => {
     expect(req.request.method).toBe('PUT');
     req.flush(existingPlan);
     await submitting;
+  });
+  it('loads the plan points and sends them when the user manages loyalty', async () => {
+    await open('p-1', [PERMISSION_CODES.loyaltySettingsManage]);
+    expect(component.form.controls.loyaltyPoints.enabled).toBe(true);
+
+    component.form.patchValue({ loyaltyPoints: 0 });
+    expect(component.buildRequest().loyaltyPoints).toBe(0);
+
+    component.form.patchValue({ loyaltyPoints: 2.5 });
+    expect(component.form.controls.loyaltyPoints.hasError('integer')).toBe(true);
+    component.form.patchValue({ loyaltyPoints: -1 });
+    expect(component.form.controls.loyaltyPoints.invalid).toBe(true);
+
+    component.form.patchValue({ loyaltyPoints: 120 });
+    const submitting = component.submit();
+    const req = httpMock.expectOne(`${api}/admin/membership-plans/p-1`);
+    expect(req.request.body.loyaltyPoints).toBe(120);
+    req.flush({ ...existingPlan, loyaltyPoints: 120 });
+    await submitting;
+  });
+
+  it('shows the points read-only and never sends them without the loyalty permission', async () => {
+    await open('p-1');
+
+    expect(component.form.controls.loyaltyPoints.disabled).toBe(true);
+    expect(component.form.controls.loyaltyPoints.value).toBe(existingPlan.loyaltyPoints);
+    expect('loyaltyPoints' in component.buildRequest()).toBe(false);
+    expect(fixture.nativeElement.textContent).toContain('Solo quien administra la fidelización puede cambiar los puntos.');
+  });
+
+  it('labels the rates "Servicio general · Tarifa"', async () => {
+    await open('p-1');
+
+    expect(component.serviceName('s-beard')).toBe('Corte · Barba');
+    expect(component.serviceName('s-old')).toBe('Corte · Tinte');
+    // Rates already in the plan (s-cut, s-old) cannot be added again.
+    expect(component.addableServices().map((service) => service.name)).toEqual(['Corte · Barba']);
   });
 });

@@ -68,10 +68,10 @@
     <section class="native-home__services">
       <h2 class="native-home__section-label">Servicios</h2>
       <ul class="native-home__services-list">
-        @for (service of visibleServices(staffMembers()[0]); track service.id) {
+        @for (service of visibleServices(staffMembers()[0]); track service.generalServiceId) {
           <li class="native-home__services-item">
             <span>{{ service.name }}</span>
-            <span class="native-home__services-price">${{ service.price }}</span>
+            <span class="native-home__services-price">{{ service.durationMinutes }} min</span>
           </li>
         }
       </ul>

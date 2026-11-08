@@ -1,3 +1,5 @@
+import { MergeLoyaltyPreview } from './loyalty-wallet.models';
+
 export interface CustomerLinkedAccountView {
   userId: string;
   fullName: string;
@@ -94,6 +96,8 @@ export interface CustomerUnlinkAccountRequest {
 
 export interface CustomerMergeRequest {
   sourceCustomerId: string;
+  /** From the preview being confirmed; the API refuses the merge if anything changed since. */
+  previewToken: string;
 }
 
 export interface CustomerMergePreview {
@@ -103,4 +107,6 @@ export interface CustomerMergePreview {
   blockingReasons: string[];
   warnings: string[];
   accountToTransfer: CustomerLinkedAccountView | null;
+  loyalty: MergeLoyaltyPreview | null;
+  previewToken: string;
 }

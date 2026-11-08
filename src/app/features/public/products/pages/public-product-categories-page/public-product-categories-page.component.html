@@ -1,0 +1,48 @@
+<div class="pp">
+  <section class="pp__hero">
+    <div class="pp__wrap">
+      <span class="pp__kicker">Catálogo</span>
+      <h1 class="pp__title">Productos</h1>
+      <p class="pp__sub">Conoce los productos disponibles en la barbería y sus precios. Elige una categoría.</p>
+    </div>
+  </section>
+
+  <section class="pp__section">
+    <div class="pp__wrap">
+      @switch (state()) {
+        @case ('loading') {
+          <p class="pp__count">Cargando categorías...</p>
+        }
+        @case ('ready') {
+          @if (!categories().length) {
+            <div class="pp__state">
+              <h2>Pronto</h2>
+              <p>Aún no hay productos publicados. Vuelve más tarde.</p>
+            </div>
+          } @else {
+            <div class="pp__grid">
+              @for (category of categories(); track category.code) {
+                <a class="pp__card" [routerLink]="['/productos', category.code]" [attr.data-category-code]="category.code">
+                  <div class="pp__card-media" aria-hidden="true">{{ category.name.charAt(0) }}</div>
+                  <div class="pp__card-body">
+                    <span class="pp__card-name">{{ category.name }}</span>
+                    <span class="pp__count">
+                      {{ category.productCount }} {{ category.productCount === 1 ? 'producto' : 'productos' }}
+                    </span>
+                  </div>
+                </a>
+              }
+            </div>
+          }
+        }
+        @default {
+          <div class="pp__state">
+            <h2>No pudimos cargar el catálogo</h2>
+            <p>Revisa tu conexión e inténtalo de nuevo.</p>
+            <button class="pp__btn" type="button" (click)="load()">Reintentar</button>
+          </div>
+        }
+      }
+    </div>
+  </section>
+</div>

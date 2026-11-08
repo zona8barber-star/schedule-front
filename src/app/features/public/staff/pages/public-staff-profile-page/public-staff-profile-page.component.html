@@ -32,9 +32,18 @@
           <span>{{ formatRating(displayAverageRating()) }}</span>
           <span class="psp__sep">·</span>
           <span>{{ displayReviewCount() }} reseñas</span>
-          <span class="psp__sep">·</span>
-          <span>{{ staffProfile()!.defaultAppointmentDurationMinutes }} min por cita</span>
         </div>
+
+        @if (bookableServices().length) {
+          <ul class="psp__services" aria-label="Servicios">
+            @for (service of bookableServices(); track service.generalServiceId) {
+              <li class="psp__service">
+                <span>{{ service.name }}</span>
+                <span class="psp__service-duration">{{ service.durationMinutes }} min</span>
+              </li>
+            }
+          </ul>
+        }
 
         @if (staffProfile()!.phoneNumber && whatsappHref()) {
           <a
@@ -184,13 +193,72 @@
           </button>
         </div>
 
-        <p class="psp__modal-sub">Elige el día y toca el horario que más te convenga.</p>
+        @if (isLoading()) {
+          <p class="psp__modal-sub">Cargando servicios...</p>
+        } @else if (!bookableServices().length) {
+          <p class="psp__modal-sub" data-testid="no-services">
+            Este profesional aún no tiene servicios disponibles para reservar.
+          </p>
+        } @else if (!bookingDate()) {
+          <p class="psp__modal-sub">¿Qué día quieres venir?</p>
+          <div class="psp__day-options" role="list" aria-label="Elige el día">
+            @for (day of dayOptions(); track day.date) {
+              <button
+                class="psp__day-option"
+                type="button"
+                role="listitem"
+                [attr.data-day]="day.date"
+                (click)="selectDate(day.date)"
+              >
+                <strong>{{ day.topLabel }}</strong>
+                <span>{{ day.bottomLabel }}</span>
+              </button>
+            }
+          </div>
+          <label class="psp__other-date">
+            <span>Otra fecha</span>
+            <input type="date" [min]="today()" data-testid="other-date" (change)="onOtherDate($event)" />
+          </label>
+        } @else if (!selectedService()) {
+          <div class="psp__chosen-service">
+            <span data-testid="chosen-date">{{ formatBookingDate(bookingDate()!) }}</span>
+            <button class="psp__link" type="button" (click)="changeDate()">Cambiar día</button>
+          </div>
+          <p class="psp__modal-sub">¿Qué servicio quieres?</p>
+          <div class="psp__service-options">
+            @for (service of bookableServices(); track service.generalServiceId) {
+              <button
+                class="psp__service-option"
+                type="button"
+                [attr.data-service-id]="service.generalServiceId"
+                (click)="selectService(service)"
+              >
+                <strong>{{ service.name }}</strong>
+                <span>{{ service.durationMinutes }} min</span>
+              </button>
+            }
+          </div>
+        } @else {
+          <div class="psp__chosen-service">
+            <span data-testid="chosen-date">{{ formatBookingDate(bookingDate()!) }}</span>
+            <button class="psp__link" type="button" (click)="changeDate()">Cambiar día</button>
+          </div>
+          <div class="psp__chosen-service">
+            <span data-testid="chosen-service">{{ formatServiceOption(selectedService()!) }}</span>
+            @if (bookableServices().length > 1) {
+              <button class="psp__link" type="button" (click)="changeService()">Cambiar servicio</button>
+            }
+          </div>
 
-        <app-slot-picker
-          [staffProfileId]="staffProfileId()!"
-          [initialDate]="bookingDate()"
-          (slotSelected)="selectSlot($event)"
-        />
+          <p class="psp__modal-sub">Toca el horario que más te convenga.</p>
+
+          <app-slot-picker
+            [staffProfileId]="staffProfileId()!"
+            [generalServiceId]="selectedService()!.generalServiceId"
+            [initialDate]="bookingDate()"
+            (slotSelected)="selectSlot($event)"
+          />
+        }
       </dialog>
     </div>
   }

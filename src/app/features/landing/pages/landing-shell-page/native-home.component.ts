@@ -29,7 +29,7 @@ export class NativeHomeComponent {
   readonly bookStaff = output<PublicStaffListItemResponse>();
 
   visibleServices(member: PublicStaffListItemResponse) {
-    return member.services.filter((s) => s.isActive).slice(0, 3);
+    return member.services.slice(0, 3);
   }
 
   openModal(member: PublicStaffListItemResponse): void {

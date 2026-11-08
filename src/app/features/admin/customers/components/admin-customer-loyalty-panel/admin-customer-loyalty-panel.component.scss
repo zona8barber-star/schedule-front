@@ -1,0 +1,161 @@
+// Same card look as the customer detail page.
+.loyalty-panel {
+  padding: 1rem;
+  border: 1px solid var(--color-border, #e2e2e2);
+  border-radius: 0.75rem;
+  background: var(--color-surface, #fff);
+
+  h2 {
+    margin: 0;
+    font-size: 1.1rem;
+  }
+
+  h3 {
+    margin: 1rem 0 0.5rem;
+    font-size: 0.95rem;
+  }
+}
+
+.loyalty-panel__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.loyalty-panel__badge {
+  padding: 0.15rem 0.6rem;
+  border-radius: 999px;
+  background: var(--color-surface-muted, #f2f2f2);
+  font-size: 0.8rem;
+}
+
+.loyalty-panel__summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(8rem, 1fr));
+  gap: 0.5rem;
+  margin: 0;
+
+  div {
+    padding: 0.5rem 0.75rem;
+    border-radius: 0.5rem;
+    background: var(--color-surface-muted, #f2f2f2);
+  }
+
+  dt {
+    font-size: 0.8rem;
+    opacity: 0.75;
+  }
+
+  dd {
+    margin: 0;
+    font-size: 1.2rem;
+    font-weight: 700;
+  }
+}
+
+.loyalty-panel__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+
+  li {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.15rem 0.6rem;
+    padding: 0.5rem 0;
+    overflow-wrap: anywhere;
+  }
+
+  li + li {
+    border-top: 1px solid var(--color-border, #e2e2e2);
+  }
+}
+
+.loyalty-panel__closed {
+  opacity: 0.6;
+}
+
+.loyalty-panel__muted {
+  opacity: 0.75;
+  font-size: 0.9rem;
+}
+
+.loyalty-panel__link {
+  margin-top: 0.75rem;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--brand-primary, inherit);
+  font: inherit;
+  font-weight: 600;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.loyalty-panel__adjust {
+  display: grid;
+  gap: 0.5rem;
+  margin-top: 1rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--color-border, #e2e2e2);
+
+  label {
+    display: grid;
+    gap: 0.25rem;
+  }
+
+  input,
+  select,
+  textarea {
+    width: 100%;
+    padding: 0.45rem 0.6rem;
+    border: 1px solid var(--color-border, #ccc);
+    border-radius: 0.5rem;
+    background: var(--color-surface, #fff);
+    color: inherit;
+    font: inherit;
+  }
+}
+
+.loyalty-panel__fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+  gap: 0.5rem;
+}
+
+.loyalty-panel__primary {
+  justify-self: start;
+  padding: 0.5rem 1rem;
+  border: 0;
+  border-radius: 0.5rem;
+  background: var(--btn-primary-bg, #222);
+  color: var(--btn-primary-text, #fff);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: default;
+  }
+}
+
+.loyalty-panel__adjust label.loyalty-panel__check {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.5rem;
+
+  input {
+    width: auto;
+    margin: 0;
+  }
+}
+
+.loyalty-panel__history-filters {
+  margin: 0.5rem 0;
+}

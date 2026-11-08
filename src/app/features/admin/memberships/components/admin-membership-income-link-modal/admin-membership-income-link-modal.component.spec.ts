@@ -44,11 +44,13 @@ describe('AdminMembershipIncomeLinkModalComponent', () => {
     fixture.detectChanges();
 
     httpMock.expectOne(`${api}/admin/memberships/income-candidates?date=2026-10-28`).flush([income]);
-    httpMock.expectOne(`${api}/admin/customers/c-1/memberships`).flush([
-      { ...membership, incomeEntryId: null } as unknown as CustomerMembershipSummaryView,
-      sibling,
-      alreadyPaid,
-    ]);
+    // The largest page: one customer never has that many memberships.
+    httpMock.expectOne(`${api}/admin/customers/c-1/memberships?pageSize=100`).flush({
+      items: [{ ...membership, incomeEntryId: null } as unknown as CustomerMembershipSummaryView, sibling, alreadyPaid],
+      page: 1,
+      pageSize: 100,
+      totalCount: 3,
+    });
     await flushMicrotasks();
     fixture.detectChanges();
   });

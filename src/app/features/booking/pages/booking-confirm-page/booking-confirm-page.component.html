@@ -25,6 +25,9 @@
         <p class="booking-confirm-page__eyebrow">Reserva confirmada</p>
         <h2>Tu cita fue creada correctamente</h2>
         <p>Fecha: {{ formatDateTime(successAppointment()!.startsAtUtc) }}</p>
+        @if (successAppointment()!.generalServiceName ?? service()?.name; as serviceName) {
+          <p>Servicio: {{ serviceName }}</p>
+        }
         <div class="booking-confirm-page__actions">
           @if (whatsappUrl()) {
             <a
@@ -51,6 +54,16 @@
           <span>Horario</span>
           <strong>{{ formatDateTime(startsAtUtc()!) }}</strong>
         </div>
+        <div>
+          <span>Servicio</span>
+          <strong data-testid="confirm-service">{{ service()?.name ?? 'Servicio seleccionado' }}</strong>
+        </div>
+        @if (service(); as chosen) {
+          <div>
+            <span>Duración</span>
+            <strong data-testid="confirm-duration">{{ chosen.durationMinutes }} min</strong>
+          </div>
+        }
       </section>
 
       @if (slotTaken()) {

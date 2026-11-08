@@ -1,155 +1,180 @@
 <div
   class="app-shell"
   [class.app-shell--menu-open]="isMobileMenuOpen()"
+  [class.app-shell--sidebar]="isSidebarLayout()"
   [class.app-shell--standalone]="isStandalone()"
   [class.app-shell--standalone-tablet]="isStandalone() && isTablet()"
 >
   <header class="app-shell__header">
+    <button
+      #menuToggle
+      class="app-shell__menu-toggle"
+      type="button"
+      data-testid="menu-toggle"
+      [attr.aria-expanded]="isMobileMenuOpen()"
+      aria-controls="mobile-menu"
+      [attr.aria-label]="isMobileMenuOpen() ? 'Cerrar menú' : 'Abrir menú'"
+      (click)="toggleMobileMenu()"
+    >
+      @if (isMobileMenuOpen()) {
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M6 6l12 12M18 6L6 18" />
+        </svg>
+      } @else {
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5M3.75 17.25h16.5" />
+        </svg>
+      }
+    </button>
+
     <a class="app-shell__brand" data-testid="brand" routerLink="/">
       <img class="app-shell__brand-logo" src="assets/images/logo_black.jpeg" alt="Logo de la barberia" />
     </a>
 
-    <nav class="app-shell__nav app-shell__nav--desktop" aria-label="Navegacion principal">
-      @for (link of navigationLinks(); track link.route) {
-        <a
-          [routerLink]="link.route"
-          routerLinkActive="is-active"
-          [routerLinkActiveOptions]="{ exact: link.exact ?? false }"
-        >
-          {{ link.label }}
-        </a>
-      }
-    </nav>
+    <p class="app-shell__title" data-testid="page-title">{{ navigation.pageTitle() }}</p>
+
+    @if (headerGroups().length) {
+      <nav class="app-shell__header-nav" aria-label="Navegación principal">
+        @if (headerGroups().length === 1) {
+          @for (item of headerGroups()[0].items; track item.id) {
+            <a
+              class="app-shell__header-link"
+              [routerLink]="item.route"
+              [class.is-active]="item.id === navigation.activeItemId()"
+              [attr.aria-current]="item.id === navigation.activeItemId() ? 'page' : null"
+              [attr.data-nav-item]="item.id"
+            >
+              {{ item.label }}
+            </a>
+          }
+        } @else {
+          @for (group of headerGroups(); track group.id) {
+            <div class="app-shell__header-group">
+              <button
+                class="app-shell__header-link app-shell__header-group-toggle"
+                type="button"
+                [class.is-active]="group.id === navigation.activeGroupId()"
+                [attr.aria-expanded]="openHeaderGroupId() === group.id"
+                [attr.aria-controls]="'header-group-' + group.id"
+                [attr.data-nav-group]="group.id"
+                (click)="toggleHeaderGroup(group.id)"
+              >
+                {{ group.label }}
+                <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M6 8l4 4 4-4" />
+                </svg>
+              </button>
+              @if (openHeaderGroupId() === group.id) {
+                <ul class="app-shell__header-dropdown" [id]="'header-group-' + group.id">
+                  @for (item of group.items; track item.id) {
+                    <li>
+                      <a
+                        class="app-shell__dropdown-item"
+                        [routerLink]="item.route"
+                        [class.is-active]="item.id === navigation.activeItemId()"
+                        [attr.aria-current]="item.id === navigation.activeItemId() ? 'page' : null"
+                        [attr.data-nav-item]="item.id"
+                      >
+                        {{ item.label }}
+                      </a>
+                    </li>
+                  }
+                </ul>
+              }
+            </div>
+          }
+        }
+      </nav>
+    }
 
     <div class="app-shell__header-actions">
       @if (authService.isAuthenticated()) {
         <app-notification-bell />
       }
 
-      <div class="app-shell__auth app-shell__auth--desktop">
-        @if (authService.status() === 'restoring') {
-          <span class="app-shell__status">Preparando tu cuenta...</span>
-        } @else if (authService.isAuthenticated()) {
-          <div class="app-shell__user-menu">
-            <button
-              class="app-shell__user-btn"
-              type="button"
-              [attr.aria-expanded]="isUserMenuOpen()"
-              aria-haspopup="true"
-              aria-label="Abrir menu de usuario"
-              (click)="toggleUserMenu()"
-            >
-              <svg
-                class="app-shell__user-icon"
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 24 24"
-                fill="currentColor"
-                aria-hidden="true"
-              >
-                <path
-                  d="M12 12a5 5 0 1 0 0-10 5 5 0 0 0 0 10zm0 2c-5.33 0-8 2.67-8 4v1h16v-1c0-1.33-2.67-4-8-4z"
-                />
-              </svg>
-            </button>
-
-            @if (isUserMenuOpen()) {
-              <div class="app-shell__user-dropdown" role="menu">
-                <div class="app-shell__user-dropdown-header">
-                  <strong>{{ authService.currentUser()?.fullName }}</strong>
-                  <small>{{ identitySubtitle() }}</small>
-                </div>
-
-                @if (userDropdownCustomerLinks().length || userDropdownStaffLinks().length) {
-                  <div class="app-shell__user-dropdown-section">
-                    @for (link of userDropdownCustomerLinks(); track link.route) {
-                      <a
-                        class="app-shell__user-dropdown-item"
-                        [routerLink]="link.route"
-                        routerLinkActive="is-active"
-                        [routerLinkActiveOptions]="{ exact: link.exact ?? false }"
-                        role="menuitem"
-                      >
-                        {{ link.label }}
-                      </a>
-                    }
-                    @for (link of userDropdownStaffLinks(); track link.route) {
-                      <a
-                        class="app-shell__user-dropdown-item"
-                        [routerLink]="link.route"
-                        routerLinkActive="is-active"
-                        [routerLinkActiveOptions]="{ exact: link.exact ?? false }"
-                        role="menuitem"
-                      >
-                        {{ link.label }}
-                      </a>
-                    }
-                  </div>
-                }
-
-                @if (userDropdownAdminLinks().length) {
-                  <div class="app-shell__user-dropdown-section">
-                    <p class="app-shell__user-dropdown-label">Administracion</p>
-                    @for (link of userDropdownAdminLinks(); track link.route) {
-                      <a
-                        class="app-shell__user-dropdown-item"
-                        [routerLink]="link.route"
-                        routerLinkActive="is-active"
-                        [routerLinkActiveOptions]="{ exact: link.exact ?? false }"
-                        role="menuitem"
-                      >
-                        {{ link.label }}
-                      </a>
-                    }
-                  </div>
-                }
-
-                <div class="app-shell__user-dropdown-section">
-                  <a
-                    class="app-shell__user-dropdown-item"
-                    routerLink="/account/notifications"
-                    routerLinkActive="is-active"
-                    role="menuitem"
-                  >
-                    Notificaciones
-                  </a>
-                </div>
-
-                <div class="app-shell__user-dropdown-footer">
-                  <button
-                    class="app-shell__user-dropdown-logout"
-                    type="button"
-                    [disabled]="isSigningOut()"
-                    role="menuitem"
-                    (click)="logout()"
-                  >
-                    {{ isSigningOut() ? 'Cerrando...' : 'Cerrar sesion' }}
-                  </button>
-                </div>
-              </div>
-            }
-          </div>
-        } @else {
-          <a class="app-shell__button app-shell__button--entry" routerLink="/auth/login"
-            >Iniciar sesion</a
+      @if (authService.status() === 'restoring') {
+        <span class="app-shell__status">Preparando...</span>
+      } @else if (authService.isAuthenticated()) {
+        <div class="app-shell__user-menu">
+          <button
+            class="app-shell__user-btn"
+            type="button"
+            data-testid="account-toggle"
+            [class.is-active]="navigation.isAccountItemActive()"
+            [attr.aria-expanded]="isUserMenuOpen()"
+            aria-controls="account-menu"
+            aria-label="Mi cuenta"
+            (click)="toggleUserMenu()"
           >
-        }
-      </div>
+            <svg class="app-shell__user-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <path d="M12 12a5 5 0 1 0 0-10 5 5 0 0 0 0 10zm0 2c-5.33 0-8 2.67-8 4v1h16v-1c0-1.33-2.67-4-8-4z" />
+            </svg>
+          </button>
 
-      <button
-        class="app-shell__menu-toggle"
-        type="button"
-        [attr.aria-expanded]="isMobileMenuOpen()"
-        aria-controls="mobile-menu"
-        [attr.aria-label]="isMobileMenuOpen() ? 'Cerrar menu' : 'Abrir menu'"
-        (click)="toggleMobileMenu()"
-      >
-        <span class="app-shell__menu-icon" aria-hidden="true"></span>
-        <span class="app-shell__sr-only">{{
-          isMobileMenuOpen() ? 'Cerrar menu' : 'Abrir menu'
-        }}</span>
-      </button>
+          @if (isUserMenuOpen()) {
+            <div class="app-shell__user-dropdown" id="account-menu">
+              <div class="app-shell__user-dropdown-header">
+                <strong>{{ authService.currentUser()?.fullName }}</strong>
+                <small>{{ identitySubtitle() }}</small>
+              </div>
+
+              @if (menu().accountItems.length) {
+                <ul class="app-shell__user-dropdown-section">
+                  @for (item of menu().accountItems; track item.id) {
+                    <li>
+                      <a
+                        class="app-shell__dropdown-item"
+                        [routerLink]="item.route"
+                        [class.is-active]="item.id === navigation.activeItemId()"
+                        [attr.aria-current]="item.id === navigation.activeItemId() ? 'page' : null"
+                        [attr.data-nav-item]="item.id"
+                      >
+                        {{ item.label }}
+                      </a>
+                    </li>
+                  }
+                </ul>
+              }
+
+              <div class="app-shell__user-dropdown-footer">
+                <button
+                  class="app-shell__user-dropdown-logout"
+                  type="button"
+                  [disabled]="isSigningOut()"
+                  (click)="logout()"
+                >
+                  {{ isSigningOut() ? 'Cerrando...' : 'Cerrar sesión' }}
+                </button>
+              </div>
+            </div>
+          }
+        </div>
+      } @else {
+        <a class="app-shell__button app-shell__button--entry" routerLink="/auth/login">Ingresar</a>
+      }
     </div>
   </header>
+
+  @if (isMobileMenuOpen()) {
+    <button
+      class="app-shell__backdrop"
+      type="button"
+      tabindex="-1"
+      aria-label="Cerrar menú"
+      (click)="closeMobileMenu()"
+    ></button>
+
+    <nav #mobilePanel id="mobile-menu" class="app-shell__panel" aria-label="Menú principal" data-testid="mobile-panel">
+      <app-nav-menu
+        idPrefix="panel"
+        [groups]="menu().groups"
+        [activeItemId]="navigation.activeItemId()"
+        [expandedGroupIds]="navigation.expandedGroupIds()"
+        (groupToggle)="navigation.toggleGroup($event)"
+        (itemSelect)="closeMobileMenu()"
+      />
+    </nav>
+  }
 
   @if (httpActivityService.isLoading()) {
     <div class="app-shell__loader-overlay" role="status" aria-live="polite" aria-label="Cargando">
@@ -250,96 +275,27 @@
     </section>
   }
 
-  @if (isMobileMenuOpen()) {
-    <button
-      class="app-shell__backdrop"
-      type="button"
-      (click)="closeMobileMenu()"
-      aria-label="Cerrar menu"
-    ></button>
-  }
+  <div class="app-shell__body">
+    @if (isSidebarLayout()) {
+      <aside class="app-shell__sidebar" data-testid="sidebar">
+        <nav aria-label="Menú principal">
+          <app-nav-menu
+            idPrefix="sidebar"
+            [groups]="menu().groups"
+            [activeItemId]="navigation.activeItemId()"
+            [expandedGroupIds]="navigation.expandedGroupIds()"
+            (groupToggle)="navigation.toggleGroup($event)"
+          />
+        </nav>
+      </aside>
+    }
 
-  <nav
-    id="mobile-menu"
-    class="app-shell__drawer"
-    [class.app-shell__drawer--open]="isMobileMenuOpen()"
-    aria-label="Menu principal movil"
-  >
-    <div class="app-shell__drawer-content">
-      <a class="app-shell__drawer-brand" routerLink="/" (click)="closeMobileMenu()">
-        <img
-          class="app-shell__drawer-logo"
-          src="assets/images/logo_black.jpeg"
-          alt="Logo de la barberia"
-        />
-        <span>{{ configService.config().appName }}</span>
-      </a>
+    <main class="app-shell__content">
+      <router-outlet></router-outlet>
+    </main>
+  </div>
 
-      <div class="app-shell__drawer-group">
-        @for (link of primaryMobileLinks(); track link.route) {
-          <a
-            [routerLink]="link.route"
-            routerLinkActive="is-active"
-            [routerLinkActiveOptions]="{ exact: link.exact ?? false }"
-            (click)="closeMobileMenu()"
-          >
-            {{ link.label }}
-          </a>
-        }
-      </div>
-
-      @if (adminMobileLinks().length) {
-        <div class="app-shell__drawer-group">
-          <p class="app-shell__drawer-title">Administracion</p>
-          @for (link of adminMobileLinks(); track link.route) {
-            <a
-              [routerLink]="link.route"
-              routerLinkActive="is-active"
-              [routerLinkActiveOptions]="{ exact: link.exact ?? false }"
-              (click)="closeMobileMenu()"
-            >
-              {{ link.label }}
-            </a>
-          }
-        </div>
-      }
-
-      <div class="app-shell__drawer-auth">
-        @if (authService.status() === 'restoring') {
-          <span class="app-shell__status">Preparando tu cuenta...</span>
-        } @else if (authService.isAuthenticated()) {
-          <div class="app-shell__identity">
-            <strong>{{ authService.currentUser()?.fullName }}</strong>
-            <small>{{ identitySubtitle() }}</small>
-          </div>
-          <a
-            routerLink="/account/notifications"
-            routerLinkActive="is-active"
-            (click)="closeMobileMenu()"
-          >
-            Notificaciones
-          </a>
-          <button
-            class="app-shell__button app-shell__button--ghost"
-            type="button"
-            [disabled]="isSigningOut()"
-            (click)="logout()"
-          >
-            {{ isSigningOut() ? 'Cerrando...' : 'Cerrar sesion' }}
-          </button>
-        } @else {
-          <a
-            class="app-shell__button app-shell__button--entry"
-            routerLink="/auth/login"
-            (click)="closeMobileMenu()"
-            >Iniciar sesion</a
-          >
-        }
-      </div>
-    </div>
-  </nav>
-
-  <nav #bottomNav class="app-shell__bottom-nav" aria-label="Navegacion principal movil">
+  <nav #bottomNav class="app-shell__bottom-nav" aria-label="Accesos rápidos" data-testid="shortcut-bar">
     <span
       class="app-shell__bottom-nav-highlight"
       [class.app-shell__bottom-nav-highlight--visible]="bottomNavHighlightStyle()"
@@ -348,18 +304,19 @@
       aria-hidden="true"
     ></span>
 
-    @for (link of bottomNavLinks(); track link.route; let i = $index) {
+    @for (shortcut of menu().shortcuts; track shortcut.id; let i = $index) {
       <a
         #bottomNavTab
         class="app-shell__bottom-nav-item"
-        [routerLink]="link.route"
-        routerLinkActive="is-active"
-        [routerLinkActiveOptions]="{ exact: link.exact ?? false }"
-        (isActiveChange)="onBottomNavTabActiveChange(i, $event)"
-        [attr.aria-label]="link.label"
+        [routerLink]="shortcut.route"
+        [class.is-active]="activeShortcutIndex() === i"
+        [attr.aria-current]="activeShortcutIndex() === i ? 'page' : null"
+        [attr.aria-label]="shortcut.label"
+        [attr.title]="shortcut.label"
+        [attr.data-shortcut]="shortcut.id"
       >
         <span class="app-shell__bottom-nav-icon" aria-hidden="true">
-          @switch (link.icon) {
+          @switch (shortcut.icon) {
             @case ('home') {
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                 <path
@@ -371,16 +328,8 @@
             }
             @case ('booking') {
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  d="M12 6v12m6-6H6"
-                />
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  d="M12 21a9 9 0 100-18 9 9 0 000 18z"
-                />
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m6-6H6" />
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 21a9 9 0 100-18 9 9 0 000 18z" />
               </svg>
             }
             @case ('staff') {
@@ -401,12 +350,30 @@
                 />
               </svg>
             }
-            @case ('profile') {
+            @case ('records') {
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                 <path
                   stroke-linecap="round"
                   stroke-linejoin="round"
-                  d="M17.982 18.725A7.488 7.488 0 0012 15.75a7.488 7.488 0 00-5.982 2.975m11.963 0a9 9 0 10-11.963 0m11.963 0A8.966 8.966 0 0112 21a8.966 8.966 0 01-5.982-2.275M15 9.75a3 3 0 11-6 0 3 3 0 016 0z"
+                  d="M9 12.75L11.25 15 15 9.75M9 4.5h6M9 4.5a1.5 1.5 0 001.5 1.5h3A1.5 1.5 0 0015 4.5M9 4.5A1.5 1.5 0 0110.5 3h3A1.5 1.5 0 0115 4.5m-6 0H6.75A2.25 2.25 0 004.5 6.75v12A2.25 2.25 0 006.75 21h10.5a2.25 2.25 0 002.25-2.25v-12A2.25 2.25 0 0017.25 4.5H15"
+                />
+              </svg>
+            }
+            @case ('points') {
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.563.563 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.563.563 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z"
+                />
+              </svg>
+            }
+            @case ('customers') {
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198v.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 003.74.477m.94-3.197a5.971 5.971 0 00-.94 3.197M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z"
                 />
               </svg>
             }
@@ -414,85 +381,10 @@
         </span>
       </a>
     }
-
-    <button
-      class="app-shell__bottom-nav-item app-shell__bottom-nav-item--button"
-      type="button"
-      [class.is-active]="isMobileMenuOpen()"
-      [attr.aria-expanded]="isMobileMenuOpen()"
-      aria-controls="mobile-menu"
-      aria-label="Menu"
-      (click)="toggleMobileMenu()"
-    >
-      <span class="app-shell__bottom-nav-icon" aria-hidden="true">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5M3.75 17.25h16.5" />
-        </svg>
-      </span>
-    </button>
   </nav>
-
-  @if (isStandalone() && isTablet()) {
-    <nav class="app-shell__side-rail" aria-label="Navegacion principal">
-      <a class="app-shell__side-rail-brand" routerLink="/">
-        <img class="app-shell__side-rail-logo" src="assets/images/logo.png" alt="Logo" />
-      </a>
-
-      <div class="app-shell__side-rail-links">
-        @for (link of bottomNavLinks(); track link.route) {
-          <a
-            class="app-shell__side-rail-item"
-            [routerLink]="link.route"
-            routerLinkActive="is-active"
-            [routerLinkActiveOptions]="{ exact: link.exact ?? false }"
-          >
-            {{ link.label }}
-          </a>
-        }
-        @if (adminMobileLinks().length) {
-          <hr class="app-shell__side-rail-divider" />
-          @for (link of adminMobileLinks(); track link.route) {
-            <a
-              class="app-shell__side-rail-item"
-              [routerLink]="link.route"
-              routerLinkActive="is-active"
-            >
-              {{ link.label }}
-            </a>
-          }
-        }
-      </div>
-
-      <div class="app-shell__side-rail-footer">
-        @if (authService.isAuthenticated()) {
-          <a
-            class="app-shell__side-rail-item"
-            routerLink="/account/notifications"
-            routerLinkActive="is-active"
-          >
-            Notificaciones
-          </a>
-          <button
-            class="app-shell__side-rail-logout"
-            type="button"
-            [disabled]="isSigningOut()"
-            (click)="logout()"
-          >
-            {{ isSigningOut() ? 'Cerrando...' : 'Salir' }}
-          </button>
-        } @else {
-          <a class="app-shell__side-rail-logout" routerLink="/auth/login">Iniciar sesion</a>
-        }
-      </div>
-    </nav>
-  }
 
   <app-toast-outlet />
   <app-confirm-modal />
-
-  <main class="app-shell__content">
-    <router-outlet></router-outlet>
-  </main>
 
   <!-- WhatsApp FAB global ─ visible en toda la app ───────────── -->
   @if (whatsappUrl()) {

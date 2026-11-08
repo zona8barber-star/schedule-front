@@ -2,8 +2,10 @@ import { Routes } from '@angular/router';
 
 import { authGuard } from './core/guards/auth.guard';
 import { guestGuard } from './core/guards/guest.guard';
+import { permissionGuard } from './core/guards/permission.guard';
 import { roleGuard } from './core/guards/role.guard';
-import { ROLE_NAMES } from './core/models/auth.models';
+import { PERMISSION_CODES, ROLE_NAMES } from './core/models/auth.models';
+import { customerClaimsQueryGuard } from './features/admin/customer-claims/customer-claims-query.guard';
 
 const loadScaffoldSection = () =>
   import('./shared/components/scaffold-section/scaffold-section.component').then(
@@ -25,9 +27,84 @@ const loadAdminStaffAvailabilityPage = () =>
     './features/admin/staff/pages/admin-staff-availability-page/admin-staff-availability-page.component'
   ).then((module) => module.AdminStaffAvailabilityPageComponent);
 
+const loadOwnCustomerProfilePage = () =>
+  import(
+    './features/customer/customer-profile/pages/own-customer-profile-page/own-customer-profile-page.component'
+  ).then((module) => module.OwnCustomerProfilePageComponent);
+
+const loadMyLoyaltyPage = () =>
+  import('./features/customer/loyalty/pages/my-loyalty-page/my-loyalty-page.component').then(
+    (module) => module.MyLoyaltyPageComponent,
+  );
+
+const loadAdminCustomerClaimsPage = () =>
+  import(
+    './features/admin/customer-claims/pages/admin-customer-claims-page/admin-customer-claims-page.component'
+  ).then((module) => module.AdminCustomerClaimsPageComponent);
+
+const loadAdminServiceRecordsPage = () =>
+  import(
+    './features/admin/service-records/pages/admin-service-records-page/admin-service-records-page.component'
+  ).then((module) => module.AdminServiceRecordsPageComponent);
+
+const loadStaffServiceRecordsPage = () =>
+  import(
+    './features/staff/service-records/pages/staff-service-records-page/staff-service-records-page.component'
+  ).then((module) => module.StaffServiceRecordsPageComponent);
+
+const loadAdminLoyaltyRewardsPage = () =>
+  import('./features/admin/loyalty/pages/admin-loyalty-rewards-page/admin-loyalty-rewards-page.component').then(
+    (module) => module.AdminLoyaltyRewardsPageComponent,
+  );
+
+const loadAdminLoyaltyRedemptionsPage = () =>
+  import('./features/admin/loyalty/pages/admin-loyalty-redemptions-page/admin-loyalty-redemptions-page.component').then(
+    (module) => module.AdminLoyaltyRedemptionsPageComponent,
+  );
+
+const loadAdminLoyaltySettingsPage = () =>
+  import(
+    './features/admin/loyalty/pages/admin-loyalty-settings-page/admin-loyalty-settings-page.component'
+  ).then((module) => module.AdminLoyaltySettingsPageComponent);
+
 const loadAdminServicesListPage = () =>
   import('./features/admin/services/pages/admin-services-list-page/admin-services-list-page.component').then(
     (module) => module.AdminServicesListPageComponent,
+  );
+
+const loadAdminServiceCategoriesPage = () =>
+  import(
+    './features/admin/service-catalog/pages/admin-service-categories-page/admin-service-categories-page.component'
+  ).then((module) => module.AdminServiceCategoriesPageComponent);
+
+const loadAdminGeneralServicesPage = () =>
+  import(
+    './features/admin/service-catalog/pages/admin-general-services-page/admin-general-services-page.component'
+  ).then((module) => module.AdminGeneralServicesPageComponent);
+
+const loadAdminProductCategoriesPage = () =>
+  import(
+    './features/admin/product-catalog/pages/admin-product-categories-page/admin-product-categories-page.component'
+  ).then((module) => module.AdminProductCategoriesPageComponent);
+
+const loadAdminProductsPage = () =>
+  import('./features/admin/product-catalog/pages/admin-products-page/admin-products-page.component').then(
+    (module) => module.AdminProductsPageComponent,
+  );
+
+const loadPublicProductCategoriesPage = () =>
+  import(
+    './features/public/products/pages/public-product-categories-page/public-product-categories-page.component'
+  ).then((module) => module.PublicProductCategoriesPageComponent);
+
+const loadPublicProductCategoryPage = () =>
+  import(
+    './features/public/products/pages/public-product-category-page/public-product-category-page.component'
+  ).then((module) => module.PublicProductCategoryPageComponent);
+
+const loadPublicProductDetailPage = () =>
+  import('./features/public/products/pages/public-product-detail-page/public-product-detail-page.component').then(
+    (module) => module.PublicProductDetailPageComponent,
   );
 
 const loadAdminCustomersListPage = () =>
@@ -279,6 +356,24 @@ export const routes: Routes = [
     title: 'Mi perfil',
   },
   {
+    path: 'customer/customer-profile',
+    canActivate: [authGuard, roleGuard],
+    loadComponent: loadOwnCustomerProfilePage,
+    data: {
+      roles: [ROLE_NAMES.customer],
+    },
+    title: 'Mi perfil de cliente',
+  },
+  {
+    path: 'customer/loyalty',
+    canActivate: [authGuard, roleGuard],
+    loadComponent: loadMyLoyaltyPage,
+    data: {
+      roles: [ROLE_NAMES.customer],
+    },
+    title: 'Mis puntos',
+  },
+  {
     path: 'customer/memberships',
     canActivate: [authGuard, roleGuard],
     loadComponent: loadCustomerMembershipsPage,
@@ -324,6 +419,16 @@ export const routes: Routes = [
     title: 'Mi disponibilidad',
   },
   {
+    // By permission, not by role: the API checks service-records.register and the user's own professional profile.
+    path: 'staff/service-records',
+    canActivate: [authGuard, permissionGuard],
+    loadComponent: loadStaffServiceRecordsPage,
+    data: {
+      permissions: [PERMISSION_CODES.serviceRecordsRegister],
+    },
+    title: 'Servicios realizados',
+  },
+  {
     path: 'staff/appointments',
     canActivate: [authGuard, roleGuard],
     loadComponent: loadStaffAppointmentsPage,
@@ -342,6 +447,23 @@ export const routes: Routes = [
     pathMatch: 'full',
     loadComponent: loadPublicStaffListPage,
     title: 'Profesionales',
+  },
+  {
+    // Public product catalog (ADR-0016 B6): stable, anonymous URLs built on immutable public codes.
+    path: 'productos',
+    pathMatch: 'full',
+    loadComponent: loadPublicProductCategoriesPage,
+    title: 'Productos',
+  },
+  {
+    path: 'productos/:categoryCode',
+    loadComponent: loadPublicProductCategoryPage,
+    title: 'Productos',
+  },
+  {
+    path: 'productos/:categoryCode/:productCode',
+    loadComponent: loadPublicProductDetailPage,
+    title: 'Producto',
   },
   {
     path: 'admin',
@@ -373,7 +495,43 @@ export const routes: Routes = [
     data: {
       roles: [ROLE_NAMES.admin],
     },
-    title: 'Servicios',
+    title: 'Tarifas de liquidación',
+  },
+  {
+    path: 'admin/service-categories',
+    canActivate: [authGuard, roleGuard],
+    loadComponent: loadAdminServiceCategoriesPage,
+    data: {
+      roles: [ROLE_NAMES.admin],
+    },
+    title: 'Categorías de servicio',
+  },
+  {
+    path: 'admin/general-services',
+    canActivate: [authGuard, roleGuard],
+    loadComponent: loadAdminGeneralServicesPage,
+    data: {
+      roles: [ROLE_NAMES.admin],
+    },
+    title: 'Servicios generales',
+  },
+  {
+    path: 'admin/product-categories',
+    canActivate: [authGuard, roleGuard],
+    loadComponent: loadAdminProductCategoriesPage,
+    data: {
+      roles: [ROLE_NAMES.admin],
+    },
+    title: 'Categorías de productos',
+  },
+  {
+    path: 'admin/products',
+    canActivate: [authGuard, roleGuard],
+    loadComponent: loadAdminProductsPage,
+    data: {
+      roles: [ROLE_NAMES.admin],
+    },
+    title: 'Productos',
   },
   {
     path: 'admin/customers',
@@ -401,6 +559,58 @@ export const routes: Routes = [
       roles: [ROLE_NAMES.admin],
     },
     title: 'Membresías',
+  },
+  {
+    // customers.claims.approve is critical: the API checks it against the database on every request.
+    path: 'admin/customer-claims',
+    // The tab and the page live in the URL; the query guard keeps it canonical on every query change.
+    canActivate: [authGuard, permissionGuard, customerClaimsQueryGuard],
+    runGuardsAndResolvers: 'paramsOrQueryParamsChange',
+    loadComponent: loadAdminCustomerClaimsPage,
+    data: {
+      permissions: [PERMISSION_CODES.customerClaimsApprove],
+    },
+    title: 'Reclamaciones de clientes',
+  },
+  {
+    // service-records.approve is critical: the API checks it against the database on every request.
+    path: 'admin/service-records',
+    canActivate: [authGuard, permissionGuard],
+    loadComponent: loadAdminServiceRecordsPage,
+    data: {
+      permissions: [PERMISSION_CODES.serviceRecordsApprove],
+    },
+    title: 'Servicios por aprobar',
+  },
+  {
+    // Guarded by the permission, not the Admin role: the API checks loyalty.settings.manage on every request.
+    path: 'admin/loyalty',
+    canActivate: [authGuard, permissionGuard],
+    loadComponent: loadAdminLoyaltySettingsPage,
+    data: {
+      permissions: [PERMISSION_CODES.loyaltySettingsManage],
+    },
+    title: 'Fidelización',
+  },
+  {
+    // loyalty.rewards.manage is checked with the token claim (not critical, ADR-0005).
+    path: 'admin/loyalty/rewards',
+    canActivate: [authGuard, permissionGuard],
+    loadComponent: loadAdminLoyaltyRewardsPage,
+    data: {
+      permissions: [PERMISSION_CODES.loyaltyRewardsManage],
+    },
+    title: 'Recompensas',
+  },
+  {
+    // Approve and deliver are critical: the API checks them against the database on every request.
+    path: 'admin/loyalty/redemptions',
+    canActivate: [authGuard, permissionGuard],
+    loadComponent: loadAdminLoyaltyRedemptionsPage,
+    data: {
+      permissions: [PERMISSION_CODES.loyaltyRedemptionsApprove, PERMISSION_CODES.loyaltyRedemptionsDeliver],
+    },
+    title: 'Canjes de puntos',
   },
   {
     path: 'admin/memberships/:membershipId',

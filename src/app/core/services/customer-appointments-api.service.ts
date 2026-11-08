@@ -6,8 +6,11 @@ import { RuntimeConfigService } from '../config/runtime-config.service';
 import {
   AppointmentResponse,
   CreateCustomerAppointmentRequest,
+  CustomerAppointmentsListFilters,
   RescheduleCustomerAppointmentRequest,
 } from '../models/appointment.models';
+import { MAX_PAGE_SIZE, PagedResult } from '../models/paged-result.models';
+import { toHttpParams } from '../utils/list-query.utils';
 
 @Injectable({
   providedIn: 'root',
@@ -16,8 +19,17 @@ export class CustomerAppointmentsApiService {
   private readonly httpClient = inject(HttpClient);
   private readonly runtimeConfigService = inject(RuntimeConfigService);
 
-  list() {
-    return this.httpClient.get<AppointmentResponse[]>(this.buildUrl('/customer/appointments'));
+  /** The customer's own appointments, paginated (ADR-0016 B7). */
+  list(filters: CustomerAppointmentsListFilters = {}) {
+    const params = toHttpParams({
+      scope: filters.scope,
+      status: filters.status,
+      from: filters.from,
+      to: filters.to,
+      page: filters.page,
+      pageSize: filters.pageSize,
+    });
+    return this.httpClient.get<PagedResult<AppointmentResponse>>(this.buildUrl('/customer/appointments'), { params });
   }
 
   getById(appointmentId: string) {
@@ -32,10 +44,10 @@ export class CustomerAppointmentsApiService {
             return throwError(() => error);
           }
 
-          return this.list().pipe(
+          return this.list({ pageSize: MAX_PAGE_SIZE }).pipe(
             map(
-              (appointments) =>
-                appointments.find((appointment) => appointment.id === appointmentId) ?? null,
+              (page) =>
+                page.items.find((appointment) => appointment.id === appointmentId) ?? null,
             ),
             switchMap((appointment) => (appointment ? of(appointment) : throwError(() => error))),
           );

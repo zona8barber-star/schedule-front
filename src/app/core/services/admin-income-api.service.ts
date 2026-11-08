@@ -1,12 +1,15 @@
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 
 import { RuntimeConfigService } from '../config/runtime-config.service';
 import {
+  IncomeEntriesPage,
   IncomeEntryCreateRequest,
   IncomeEntryUpdateRequest,
   IncomeEntryView,
+  IncomeListQuery,
 } from '../models/income.models';
+import { toHttpParams } from '../utils/list-query.utils';
 
 @Injectable({
   providedIn: 'root',
@@ -15,12 +18,17 @@ export class AdminIncomeApiService {
   private readonly httpClient = inject(HttpClient);
   private readonly runtimeConfigService = inject(RuntimeConfigService);
 
-  list(date: string, staffProfileId?: string | null) {
-    let params = new HttpParams().set('date', date);
-    if (staffProfileId) {
-      params = params.set('staffProfileId', staffProfileId);
-    }
-    return this.httpClient.get<IncomeEntryView[]>(this.buildUrl('/admin/income'), { params });
+  list(query: IncomeListQuery = {}) {
+    const params = toHttpParams({
+      from: query.from,
+      to: query.to,
+      staffProfileId: query.staffProfileId,
+      kind: query.kind,
+      generalServiceId: query.generalServiceId,
+      page: query.page,
+      pageSize: query.pageSize,
+    });
+    return this.httpClient.get<IncomeEntriesPage>(this.buildUrl('/admin/income'), { params });
   }
 
   create(request: IncomeEntryCreateRequest) {

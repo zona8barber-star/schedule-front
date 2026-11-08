@@ -23,7 +23,7 @@ describe('SlotPickerComponent', () => {
 
     slots = tomorrowSlots;
     getSlots = vi.fn((staffProfileId: string, from: string, to: string) =>
-      of({ staffProfileId, from, to, slotDurationMinutes: 30, slots }),
+      of({ staffProfileId, from, to, slotDurationMinutes: 30, slots, generalServiceId: null, slotStepMinutes: 15 }),
     );
 
     await TestBed.configureTestingModule({
@@ -33,6 +33,7 @@ describe('SlotPickerComponent', () => {
 
     fixture = TestBed.createComponent(SlotPickerComponent);
     fixture.componentRef.setInput('staffProfileId', 'staff-1');
+    fixture.componentRef.setInput('generalServiceId', 'gs-cut');
   });
 
   afterEach(() => {
@@ -49,7 +50,7 @@ describe('SlotPickerComponent', () => {
   it('loads two weeks starting today in Bogotá and jumps to the first day with free time', async () => {
     await render();
 
-    expect(getSlots).toHaveBeenCalledWith('staff-1', '2026-10-07', '2026-10-20');
+    expect(getSlots).toHaveBeenCalledWith('staff-1', '2026-10-07', '2026-10-20', { generalServiceId: 'gs-cut' });
 
     const component = fixture.componentInstance;
     expect(component.days()[0]).toMatchObject({ date: '2026-10-07', topLabel: 'Hoy', slotCount: 0 });
@@ -82,7 +83,7 @@ describe('SlotPickerComponent', () => {
     input.dispatchEvent(new Event('change'));
     await render();
 
-    expect(getSlots).toHaveBeenLastCalledWith('staff-1', '2026-11-02', '2026-11-02');
+    expect(getSlots).toHaveBeenLastCalledWith('staff-1', '2026-11-02', '2026-11-02', { generalServiceId: 'gs-cut' });
     expect(fixture.componentInstance.selectedDate()).toBe('2026-11-02');
     expect(fixture.componentInstance.isOutsideWindow()).toBe(true);
   });
@@ -95,5 +96,30 @@ describe('SlotPickerComponent', () => {
     (fixture.nativeElement.querySelector('.sp__slot') as HTMLButtonElement).click();
 
     expect(emitted).toEqual([tomorrowSlots[1]]);
+  });
+
+  it('asks for a plain duration when no service is given (rescheduling)', async () => {
+    fixture.componentRef.setInput('generalServiceId', null);
+    fixture.componentRef.setInput('durationMinutes', 45);
+    await render();
+
+    expect(getSlots).toHaveBeenCalledWith('staff-1', '2026-10-07', '2026-10-20', { durationMinutes: 45 });
+  });
+
+  it('does not load anything without a service or a duration', async () => {
+    fixture.componentRef.setInput('generalServiceId', null);
+    await render();
+
+    expect(getSlots).not.toHaveBeenCalled();
+  });
+
+  it('reloads the free times when the service changes', async () => {
+    await render();
+    getSlots.mockClear();
+
+    fixture.componentRef.setInput('generalServiceId', 'gs-beard');
+    await render();
+
+    expect(getSlots).toHaveBeenCalledWith('staff-1', '2026-10-07', '2026-10-20', { generalServiceId: 'gs-beard' });
   });
 });

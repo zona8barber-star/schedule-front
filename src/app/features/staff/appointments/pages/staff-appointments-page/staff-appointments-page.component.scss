@@ -222,6 +222,8 @@
 .appt-card__btn--delete   { background: rgba(180,83,60,0.08); border-color: rgba(180,83,60,0.3); color: var(--color-error,#b4533c); }
 .appt-card__btn--delete:hover:not(:disabled) { background: rgba(180,83,60,0.18); }
 .appt-card__btn:disabled { opacity: 0.45; cursor: not-allowed; }
+.appt-card__btn--services { background: rgba(176,138,74,0.1); border-color: rgba(176,138,74,0.4); color: var(--brand-primary,#b08a4a); text-decoration: none; display: inline-flex; align-items: center; }
+.appt-card__btn--services:hover { background: rgba(176,138,74,0.2); }
 .appt-card__btn:focus-visible { outline: 2px solid rgba(176,138,74,0.4); outline-offset: 2px; }
 
 /* Inline edit form */
@@ -260,6 +262,7 @@
 .agenda-page__field--wide { grid-column: 1 / -1; }
 .agenda-page__required { color: var(--color-error, #b4533c); }
 .agenda-page__error { margin: 0; font-size: 0.8rem; color: var(--color-error, #b4533c); }
+.agenda-page__hint { margin: 0; font-size: 0.8rem; color: var(--color-text-secondary, #b8b0a4); }
 .agenda-page__form-actions {
   display: flex;
   justify-content: flex-end;
@@ -404,4 +407,36 @@
   .agenda-page__field--wide { grid-column: 1; }
   .appt-card__info { grid-template-columns: 1fr; }
   .appt-card__info-item--wide { grid-column: 1; }
+}
+.agenda-page__header-actions { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; }
+.agenda-page__link { text-decoration: none; display: inline-flex; align-items: center; }
+
+.agenda-page__filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 0.75rem;
+  margin-bottom: 1rem;
+
+  label {
+    display: inline-flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    font-size: 0.85rem;
+  }
+
+  input,
+  select {
+    padding: 0.4rem 0.55rem;
+    border: 1px solid var(--color-border, #ccc);
+    border-radius: 0.5rem;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+  }
+}
+
+.agenda-page__hint {
+  margin: 0 0 0.75rem;
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
 }

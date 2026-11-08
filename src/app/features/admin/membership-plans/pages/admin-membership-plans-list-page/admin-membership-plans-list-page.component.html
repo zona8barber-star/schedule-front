@@ -21,6 +21,7 @@
             <th>Vigencia</th>
             <th>Servicios</th>
             <th>Obsequios</th>
+            <th>Puntos</th>
             <th>Estado</th>
             <th aria-label="Acciones"></th>
           </tr>
@@ -37,6 +38,7 @@
               <td class="plans__nowrap">{{ plan.defaultDurationDays }} días</td>
               <td class="plans__services">{{ servicesSummary(plan) }}</td>
               <td>{{ plan.giftRules.length || '—' }}</td>
+              <td>{{ plan.loyaltyPoints || '—' }}</td>
               <td>{{ plan.isActive ? 'Activo' : 'Inactivo' }}</td>
               <td class="plans__actions">
                 <button class="plans__action-btn" type="button" (click)="openEdit(plan.id)" [disabled]="busyId() === plan.id">

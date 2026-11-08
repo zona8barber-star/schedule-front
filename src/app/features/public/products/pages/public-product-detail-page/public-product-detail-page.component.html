@@ -1,0 +1,57 @@
+<div class="pp">
+  <section class="pp__hero">
+    <div class="pp__wrap">
+      <nav class="pp__crumbs" aria-label="Ruta">
+        <a routerLink="/productos">Productos</a>
+        @if (product(); as current) {
+          <span aria-hidden="true">/</span>
+          <a [routerLink]="['/productos', current.categoryCode]">{{ current.categoryName }}</a>
+        }
+      </nav>
+      <span class="pp__kicker">Producto</span>
+      <h1 class="pp__title">{{ product()?.name ?? (state() === 'unavailable' ? 'No disponible' : 'Producto') }}</h1>
+    </div>
+  </section>
+
+  <section class="pp__section">
+    <div class="pp__wrap">
+      @switch (state()) {
+        @case ('loading') {
+          <p class="pp__count">Cargando producto...</p>
+        }
+        @case ('ready') {
+          @if (product(); as current) {
+            <article class="pp__detail">
+              @if (current.imageUrl) {
+                <div class="pp__detail-media">
+                  <img [src]="current.imageUrl" [alt]="current.name" />
+                </div>
+              }
+              <div>
+                <span class="pp__kicker">{{ current.categoryName }}</span>
+                <p class="pp__detail-price" data-testid="product-price">{{ formatPrice(current.price) }}</p>
+                @if (current.description) {
+                  <p class="pp__detail-desc">{{ current.description }}</p>
+                }
+              </div>
+            </article>
+          }
+        }
+        @case ('unavailable') {
+          <div class="pp__state" data-testid="not-available">
+            <h2>No disponible</h2>
+            <p>Este producto ya no está disponible. Mira los demás productos del catálogo.</p>
+            <a class="pp__btn" routerLink="/productos">Ver el catálogo</a>
+          </div>
+        }
+        @default {
+          <div class="pp__state">
+            <h2>No pudimos cargar el producto</h2>
+            <p>Revisa tu conexión e inténtalo de nuevo.</p>
+            <button class="pp__btn" type="button" (click)="load()">Reintentar</button>
+          </div>
+        }
+      }
+    </div>
+  </section>
+</div>

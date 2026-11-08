@@ -11,16 +11,20 @@ import {
 } from '@angular/forms';
 import { firstValueFrom, startWith } from 'rxjs';
 
+import { PERMISSION_CODES } from '../../../../../core/models/auth.models';
+import { LOYALTY_MAX_POINTS_PER_ITEM } from '../../../../../core/models/loyalty.models';
 import {
   MembershipGiftCondition,
   MembershipGiftKind,
   MembershipPlanMode,
   MembershipPlanUpsertRequest,
   MembershipPlanView,
+  planRateLabel,
 } from '../../../../../core/models/membership-plan.models';
 import { ServiceView } from '../../../../../core/models/service.models';
 import { AdminMembershipPlansApiService } from '../../../../../core/services/admin-membership-plans-api.service';
 import { AdminServicesApiService } from '../../../../../core/services/admin-services-api.service';
+import { AuthService } from '../../../../../core/services/auth.service';
 import { getApiErrorMessage } from '../../../../../core/utils/api-error.utils';
 import { ApiFeedbackComponent } from '../../../../../shared/components/api-feedback/api-feedback.component';
 import {
@@ -52,6 +56,7 @@ export class AdminMembershipPlanFormModalComponent implements OnInit {
   private readonly formBuilder = inject(FormBuilder);
   private readonly membershipPlansApiService = inject(AdminMembershipPlansApiService);
   private readonly servicesApiService = inject(AdminServicesApiService);
+  private readonly authService = inject(AuthService);
 
   /** The plan being edited, or null to create a new one. */
   @Input() planId: string | null = null;
@@ -60,6 +65,9 @@ export class AdminMembershipPlanFormModalComponent implements OnInit {
 
   readonly maxQuantity = MEMBERSHIP_MAX_QUANTITY;
   readonly maxDurationDays = MEMBERSHIP_MAX_DURATION_DAYS;
+  readonly maxLoyaltyPoints = LOYALTY_MAX_POINTS_PER_ITEM;
+  /** Without the permission the points are shown read-only and never sent, so the API keeps them. */
+  readonly canManageLoyalty = this.authService.hasPermission(PERMISSION_CODES.loyaltySettingsManage);
   readonly conditionLabels = GIFT_CONDITION_LABELS;
   readonly conditionOptions: MembershipGiftCondition[] = ['EveryPurchase', 'FirstPurchaseOfPlan'];
 
@@ -84,6 +92,12 @@ export class AdminMembershipPlanFormModalComponent implements OnInit {
     ]),
     terms: this.formBuilder.nonNullable.control(DEFAULT_MEMBERSHIP_TERMS, [Validators.required, Validators.maxLength(4000)]),
     specificConditions: this.formBuilder.nonNullable.control('', [Validators.maxLength(2000)]),
+    loyaltyPoints: this.formBuilder.nonNullable.control({ value: 0, disabled: !this.canManageLoyalty }, [
+      Validators.required,
+      Validators.min(0),
+      Validators.max(LOYALTY_MAX_POINTS_PER_ITEM),
+      integerValidator,
+    ]),
     services: this.formBuilder.array<FormGroup>([]),
     giftRules: this.formBuilder.array<FormGroup>([]),
   });
@@ -138,7 +152,7 @@ export class AdminMembershipPlanFormModalComponent implements OnInit {
 
     try {
       const [catalog, plan] = await Promise.all([
-        firstValueFrom(this.servicesApiService.list()),
+        firstValueFrom(this.servicesApiService.options()),
         this.planId ? firstValueFrom(this.membershipPlansApiService.getById(this.planId)) : Promise.resolve(null),
       ]);
       this.serviceOptions.set(this.buildOptions(catalog, plan));
@@ -255,6 +269,7 @@ export class AdminMembershipPlanFormModalComponent implements OnInit {
           condition: group.controls['condition'].value,
         };
       }),
+      ...(this.canManageLoyalty ? { loyaltyPoints: Math.trunc(value.loyaltyPoints) } : {}),
     };
   }
 
@@ -293,6 +308,7 @@ export class AdminMembershipPlanFormModalComponent implements OnInit {
         defaultDurationDays: plan.defaultDurationDays,
         terms: plan.terms,
         specificConditions: plan.specificConditions ?? '',
+        loyaltyPoints: plan.loyaltyPoints,
       },
       { emitEvent: false },
     );
@@ -315,11 +331,16 @@ export class AdminMembershipPlanFormModalComponent implements OnInit {
   }
 
   private buildOptions(catalog: ServiceView[], plan: MembershipPlanView | null): ServiceOption[] {
-    const options = catalog.map((service) => ({ id: service.id, name: service.name, isActive: service.isActive }));
+    // Rates are labelled "Servicio general · Tarifa" (ADR-0016 B4).
+    const options = catalog.map((service) => ({
+      id: service.id,
+      name: planRateLabel(service.generalServiceName, service.name),
+      isActive: service.isActive,
+    }));
     // Keep services the plan already has even if they are no longer in the active catalog.
     for (const service of plan?.services ?? []) {
       if (!options.some((option) => option.id === service.serviceId)) {
-        options.push({ id: service.serviceId, name: service.serviceName, isActive: false });
+        options.push({ id: service.serviceId, name: planRateLabel(service.generalServiceName, service.serviceName), isActive: false });
       }
     }
     return options.sort((a, b) => a.name.localeCompare(b.name, 'es'));

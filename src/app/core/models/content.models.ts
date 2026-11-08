@@ -35,13 +35,14 @@ export interface BannerResponse {
   updatedAtUtc: string | null;
 }
 
+/** A general service the professional offers (ADR-0016 B2). Never carries a price. */
 export interface PublicStaffServiceResponse {
-  id: string;
+  generalServiceId: string;
   name: string;
   description: string | null;
+  categoryId: string;
+  categoryName: string;
   durationMinutes: number;
-  price: number | null;
-  isActive: boolean;
 }
 
 export interface PublicStaffListItemResponse {

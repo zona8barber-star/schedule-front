@@ -71,7 +71,7 @@ export class AdminIncomeFormModalComponent implements OnInit {
     this.isLoading.set(true);
     try {
       const [services, staff] = await Promise.all([
-        firstValueFrom(this.servicesApi.list()),
+        firstValueFrom(this.servicesApi.options()),
         firstValueFrom(this.staffApi.list()),
       ]);
 

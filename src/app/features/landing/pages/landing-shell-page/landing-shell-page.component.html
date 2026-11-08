@@ -303,31 +303,50 @@
 
       <p class="lp-modal__sub">Elegí el día y seleccioná el horario que más te convenga.</p>
 
-      <label class="lp-modal__date-label" for="lp-avail-date">Fecha</label>
-      <input
-        id="lp-avail-date"
-        class="lp-modal__date-input"
-        type="date"
-        [value]="selectedDate()"
-        [min]="todayDate()"
-        (change)="onDateChange($event)"
-      />
-
-      <app-api-feedback severity="error" [message]="slotsError()" />
-
-      @if (slotsLoading()) {
-        <p class="lp-modal__msg">Buscando horarios disponibles...</p>
-      } @else if (!slots().length) {
-        <p class="lp-modal__msg">No hay horarios disponibles para este día.</p>
+      @if (!activeStaff()!.services.length) {
+        <p class="lp-modal__msg">Este profesional aún no tiene servicios disponibles para reservar.</p>
       } @else {
-        <p class="lp-modal__hint">Seleccioná un horario para continuar</p>
-        <div class="lp-modal__slots">
-          @for (slot of slots(); track slot.startAtUtc) {
-            <button class="lp-modal__slot" type="button" (click)="selectSlot(slot)">
-              {{ formatSlotTime(slot.startAtUtc) }}
-            </button>
+        <!-- ADR-0016 D8: the day first, then the service, then the free times. -->
+        <label class="lp-modal__date-label" for="lp-avail-date">Fecha</label>
+        <input
+          id="lp-avail-date"
+          class="lp-modal__date-input"
+          type="date"
+          [value]="selectedDate()"
+          [min]="todayDate()"
+          (change)="onDateChange($event)"
+        />
+
+        <label class="lp-modal__date-label" for="lp-avail-service">Servicio</label>
+        <select
+          id="lp-avail-service"
+          class="lp-modal__date-input"
+          [value]="selectedServiceId() ?? ''"
+          (change)="onServiceChange($event)"
+        >
+          @for (service of activeStaff()!.services; track service.generalServiceId) {
+            <option [value]="service.generalServiceId" [selected]="service.generalServiceId === selectedServiceId()">
+              {{ formatServiceOption(service) }}
+            </option>
           }
-        </div>
+        </select>
+
+        <app-api-feedback severity="error" [message]="slotsError()" />
+
+        @if (slotsLoading()) {
+          <p class="lp-modal__msg">Buscando horarios disponibles...</p>
+        } @else if (!slots().length) {
+          <p class="lp-modal__msg">No hay horarios disponibles para este día.</p>
+        } @else {
+          <p class="lp-modal__hint">Seleccioná un horario para continuar</p>
+          <div class="lp-modal__slots">
+            @for (slot of slots(); track slot.startAtUtc) {
+              <button class="lp-modal__slot" type="button" (click)="selectSlot(slot)">
+                {{ formatSlotTime(slot.startAtUtc) }}
+              </button>
+            }
+          </div>
+        }
       }
     </dialog>
   </div>

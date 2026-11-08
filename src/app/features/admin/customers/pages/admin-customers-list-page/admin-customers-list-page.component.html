@@ -30,7 +30,7 @@
     <app-page-state kind="loading" message="Cargando clientes..." />
   } @else if (!customers().length) {
     <app-page-state
-      [message]="query() ? 'No hay clientes que coincidan con la búsqueda.' : 'Aún no hay clientes. Crea el primero.'"
+      [message]="appliedQuery() ? 'No hay clientes que coincidan con la búsqueda.' : 'Aún no hay clientes. Crea el primero.'"
     />
   } @else {
     <div class="customers__table-wrap">
@@ -71,6 +71,15 @@
       </table>
     </div>
   }
+
+  <app-paginator
+    label="Paginación de clientes"
+    [page]="page()"
+    [pageSize]="pageSize()"
+    [totalCount]="totalCount()"
+    [disabled]="isLoading()"
+    (pageChange)="onPageChange($event)"
+  />
 </section>
 
 @switch (openModal()) {

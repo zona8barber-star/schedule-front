@@ -1,9 +1,10 @@
 import { Component, DestroyRef, EventEmitter, Input, OnInit, Output, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { firstValueFrom } from 'rxjs';
+import { Observable, firstValueFrom } from 'rxjs';
 
 import {
+  CustomerCreateRequest,
   CustomerDetailView,
   CustomerDuplicateCandidate,
 } from '../../../../../core/models/customer.models';
@@ -12,6 +13,22 @@ import { getApiErrorMessage } from '../../../../../core/utils/api-error.utils';
 import { ApiFeedbackComponent } from '../../../../../shared/components/api-feedback/api-feedback.component';
 
 const PHONE_PATTERN = /^(?=(?:\D*\d){7,})[\d\s()+-]+$/;
+
+/** What a creation source answers: enough to select the new profile, nothing else. */
+export interface CreatedCustomerSummary {
+  id: string;
+  fullName: string;
+}
+
+/**
+ * Where a new customer is created. By default the customers module (Admin role); the service records review passes
+ * its own endpoints, backed by the same backend logic but with reduced answers, so approvers without the Admin role
+ * can create customers too. Duplicates come back as hints (see ServiceRecordCustomerPrivacy in the API).
+ */
+export interface CustomerCreationSource {
+  create(request: CustomerCreateRequest): Observable<CreatedCustomerSummary>;
+  findDuplicates(email: string, phone: string): Observable<CustomerDuplicateCandidate[]>;
+}
 
 @Component({
   selector: 'app-admin-customer-form-modal',
@@ -26,7 +43,13 @@ export class AdminCustomerFormModalComponent implements OnInit {
 
   /** The customer being edited, or null to create a new one. */
   @Input() customer: CustomerDetailView | null = null;
+  /** Only used to create; editing always goes through the customers module. */
+  @Input() source: CustomerCreationSource | null = null;
+  /** Prefills the name of a new customer. */
+  @Input() initialName = '';
   @Output() readonly saved = new EventEmitter<CustomerDetailView>();
+  /** Emitted instead of `saved` when the customer was created through a `source`. */
+  @Output() readonly createdFromSource = new EventEmitter<CreatedCustomerSummary>();
   @Output() readonly cancelled = new EventEmitter<void>();
 
   readonly isSaving = signal(false);
@@ -47,6 +70,10 @@ export class AdminCustomerFormModalComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    if (!this.customer && this.initialName) {
+      this.form.patchValue({ fullName: this.initialName });
+    }
+
     if (this.customer) {
       this.form.patchValue({
         fullName: this.customer.fullName,
@@ -82,7 +109,9 @@ export class AdminCustomerFormModalComponent implements OnInit {
     try {
       if (this.acknowledgedKey !== contactKey) {
         const found = await firstValueFrom(
-          this.adminCustomersApiService.findDuplicates(payload.email, payload.phone, this.customer?.id),
+          this.source && !this.customer
+            ? this.source.findDuplicates(payload.email, payload.phone)
+            : this.adminCustomersApiService.findDuplicates(payload.email, payload.phone, this.customer?.id),
         );
         if (found.length > 0) {
           // Warn once; a second submit with the same contact data saves anyway.
@@ -90,6 +119,11 @@ export class AdminCustomerFormModalComponent implements OnInit {
           this.acknowledgedKey = contactKey;
           return;
         }
+      }
+
+      if (this.source && !this.customer) {
+        this.createdFromSource.emit(await firstValueFrom(this.source.create(payload)));
+        return;
       }
 
       const result = this.customer

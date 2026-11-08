@@ -5,14 +5,19 @@ import {
   OnInit,
   afterNextRender,
   computed,
+  effect,
   inject,
   input,
   output,
   signal,
+  untracked,
 } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 
-import { PublicAvailabilitySlotResponse } from '../../../core/models/availability.models';
+import {
+  PublicAvailabilitySlotResponse,
+  PublicAvailabilitySlotsQuery,
+} from '../../../core/models/availability.models';
 import { PublicAvailabilityApiService } from '../../../core/services/public-availability-api.service';
 import {
   BOGOTA_TIME_ZONE,
@@ -56,7 +61,8 @@ const timeFormatter = new Intl.DateTimeFormat('es-CO', {
 /**
  * Day + time picker for one barber: the next two weeks as buttons (days without free
  * time are disabled), a native date input for anything further, and the free times
- * of the selected day.
+ * of the selected day. Slots are computed for a general service the barber offers
+ * (`generalServiceId`) or, when rescheduling, for a plain `durationMinutes`.
  */
 @Component({
   selector: 'app-slot-picker',
@@ -69,6 +75,10 @@ export class SlotPickerComponent implements OnInit {
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
 
   readonly staffProfileId = input.required<string>();
+  /** General service to book (ADR-0016 B3). Takes precedence over `durationMinutes`. */
+  readonly generalServiceId = input<string | null>(null);
+  /** Plain duration, used when rescheduling an existing appointment. */
+  readonly durationMinutes = input<number | null>(null);
   /** Day to open on (YYYY-MM-DD). Defaults to the first day with free time. */
   readonly initialDate = input<string | null>(null);
   /** Highlights this slot (e.g. the one the parent is about to confirm). */
@@ -111,8 +121,32 @@ export class SlotPickerComponent implements OnInit {
 
   readonly selectedSlots = computed(() => this.slotsByDate()[this.selectedDate()] ?? null);
 
+  /** What the slots are computed for; null when neither input is set (nothing can be loaded). */
+  readonly query = computed<PublicAvailabilitySlotsQuery | null>(() => {
+    const generalServiceId = this.generalServiceId();
+    if (generalServiceId) {
+      return { generalServiceId };
+    }
+
+    const durationMinutes = this.durationMinutes();
+    return durationMinutes && durationMinutes > 0 ? { durationMinutes } : null;
+  });
+
+  private initialized = false;
+  private loadedQueryKey: string | null = null;
+
   constructor() {
     afterNextRender(() => this.scrollSelectedDayIntoView());
+
+    // Another service (or duration) changes every free time: start over.
+    effect(() => {
+      const key = queryKey(this.query());
+      untracked(() => {
+        if (this.initialized && key !== this.loadedQueryKey) {
+          void this.reload();
+        }
+      });
+    });
   }
 
   ngOnInit(): void {
@@ -122,6 +156,7 @@ export class SlotPickerComponent implements OnInit {
       this.selectedDate.set(initial);
     }
 
+    this.initialized = true;
     void this.loadWindow(!hasInitialDate);
   }
 
@@ -180,13 +215,24 @@ export class SlotPickerComponent implements OnInit {
   }
 
   private async loadRange(from: string, to: string): Promise<void> {
+    const query = this.query();
+    this.loadedQueryKey = queryKey(query);
+    if (!query) {
+      return;
+    }
+
     this.isLoading.set(true);
     this.errorMessage.set(null);
 
     try {
       const response = await firstValueFrom(
-        this.availabilityApi.getSlots(this.staffProfileId(), from, to),
+        this.availabilityApi.getSlots(this.staffProfileId(), from, to, query),
       );
+
+      // The service changed while loading: these times belong to the previous one.
+      if (queryKey(this.query()) !== queryKey(query)) {
+        return;
+      }
 
       const grouped: Record<string, PublicAvailabilitySlotResponse[]> = {};
       for (let date = from; date <= to; date = addDaysToDateKey(date, 1)) {
@@ -218,6 +264,14 @@ export class SlotPickerComponent implements OnInit {
       button?.scrollIntoView?.({ block: 'nearest', inline: 'center', behavior: 'smooth' });
     });
   }
+}
+
+function queryKey(query: PublicAvailabilitySlotsQuery | null): string | null {
+  if (!query) {
+    return null;
+  }
+
+  return 'generalServiceId' in query ? `service:${query.generalServiceId}` : `duration:${query.durationMinutes}`;
 }
 
 function capitalize(value: string): string {

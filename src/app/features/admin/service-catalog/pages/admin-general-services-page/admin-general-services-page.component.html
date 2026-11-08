@@ -1,0 +1,149 @@
+<section class="catalog">
+  <header class="catalog__header">
+    <div>
+      <h1>Servicios generales</h1>
+      <p class="catalog__lead">
+        Lo que el cliente pide (Corte, Barba...). Cada uno pertenece a una categoría y agrupa las
+        <a routerLink="/admin/services">tarifas de liquidación</a> con las que se cobra.
+      </p>
+    </div>
+    <button class="catalog__create-btn" type="button" [disabled]="isLoading()" (click)="openCreate()">
+      + Nuevo servicio general
+    </button>
+  </header>
+
+  <app-api-feedback severity="error" [message]="errorMessage()" />
+
+  @if (categories().length > 1) {
+    <label class="catalog__filter">
+      <span>Categoría</span>
+      <select data-testid="category-filter" [value]="categoryFilter()" (change)="onFilterChange($event)">
+        <option value="">Todas</option>
+        @for (category of categories(); track category.id) {
+          <option [value]="category.id">{{ category.name }}</option>
+        }
+      </select>
+    </label>
+  }
+
+  @if (isLoading()) {
+    <p class="catalog__state">Cargando servicios generales...</p>
+  } @else if (!visibleServices().length) {
+    <p class="catalog__state">No hay servicios generales{{ categoryFilter() ? ' en esta categoría' : '' }}.</p>
+  } @else {
+    <div class="catalog__table-wrap">
+      <table class="catalog__table">
+        <thead>
+          <tr>
+            <th>Servicio general</th>
+            <th>Categoría</th>
+            <th>Orden</th>
+            <th>Tarifas</th>
+            <th>Código</th>
+            <th>Estado</th>
+            <th aria-label="Acciones"></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (service of visibleServices(); track service.id) {
+            <tr [class.catalog__row--inactive]="!service.isActive" [attr.data-general-service]="service.id">
+              <td>
+                {{ service.name }}
+                @if (service.description) {
+                  <small class="catalog__muted">{{ service.description }}</small>
+                }
+              </td>
+              <td>
+                {{ service.categoryName }}
+                @if (!service.categoryIsActive) {
+                  <small class="catalog__tag">Categoría inactiva</small>
+                }
+              </td>
+              <td>{{ service.sortOrder }}</td>
+              <td>
+                {{ service.activeRateCount }} activas
+                <small class="catalog__muted">de {{ service.rateCount }}</small>
+              </td>
+              <td><span class="catalog__code">{{ service.publicCode }}</span></td>
+              <td>{{ service.isActive ? 'Activo' : 'Inactivo' }}</td>
+              <td class="catalog__actions">
+                <button class="catalog__action-btn" type="button" [disabled]="busyId() === service.id" (click)="openEdit(service)">
+                  Editar
+                </button>
+                <button class="catalog__action-btn" type="button" [disabled]="busyId() === service.id" (click)="toggleActive(service)">
+                  {{ service.isActive ? 'Desactivar' : 'Activar' }}
+                </button>
+                <button
+                  class="catalog__action-btn catalog__action-btn--delete"
+                  type="button"
+                  [disabled]="busyId() === service.id"
+                  (click)="remove(service)"
+                >
+                  Eliminar
+                </button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</section>
+
+@if (isModalOpen()) {
+  <div class="catalog-modal__overlay" (click)="closeModal()">
+    <div class="catalog-modal__card" role="dialog" aria-modal="true" aria-labelledby="general-modal-title" (click)="$event.stopPropagation()">
+      <h2 id="general-modal-title">{{ modalTitle() }}</h2>
+
+      <app-api-feedback severity="error" [message]="formError()" />
+
+      <form [formGroup]="form" (ngSubmit)="save()">
+        <label class="catalog-modal__field">
+          <span>Categoría</span>
+          <select formControlName="categoryId">
+            <option value="" disabled>Elige la categoría</option>
+            @for (category of categoryOptions(); track category.id) {
+              <option [value]="category.id">{{ category.name }}{{ category.isActive ? '' : ' (inactiva)' }}</option>
+            }
+          </select>
+        </label>
+        @if (form.controls.categoryId.touched && form.controls.categoryId.invalid) {
+          <small class="catalog-modal__error">Elige una categoría.</small>
+        }
+
+        <label class="catalog-modal__field">
+          <span>Nombre</span>
+          <input type="text" formControlName="name" maxlength="120" autocomplete="off" />
+        </label>
+        @if (form.controls.name.touched && form.controls.name.invalid) {
+          <small class="catalog-modal__error">El nombre debe tener entre 2 y 120 caracteres.</small>
+        }
+        <small class="catalog-modal__hint">
+          No puede repetirse dentro de la misma categoría (sin distinguir mayúsculas); sí en categorías distintas.
+        </small>
+
+        <label class="catalog-modal__field">
+          <span>Descripción (opcional)</span>
+          <textarea formControlName="description" maxlength="1000"></textarea>
+        </label>
+
+        <label class="catalog-modal__field">
+          <span>Orden dentro de la categoría</span>
+          <input type="number" formControlName="sortOrder" min="0" [max]="maxSortOrder" step="1" inputmode="numeric" />
+        </label>
+        @if (form.controls.sortOrder.touched && form.controls.sortOrder.invalid) {
+          <small class="catalog-modal__error">Usa un número entero entre 0 y {{ maxSortOrder }}.</small>
+        }
+
+        @if (editing(); as current) {
+          <small class="catalog-modal__hint">Código público: <span class="catalog__code">{{ current.publicCode }}</span> (no cambia).</small>
+        }
+
+        <div class="catalog-modal__actions">
+          <button type="button" [disabled]="isSaving()" (click)="closeModal()">Cancelar</button>
+          <button type="submit" [disabled]="isSaving()">{{ isSaving() ? 'Guardando...' : 'Guardar' }}</button>
+        </div>
+      </form>
+    </div>
+  </div>
+}

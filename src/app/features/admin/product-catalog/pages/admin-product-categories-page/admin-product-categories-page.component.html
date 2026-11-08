@@ -1,0 +1,108 @@
+<section class="catalog">
+  <header class="catalog__header">
+    <div>
+      <h1>Categorías de productos</h1>
+      <p class="catalog__lead">
+        Agrupan los productos del catálogo público. Son independientes de las categorías de servicio. Una categoría
+        solo aparece en el catálogo público si está activa y tiene al menos un producto activo.
+      </p>
+    </div>
+    <button class="catalog__create-btn" type="button" (click)="openCreate()">+ Nueva categoría</button>
+  </header>
+
+  <p class="catalog__public-link" data-testid="public-catalog-link">
+    Enlace público del catálogo (para compartir o generar un QR):
+    <a [href]="publicCatalogUrl()" target="_blank" rel="noopener">{{ publicCatalogUrl() }}</a>
+  </p>
+
+  <app-api-feedback severity="error" [message]="errorMessage()" />
+
+  @if (isLoading()) {
+    <p class="catalog__state">Cargando categorías...</p>
+  } @else if (!categories().length) {
+    <p class="catalog__state">Aún no hay categorías de productos. Crea la primera.</p>
+  } @else {
+    <div class="catalog__table-wrap">
+      <table class="catalog__table">
+        <thead>
+          <tr>
+            <th>Orden</th>
+            <th>Categoría</th>
+            <th>Productos</th>
+            <th>Código</th>
+            <th>Estado</th>
+            <th aria-label="Acciones"></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (category of categories(); track category.id) {
+            <tr [class.catalog__row--inactive]="!category.isActive" [attr.data-category]="category.id">
+              <td>{{ category.sortOrder }}</td>
+              <td>{{ category.name }}</td>
+              <td>
+                {{ category.activeProductCount }} activos
+                <small class="catalog__muted">de {{ category.productCount }}</small>
+              </td>
+              <td><span class="catalog__code">{{ category.publicCode }}</span></td>
+              <td>{{ category.isActive ? 'Activa' : 'Inactiva' }}</td>
+              <td class="catalog__actions">
+                <button class="catalog__action-btn" type="button" [disabled]="busyId() === category.id" (click)="openEdit(category)">
+                  Editar
+                </button>
+                <button class="catalog__action-btn" type="button" [disabled]="busyId() === category.id" (click)="toggleActive(category)">
+                  {{ category.isActive ? 'Desactivar' : 'Activar' }}
+                </button>
+                <button
+                  class="catalog__action-btn catalog__action-btn--delete"
+                  type="button"
+                  [disabled]="busyId() === category.id"
+                  (click)="remove(category)"
+                >
+                  Eliminar
+                </button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</section>
+
+@if (isModalOpen()) {
+  <div class="catalog-modal__overlay" (click)="closeModal()">
+    <div class="catalog-modal__card" role="dialog" aria-modal="true" aria-labelledby="product-category-modal-title" (click)="$event.stopPropagation()">
+      <h2 id="product-category-modal-title">{{ modalTitle() }}</h2>
+
+      <app-api-feedback severity="error" [message]="formError()" />
+
+      <form [formGroup]="form" (ngSubmit)="save()">
+        <label class="catalog-modal__field">
+          <span>Nombre</span>
+          <input type="text" formControlName="name" maxlength="80" autocomplete="off" />
+        </label>
+        @if (form.controls.name.touched && form.controls.name.invalid) {
+          <small class="catalog-modal__error">El nombre debe tener entre 2 y 80 caracteres.</small>
+        }
+
+        <label class="catalog-modal__field">
+          <span>Orden</span>
+          <input type="number" formControlName="sortOrder" min="0" [max]="maxSortOrder" step="1" inputmode="numeric" />
+        </label>
+        @if (form.controls.sortOrder.touched && form.controls.sortOrder.invalid) {
+          <small class="catalog-modal__error">Usa un número entero entre 0 y {{ maxSortOrder }}.</small>
+        }
+        <small class="catalog-modal__hint">Las categorías se muestran de menor a mayor orden.</small>
+
+        @if (editing(); as current) {
+          <small class="catalog-modal__hint">Código público: <span class="catalog__code">{{ current.publicCode }}</span> (no cambia).</small>
+        }
+
+        <div class="catalog-modal__actions">
+          <button type="button" [disabled]="isSaving()" (click)="closeModal()">Cancelar</button>
+          <button type="submit" [disabled]="isSaving()">{{ isSaving() ? 'Guardando...' : 'Guardar' }}</button>
+        </div>
+      </form>
+    </div>
+  </div>
+}

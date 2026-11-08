@@ -1,0 +1,271 @@
+// Shared by the service category and general service masters (ADR-0016 B1) and the product masters (B5).
+
+.catalog {
+  padding: 1rem;
+}
+
+.catalog__header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+
+  h1 {
+    margin: 0;
+  }
+}
+
+.catalog__lead {
+  margin: 0.25rem 0 0;
+  max-width: 46rem;
+  color: var(--color-text-secondary, #555);
+  font-size: 0.92rem;
+  line-height: 1.45;
+}
+
+.catalog__state {
+  opacity: 0.75;
+}
+
+.catalog__filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 0.75rem;
+}
+
+.catalog__filter {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  margin-bottom: 1rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+
+  input,
+  select {
+    min-width: min(16rem, 100%);
+    padding: 0.45rem 0.6rem;
+    border: 1px solid var(--color-border, #ccc);
+    border-radius: 0.5rem;
+    font: inherit;
+    font-weight: 400;
+  }
+}
+
+// Tables scroll sideways inside their own box on narrow screens.
+.catalog__table-wrap {
+  overflow-x: auto;
+}
+
+.catalog__table {
+  width: 100%;
+  border-collapse: collapse;
+
+  th,
+  td {
+    padding: 0.6rem 0.75rem;
+    border-bottom: 1px solid var(--color-border, #e2e2e2);
+    text-align: left;
+    vertical-align: top;
+  }
+}
+
+.catalog__row--inactive {
+  opacity: 0.55;
+}
+
+.catalog__muted {
+  display: block;
+  color: var(--color-text-secondary, #666);
+  font-size: 0.8rem;
+}
+
+.catalog__code {
+  font-family: var(--z-font-mono, monospace);
+  font-size: 0.82rem;
+}
+
+.catalog__tag {
+  display: inline-block;
+  margin-top: 0.2rem;
+  padding: 0.05rem 0.45rem;
+  border-radius: 999px;
+  background: rgba(180, 83, 60, 0.12);
+  color: var(--color-error, #b4533c);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.catalog__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.catalog__create-btn {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.6rem 1.1rem;
+  border: 0;
+  border-radius: 999px;
+  background: var(--btn-primary-bg, #1a1a1a);
+  color: var(--btn-primary-text, #fff);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+
+  &:hover {
+    background: var(--btn-primary-bg-hover, #333);
+  }
+}
+
+.catalog__action-btn {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.4rem 0.8rem;
+  border: 1px solid var(--color-border, #ccc);
+  border-radius: 0.5rem;
+  background: var(--color-surface, #fff);
+  color: inherit;
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+
+  &:hover:not(:disabled) {
+    background: var(--color-surface-muted, #f2f2f2);
+    border-color: var(--brand-primary, #888);
+  }
+
+  &:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+  }
+}
+
+.catalog__action-btn--delete {
+  border-color: rgba(180, 83, 60, 0.4);
+  color: var(--color-error, #b4533c);
+
+  &:hover:not(:disabled) {
+    background: rgba(180, 83, 60, 0.1);
+    border-color: rgba(180, 83, 60, 0.6);
+  }
+}
+
+// ── Form modal ──────────────────────────────────────────────────────
+
+.catalog-modal__overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background: rgba(0, 0, 0, 0.5);
+}
+
+.catalog-modal__card {
+  width: 100%;
+  max-width: 440px;
+  max-height: 90dvh;
+  overflow-y: auto;
+  padding: 1.5rem;
+  border-radius: 0.75rem;
+  background: var(--color-surface, #fff);
+  color: inherit;
+
+  h2 {
+    margin: 0 0 1rem;
+  }
+}
+
+.catalog-modal__field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin-bottom: 0.75rem;
+
+  input,
+  select,
+  textarea {
+    padding: 0.5rem 0.65rem;
+    border: 1px solid var(--color-border, #ccc);
+    border-radius: 0.5rem;
+    font: inherit;
+  }
+
+  textarea {
+    min-height: 5rem;
+    resize: vertical;
+  }
+}
+
+.catalog-modal__error {
+  display: block;
+  margin: -0.5rem 0 0.75rem;
+  color: #c0392b;
+}
+
+.catalog-modal__hint {
+  display: block;
+  margin: -0.4rem 0 0.75rem;
+  color: var(--text-muted, #666);
+  font-size: 0.82rem;
+  line-height: 1.4;
+}
+
+.catalog-modal__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+// ── Product masters (B5) ─────────────────────────────────────────────
+
+.catalog__public-link {
+  margin: 0 0 1rem;
+  padding: 0.65rem 0.85rem;
+  border: 1px dashed var(--color-border, #ccc);
+  border-radius: 0.5rem;
+  font-size: 0.88rem;
+  line-height: 1.45;
+  word-break: break-all;
+}
+
+.catalog__thumb {
+  display: block;
+  width: 3rem;
+  height: 3rem;
+  border-radius: 0.4rem;
+  object-fit: cover;
+  background: var(--color-surface-muted, #f2f2f2);
+}
+
+.catalog__price {
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.catalog-modal__image {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+
+  img {
+    width: 6rem;
+    height: 6rem;
+    border-radius: 0.5rem;
+    object-fit: cover;
+  }
+}
+
+.catalog__file-hidden {
+  display: none;
+}

@@ -1,0 +1,245 @@
+<article class="loyalty-panel">
+  <div class="loyalty-panel__header">
+    <h2>Puntos de fidelización</h2>
+    @if (wallet(); as w) {
+      @if (!w.programEnabled) {
+        <span class="loyalty-panel__badge">Programa deshabilitado</span>
+      }
+    }
+  </div>
+
+  <app-api-feedback severity="error" [message]="errorMessage()" />
+
+  @if (wallet(); as w) {
+    @if (w.isMerged) {
+      <p class="loyalty-panel__muted">Este perfil fue fusionado: sus puntos utilizables pasaron al perfil que se conserva.</p>
+    }
+
+    <dl class="loyalty-panel__summary">
+      <div>
+        <dt>Disponibles</dt>
+        <dd>{{ w.availablePoints }}</dd>
+      </div>
+      <div>
+        <dt>Reservados</dt>
+        <dd>{{ w.reservedPoints }}</dd>
+      </div>
+      <div>
+        <dt>Deuda</dt>
+        <dd>{{ w.debtPoints }}</dd>
+      </div>
+      <div>
+        <dt>Vencen en 30 días</dt>
+        <dd>{{ w.expiringSoonPoints }}</dd>
+      </div>
+      <div>
+        <dt>Próximo vencimiento</dt>
+        <dd>{{ w.nextExpiresOn ? (w.nextExpiresOn | date: 'mediumDate') : '—' }}</dd>
+      </div>
+    </dl>
+
+    @if (w.lots.length) {
+      <h3>Lotes</h3>
+      <ul class="loyalty-panel__list">
+        @for (lot of w.lots; track lot.id) {
+          <li [class.loyalty-panel__closed]="lot.usablePoints === 0">
+            <strong>{{ lot.usablePoints }} / {{ lot.initialPoints }} pts</strong>
+            <span>{{ lot.sourceLabel }}</span>
+            <span class="loyalty-panel__muted">
+              Acumulado {{ lot.accruedOn | date: 'mediumDate' }} · vence {{ lot.expiresOn | date: 'mediumDate' }}
+              @if (lot.isExpired && lot.remainingPoints > 0) {
+                · vencido
+              }
+              @if (lot.originLotId) {
+                · recibido por fusión
+              }
+              @if (lot.reservedPoints) {
+                · {{ lot.reservedPoints }} reservados para canjes
+              }
+            </span>
+          </li>
+        }
+      </ul>
+    } @else {
+      <p class="loyalty-panel__muted">Sin puntos acumulados.</p>
+    }
+
+    @if (w.debts.length) {
+      <h3>Deudas</h3>
+      <ul class="loyalty-panel__list">
+        @for (debt of w.debts; track debt.id) {
+          <li>
+            <strong>{{ debt.outstandingPoints }} / {{ debt.amount }} pts pendientes</strong>
+            <span class="loyalty-panel__muted">
+              {{ debt.origin === 'MergeTransfer' ? 'Recibida por fusión' : 'Deuda' }} · originada {{ debt.incurredAt | date: 'mediumDate' }}
+              @if (debt.origin === 'MergeTransfer') {
+                · traspasada {{ debt.createdAt | date: 'mediumDate' }}
+              }
+            </span>
+          </li>
+        }
+      </ul>
+    }
+
+    @if (w.redemptions?.length) {
+      <h3>Canjes</h3>
+      @if (canRegisterAtCounter) {
+        <a
+          class="loyalty-panel__link"
+          routerLink="/admin/loyalty/redemptions"
+          [queryParams]="{ tab: 'History', customerId: customerId }"
+        >
+          Ver el historial de sus canjes
+        </a>
+      }
+      <p class="loyalty-panel__muted">Pendientes y últimos canjes; el historial completo está en la página de canjes, por períodos de hasta 30 días.</p>
+      <ul class="loyalty-panel__list">
+        @for (redemption of w.redemptions; track redemption.id) {
+          <li>
+            <strong>{{ redemption.rewardName }} · {{ redemption.pointsCost }} pts</strong>
+            <span>{{ statusLabel(redemption.status) }}{{ redemption.isPastDeadline ? ' (plazo vencido)' : '' }}</span>
+            <span class="loyalty-panel__muted">
+              Pedido {{ redemption.requestedAt | date: 'mediumDate' }}{{ redemption.channel === 'Counter' ? ' en mostrador' : '' }}
+              @if (redemption.status === 'Requested') {
+                · aprobar hasta {{ redemption.approveBy | date: 'mediumDate' }}
+              }
+              @if (redemption.status === 'Approved') {
+                · entregar hasta {{ redemption.deliverBy | date: 'mediumDate' }}
+              }
+              @if (redemption.rejectionReason) {
+                · «{{ redemption.rejectionReason }}»
+              }
+              @if (redemption.cancellationReason) {
+                · «{{ redemption.cancellationReason }}»
+              }
+            </span>
+          </li>
+        }
+      </ul>
+    }
+
+    @if (canRegisterAtCounter && !w.isMerged) {
+      <form class="loyalty-panel__adjust" (ngSubmit)="registerAtCounter()">
+        <h3>Canje en mostrador</h3>
+        <app-api-feedback severity="error" [message]="counterError()" />
+        <label>
+          <span>Recompensa</span>
+          <select name="counterRewardId" [(ngModel)]="counterRewardId" [disabled]="isRegistering()">
+            <option value="">Elige una recompensa</option>
+            @for (reward of counterRewards(); track reward.id) {
+              <option [value]="reward.id" [disabled]="reward.pointsCost > w.availablePoints">
+                {{ reward.name }} · {{ reward.pointsCost }} pts
+              </option>
+            }
+          </select>
+        </label>
+        <label class="loyalty-panel__check">
+          <input type="checkbox" name="counterVerified" [(ngModel)]="counterVerified" [disabled]="isRegistering()" />
+          <span>Verifiqué en persona la identidad del cliente</span>
+        </label>
+        <label class="loyalty-panel__check">
+          <input type="checkbox" name="counterApproveNow" [(ngModel)]="counterApproveNow" [disabled]="isRegistering()" />
+          <span>Aprobar en este mismo paso</span>
+        </label>
+        <small class="loyalty-panel__muted">Los puntos quedan reservados hasta la entrega.</small>
+        <button type="submit" class="loyalty-panel__primary" [disabled]="isRegistering()">
+          {{ isRegistering() ? 'Registrando...' : 'Registrar canje' }}
+        </button>
+      </form>
+    }
+
+    @if (w.movements.length || showHistory()) {
+      <button
+        type="button"
+        class="loyalty-panel__link"
+        [attr.aria-expanded]="showHistory()"
+        (click)="toggleHistory()"
+      >
+        {{ showHistory() ? 'Ocultar historial' : 'Ver historial' }}
+      </button>
+      @if (showHistory()) {
+        <div class="loyalty-panel__fields loyalty-panel__history-filters">
+          <label>
+            <span>Tipo</span>
+            <select
+              name="movementType"
+              [ngModel]="movementType()"
+              (ngModelChange)="onMovementTypeChange($event)"
+            >
+              <option value="">Todos</option>
+              @for (type of movementTypes; track type) {
+                <option [value]="type">{{ movementLabel(type) }}</option>
+              }
+            </select>
+          </label>
+          <label>
+            <span>Desde</span>
+            <input type="date" name="movementFrom" [ngModel]="movementRange().from" (ngModelChange)="onMovementFromChange($event)" />
+          </label>
+          <label>
+            <span>Hasta</span>
+            <input type="date" name="movementTo" [ngModel]="movementRange().to" (ngModelChange)="onMovementToChange($event)" />
+          </label>
+        </div>
+        <p class="loyalty-panel__muted">{{ rangeHint }} El saldo de arriba no depende de estas fechas.</p>
+        <app-api-feedback severity="error" [message]="movementsError()" />
+        @if (!movementsLoading() && !movements().length && !movementsError()) {
+          <p class="loyalty-panel__muted">Sin movimientos para estos filtros.</p>
+        }
+        <ul class="loyalty-panel__list loyalty-panel__history" [attr.aria-busy]="movementsLoading()">
+          @for (movement of movements(); track movement.id) {
+            <li>
+              <strong>{{ movementSign(movement.type) }}{{ movement.points }}</strong>
+              <span>{{ movementLabel(movement.type) }}</span>
+              <span class="loyalty-panel__muted">
+                {{ movement.performedAt | date: 'short' }}
+                @if (movement.performedByName) {
+                  · {{ movement.performedByName }}
+                }
+                @if (movement.reason) {
+                  · «{{ movement.reason }}»
+                }
+              </span>
+            </li>
+          }
+        </ul>
+        <app-paginator
+          label="Paginación del historial de puntos"
+          [page]="movementsPage()"
+          [pageSize]="movementsPageSize"
+          [totalCount]="movementsTotal()"
+          [disabled]="movementsLoading()"
+          (pageChange)="onMovementsPageChange($event)"
+        />
+      }
+    }
+
+    @if (canAdjust && !w.isMerged) {
+      <form class="loyalty-panel__adjust" (ngSubmit)="adjust()">
+        <h3>Ajuste manual</h3>
+        <app-api-feedback severity="error" [message]="adjustError()" />
+        <div class="loyalty-panel__fields">
+          <label>
+            <span>Tipo</span>
+            <select name="direction" [(ngModel)]="direction" [disabled]="isSaving()">
+              <option value="Credit">Abonar puntos</option>
+              <option value="Debit">Descontar puntos</option>
+            </select>
+          </label>
+          <label>
+            <span>Puntos</span>
+            <input type="number" name="points" min="1" step="1" [(ngModel)]="points" [disabled]="isSaving()" required />
+          </label>
+        </div>
+        <label>
+          <span>Motivo</span>
+          <textarea name="reason" rows="2" maxlength="500" [(ngModel)]="reason" [disabled]="isSaving()" required></textarea>
+        </label>
+        <small class="loyalty-panel__muted">Un descuento nunca supera los puntos disponibles ni genera deuda.</small>
+        <button type="submit" class="loyalty-panel__primary" [disabled]="isSaving()">
+          {{ isSaving() ? 'Guardando...' : 'Registrar ajuste' }}
+        </button>
+      </form>
+    }
+  }
+</article>

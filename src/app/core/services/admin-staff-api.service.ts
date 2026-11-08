@@ -7,6 +7,8 @@ import {
   AdminStaffUpdateRequest,
   EnableProfessionalProfileRequest,
   StaffListItem,
+  StaffOfferingsUpdateRequest,
+  StaffOfferingsView,
   StaffResponse,
   StaffStatusUpdateRequest,
 } from '../models/staff.models';
@@ -48,6 +50,16 @@ export class AdminStaffApiService {
 
   remove(staffId: string) {
     return this.httpClient.delete<void>(this.buildUrl(`/admin/staff/${staffId}`));
+  }
+
+  /** General services the professional offers, with their duration (ADR-0016 B2). */
+  getOfferings(staffId: string) {
+    return this.httpClient.get<StaffOfferingsView>(this.buildUrl(`/admin/staff/${staffId}/offerings`));
+  }
+
+  /** Full replacement: offerings not sent are removed. */
+  updateOfferings(staffId: string, request: StaffOfferingsUpdateRequest) {
+    return this.httpClient.put<StaffOfferingsView>(this.buildUrl(`/admin/staff/${staffId}/offerings`), request);
   }
 
   uploadPhoto(staffId: string, file: File) {

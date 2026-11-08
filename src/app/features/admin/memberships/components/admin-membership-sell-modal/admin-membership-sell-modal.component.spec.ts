@@ -23,12 +23,15 @@ describe('AdminMembershipSellModalComponent', () => {
     terms: 'T',
     specificConditions: null,
     isActive: true,
-    services: [{ serviceId: 's-1', serviceName: 'Corte', serviceBasePrice: 25000, serviceIsActive: true, quantity: null }],
+    services: [
+      { serviceId: 's-1', serviceName: 'Corte clásico', generalServiceName: 'Corte', serviceBasePrice: 25000, serviceIsActive: true, quantity: null },
+    ],
     giftRules: [
       { id: 'g-1', kind: 'Physical', serviceId: null, serviceName: null, description: 'Gorra', quantity: 1, condition: 'FirstPurchaseOfPlan' },
     ],
     createdAt: '',
     updatedAt: null,
+    loyaltyPoints: 0,
     ...overrides,
   });
 
@@ -61,6 +64,7 @@ describe('AdminMembershipSellModalComponent', () => {
     fixture.detectChanges();
 
     expect(fixture.nativeElement.textContent).toContain('Bolsa común de 10 servicios');
+    expect(fixture.nativeElement.textContent).toContain('Corte · Corte clásico');
     expect(fixture.nativeElement.textContent).toContain('Gorra');
     expect(fixture.nativeElement.textContent).toContain('primera compra');
   });

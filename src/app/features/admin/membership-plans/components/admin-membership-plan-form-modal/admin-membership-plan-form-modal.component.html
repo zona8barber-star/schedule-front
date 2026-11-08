@@ -40,6 +40,21 @@
           @if (form.controls.defaultDurationDays.touched && form.controls.defaultDurationDays.invalid) {
             <small class="plan-modal__error">La vigencia debe ser un número entero de días entre 1 y {{ maxDurationDays }}.</small>
           }
+
+          <label class="plan-modal__field plan-modal__field--narrow">
+            <span>Puntos de fidelización</span>
+            <input type="number" formControlName="loyaltyPoints" min="0" [max]="maxLoyaltyPoints" step="1" inputmode="numeric" />
+          </label>
+          @if (form.controls.loyaltyPoints.touched && form.controls.loyaltyPoints.invalid) {
+            <small class="plan-modal__error">Ingresa un número entero entre 0 y {{ maxLoyaltyPoints }}. Usa 0 si no otorga puntos.</small>
+          }
+          <small class="plan-modal__muted">
+            @if (canManageLoyalty) {
+              Puntos fijos que otorga la compra de esta membresía; 0 no otorga puntos. Consumir la membresía no otorga puntos.
+            } @else {
+              Solo quien administra la fidelización puede cambiar los puntos.
+            }
+          </small>
         </fieldset>
 
         <fieldset class="plan-modal__section">
