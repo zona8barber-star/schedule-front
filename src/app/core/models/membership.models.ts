@@ -1,3 +1,4 @@
+import { PageQuery } from './paged-result.models';
 import { MembershipGiftCondition, MembershipGiftKind, MembershipPlanMode } from './membership-plan.models';
 
 export type MembershipStatus = 'PendingActivation' | 'Active' | 'Annulled';
@@ -161,6 +162,27 @@ export interface CustomerMembershipDetailView {
   consumptions: MembershipConsumptionView[];
   giftDeliveries: MembershipGiftDeliveryView[];
   createdAt: string;
+  loyalty?: MembershipLoyaltyView | null;
+}
+
+export type MembershipLoyaltyDecision =
+  | 'Accrued'
+  | 'NotAccruedProgramDisabled'
+  | 'NotAccruedNoPoints'
+  | 'NotAccruedPredatesWallet'
+  | 'NotAccruedAnnulled';
+
+/**
+ * Loyalty side of a membership. `pointsSnapshot` is null only for memberships sold before the wallet existed
+ * (`predatesWallet`); `decision` is taken once, at the first income link (null: no income linked yet).
+ */
+export interface MembershipLoyaltyView {
+  pointsSnapshot: number | null;
+  predatesWallet: boolean;
+  decision: MembershipLoyaltyDecision | null;
+  decidedAt: string | null;
+  accruedPoints: number;
+  withdrawnPoints: number;
 }
 
 export interface MembershipIncomeCandidateView {
@@ -221,4 +243,12 @@ export interface MembershipGiftDeliveryRequest {
 
 export interface MembershipGiftDeliveryReverseRequest {
   reason: string;
+}
+
+/** Filters of the membership lists (ADR-0016 B7): displayed status, plan and an inclusive range of the sale date. */
+export interface MembershipListQuery extends PageQuery {
+  status?: MembershipDisplayStatus | null;
+  planId?: string | null;
+  soldFrom?: string | null;
+  soldTo?: string | null;
 }

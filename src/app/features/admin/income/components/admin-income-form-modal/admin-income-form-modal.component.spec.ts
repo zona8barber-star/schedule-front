@@ -53,7 +53,7 @@ describe('AdminIncomeFormModalComponent', () => {
     httpMock = TestBed.inject(HttpTestingController);
     fixture.detectChanges();
 
-    httpMock.expectOne(`${api}/admin/services`).flush(services);
+    httpMock.expectOne(`${api}/admin/services/options`).flush(services);
     httpMock.expectOne(`${api}/admin/staff`).flush(staff);
     await flushMicrotasks();
     fixture.detectChanges();

@@ -74,6 +74,33 @@
           </ul>
         </div>
       } @else {
+        @if (merge.loyalty; as points) {
+          <div class="customer-modal__points">
+            <h3>Puntos de fidelización</h3>
+            <dl>
+              <div><dt>Se conserva</dt><dd>{{ points.targetAvailablePoints }} disponibles · {{ points.targetDebtPoints }} de deuda</dd></div>
+              <div><dt>Se fusiona</dt><dd>{{ points.sourceAvailablePoints }} disponibles · {{ points.sourceDebtPoints }} de deuda</dd></div>
+              <div><dt>Resultado</dt><dd><strong>{{ points.resultAvailablePoints }} disponibles · {{ points.resultDebtPoints }} de deuda</strong></dd></div>
+            </dl>
+            @if (points.lotsToTransfer.length) {
+              <p class="customer-modal__hint">Lotes que se traspasan, cada uno con su vencimiento original:</p>
+              <ul>
+                @for (lot of points.lotsToTransfer; track lot.lotId) {
+                  <li [class.customer-modal__soon]="lot.expiresSoon">
+                    {{ lot.points }} pts · {{ lot.sourceLabel }} · vence {{ lot.expiresOn | date: 'mediumDate' }}
+                    @if (lot.expiresSoon) {
+                      <small>(vence pronto)</small>
+                    }
+                  </li>
+                }
+              </ul>
+            }
+            @if (points.sourceExpiredPointsNotMoved) {
+              <p class="customer-modal__hint">{{ points.sourceExpiredPointsNotMoved }} punto(s) vencido(s) no se traspasan.</p>
+            }
+          </div>
+        }
+
         @if (merge.warnings.length) {
           <div class="customer-modal__warning">
             <ul>

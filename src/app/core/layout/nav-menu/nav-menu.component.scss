@@ -1,0 +1,128 @@
+:host {
+  display: grid;
+  gap: 0.25rem;
+}
+
+.nav-menu__group {
+  display: grid;
+}
+
+.nav-menu__heading {
+  margin: 0;
+}
+
+.nav-menu__toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  width: 100%;
+  min-height: 2.75rem;
+  padding: 0.5rem 0.75rem;
+  border: 0;
+  border-radius: 0.5rem;
+  background: transparent;
+  color: var(--z-steel-hi);
+  font-family: var(--z-font-mono);
+  font-size: 0.74rem;
+  font-weight: 400;
+  letter-spacing: 0.12em;
+  text-align: left;
+  text-transform: uppercase;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    background-color 120ms ease,
+    color 120ms ease;
+}
+
+.nav-menu__toggle:hover {
+  background: rgba(244, 242, 236, 0.06);
+  color: var(--z-bone);
+}
+
+.nav-menu__group--current .nav-menu__toggle {
+  color: var(--z-bone);
+}
+
+.nav-menu__toggle-label {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.nav-menu__chevron {
+  flex: none;
+  width: 1rem;
+  height: 1rem;
+  transition: transform 160ms ease;
+}
+
+.nav-menu__toggle[aria-expanded='true'] .nav-menu__chevron {
+  transform: rotate(180deg);
+}
+
+.nav-menu__list {
+  display: grid;
+  gap: 0.1rem;
+  margin: 0 0 0.35rem;
+  padding: 0;
+  list-style: none;
+}
+
+.nav-menu__list[hidden] {
+  display: none;
+}
+
+.nav-menu__list--flat {
+  margin: 0;
+}
+
+.nav-menu__link {
+  display: flex;
+  align-items: center;
+  min-height: 2.75rem;
+  padding: 0.55rem 0.75rem 0.55rem 1.1rem;
+  border-left: 2px solid transparent;
+  border-radius: 0 0.5rem 0.5rem 0;
+  color: var(--z-concrete);
+  font-family: var(--z-font-body);
+  font-size: 0.95rem;
+  font-weight: 500;
+  line-height: 1.3;
+  text-decoration: none;
+  overflow-wrap: anywhere;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    background-color 120ms ease,
+    color 120ms ease;
+}
+
+.nav-menu__list--flat .nav-menu__link {
+  padding-left: 0.75rem;
+}
+
+.nav-menu__link:hover {
+  background: rgba(244, 242, 236, 0.06);
+  color: var(--z-bone);
+}
+
+.nav-menu__link.is-active {
+  border-left-color: var(--z-brass);
+  background: rgba(176, 138, 74, 0.16);
+  color: var(--z-bone);
+  font-weight: 600;
+}
+
+.nav-menu__toggle:focus-visible,
+.nav-menu__link:focus-visible {
+  outline: 2px solid var(--z-brass);
+  outline-offset: -2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nav-menu__chevron,
+  .nav-menu__toggle,
+  .nav-menu__link {
+    transition: none;
+  }
+}

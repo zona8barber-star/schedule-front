@@ -1,0 +1,67 @@
+<div class="pp">
+  <section class="pp__hero">
+    <div class="pp__wrap">
+      <nav class="pp__crumbs" aria-label="Ruta">
+        <a routerLink="/productos">Productos</a>
+      </nav>
+      <span class="pp__kicker">Categoría</span>
+      <h1 class="pp__title">{{ category()?.name ?? (state() === 'unavailable' ? 'No disponible' : 'Productos') }}</h1>
+    </div>
+  </section>
+
+  <section class="pp__section">
+    <div class="pp__wrap">
+      @switch (state()) {
+        @case ('loading') {
+          <p class="pp__count">Cargando productos...</p>
+        }
+        @case ('ready') {
+          @if (category(); as current) {
+            @if (!current.products.length) {
+              <div class="pp__state">
+                <h2>Sin productos por ahora</h2>
+                <p>Esta categoría aún no tiene productos disponibles.</p>
+                <a class="pp__btn" routerLink="/productos">Ver todas las categorías</a>
+              </div>
+            } @else {
+              <div class="pp__grid">
+                @for (product of current.products; track product.code) {
+                  <a class="pp__card" [routerLink]="['/productos', current.code, product.code]" [attr.data-product-code]="product.code">
+                    <div class="pp__card-media">
+                      @if (product.imageUrl) {
+                        <img [src]="product.imageUrl" [alt]="product.name" loading="lazy" />
+                      } @else {
+                        <span aria-hidden="true">{{ product.name.charAt(0) }}</span>
+                      }
+                    </div>
+                    <div class="pp__card-body">
+                      <span class="pp__card-name">{{ product.name }}</span>
+                      @if (product.description) {
+                        <p class="pp__card-desc">{{ product.description }}</p>
+                      }
+                      <span class="pp__price">{{ formatPrice(product.price) }}</span>
+                    </div>
+                  </a>
+                }
+              </div>
+            }
+          }
+        }
+        @case ('unavailable') {
+          <div class="pp__state" data-testid="not-available">
+            <h2>No disponible</h2>
+            <p>Esta categoría ya no está disponible. Mira las demás categorías del catálogo.</p>
+            <a class="pp__btn" routerLink="/productos">Ver el catálogo</a>
+          </div>
+        }
+        @default {
+          <div class="pp__state">
+            <h2>No pudimos cargar los productos</h2>
+            <p>Revisa tu conexión e inténtalo de nuevo.</p>
+            <button class="pp__btn" type="button" (click)="load()">Reintentar</button>
+          </div>
+        }
+      }
+    </div>
+  </section>
+</div>

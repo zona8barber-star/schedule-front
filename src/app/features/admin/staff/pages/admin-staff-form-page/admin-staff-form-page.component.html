@@ -280,4 +280,8 @@
       </aside>
     }
   </div>
+
+  @if (isEditMode() && hasRecord() && staffId()) {
+    <app-admin-staff-offerings-section [staffId]="staffId()!" />
+  }
 </section>

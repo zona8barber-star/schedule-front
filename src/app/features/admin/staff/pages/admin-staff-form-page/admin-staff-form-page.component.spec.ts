@@ -58,7 +58,22 @@ describe('AdminStaffFormPageComponent', () => {
     httpMock = TestBed.inject(HttpTestingController);
   }
 
+  /** The "Servicios que ofrece" section (edit mode only) loads its own data; these tests do not look at it. */
+  function flushOfferingsSection(): void {
+    const api = environment.defaultApiBaseUrl;
+    for (const req of httpMock.match(`${api}/admin/staff/${staffId}/offerings`)) {
+      req.flush({ staffProfileId: staffId, defaultAppointmentDurationMinutes: 30, offerings: [] });
+    }
+    for (const req of httpMock.match(`${api}/admin/service-categories`)) {
+      req.flush([]);
+    }
+    for (const req of httpMock.match(`${api}/admin/general-services`)) {
+      req.flush([]);
+    }
+  }
+
   afterEach(() => {
+    flushOfferingsSection();
     httpMock.verify();
   });
 
@@ -191,5 +206,24 @@ describe('AdminStaffFormPageComponent', () => {
     await submitPromise;
     await fixture.whenStable();
     fixture.detectChanges();
+  });
+
+  it('shows the offerings section only when editing an existing professional', async () => {
+    await createFixture(staffId);
+    fixture.detectChanges();
+    httpMock.expectOne(`${environment.defaultApiBaseUrl}/admin/staff/${staffId}`).flush(baseStaffView());
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('app-admin-staff-offerings-section')).not.toBeNull();
+    httpMock.expectOne(`${environment.defaultApiBaseUrl}/admin/staff/${staffId}/offerings`);
+  });
+
+  it('does not show the offerings section in create mode', async () => {
+    await createFixture(null);
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('app-admin-staff-offerings-section')).toBeNull();
+    httpMock.expectNone(`${environment.defaultApiBaseUrl}/admin/service-categories`);
   });
 });

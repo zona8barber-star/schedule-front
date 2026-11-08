@@ -165,3 +165,46 @@
 .customer-modal__danger {
   color: var(--color-error, #b4533c);
 }
+
+// Points side of the merge preview (ADR-0013 D7).
+.customer-modal__points {
+  margin: 0 0 1rem;
+  padding: 0.75rem;
+  border: 1px solid var(--color-border, #e2e2e2);
+  border-radius: 0.5rem;
+
+  h3 {
+    margin: 0 0 0.5rem;
+    font-size: 1rem;
+  }
+
+  dl {
+    display: grid;
+    gap: 0.25rem;
+    margin: 0 0 0.5rem;
+  }
+
+  dl > div {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  dt {
+    min-width: 6.5rem;
+    font-weight: 600;
+  }
+
+  dd {
+    margin: 0;
+  }
+
+  ul {
+    margin: 0 0 0.5rem;
+    padding-left: 1.2rem;
+  }
+}
+
+.customer-modal__soon {
+  color: #a35f00;
+}

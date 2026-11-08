@@ -1,0 +1,141 @@
+.records {
+  display: grid;
+  gap: 1rem;
+}
+
+.records__header {
+  h1 {
+    margin: 0 0 0.35rem;
+  }
+
+  p {
+    margin: 0;
+    color: var(--text-muted);
+    line-height: 1.5;
+  }
+}
+
+.records__tabs {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+
+  button {
+    padding: 0.55rem 1.1rem;
+    border: 1px solid var(--border-soft);
+    border-radius: 999px;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  .records__tab--active {
+    background: var(--btn-primary-bg);
+    color: var(--btn-primary-text);
+    border-color: transparent;
+  }
+}
+
+.records__list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 0.75rem;
+}
+
+.records__card {
+  display: grid;
+  gap: 0.3rem;
+  padding: 1rem 1.15rem;
+  border: 1px solid var(--border-soft);
+  border-radius: 1rem;
+  background: var(--surface-panel);
+}
+
+.records__card-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.records__date {
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.records__meta {
+  color: var(--text-muted);
+  font-size: 0.92rem;
+  overflow-wrap: anywhere;
+}
+
+.records__meta--small {
+  font-size: 0.8rem;
+}
+
+.records__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  justify-content: flex-end;
+  margin-top: 0.35rem;
+
+  button {
+    padding: 0.55rem 1.2rem;
+    border: 0;
+    border-radius: 999px;
+    background: var(--btn-primary-bg);
+    color: var(--btn-primary-text);
+    font: inherit;
+    font-weight: 700;
+    cursor: pointer;
+
+    &[disabled] {
+      opacity: 0.6;
+      cursor: wait;
+    }
+  }
+}
+
+.records__filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 0.75rem;
+
+  label {
+    display: inline-flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    font-size: 0.85rem;
+  }
+
+  input,
+  select {
+    padding: 0.4rem 0.55rem;
+    border: 1px solid var(--border-soft, #ccc);
+    border-radius: 0.5rem;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+  }
+}
+
+.records__hint {
+  margin: 0 0 0.75rem;
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+}
+
+.records__link {
+  margin-left: 0.35rem;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}

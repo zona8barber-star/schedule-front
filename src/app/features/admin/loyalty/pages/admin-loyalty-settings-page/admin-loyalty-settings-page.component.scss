@@ -1,0 +1,176 @@
+// Same layout as the other admin settings pages (horario de atención, landing).
+.admin-content-page {
+  display: grid;
+  gap: 1.25rem;
+}
+
+.admin-content-page__hero,
+.admin-content-page__panel {
+  padding: clamp(1.1rem, 2vw, 1.55rem);
+  border: 1px solid var(--border-soft);
+  border-radius: 1.5rem;
+  background: var(--surface-panel);
+  box-shadow: var(--shadow-soft);
+}
+
+.admin-content-page__eyebrow {
+  margin: 0;
+  color: var(--brand-primary);
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.admin-content-page h1,
+.admin-content-page h2,
+.admin-content-page p {
+  margin: 0;
+}
+
+.admin-content-page h2 {
+  font-size: 1.1rem;
+}
+
+.admin-content-page p {
+  color: var(--text-muted);
+  line-height: 1.6;
+}
+
+.admin-content-page__panel,
+form,
+fieldset {
+  display: grid;
+  gap: 1rem;
+}
+
+fieldset {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  min-width: 0;
+}
+
+.admin-content-page__field {
+  display: grid;
+  gap: 0.45rem;
+  max-width: 24rem;
+
+  label {
+    font-weight: 600;
+  }
+
+  input {
+    width: 100%;
+    padding: 0.85rem 1rem;
+    border: 1px solid rgba(110, 96, 74, 0.3);
+    border-radius: 1rem;
+    background: rgba(241, 243, 245, 0.74);
+    color: var(--color-text);
+    font: inherit;
+
+    &:focus {
+      outline: 2px solid rgba(176, 138, 74, 0.3);
+      outline-offset: 2px;
+      border-color: rgba(176, 138, 74, 0.64);
+    }
+  }
+}
+
+.admin-content-page__error {
+  color: #92382d;
+  font-size: 0.84rem;
+}
+
+.admin-content-page__hint {
+  color: var(--text-muted);
+  font-size: 0.82rem;
+  line-height: 1.5;
+}
+
+.admin-content-page__actions {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.admin-content-page__actions button,
+.loyalty-settings__conflict button {
+  min-width: 11rem;
+  padding: 0.85rem 1.2rem;
+  border: 0;
+  border-radius: 999px;
+  background: var(--btn-primary-bg);
+  color: var(--btn-primary-text);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color 130ms ease;
+
+  &:hover:not([disabled]) {
+    background: var(--btn-primary-bg-hover);
+  }
+
+  &[disabled] {
+    cursor: wait;
+    opacity: 0.72;
+  }
+}
+
+.loyalty-settings__toggle {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  cursor: pointer;
+
+  input[type='checkbox'] {
+    width: 1.2rem;
+    height: 1.2rem;
+    margin: 0.2rem 0 0;
+    cursor: pointer;
+    accent-color: var(--brand-primary);
+    flex-shrink: 0;
+  }
+
+  span {
+    display: grid;
+    gap: 0.2rem;
+  }
+
+  small {
+    color: var(--text-muted);
+    line-height: 1.5;
+  }
+}
+
+.loyalty-settings__rules {
+  margin: 0;
+  padding-left: 1.2rem;
+  display: grid;
+  gap: 0.45rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+.loyalty-settings__history {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+
+  li {
+    display: grid;
+    gap: 0.2rem;
+    padding: 0.7rem 0;
+    border-bottom: 1px solid var(--border-soft);
+
+    &:last-child {
+      border-bottom: none;
+    }
+  }
+}
+
+.loyalty-settings__history-when {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}

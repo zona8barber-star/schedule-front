@@ -1,0 +1,136 @@
+<section class="admin-content-page">
+  <header class="admin-content-page__hero">
+    <div>
+      <p class="admin-content-page__eyebrow">Fidelización</p>
+      <h1>Recompensas</h1>
+      <p>
+        Lo que los clientes pueden canjear con sus puntos. Cada canje conserva el nombre, el tipo, el servicio y el coste
+        con los que se pidió: editar o desactivar una recompensa no cambia los canjes existentes.
+      </p>
+    </div>
+  </header>
+
+  <article class="admin-content-page__panel">
+    <h2>{{ editing() ? 'Editar recompensa' : 'Nueva recompensa' }}</h2>
+    <app-api-feedback severity="error" [message]="errorMessage()" />
+    <app-api-feedback severity="info" [message]="successMessage()" />
+
+    <form [formGroup]="form" (ngSubmit)="save()" novalidate>
+      <fieldset class="rewards__fields" [disabled]="isSaving()">
+        <div class="admin-content-page__field">
+          <label for="rewardName">Nombre</label>
+          <input id="rewardName" type="text" formControlName="name" maxlength="120" />
+        </div>
+
+        <div class="admin-content-page__field">
+          <label for="rewardKind">Tipo</label>
+          <select id="rewardKind" formControlName="kind">
+            <option value="Other">Otra recompensa (producto u obsequio)</option>
+            <option value="Service">Servicio del catálogo</option>
+          </select>
+        </div>
+
+        @if (form.controls.kind.value === 'Service') {
+          <div class="admin-content-page__field">
+            <label for="rewardService">Servicio</label>
+            <select id="rewardService" formControlName="serviceId">
+              <option value="">Elige un servicio</option>
+              @for (service of services(); track service.id) {
+                <option [value]="service.id">{{ serviceOptionLabel(service) }}{{ service.isActive ? '' : ' (inactivo)' }}</option>
+              }
+            </select>
+            <span class="admin-content-page__hint">Se entrega al confirmar el servicio realizado con el tipo «Recompensa».</span>
+          </div>
+        }
+
+        <div class="admin-content-page__field">
+          <label for="rewardCost">Coste (puntos)</label>
+          <input id="rewardCost" type="number" formControlName="pointsCost" min="1" [max]="maxCost" step="1" inputmode="numeric" />
+        </div>
+
+        <div class="admin-content-page__field">
+          <label for="rewardDescription">Descripción (opcional)</label>
+          <textarea id="rewardDescription" rows="2" formControlName="description" maxlength="500"></textarea>
+        </div>
+
+        <label class="rewards__toggle">
+          <input type="checkbox" formControlName="isActive" />
+          <span>Activa (visible para pedir canjes)</span>
+        </label>
+      </fieldset>
+
+      <div class="admin-content-page__actions">
+        @if (editing()) {
+          <button type="button" class="rewards__secondary" (click)="startNew()" [disabled]="isSaving()">Cancelar edición</button>
+        }
+        <button type="submit" [disabled]="isSaving()">{{ isSaving() ? 'Guardando...' : editing() ? 'Guardar cambios' : 'Crear recompensa' }}</button>
+      </div>
+    </form>
+  </article>
+
+  <article class="admin-content-page__panel">
+    <h2>Catálogo</h2>
+    @if (isLoading()) {
+      <app-page-state kind="loading" message="Cargando recompensas..." />
+    } @else if (!rewards().length) {
+      <p>Aún no hay recompensas.</p>
+    } @else {
+      <ul class="rewards__list">
+        @for (reward of rewards(); track reward.id) {
+          <li [class.rewards__inactive]="!reward.isActive">
+            <div class="rewards__row">
+              <span>
+                <strong>{{ reward.name }}</strong> · {{ reward.pointsCost }} pts
+                <small>
+                  · {{ kindLabels[reward.kind] }}{{ reward.serviceName ? ': ' + reward.serviceName : '' }}
+                  {{ reward.isActive ? '' : '· inactiva' }}
+                </small>
+              </span>
+              <span class="rewards__buttons">
+                <button type="button" class="rewards__secondary" (click)="toggleHistory(reward)">
+                  {{ historyFor() === reward.id ? 'Ocultar historial' : 'Historial' }}
+                </button>
+                <button type="button" class="rewards__secondary" (click)="edit(reward)">Editar</button>
+              </span>
+            </div>
+            @if (historyFor() === reward.id) {
+              <ul class="rewards__history">
+                @for (change of history(); track change.id) {
+                  <li>
+                    {{ change.changedAt | date: 'medium' }} · {{ change.changedByName ?? 'Usuario eliminado' }} ·
+                    @if (change.changeType === 'Created') {
+                      creada con {{ change.newPointsCost }} pts
+                    } @else {
+                      @if (change.previousName !== change.newName) {
+                        nombre «{{ change.previousName }}» → «{{ change.newName }}»;
+                      }
+                      @if (change.previousPointsCost !== change.newPointsCost) {
+                        coste {{ change.previousPointsCost }} → {{ change.newPointsCost }} pts;
+                      }
+                      @if (change.previousServiceName !== change.newServiceName || change.previousKind !== change.newKind) {
+                        tipo {{ change.previousServiceName ?? kindLabels[change.previousKind ?? 'Other'] }} → {{ change.newServiceName ?? kindLabels[change.newKind] }};
+                      }
+                      @if (change.previousIsActive !== change.newIsActive) {
+                        {{ change.newIsActive ? 'activada' : 'desactivada' }};
+                      }
+                      @if (change.previousDescription !== change.newDescription) {
+                        descripción actualizada;
+                      }
+                    }
+                  </li>
+                }
+              </ul>
+              <app-paginator
+                label="Paginación del historial de la recompensa"
+                [page]="historyPage()"
+                [pageSize]="historyPageSize"
+                [totalCount]="historyTotal()"
+                (pageChange)="onHistoryPageChange($event)"
+              />
+            }
+          </li>
+        }
+      </ul>
+    }
+  </article>
+</section>

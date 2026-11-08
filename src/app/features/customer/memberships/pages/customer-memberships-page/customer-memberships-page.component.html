@@ -7,17 +7,44 @@
 
   <app-api-feedback severity="error" [message]="errorMessage()" />
 
+  @if (hasFilters() || totalCount() > 0) {
+    <div class="my-memberships__filters" role="group" aria-label="Filtros de membresías">
+      <label>
+        <span>Estado</span>
+        <select data-testid="membership-status-filter" [value]="status()" (change)="onFilterChange({ status: $any($event.target).value })">
+          <option value="">Todos</option>
+          @for (item of statuses; track item) {
+            <option [value]="item" [selected]="item === status()">{{ statusLabels[item] }}</option>
+          }
+        </select>
+      </label>
+      <label>
+        <span>Comprada desde</span>
+        <input type="date" [value]="soldRange()?.from ?? ''" (change)="onSoldFromChange($any($event.target).value)" />
+      </label>
+      <label>
+        <span>Comprada hasta</span>
+        <input type="date" [value]="soldRange()?.to ?? ''" (change)="onSoldToChange($any($event.target).value)" />
+      </label>
+    </div>
+  }
+
   @if (isLoading()) {
     <article class="my-memberships__panel">
       <app-page-state kind="loading" message="Cargando membresías..." />
+    </article>
+  } @else if (!memberships().length && !errorMessage() && hasFilters()) {
+    <article class="my-memberships__panel">
+      <app-page-state kind="empty" message="No tienes membresías que coincidan con los filtros." />
     </article>
   } @else if (!memberships().length && !errorMessage()) {
     <article class="my-memberships__panel">
       <app-page-state
         kind="empty"
         title="Aún no tienes membresías"
-        message="Cuando compres una membresía en la barbería aparecerá aquí. Si ya compraste una y no la ves, pide en la barbería que la vinculen a tu cuenta."
+        message="Cuando compres una membresía en la barbería aparecerá aquí. Si ya compraste una y no la ves, solicita vincular tu perfil de cliente."
       />
+      <a class="my-memberships__profile-link" routerLink="/customer/customer-profile">Ir a mi perfil de cliente</a>
     </article>
   } @else {
     <div class="my-memberships__list">
@@ -60,5 +87,12 @@
         </a>
       }
     </div>
+    <app-paginator
+      label="Paginación de membresías"
+      [page]="page()"
+      [pageSize]="pageSize"
+      [totalCount]="totalCount()"
+      (pageChange)="onPageChange($event)"
+    />
   }
 </section>

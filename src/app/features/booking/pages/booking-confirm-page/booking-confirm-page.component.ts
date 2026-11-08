@@ -6,7 +6,10 @@ import {
   AppointmentResponse,
   CreateCustomerAppointmentRequest,
 } from '../../../../core/models/appointment.models';
-import { PublicStaffProfileResponse } from '../../../../core/models/content.models';
+import {
+  PublicStaffProfileResponse,
+  PublicStaffServiceResponse,
+} from '../../../../core/models/content.models';
 import { CustomerAppointmentsApiService } from '../../../../core/services/customer-appointments-api.service';
 import { PublicStaffApiService } from '../../../../core/services/public-staff-api.service';
 import { getApiErrorMessage } from '../../../../core/utils/api-error.utils';
@@ -34,6 +37,10 @@ export class BookingConfirmPageComponent implements OnInit {
     this.route.snapshot.queryParamMap.get('staffProfileId'),
   );
   readonly startsAtUtc = signal<string | null>(this.route.snapshot.queryParamMap.get('startsAt'));
+  /** General service being booked (ADR-0016 B3); its name and duration come from the profile. */
+  readonly generalServiceId = signal<string | null>(
+    this.route.snapshot.queryParamMap.get('generalServiceId'),
+  );
   readonly staffProfile = signal<PublicStaffProfileResponse | null>(null);
   readonly isSubmitting = signal(false);
   readonly errorMessage = signal<string | null>(null);
@@ -41,21 +48,33 @@ export class BookingConfirmPageComponent implements OnInit {
   /** The chosen time was taken by someone else while confirming (409). */
   readonly slotTaken = signal(false);
 
+  readonly service = computed<PublicStaffServiceResponse | null>(
+    () =>
+      this.staffProfile()?.services.find(
+        (service) => service.generalServiceId === this.generalServiceId(),
+      ) ?? null,
+  );
+
   readonly canSubmit = computed(() => {
     const staffProfileId = this.staffProfileId();
     const startsAtUtc = this.startsAtUtc();
-    if (!staffProfileId || !startsAtUtc) {
+    if (!staffProfileId || !startsAtUtc || !this.generalServiceId()) {
       return false;
     }
 
     return !Number.isNaN(Date.parse(startsAtUtc));
   });
 
-  /** Back to the barber's booking modal, opened on the same day. */
+  /** Back to the barber's booking modal, opened on the same day and service. */
   readonly changeDateQueryParams = computed(() => {
     const startsAtUtc = this.startsAtUtc();
     const valid = !!startsAtUtc && !Number.isNaN(Date.parse(startsAtUtc));
-    return valid ? { reservar: 1, fecha: bogotaDateKey(startsAtUtc) } : { reservar: 1 };
+    const generalServiceId = this.generalServiceId();
+    return {
+      reservar: 1,
+      ...(valid ? { fecha: bogotaDateKey(startsAtUtc) } : {}),
+      ...(generalServiceId ? { servicio: generalServiceId } : {}),
+    };
   });
 
   readonly submitLabel = computed(() =>
@@ -99,7 +118,8 @@ export class BookingConfirmPageComponent implements OnInit {
 
     const staffProfileId = this.staffProfileId();
     const startsAtUtc = this.startsAtUtc();
-    if (!staffProfileId || !startsAtUtc) {
+    const generalServiceId = this.generalServiceId();
+    if (!staffProfileId || !startsAtUtc || !generalServiceId) {
       return;
     }
 
@@ -108,6 +128,7 @@ export class BookingConfirmPageComponent implements OnInit {
     try {
       const request: CreateCustomerAppointmentRequest = {
         staffProfileId,
+        generalServiceId,
         startsAtUtc,
         notes: null,
       };
@@ -130,7 +151,7 @@ export class BookingConfirmPageComponent implements OnInit {
 
 function getBookingErrorMessage(error: unknown): string {
   if (isHttpConflict(error)) {
-    return 'Ese horario ya no está disponible.';
+    return 'Ese horario ya no está disponible o el servicio ya no se ofrece.';
   }
 
   return getApiErrorMessage(error);

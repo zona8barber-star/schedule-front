@@ -94,9 +94,40 @@
           <p class="membership-detail__muted">
             Sin ingreso vinculado. Registra el pago en Ingresos como "Venta de membresía" y vincúlalo aquí.
           </p>
-          <button class="membership-detail__btn" type="button" (click)="open('link')">Vincular ingreso</button>
+          @if (canConfirmPayment) {
+            <button class="membership-detail__btn" type="button" (click)="open('link')">Vincular ingreso</button>
+          } @else {
+            <p class="membership-detail__muted">Vincular el ingreso confirma el pago y requiere el permiso para confirmar pagos de membresía.</p>
+          }
         }
       </article>
+
+      @if (m.loyalty; as loyalty) {
+        <article class="membership-detail__card">
+          <h2>Puntos de fidelización</h2>
+          @if (loyalty.predatesWallet) {
+            <p class="membership-detail__muted">Vendida antes de existir la billetera de puntos: no acumula puntos.</p>
+          } @else {
+            <dl>
+              <dt>Puntos del plan al vender</dt>
+              <dd>{{ loyalty.pointsSnapshot }}</dd>
+              <dt>Acreditados</dt>
+              <dd>{{ loyalty.accruedPoints }}</dd>
+              @if (loyalty.withdrawnPoints) {
+                <dt>Retirados por la anulación</dt>
+                <dd>{{ loyalty.withdrawnPoints }}</dd>
+              }
+            </dl>
+          }
+          @if (loyalty.decision) {
+            <p class="membership-detail__muted">
+              {{ loyaltyDecisionLabels[loyalty.decision] }} ({{ loyalty.decidedAt | date: 'medium' }}). La decisión es definitiva.
+            </p>
+          } @else if (!loyalty.predatesWallet) {
+            <p class="membership-detail__muted">Los puntos se acreditan una sola vez, al vincular el primer ingreso. Desvincular no los retira.</p>
+          }
+        </article>
+      }
     </div>
 
     <article class="membership-detail__card">

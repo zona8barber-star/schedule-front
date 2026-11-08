@@ -26,6 +26,37 @@
         </select>
       </div>
 
+      <div class="ap-field">
+        <label for="filterStatus">Estado</label>
+        <select id="filterStatus" [value]="statusFilter()" (change)="onFilterChange({ status: $any($event.target).value })">
+          <option value="">Todos</option>
+          @for (status of statuses; track status) {
+            <option [value]="status" [selected]="status === statusFilter()">{{ statusLabel(status) }}</option>
+          }
+        </select>
+      </div>
+
+      <div class="ap-field">
+        <label for="filterService">Servicio general</label>
+        <select id="filterService" [value]="generalServiceFilter()" (change)="onFilterChange({ generalServiceId: $any($event.target).value })">
+          <option value="">Todos</option>
+          @for (service of generalServices(); track service.id) {
+            <option [value]="service.id" [selected]="service.id === generalServiceFilter()">{{ service.name }}</option>
+          }
+        </select>
+      </div>
+
+      <div class="ap-field">
+        <label for="filterCustomer">Cliente</label>
+        <input
+          id="filterCustomer"
+          type="search"
+          placeholder="Nombre, correo o teléfono"
+          [value]="customerFilter()"
+          (change)="onFilterChange({ customer: $any($event.target).value.trim() })"
+        />
+      </div>
+
       <button
         class="ap-btn ap-btn--primary ap-toolbar__create-btn"
         type="button"
@@ -50,7 +81,9 @@
         (click)="setTab('today')"
       >
         Hoy
-        <span class="ap-tab__count">{{ todayAppointments().length }}</span>
+        @if (activeTab() === 'today' && !isLoading()) {
+          <span class="ap-tab__count">{{ totalCount() }}</span>
+        }
       </button>
       <button
         class="ap-tab"
@@ -60,7 +93,9 @@
         (click)="setTab('upcoming')"
       >
         Próximas
-        <span class="ap-tab__count">{{ upcomingAppointments().length }}</span>
+        @if (activeTab() === 'upcoming' && !isLoading()) {
+          <span class="ap-tab__count">{{ totalCount() }}</span>
+        }
       </button>
       <button
         class="ap-tab"
@@ -70,7 +105,9 @@
         (click)="setTab('past')"
       >
         Pasadas
-        <span class="ap-tab__count">{{ pastAppointments().length }}</span>
+        @if (activeTab() === 'past' && !isLoading()) {
+          <span class="ap-tab__count">{{ totalCount() }}</span>
+        }
       </button>
     </div>
 
@@ -82,8 +119,8 @@
           <input
             id="dateFrom"
             type="date"
-            [value]="dateFrom()"
-            (input)="setDateFrom($any($event.target).value)"
+            [value]="shownFrom()"
+            (change)="setDateFrom($any($event.target).value)"
           />
         </div>
         <div class="ap-field">
@@ -91,11 +128,17 @@
           <input
             id="dateTo"
             type="date"
-            [value]="dateTo()"
-            (input)="setDateTo($any($event.target).value)"
+            [value]="shownTo()"
+            (change)="setDateTo($any($event.target).value)"
           />
         </div>
       </div>
+      @if (activeTab() === 'past') {
+        <p class="ap-range-hint">
+          Las fechas filtran por el día programado de cada cita (también las canceladas). {{ rangeHint }}
+        </p>
+        <app-api-feedback severity="error" [message]="rangeError()" />
+      }
     }
 
     <!-- Table -->
@@ -110,6 +153,7 @@
             <tr>
               <th>Profesional</th>
               <th>Cliente</th>
+              <th>Servicio</th>
               <th>Teléfono</th>
               <th>Fecha</th>
               <th>Hora</th>
@@ -123,6 +167,7 @@
               <tr [class.is-editing]="editingAppointmentId() === apt.id">
                 <td class="ap-td--staff">{{ staffName(apt.staffProfileId) }}</td>
                 <td>{{ apt.customerName }}</td>
+                <td data-testid="appointment-service">{{ serviceLabel(apt) ?? '—' }}</td>
                 <td>{{ apt.customerPhone || '—' }}</td>
                 <td class="ap-td--nowrap">{{ formatDate(apt.startsAtUtc) }}</td>
                 <td class="ap-td--nowrap">{{ formatTime(apt.startsAtUtc) }}</td>
@@ -175,6 +220,15 @@
         </table>
       </div>
     }
+
+    <app-paginator
+      label="Paginación de citas"
+      [page]="page()"
+      [pageSize]="pageSize()"
+      [totalCount]="totalCount()"
+      [disabled]="isLoading()"
+      (pageChange)="onPageChange($event)"
+    />
 
   </div>
 
@@ -233,6 +287,40 @@
                 <input id="createStartsAt" type="datetime-local" formControlName="startsAt" />
                 @if (showCreateError('startsAt', 'required')) {
                   <p class="ap-error">Selecciona fecha y hora de inicio.</p>
+                }
+              </div>
+
+              <div class="ap-field">
+                <label for="createService">Servicio</label>
+                <select id="createService" formControlName="generalServiceId">
+                  <option value="">Selecciona un servicio</option>
+                  @for (option of createServiceOptions(); track option.generalServiceId) {
+                    <option [value]="option.generalServiceId">{{ formatServiceOption(option) }}</option>
+                  }
+                </select>
+                @if (showCreateError('generalServiceId', 'required')) {
+                  <p class="ap-error">Selecciona el servicio.</p>
+                }
+                @if (serviceOptionsError()) {
+                  <p class="ap-error">{{ serviceOptionsError() }}</p>
+                }
+              </div>
+
+              <div class="ap-field">
+                <label for="createDuration">Duración (min)</label>
+                <input
+                  id="createDuration"
+                  type="number"
+                  formControlName="durationMinutes"
+                  [min]="durationRange.min"
+                  [max]="durationRange.max"
+                  step="5"
+                />
+                @if (showCreateError('durationMinutes', 'required')) {
+                  <p class="ap-error">Indica la duración.</p>
+                }
+                @if (showCreateError('durationMinutes', 'min') || showCreateError('durationMinutes', 'max')) {
+                  <p class="ap-error">La duración debe estar entre {{ durationRange.min }} y {{ durationRange.max }} minutos.</p>
                 }
               </div>
 
@@ -332,11 +420,38 @@
                 }
               </div>
 
+              @if (editingAppointment(); as apt) {
+                <div class="ap-field">
+                  <label for="editService">Servicio</label>
+                  <select id="editService" formControlName="generalServiceId">
+                    @if (!apt.generalServiceId) {
+                      <option value="">Sin servicio (mantener)</option>
+                    }
+                    @for (option of editServiceChoices(apt); track option.generalServiceId) {
+                      <option [value]="option.generalServiceId">{{ formatServiceOption(option) }}</option>
+                    }
+                  </select>
+                  @if (serviceOptionsError()) {
+                    <p class="ap-error">{{ serviceOptionsError() }}</p>
+                  }
+                </div>
+              }
+
               <div class="ap-field">
-                <label for="editEndsAt">Fecha y hora de fin</label>
-                <input id="editEndsAt" type="datetime-local" formControlName="endsAt" />
-                @if (showEditError('endsAt', 'required')) {
-                  <p class="ap-error">Selecciona fecha y hora de fin.</p>
+                <label for="editDuration">Duración (min)</label>
+                <input
+                  id="editDuration"
+                  type="number"
+                  formControlName="durationMinutes"
+                  [min]="durationRange.min"
+                  [max]="durationRange.max"
+                  step="5"
+                />
+                @if (showEditError('durationMinutes', 'required')) {
+                  <p class="ap-error">Indica la duración.</p>
+                }
+                @if (showEditError('durationMinutes', 'min') || showEditError('durationMinutes', 'max')) {
+                  <p class="ap-error">La duración debe estar entre {{ durationRange.min }} y {{ durationRange.max }} minutos.</p>
                 }
               </div>
 

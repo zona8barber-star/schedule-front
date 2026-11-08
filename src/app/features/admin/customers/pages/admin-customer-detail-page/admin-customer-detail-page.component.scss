@@ -175,3 +175,27 @@
     background: rgba(180, 83, 60, 0.1);
   }
 }
+
+.customer-detail__filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 0.75rem;
+  margin-bottom: 0.75rem;
+
+  label {
+    display: inline-flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    font-size: 0.85rem;
+  }
+
+  input,
+  select {
+    padding: 0.35rem 0.5rem;
+    border: 1px solid var(--color-border, #ccc);
+    border-radius: 0.4rem;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+  }
+}

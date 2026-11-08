@@ -1,0 +1,159 @@
+<section class="records">
+  <header class="records__header">
+    <h1>Canjes de puntos</h1>
+    <p>
+      Los puntos de cada canje quedan reservados desde la solicitud. Se descuentan al entregar y vuelven al cliente si se
+      rechaza, se cancela o vence (los que ya vencieron no vuelven a estar disponibles).
+    </p>
+  </header>
+
+  <div class="records__tabs" role="tablist">
+    @for (item of tabs; track item.id) {
+      <button
+        type="button"
+        role="tab"
+        [attr.aria-selected]="tab() === item.id"
+        [class.records__tab--active]="tab() === item.id"
+        (click)="selectTab(item.id)"
+      >
+        {{ item.label }}
+      </button>
+    }
+  </div>
+
+  @if (hasFilters) {
+    <div class="records__filters" role="group" aria-label="Filtros de canjes">
+      @if (tab() === 'History') {
+        <label>
+          <span>Estado</span>
+          <select data-testid="redemption-status-filter" [value]="statusFilter()" (change)="onFilterChange({ status: $any($event.target).value })">
+            <option value="">Todos</option>
+            @for (status of statuses; track status) {
+              <option [value]="status" [selected]="status === statusFilter()">{{ statusLabel(status) }}</option>
+            }
+          </select>
+        </label>
+      }
+      <label>
+        <span>Solicitado desde</span>
+        <input type="date" [value]="range()?.from ?? ''" (change)="onFromChange($any($event.target).value)" />
+      </label>
+      <label>
+        <span>Solicitado hasta</span>
+        <input type="date" [value]="range()?.to ?? ''" (change)="onToChange($any($event.target).value)" />
+      </label>
+      @if (customerId()) {
+        <p class="records__meta">
+          Solo los canjes de {{ redemptions()[0]?.customerName ?? 'un cliente' }}.
+          <button type="button" class="records__link" (click)="clearCustomer()">Ver todos los clientes</button>
+        </p>
+      }
+    </div>
+    <p class="records__hint">
+      @if (isHistoryView()) {
+        {{ rangeHint }}
+      } @else {
+        Los pendientes se muestran todos, sin importar su fecha; las fechas son opcionales (hasta 30 días).
+        @if (range()) {
+          <button type="button" class="records__link" (click)="clearDates()">Ver todos los pendientes</button>
+        }
+      }
+    </p>
+    <app-api-feedback severity="error" [message]="rangeError()" />
+  }
+
+  <app-api-feedback severity="error" [message]="errorMessage()" />
+  <app-api-feedback severity="info" [message]="successMessage()" />
+
+  @if (isLoading()) {
+    <app-page-state kind="loading" message="Cargando canjes..." />
+  } @else if (!redemptions().length) {
+    <app-page-state [message]="tab() === 'History' ? 'No hay canjes para estos filtros.' : 'No hay canjes pendientes en esta lista.'" />
+  } @else {
+    <ul class="records__list">
+      @for (redemption of redemptions(); track redemption.id) {
+        <li class="records__card">
+          <div class="records__card-head">
+            <strong>{{ redemption.rewardName }} · {{ redemption.pointsCost }} pts</strong>
+            <span class="records__date">{{ redemption.requestedAt | date: 'mediumDate' }}</span>
+          </div>
+          <span class="records__meta">
+            {{ redemption.customerName ?? 'Cliente' }} · {{ kindLabels[redemption.rewardKind] }}{{ redemption.serviceName ? ': ' + redemption.serviceName : '' }}
+          </span>
+          <span class="records__meta">
+            {{ statusLabel(redemption.status) }}
+            @if (redemption.isPastDeadline) {
+              <span class="redemptions__warning">· plazo vencido</span>
+            }
+          </span>
+          <span class="records__meta records__meta--small">
+            {{ redemption.channel === 'Counter' ? 'Registrado en mostrador' : 'Pedido desde la app' }} por {{ redemption.requestedByName ?? 'usuario eliminado' }}
+            @if (redemption.status === 'Requested') {
+              · aprobar hasta {{ redemption.approveBy | date: 'mediumDate' }}
+            }
+            @if (redemption.status === 'Approved') {
+              · aprobado por {{ redemption.approvedByName }} · entregar hasta {{ redemption.deliverBy | date: 'mediumDate' }}
+            }
+            @if (redemption.status === 'Delivered') {
+              · entregado por {{ redemption.deliveredByName }} el {{ redemption.deliveredAt | date: 'medium' }}
+            }
+            @if (redemption.rejectionReason) {
+              · rechazado: «{{ redemption.rejectionReason }}»
+            }
+            @if (redemption.status === 'Cancelled') {
+              · cancelado {{ redemption.cancelledByCustomer ? 'por el cliente' : 'por ' + redemption.cancelledByName }}
+              @if (redemption.cancellationReason) {
+                : «{{ redemption.cancellationReason }}»
+              }
+            }
+          </span>
+
+          @if (acting()?.id === redemption.id) {
+            <label class="redemptions__reason">
+              <span>{{ acting()?.action === 'reject' ? 'Motivo del rechazo' : 'Motivo de la cancelación' }}</span>
+              <textarea rows="2" maxlength="500" [(ngModel)]="reason" [disabled]="busyId() === redemption.id"></textarea>
+            </label>
+            <div class="records__actions">
+              <button type="button" (click)="acting.set(null)" [disabled]="busyId() === redemption.id">Volver</button>
+              <button type="button" class="redemptions__danger" (click)="confirmReason(redemption)" [disabled]="busyId() === redemption.id">
+                {{ acting()?.action === 'reject' ? 'Confirmar rechazo' : 'Confirmar cancelación' }}
+              </button>
+            </div>
+          } @else if (redemption.status === 'Requested' && canApprove) {
+            <div class="records__actions">
+              <button type="button" (click)="startReason(redemption, 'reject')" [disabled]="!!busyId()">Rechazar</button>
+              <button type="button" (click)="approve(redemption)" [disabled]="!!busyId() || redemption.isPastDeadline">
+                {{ busyId() === redemption.id ? 'Aprobando...' : 'Aprobar' }}
+              </button>
+            </div>
+          } @else if (redemption.status === 'Approved') {
+            @if (redemption.rewardKind === 'Service') {
+              <span class="records__meta records__meta--small">
+                Se entrega al confirmar el servicio realizado con el tipo «Recompensa».
+              </span>
+            }
+            <div class="records__actions">
+              @if (canApprove) {
+                <button type="button" (click)="startReason(redemption, 'cancel')" [disabled]="!!busyId()">Cancelar canje</button>
+              }
+              @if (redemption.rewardKind === 'Other' && canDeliver) {
+                <button type="button" (click)="deliver(redemption)" [disabled]="!!busyId() || redemption.isPastDeadline">
+                  {{ busyId() === redemption.id ? 'Entregando...' : 'Marcar entregado' }}
+                </button>
+              }
+            </div>
+          }
+        </li>
+      }
+    </ul>
+  }
+
+  <app-paginator
+    label="Paginación de canjes"
+    [page]="page()"
+    [pageSize]="pageSize()"
+    [totalCount]="totalCount()"
+    [disabled]="isLoading()"
+    (pageChange)="onPageChange($event)"
+  />
+</section>

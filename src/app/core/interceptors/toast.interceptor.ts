@@ -75,6 +75,10 @@ function resolveSuccessMessage(requestMethod: string, requestPath: string): stri
     return 'Profesional creado correctamente.';
   }
 
+  if (requestPath.startsWith('/admin/staff') && requestPath.endsWith('/offerings') && method === 'PUT') {
+    return 'Servicios del profesional guardados correctamente.';
+  }
+
   if (requestPath.startsWith('/admin/staff') && (method === 'PUT' || method === 'PATCH')) {
     return 'Datos del profesional guardados correctamente.';
   }
@@ -137,6 +141,11 @@ function resolveErrorMessage(
 
     if (requestPath.startsWith('/public/staff')) {
       return 'No pudimos cargar los perfiles de profesionales por ahora.';
+    }
+
+    // Public product catalog (ADR-0016 B6): a 404 is an inactive or old link, shown as "No disponible" by the page.
+    if (requestPath.startsWith('/public/product')) {
+      return error.status === 404 ? null : 'No pudimos cargar el catálogo de productos por ahora.';
     }
 
     if (requestPath.startsWith('/customer/appointments')) {

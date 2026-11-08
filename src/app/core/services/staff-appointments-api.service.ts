@@ -6,11 +6,15 @@ import { RuntimeConfigService } from '../config/runtime-config.service';
 import {
   APPOINTMENT_STATUS,
   AppointmentResponse,
+  AppointmentServiceOption,
   AppointmentStatus,
   AppointmentStatusUpdateRequest,
   AppointmentUpdateRequest,
+  StaffAppointmentsListFilters,
   StaffManualAppointmentCreateRequest,
 } from '../models/appointment.models';
+import { MAX_PAGE_SIZE, PagedResult } from '../models/paged-result.models';
+import { toHttpParams } from '../utils/list-query.utils';
 
 @Injectable({
   providedIn: 'root',
@@ -19,8 +23,18 @@ export class StaffAppointmentsApiService {
   private readonly httpClient = inject(HttpClient);
   private readonly runtimeConfigService = inject(RuntimeConfigService);
 
-  list() {
-    return this.httpClient.get<AppointmentResponse[]>(this.buildUrl('/staff/appointments'));
+  /** The professional's own agenda, paginated (ADR-0016 B7). */
+  list(filters: StaffAppointmentsListFilters = {}) {
+    const params = toHttpParams({
+      from: filters.from,
+      to: filters.to,
+      status: filters.status,
+      sort: filters.sort,
+      scope: filters.scope,
+      page: filters.page,
+      pageSize: filters.pageSize,
+    });
+    return this.httpClient.get<PagedResult<AppointmentResponse>>(this.buildUrl('/staff/appointments'), { params });
   }
 
   getById(appointmentId: string) {
@@ -35,15 +49,20 @@ export class StaffAppointmentsApiService {
             return throwError(() => error);
           }
 
-          return this.list().pipe(
+          return this.list({ pageSize: MAX_PAGE_SIZE }).pipe(
             map(
-              (appointments) =>
-                appointments.find((appointment) => appointment.id === appointmentId) ?? null,
+              (page) =>
+                page.items.find((appointment) => appointment.id === appointmentId) ?? null,
             ),
             switchMap((appointment) => (appointment ? of(appointment) : throwError(() => error))),
           );
         }),
       );
+  }
+
+  /** Bookable offerings of the current professional (ADR-0016 B3). */
+  serviceOptions() {
+    return this.httpClient.get<AppointmentServiceOption[]>(this.buildUrl('/staff/appointments/service-options'));
   }
 
   createManual(request: StaffManualAppointmentCreateRequest) {

@@ -6,8 +6,12 @@
 
   <div class="income__filters">
     <label>
-      <span>Fecha</span>
-      <input type="date" [max]="today" [ngModel]="selectedDate()" (ngModelChange)="onDateChange($event)" />
+      <span>Desde</span>
+      <input type="date" [max]="today" [ngModel]="fromDate()" (ngModelChange)="onFromChange($event)" />
+    </label>
+    <label>
+      <span>Hasta</span>
+      <input type="date" [max]="today" [ngModel]="toDate()" (ngModelChange)="onToChange($event)" />
     </label>
     <label>
       <span>Profesional</span>
@@ -18,15 +22,35 @@
         }
       </select>
     </label>
+    <label>
+      <span>Tipo</span>
+      <select [ngModel]="selectedKind()" (ngModelChange)="onKindChange($event)">
+        <option value="">Todos</option>
+        <option value="Service">Servicio</option>
+        <option value="MembershipSale">Venta de membresía</option>
+      </select>
+    </label>
+    <label>
+      <span>Servicio general</span>
+      <select [ngModel]="selectedGeneralServiceId()" (ngModelChange)="onGeneralServiceChange($event)">
+        <option value="">Todos</option>
+        @for (service of generalServices(); track service.id) {
+          <option [value]="service.id">{{ service.name }}</option>
+        }
+      </select>
+    </label>
     <div class="income__total">Total: $ {{ total() | number: '1.0-0' }}</div>
   </div>
+  <p class="income__hint">{{ rangeHint }}</p>
+
+  <app-api-feedback severity="error" [message]="rangeError()" />
 
   <app-api-feedback severity="error" [message]="errorMessage()" />
 
   @if (isLoading()) {
     <p class="income__state">Cargando ingresos...</p>
   } @else if (!entries().length) {
-    <p class="income__state">Sin ingresos para este día.</p>
+    <p class="income__state">Sin ingresos para estos filtros.</p>
   } @else {
     <div class="income__table-wrap">
       <table class="income__table">
@@ -36,6 +60,7 @@
             <th>Profesional</th>
             <th>Valor</th>
             <th>Promo</th>
+            <th>Fecha</th>
             <th aria-label="Acciones"></th>
           </tr>
         </thead>
@@ -51,9 +76,14 @@
               }
               <td>$ {{ entry.amount | number: '1.0-0' }}</td>
               <td>{{ entry.isPromo ? 'Sí' : '—' }}</td>
+              <td>{{ entry.occurredOn }}</td>
               <td class="income__actions">
-                <button type="button" (click)="openEdit(entry)" [disabled]="busyId() === entry.id">Editar</button>
-                <button type="button" (click)="deleteEntry(entry)" [disabled]="busyId() === entry.id">Eliminar</button>
+                @if (entry.serviceRecordId) {
+                  <span class="income__badge" title="Se gestiona desde Servicios por aprobar">Servicio confirmado</span>
+                } @else {
+                  <button type="button" (click)="openEdit(entry)" [disabled]="busyId() === entry.id">Editar</button>
+                  <button type="button" (click)="deleteEntry(entry)" [disabled]="busyId() === entry.id">Eliminar</button>
+                }
               </td>
             </tr>
           }
@@ -61,6 +91,15 @@
       </table>
     </div>
   }
+
+  <app-paginator
+    label="Paginación de ingresos"
+    [page]="page()"
+    [pageSize]="pageSize()"
+    [totalCount]="totalCount()"
+    [disabled]="isLoading()"
+    (pageChange)="onPageChange($event)"
+  />
 </section>
 
 @if (isModalOpen()) {

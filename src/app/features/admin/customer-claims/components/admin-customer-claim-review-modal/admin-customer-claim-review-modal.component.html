@@ -1,0 +1,101 @@
+<div class="review-modal__overlay" (click)="cancel()">
+  <div class="review-modal__card" (click)="$event.stopPropagation()" role="dialog" aria-label="Revisar reclamación de perfil">
+    <h2>Revisar reclamación de perfil</h2>
+    <p class="review-modal__muted">
+      Cuenta: <strong>{{ claim.accountFullName }}</strong> · {{ claim.accountEmail }}
+      @if (!claim.accountIsActive) {
+        · <strong>cuenta inactiva</strong>
+      }
+      · enviada {{ claim.submittedAt | date: 'medium' }}
+    </p>
+
+    <app-api-feedback severity="error" [message]="errorMessage()" />
+    @if (hasConflict()) {
+      <button type="button" class="review-modal__secondary" (click)="staleDetected.emit()">Recargar bandeja</button>
+    }
+
+    <form [formGroup]="form" (ngSubmit)="approve()" novalidate>
+      <fieldset [disabled]="isSaving()">
+        <fieldset class="review-modal__section">
+          <legend>Datos que envió el cliente</legend>
+          <p class="review-modal__muted">
+            <strong>{{ claim.fullName }}</strong> · {{ claim.phone }} · {{ claim.email }}
+          </p>
+          @if (claim.notes) {
+            <p class="review-modal__muted">«{{ claim.notes }}»</p>
+          }
+        </fieldset>
+
+        <fieldset class="review-modal__section">
+          <legend>Perfil del cliente</legend>
+          <div class="review-modal__search">
+            <input type="search" formControlName="query" placeholder="Nombre, teléfono o correo" (keydown.enter)="$event.preventDefault(); search()" />
+            <button type="button" class="review-modal__secondary" (click)="search()" [disabled]="isSearching()">Buscar</button>
+          </div>
+          <small class="review-modal__muted">
+            Sin búsqueda se sugieren los perfiles con el mismo teléfono o correo. Coincidir no basta: verifica la identidad en persona.
+          </small>
+          @if (candidates().length) {
+            <ul class="review-modal__results">
+              @for (candidate of candidates(); track candidate.customerId) {
+                <li>
+                  <button
+                    type="button"
+                    (click)="select(candidate)"
+                    [disabled]="candidate.isLinked"
+                    [class.review-modal__chosen]="selected()?.customerId === candidate.customerId"
+                  >
+                    <strong>{{ candidate.fullName }}</strong>&nbsp;<small>{{ candidate.phoneHint }} · {{ candidate.emailHint }}</small>
+                    <small>
+                      · {{ candidate.membershipCount }} membresía(s)
+                      @if (candidate.matchedOn.length) {
+                        · coincide en {{ describeMatch(candidate) }}
+                      }
+                      @if (candidate.isLinked) {
+                        · ya está vinculado a otra cuenta
+                      }
+                    </small>
+                  </button>
+                </li>
+              }
+            </ul>
+          } @else if (!isSearching()) {
+            <small class="review-modal__muted">No hay perfiles que coincidan.</small>
+          }
+          @if (selected(); as chosen) {
+            <p class="review-modal__muted">Perfil elegido: <strong>{{ chosen.fullName }}</strong></p>
+          }
+        </fieldset>
+
+        <label class="review-modal__check">
+          <input type="checkbox" formControlName="identityVerified" />
+          <span>Verifiqué la identidad del cliente en persona</span>
+        </label>
+
+        <label class="review-modal__field">
+          <span>Notas (opcional)</span>
+          <textarea formControlName="notes" maxlength="500" rows="2"></textarea>
+        </label>
+
+        @if (rejecting()) {
+          <label class="review-modal__field">
+            <span>Motivo del rechazo</span>
+            <textarea formControlName="reason" maxlength="500" rows="2"></textarea>
+          </label>
+        }
+      </fieldset>
+
+      <div class="review-modal__actions">
+        <button type="button" (click)="cancel()" [disabled]="isSaving()">Cancelar</button>
+        @if (rejecting()) {
+          <button type="button" class="review-modal__danger" (click)="reject()" [disabled]="isSaving()">Confirmar rechazo</button>
+        } @else {
+          <button type="button" class="review-modal__danger" (click)="rejecting.set(true)" [disabled]="isSaving()">Rechazar</button>
+          <button type="submit" class="review-modal__primary" [disabled]="isSaving()">
+            {{ isSaving() ? 'Guardando...' : 'Aprobar y vincular' }}
+          </button>
+        }
+      </div>
+    </form>
+  </div>
+</div>

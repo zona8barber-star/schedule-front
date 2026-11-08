@@ -73,6 +73,37 @@ export interface StaffProfileUpdateRequest {
   xUrl: string | null;
 }
 
+/** One general service a professional offers, with their own duration (ADR-0016 B2). */
+export interface StaffOfferingView {
+  generalServiceId: string;
+  generalServiceName: string;
+  categoryId: string;
+  categoryName: string;
+  durationMinutes: number;
+  isActive: boolean;
+  generalServiceIsActive: boolean;
+  categoryIsActive: boolean;
+  createdAt: string;
+  updatedAt: string | null;
+}
+
+export interface StaffOfferingsView {
+  staffProfileId: string;
+  defaultAppointmentDurationMinutes: number;
+  offerings: StaffOfferingView[];
+}
+
+export interface StaffOfferingUpsertItem {
+  generalServiceId: string;
+  durationMinutes: number;
+  isActive: boolean;
+}
+
+/** Full replacement: offerings not sent are removed. */
+export interface StaffOfferingsUpdateRequest {
+  offerings: StaffOfferingUpsertItem[];
+}
+
 export const STAFF_DURATION_RANGE = {
   min: 10,
   max: 240,

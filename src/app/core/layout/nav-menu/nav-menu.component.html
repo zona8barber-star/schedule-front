@@ -1,0 +1,58 @@
+@if (groups().length === 1) {
+  <ul class="nav-menu__list nav-menu__list--flat">
+    @for (item of groups()[0].items; track item.id) {
+      <li>
+        <a
+          class="nav-menu__link"
+          [routerLink]="item.route"
+          [class.is-active]="item.id === activeItemId()"
+          [attr.aria-current]="item.id === activeItemId() ? 'page' : null"
+          [attr.data-nav-item]="item.id"
+          (click)="itemSelect.emit(item)"
+        >
+          {{ item.label }}
+        </a>
+      </li>
+    }
+  </ul>
+} @else {
+  @for (group of groups(); track group.id) {
+    <section
+      class="nav-menu__group"
+      [class.nav-menu__group--current]="containsActive(group)"
+      [attr.data-nav-group]="group.id"
+    >
+      <h2 class="nav-menu__heading">
+        <button
+          class="nav-menu__toggle"
+          type="button"
+          [attr.aria-expanded]="isExpanded(group.id)"
+          [attr.aria-controls]="listId(group.id)"
+          (click)="groupToggle.emit(group.id)"
+        >
+          <span class="nav-menu__toggle-label">{{ group.label }}</span>
+          <svg class="nav-menu__chevron" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 8l4 4 4-4" />
+          </svg>
+        </button>
+      </h2>
+
+      <ul class="nav-menu__list" [id]="listId(group.id)" [hidden]="!isExpanded(group.id)">
+        @for (item of group.items; track item.id) {
+          <li>
+            <a
+              class="nav-menu__link"
+              [routerLink]="item.route"
+              [class.is-active]="item.id === activeItemId()"
+              [attr.aria-current]="item.id === activeItemId() ? 'page' : null"
+              [attr.data-nav-item]="item.id"
+              (click)="itemSelect.emit(item)"
+            >
+              {{ item.label }}
+            </a>
+          </li>
+        }
+      </ul>
+    </section>
+  }
+}

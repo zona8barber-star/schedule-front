@@ -1,11 +1,12 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { Router, provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 
 import { environment } from '../../../../../../environments/environment';
 import { CustomerDetailView } from '../../../../../core/models/customer.models';
+import { LoyaltyWalletView } from '../../../../../core/models/loyalty-wallet.models';
 import { CustomerMembershipSummaryView } from '../../../../../core/models/membership.models';
 import { AdminCustomerDetailPageComponent } from './admin-customer-detail-page.component';
 
@@ -73,17 +74,47 @@ describe('AdminCustomerDetailPageComponent', () => {
     const navigation = harness.navigateByUrl(`/admin/customers/${customer.id}`);
     await new Promise<void>((resolve) => setTimeout(resolve, 0));
     httpMock.expectOne(`${base}/${customer.id}`).flush(customer);
+    // The plans of the membership filter.
+    httpMock.match(`${environment.defaultApiBaseUrl}/admin/membership-plans`).forEach((request) => request.flush([]));
     await navigation;
     await new Promise<void>((resolve) => setTimeout(resolve, 0));
     // The page then loads the customer's memberships.
-    httpMock.expectOne(`${base}/${customer.id}/memberships`).flush(memberships);
+    flushMemberships(customer.id, memberships);
+    await new Promise<void>((resolve) => setTimeout(resolve, 0));
+    harness.detectChanges();
+    // ...and the points panel loads its wallet.
+    httpMock.match(`${base}/${customer.id}/loyalty`).forEach((request) => request.flush(emptyWallet(customer.id)));
     await new Promise<void>((resolve) => setTimeout(resolve, 0));
     harness.detectChanges();
     return harness.fixture;
   }
 
+  function flushMemberships(customerId: string, items: CustomerMembershipSummaryView[], params: Record<string, string> = {}): void {
+    const request = httpMock.expectOne((candidate) => candidate.url === `${base}/${customerId}/memberships`);
+    for (const [key, value] of Object.entries(params)) {
+      expect(request.request.params.get(key)).toBe(value);
+    }
+    request.flush({ items, page: 1, pageSize: 20, totalCount: items.length });
+  }
+
   afterEach(() => {
     httpMock.verify();
+  });
+
+  it('filters the memberships by status through the URL', async () => {
+    await openPage(linkedCustomer);
+
+    const select = harness.fixture.nativeElement.querySelector('[data-testid="membership-status-filter"]') as HTMLSelectElement;
+    select.value = 'Expired';
+    select.dispatchEvent(new Event('change'));
+    await new Promise<void>((resolve) => setTimeout(resolve, 0));
+
+    expect(TestBed.inject(Router).url).toBe(`/admin/customers/${linkedCustomer.id}?membershipStatus=Expired`);
+    flushMemberships(linkedCustomer.id, [], { status: 'Expired', page: '1' });
+    await new Promise<void>((resolve) => setTimeout(resolve, 0));
+    harness.detectChanges();
+
+    expect(harness.fixture.nativeElement.textContent).toContain('Ninguna membresía coincide con los filtros.');
   });
 
   it('shows the linked account, the unlink action and the history', async () => {
@@ -95,6 +126,19 @@ describe('AdminCustomerDetailPageComponent', () => {
     expect(text).toContain('Desvincular cuenta');
     expect(text).toContain('Cuenta vinculada');
     expect(text).toContain('Fusionar perfil duplicado');
+  });
+
+  it('reloads the memberships and the points after a merge brings the duplicate over', async () => {
+    const fixture = await openPage(linkedCustomer);
+    const page = harness.routeDebugElement!.componentInstance as AdminCustomerDetailPageComponent;
+
+    page.onUpdated(linkedCustomer, 'Perfiles fusionados.');
+    flushMemberships(linkedCustomer.id, []);
+    httpMock.expectOne(`${base}/${linkedCustomer.id}/loyalty`).flush({ ...emptyWallet(linkedCustomer.id), availablePoints: 60 });
+    await new Promise<void>((resolve) => setTimeout(resolve, 0));
+    harness.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('.loyalty-panel__summary')?.textContent).toContain('60');
   });
 
   it('lists the customer memberships with their status and offers selling one', async () => {
@@ -168,3 +212,21 @@ describe('AdminCustomerDetailPageComponent', () => {
     expect(text).not.toContain('No tenía una cuenta');
   });
 });
+
+function emptyWallet(customerId: string): LoyaltyWalletView {
+  return {
+    customerId,
+    liveCustomerId: customerId,
+    isMerged: false,
+    programEnabled: true,
+    availablePoints: 0,
+    debtPoints: 0,
+    expiringSoonPoints: 0,
+    nextExpiresOn: null,
+    reservedPoints: 0,
+    redemptions: [],
+    lots: [],
+    debts: [],
+    movements: [],
+  };
+}

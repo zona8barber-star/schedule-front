@@ -1,0 +1,29 @@
+.redemptions__warning {
+  color: var(--color-error, #b4533c);
+  font-weight: 600;
+}
+
+.redemptions__reason {
+  display: grid;
+  gap: 0.35rem;
+
+  textarea {
+    width: 100%;
+    box-sizing: border-box;
+    font: inherit;
+  }
+}
+
+.redemptions__danger {
+  color: var(--color-error, #b4533c);
+}
+
+.records__link {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+  font: inherit;
+}

@@ -3,7 +3,10 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 
 import { PublicAvailabilitySlotResponse } from '../../../../../core/models/availability.models';
-import { PublicStaffProfileResponse } from '../../../../../core/models/content.models';
+import {
+  PublicStaffProfileResponse,
+  PublicStaffServiceResponse,
+} from '../../../../../core/models/content.models';
 import {
   PublicStaffReviewResponse,
   StaffReviewSummaryResponse,
@@ -15,7 +18,34 @@ import { ApiFeedbackComponent } from '../../../../../shared/components/api-feedb
 import { PageStateComponent } from '../../../../../shared/components/page-state/page-state.component';
 import { PhotoPlaceholderComponent } from '../../../../../shared/components/photo-placeholder/photo-placeholder.component';
 import { SlotPickerComponent } from '../../../../../shared/components/slot-picker/slot-picker.component';
-import { isDateKey } from '../../../../../core/utils/bogota-date.utils';
+import {
+  BOGOTA_TIME_ZONE,
+  addDaysToDateKey,
+  bogotaToday,
+  dateKeyToUtcNoon,
+  isDateKey,
+} from '../../../../../core/utils/bogota-date.utils';
+
+/** Days offered as quick buttons in the first booking step (today included); others through "Otra fecha". */
+const BOOKING_DAY_OPTIONS = 14;
+const weekdayFormatter = new Intl.DateTimeFormat('es-CO', { weekday: 'short', timeZone: BOGOTA_TIME_ZONE });
+const dayMonthFormatter = new Intl.DateTimeFormat('es-CO', { day: 'numeric', month: 'short', timeZone: BOGOTA_TIME_ZONE });
+const longDateFormatter = new Intl.DateTimeFormat('es-CO', {
+  weekday: 'long',
+  day: 'numeric',
+  month: 'long',
+  timeZone: BOGOTA_TIME_ZONE,
+});
+
+export interface BookingDayOption {
+  date: string;
+  topLabel: string;
+  bottomLabel: string;
+}
+
+function trimDot(value: string): string {
+  return value.replace(/\.$/, '');
+}
 
 @Component({
   selector: 'app-public-staff-profile-page',
@@ -50,11 +80,43 @@ export class PublicStaffProfilePageComponent implements OnInit {
   readonly errorMessage = signal<string | null>(null);
   readonly reviewsErrorMessage = signal<string | null>(null);
 
-  // Booking modal. "?reservar=1&fecha=YYYY-MM-DD" opens it on that day (used by "Cambiar fecha u hora").
+  // Booking modal. "?reservar=1&fecha=YYYY-MM-DD&servicio=<generalServiceId>" opens it on that day and
+  // service (used by "Cambiar fecha u hora").
   readonly showBookingModal = signal(this.route.snapshot.queryParamMap.has('reservar'));
   readonly bookingDate = signal<string | null>(
     readDateParam(this.route.snapshot.queryParamMap.get('fecha')),
   );
+  /** General service chosen in the booking modal (ADR-0016 B3): free times depend on its duration. */
+  readonly selectedServiceId = signal<string | null>(this.route.snapshot.queryParamMap.get('servicio'));
+
+  /** Booking order (ADR-0016 D8): professional → date → service → free times. */
+  readonly today = signal(bogotaToday());
+  readonly dayOptions = computed<BookingDayOption[]>(() => {
+    const today = this.today();
+    return Array.from({ length: BOOKING_DAY_OPTIONS }, (_, index) => {
+      const date = addDaysToDateKey(today, index);
+      const asDate = dateKeyToUtcNoon(date);
+      const weekday = trimDot(weekdayFormatter.format(asDate));
+      return {
+        date,
+        topLabel: index === 0 ? 'Hoy' : index === 1 ? 'Mañana' : weekday.charAt(0).toUpperCase() + weekday.slice(1),
+        bottomLabel: trimDot(dayMonthFormatter.format(asDate)),
+      };
+    });
+  });
+
+  readonly bookableServices = computed(() => this.staffProfile()?.services ?? []);
+  readonly selectedService = computed<PublicStaffServiceResponse | null>(() => {
+    const services = this.bookableServices();
+    const selectedId = this.selectedServiceId();
+    const selected = services.find((service) => service.generalServiceId === selectedId);
+    if (selected) {
+      return selected;
+    }
+
+    // Nothing to choose from when the professional offers a single service.
+    return services.length === 1 ? services[0] : null;
+  });
 
   readonly displayAverageRating = computed(
     () => this.reviewsSummary()?.averageStars ?? this.staffProfile()?.averageRating ?? 0,
@@ -87,15 +149,47 @@ export class PublicStaffProfilePageComponent implements OnInit {
     this.showBookingModal.set(true);
   }
 
+  formatServiceOption(service: PublicStaffServiceResponse): string {
+    return `${service.name} · ${service.durationMinutes} min`;
+  }
+
+  formatBookingDate(dateKey: string): string {
+    const label = longDateFormatter.format(dateKeyToUtcNoon(dateKey));
+    return label.charAt(0).toUpperCase() + label.slice(1);
+  }
+
+  selectDate(dateKey: string): void {
+    if (isDateKey(dateKey) && dateKey >= this.today()) {
+      this.bookingDate.set(dateKey);
+    }
+  }
+
+  onOtherDate(event: Event): void {
+    this.selectDate((event.target as HTMLInputElement).value);
+  }
+
+  changeDate(): void {
+    this.bookingDate.set(null);
+  }
+
+  selectService(service: PublicStaffServiceResponse): void {
+    this.selectedServiceId.set(service.generalServiceId);
+  }
+
+  changeService(): void {
+    this.selectedServiceId.set(null);
+  }
+
   closeBookingModal(): void {
     this.showBookingModal.set(false);
     this.bookingDate.set(null);
+    this.selectedServiceId.set(null);
 
     // Coming from "Cambiar fecha u hora": drop the params so a refresh does not reopen it.
     if (this.route.snapshot.queryParamMap.has('reservar')) {
       void this.router.navigate([], {
         relativeTo: this.route,
-        queryParams: { reservar: null, fecha: null },
+        queryParams: { reservar: null, fecha: null, servicio: null },
         queryParamsHandling: 'merge',
         replaceUrl: true,
       });
@@ -103,10 +197,16 @@ export class PublicStaffProfilePageComponent implements OnInit {
   }
 
   selectSlot(slot: PublicAvailabilitySlotResponse): void {
+    const service = this.selectedService();
+    if (!service) {
+      return;
+    }
+
     void this.router.navigate(['/booking/confirm'], {
       queryParams: {
         staffProfileId: this.staffProfileId(),
         startsAt: slot.startAtUtc,
+        generalServiceId: service.generalServiceId,
       },
     });
   }

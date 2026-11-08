@@ -1,0 +1,225 @@
+// Shared by the three public product catalog pages (ADR-0016 B6): categories → products → detail.
+// Same visual language as the public staff directory (bone background, ink hero, brass accents).
+
+.pp {
+  margin: calc(-1 * var(--shell-content-padding-block, 1.5rem)) calc(-1 * var(--shell-content-padding-inline, 1.5rem))
+    -1.5rem;
+  min-height: 60vh;
+  background: var(--z-bone);
+  overflow-x: hidden;
+}
+
+.pp__wrap {
+  max-width: 1160px;
+  margin: 0 auto;
+  padding: 0 1rem;
+
+  @media (min-width: 640px) {
+    padding: 0 2rem;
+  }
+}
+
+.pp__hero {
+  padding: 2.5rem 0 2rem;
+  background: var(--z-ink);
+  color: var(--z-text-on-dark);
+}
+
+.pp__kicker {
+  font-family: var(--z-font-mono);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--z-brass);
+}
+
+.pp__title {
+  margin: 0.4rem 0 0;
+  font-family: var(--z-font-display);
+  font-size: clamp(2rem, 6vw, 3.2rem);
+  font-weight: 700;
+  line-height: 1;
+  text-transform: uppercase;
+  overflow-wrap: anywhere;
+}
+
+.pp__sub {
+  margin: 0.75rem 0 0;
+  max-width: 40rem;
+  color: var(--z-muted-on-dark);
+  line-height: 1.5;
+}
+
+.pp__crumbs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-bottom: 0.75rem;
+  font-size: 0.85rem;
+
+  a {
+    color: var(--z-brass);
+    text-decoration: none;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+}
+
+.pp__section {
+  padding: 2rem 0 3rem;
+}
+
+.pp__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 15rem), 1fr));
+  gap: 1rem;
+}
+
+.pp__card {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid var(--z-hairline-light);
+  border-radius: 0.75rem;
+  background: #fff;
+  color: var(--z-text-on-light);
+  text-decoration: none;
+  transition: border-color 0.15s ease, transform 0.15s ease;
+
+  &:hover,
+  &:focus-visible {
+    border-color: var(--z-brass);
+    transform: translateY(-2px);
+  }
+}
+
+.pp__card-media {
+  aspect-ratio: 4 / 3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--z-bone-2);
+  color: var(--z-steel);
+  font-family: var(--z-font-display);
+  font-size: 2.5rem;
+  text-transform: uppercase;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+}
+
+.pp__card-body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding: 0.9rem 1rem 1rem;
+}
+
+.pp__card-name {
+  font-family: var(--z-font-display);
+  font-size: 1.15rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  overflow-wrap: anywhere;
+}
+
+.pp__card-desc {
+  display: -webkit-box;
+  overflow: hidden;
+  margin: 0;
+  color: var(--z-muted-on-light);
+  font-size: 0.88rem;
+  line-height: 1.4;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.pp__price {
+  margin-top: auto;
+  font-family: var(--z-font-mono);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--z-brass-dk);
+}
+
+.pp__count {
+  color: var(--z-steel);
+  font-size: 0.85rem;
+}
+
+.pp__detail {
+  display: grid;
+  gap: 1.5rem;
+
+  @media (min-width: 760px) {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    align-items: start;
+  }
+}
+
+.pp__detail-media {
+  overflow: hidden;
+  border-radius: 0.75rem;
+  background: var(--z-bone-2);
+
+  img {
+    display: block;
+    width: 100%;
+    max-height: 32rem;
+    object-fit: cover;
+  }
+}
+
+.pp__detail-price {
+  margin: 0.5rem 0 1rem;
+  font-family: var(--z-font-mono);
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: var(--z-brass-dk);
+}
+
+.pp__detail-desc {
+  margin: 0;
+  line-height: 1.6;
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+}
+
+.pp__state {
+  padding: 2rem 1rem;
+  border: 1px dashed var(--z-hairline-light);
+  border-radius: 0.75rem;
+  text-align: center;
+
+  h2 {
+    margin: 0 0 0.5rem;
+    font-family: var(--z-font-display);
+    text-transform: uppercase;
+  }
+
+  p {
+    margin: 0 0 1rem;
+    color: var(--z-muted-on-light);
+  }
+}
+
+.pp__btn {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.6rem 1.1rem;
+  border: 0;
+  border-radius: 999px;
+  background: var(--z-ink);
+  color: var(--z-text-on-dark);
+  font: inherit;
+  font-weight: 700;
+  text-decoration: none;
+  cursor: pointer;
+}

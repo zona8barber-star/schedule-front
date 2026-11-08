@@ -14,8 +14,11 @@ import {
   MembershipIncomeCandidateView,
   MembershipIncomeLinkRequest,
   MembershipIncomeUnlinkRequest,
+  MembershipListQuery,
   MembershipSaleRequest,
 } from '../models/membership.models';
+import { PagedResult } from '../models/paged-result.models';
+import { toHttpParams } from '../utils/list-query.utils';
 
 @Injectable({
   providedIn: 'root',
@@ -24,9 +27,11 @@ export class AdminMembershipsApiService {
   private readonly httpClient = inject(HttpClient);
   private readonly runtimeConfigService = inject(RuntimeConfigService);
 
-  listForCustomer(customerId: string) {
-    return this.httpClient.get<CustomerMembershipSummaryView[]>(
+  /** One customer's memberships, paginated and newest first (ADR-0016 B7). */
+  listForCustomer(customerId: string, query: MembershipListQuery = {}) {
+    return this.httpClient.get<PagedResult<CustomerMembershipSummaryView>>(
       this.buildUrl(`/admin/customers/${customerId}/memberships`),
+      { params: membershipParams(query) },
     );
   }
 
@@ -112,4 +117,15 @@ export class AdminMembershipsApiService {
     const apiBaseUrl = this.runtimeConfigService.config().apiBaseUrl.replace(/\/$/, '');
     return `${apiBaseUrl}${path}`;
   }
+}
+
+export function membershipParams(query: MembershipListQuery) {
+  return toHttpParams({
+    status: query.status,
+    planId: query.planId,
+    soldFrom: query.soldFrom,
+    soldTo: query.soldTo,
+    page: query.page,
+    pageSize: query.pageSize,
+  });
 }

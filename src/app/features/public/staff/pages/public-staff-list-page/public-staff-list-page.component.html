@@ -168,31 +168,50 @@
 
       <p class="psl-modal__sub">Elegí el día y seleccioná el horario que más te convenga.</p>
 
-      <label class="psl-modal__date-label" for="avail-date">Fecha</label>
-      <input
-        id="avail-date"
-        class="psl-modal__date-input"
-        type="date"
-        [value]="selectedDate()"
-        [min]="todayDate()"
-        (change)="onDateChange($event)"
-      />
-
-      <app-api-feedback severity="error" [message]="slotsError()" />
-
-      @if (slotsLoading()) {
-        <p class="psl-modal__msg">Buscando horarios disponibles...</p>
-      } @else if (!slots().length) {
-        <p class="psl-modal__msg">No hay horarios disponibles para este día.</p>
+      @if (!activeStaff()!.services.length) {
+        <p class="psl-modal__msg">Este profesional aún no tiene servicios disponibles para reservar.</p>
       } @else {
-        <p class="psl-modal__hint">Seleccioná un horario para continuar</p>
-        <div class="psl-modal__slots">
-          @for (slot of slots(); track slot.startAtUtc) {
-            <button class="psl-modal__slot" type="button" (click)="selectSlot(slot)">
-              {{ formatSlotTime(slot.startAtUtc) }}
-            </button>
+        <!-- ADR-0016 D8: the day first, then the service, then the free times. -->
+        <label class="psl-modal__date-label" for="avail-date">Fecha</label>
+        <input
+          id="avail-date"
+          class="psl-modal__date-input"
+          type="date"
+          [value]="selectedDate()"
+          [min]="todayDate()"
+          (change)="onDateChange($event)"
+        />
+
+        <label class="psl-modal__date-label" for="avail-service">Servicio</label>
+        <select
+          id="avail-service"
+          class="psl-modal__date-input"
+          [value]="selectedServiceId() ?? ''"
+          (change)="onServiceChange($event)"
+        >
+          @for (service of activeStaff()!.services; track service.generalServiceId) {
+            <option [value]="service.generalServiceId" [selected]="service.generalServiceId === selectedServiceId()">
+              {{ formatServiceOption(service) }}
+            </option>
           }
-        </div>
+        </select>
+
+        <app-api-feedback severity="error" [message]="slotsError()" />
+
+        @if (slotsLoading()) {
+          <p class="psl-modal__msg">Buscando horarios disponibles...</p>
+        } @else if (!slots().length) {
+          <p class="psl-modal__msg">No hay horarios disponibles para este día.</p>
+        } @else {
+          <p class="psl-modal__hint">Seleccioná un horario para continuar</p>
+          <div class="psl-modal__slots">
+            @for (slot of slots(); track slot.startAtUtc) {
+              <button class="psl-modal__slot" type="button" (click)="selectSlot(slot)">
+                {{ formatSlotTime(slot.startAtUtc) }}
+              </button>
+            }
+          </div>
+        }
       }
     </dialog>
   </div>
