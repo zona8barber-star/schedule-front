@@ -290,9 +290,13 @@
       </aside>
     }
 
-    <main class="app-shell__content">
-      <router-outlet></router-outlet>
-    </main>
+    <div class="app-shell__main">
+      <main class="app-shell__content">
+        <router-outlet></router-outlet>
+      </main>
+
+      <app-site-footer />
+    </div>
   </div>
 
   <nav #bottomNav class="app-shell__bottom-nav" aria-label="Accesos rápidos" data-testid="shortcut-bar">

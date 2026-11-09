@@ -28,7 +28,6 @@ export class LoginPageComponent {
 
   readonly authService = inject(AuthService);
 
-  readonly currentYear = new Date().getFullYear();
   readonly minimumPasswordLength = 8;
   readonly maximumPasswordLength = 128;
 

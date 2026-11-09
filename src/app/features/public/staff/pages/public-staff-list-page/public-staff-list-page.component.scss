@@ -335,35 +335,6 @@
   }
 }
 
-// ── Footer ─────────────────────────────────────────────────────────
-.ps__foot {
-  background: var(--z-ink);
-  border-top: 1px solid var(--z-hairline-dark);
-  padding: 28px 0;
-}
-
-.ps__foot-in {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-}
-
-.ps__foot-logo {
-  height: 32px;
-  width: auto;
-  object-fit: contain;
-  display: block;
-}
-
-.ps__foot-copy {
-  font-family: var(--z-font-mono);
-  font-size: 10px;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--z-steel);
-}
-
 // ── Responsive ─────────────────────────────────────────────────────
 @media (max-width: 880px) {
   .ps__search-row {

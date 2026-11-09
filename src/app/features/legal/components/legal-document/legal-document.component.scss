@@ -1,0 +1,295 @@
+// Public legal pages (/privacidad, /terminos). Same visual language as the other public pages: ink hero, bone page.
+// Global on purpose (see LegalDocumentComponent): every selector starts with `.legal`.
+
+$toc-columns-min: 1100px;
+
+.legal {
+  // Full-bleed: cancels exactly the shell content padding, so the hero touches the header and the footer follows.
+  margin: calc(-1 * var(--shell-content-padding-block, 1.5rem))
+    calc(-1 * var(--shell-content-padding-inline, 1.5rem));
+  min-height: 60vh;
+  background: var(--z-bone);
+  color: var(--z-text-on-light);
+  font-family: var(--z-font-body);
+  // `clip`, not `hidden`: hidden would make this a scroll container and break the sticky contents.
+  overflow-x: clip;
+}
+
+.legal__wrap {
+  max-width: 1160px;
+  margin: 0 auto;
+  padding: 0 1rem;
+
+  @media (min-width: 640px) {
+    padding: 0 2rem;
+  }
+}
+
+// ── Heading ─────────────────────────────────────────────────────────
+
+.legal__hero {
+  padding: 2.5rem 0 2rem;
+  background: var(--z-ink);
+  color: var(--z-text-on-dark);
+}
+
+.legal__kicker {
+  margin: 0;
+  font-family: var(--z-font-mono);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--z-brass);
+}
+
+.legal__title {
+  margin: 0.4rem 0 0;
+  font-family: var(--z-font-display);
+  font-size: clamp(1.9rem, 6vw, 3rem);
+  font-weight: 700;
+  line-height: 1.05;
+  text-transform: uppercase;
+  overflow-wrap: anywhere;
+}
+
+.legal__lead {
+  margin: 0.75rem 0 0;
+  max-width: 44rem;
+  color: var(--z-concrete);
+  line-height: 1.55;
+}
+
+.legal__meta {
+  margin: 1rem 0 0;
+  font-family: var(--z-font-mono);
+  font-size: 0.75rem;
+  letter-spacing: 0.04em;
+  color: var(--z-steel-hi);
+}
+
+// ── Body ────────────────────────────────────────────────────────────
+
+.legal__layout {
+  display: grid;
+  gap: 1.5rem;
+  padding-top: 1.75rem;
+  padding-bottom: 3rem;
+}
+
+.legal__notice {
+  margin: 0;
+  padding: 0.8rem 1rem;
+  border-left: 3px solid var(--z-brass);
+  background: rgba(176, 138, 74, 0.1);
+  color: var(--z-text-on-light);
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.legal__toc {
+  padding: 1rem 1.1rem;
+  border: 1px solid var(--z-hairline-light);
+  background: #fff;
+}
+
+.legal__toc-title {
+  margin: 0 0 0.5rem;
+  font-family: var(--z-font-mono);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--z-graphite);
+}
+
+.legal__toc-list {
+  margin: 0;
+  padding-left: 1.25rem;
+  font-size: 0.9rem;
+  line-height: 1.4;
+
+  li + li {
+    margin-top: 0.15rem;
+  }
+}
+
+.legal__toc-link {
+  // Block, so the list number lines up with the first line of a wrapped entry.
+  display: block;
+  padding-block: 0.2rem;
+  color: var(--z-text-on-light);
+  text-decoration: none;
+
+  &:hover {
+    color: var(--z-brass-dk);
+    text-decoration: underline;
+  }
+}
+
+.legal__content {
+  min-width: 0;
+  max-width: 46rem;
+  font-size: 1rem;
+  line-height: 1.7;
+}
+
+.legal__section {
+  // The header is sticky: keep jumped-to headings visible under it.
+  scroll-margin-top: calc(var(--shell-header-offset, 3.75rem) + 1rem);
+
+  & + & {
+    margin-top: 2rem;
+    padding-top: 2rem;
+    border-top: 1px solid var(--z-hairline-light);
+  }
+
+  h2 {
+    margin: 0 0 0.75rem;
+    font-family: var(--z-font-display);
+    font-size: 1.35rem;
+    font-weight: 600;
+    line-height: 1.2;
+    letter-spacing: 0.01em;
+    text-transform: uppercase;
+    color: var(--z-text-on-light);
+
+    &:focus {
+      outline: none;
+    }
+
+    &:focus-visible {
+      outline: 2px solid var(--z-brass);
+      outline-offset: 4px;
+    }
+  }
+
+  h3 {
+    margin: 1.25rem 0 0.4rem;
+    font-size: 1rem;
+    font-weight: 700;
+  }
+
+  p,
+  ul,
+  dl {
+    margin: 0 0 0.85rem;
+  }
+
+  ul {
+    padding-left: 1.25rem;
+  }
+
+  li + li {
+    margin-top: 0.35rem;
+  }
+
+  > :last-child {
+    margin-bottom: 0;
+  }
+}
+
+.legal__contact {
+  display: grid;
+  gap: 0.35rem 1rem;
+  padding: 0.9rem 1rem;
+  border: 1px solid var(--z-hairline-light);
+  background: #fff;
+
+  dt {
+    font-family: var(--z-font-mono);
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--z-graphite);
+  }
+
+  dd {
+    margin: 0 0 0.4rem;
+    overflow-wrap: anywhere;
+  }
+
+  @media (min-width: 640px) {
+    grid-template-columns: max-content 1fr;
+    align-items: baseline;
+
+    dd {
+      margin: 0;
+    }
+  }
+}
+
+// Inline links of the text (internal, mailto and official sources).
+.legal__content a:not(.legal__related-link) {
+  color: var(--z-brass-dk);
+  text-decoration: underline;
+  text-underline-offset: 0.15em;
+  overflow-wrap: anywhere;
+
+  &:hover {
+    color: var(--z-text-on-light);
+  }
+}
+
+.legal__related {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem 1.5rem;
+  margin-top: 2.5rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--z-hairline-light);
+}
+
+.legal__related-link {
+  font-family: var(--z-font-mono);
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--z-text-on-light);
+  text-decoration: none;
+  border-bottom: 1.5px solid var(--z-brass);
+  padding-bottom: 0.1rem;
+
+  &:hover {
+    color: var(--z-brass-dk);
+  }
+}
+
+.legal__toc-link:focus-visible,
+.legal__related-link:focus-visible,
+.legal__content a:focus-visible {
+  outline: 2px solid var(--z-brass);
+  outline-offset: 3px;
+}
+
+.legal__sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+// Wide screens: sticky contents on the left, text on the right.
+@media (min-width: $toc-columns-min) {
+  .legal__layout {
+    grid-template-columns: 15rem minmax(0, 1fr);
+    column-gap: 3rem;
+    align-items: start;
+  }
+
+  .legal__notice {
+    grid-column: 1 / -1;
+  }
+
+  .legal__toc {
+    position: sticky;
+    top: calc(var(--shell-header-offset, 3.75rem) + 1.25rem);
+  }
+}

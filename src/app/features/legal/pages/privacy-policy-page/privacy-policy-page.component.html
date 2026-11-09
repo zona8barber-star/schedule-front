@@ -1,0 +1,246 @@
+<app-legal-document
+  title="Política de tratamiento de datos"
+  lead="Cómo se recogen, usan y protegen los datos personales de quienes usan el sitio web y la aplicación de Zona 8."
+  [meta]="meta"
+  [sections]="sections"
+  [related]="{ label: 'Ver los términos de uso', route: routes.terms }"
+>
+  <section class="legal__section" id="responsable">
+    <h2 tabindex="-1">1. Responsable y contacto</h2>
+    <p>
+      {{ operator.tradeName }} es el nombre comercial con el que opera
+      <strong>{{ operator.responsibleName }}</strong
+      >, responsable del tratamiento de los datos personales descritos en esta política, en
+      {{ operator.city }}. El responsable decide para qué y cómo se tratan esos datos.
+    </p>
+    <dl class="legal__contact">
+      <dt>Dirección</dt>
+      <dd>{{ operator.address }}</dd>
+      <dt>Correo</dt>
+      <dd>
+        <a [href]="'mailto:' + operator.email">{{ operator.email }}</a>
+      </dd>
+      <dt>WhatsApp</dt>
+      <dd>{{ operator.whatsapp }}</dd>
+    </dl>
+    <p>Escribirnos por WhatsApp no implica autorizar el envío de publicidad por ese canal.</p>
+  </section>
+
+  <section class="legal__section" id="datos">
+    <h2 tabindex="-1">2. Datos que tratamos</h2>
+    <p>
+      Esta política cubre el sitio web, la aplicación instalable y los registros de clientes que se
+      hacen en el sistema durante la atención en la barbería. Según las funciones que utilices,
+      podemos tratar:
+    </p>
+    <ul>
+      <li>
+        Nombre, correo, teléfono y datos de tu cuenta; si decides agregarlos, fecha de nacimiento y
+        foto de perfil.
+      </li>
+      <li>
+        Profesional elegido, servicio solicitado, fecha, duración y estado de tus citas, así como
+        los registros de los servicios realizados y las observaciones necesarias para atenderte.
+      </li>
+      <li>
+        Membresías, servicios incluidos y consumidos, pagos vinculados a la atención, puntos,
+        vencimientos, recompensas y solicitudes de canje con sus estados.
+      </li>
+      <li>
+        Solicitudes para vincular o reclamar un perfil de cliente y las verificaciones hechas para
+        proteger tu historial.
+      </li>
+      <li>Calificaciones y comentarios que decidas enviar.</li>
+      <li>
+        Credenciales protegidas y datos de sesión, suscripciones del navegador para recibir
+        notificaciones y datos técnicos necesarios para el funcionamiento y la seguridad.
+      </li>
+    </ul>
+    <p>
+      Te pedimos no incluir en comentarios u observaciones información de salud, documentos de
+      identidad completos, contraseñas ni otros datos sensibles.
+    </p>
+    <p>
+      Una fotografía también es un dato personal. Subirla como foto de perfil no autoriza su uso en
+      publicidad, para reconocimiento facial ni para fines distintos de identificar tu cuenta.
+    </p>
+  </section>
+
+  <section class="legal__section" id="finalidades">
+    <h2 tabindex="-1">3. Para qué usamos los datos</h2>
+    <p>
+      Usamos los datos necesarios para identificarte y gestionar tu cuenta; atender tus reservas y
+      sus novedades; registrar los servicios y pagos relacionados; administrar membresías y el
+      programa de puntos; verificar solicitudes sobre perfiles de cliente; responder tus
+      solicitudes; proteger la aplicación y conservar los soportes que exija la ley.
+    </p>
+    <p>
+      Las calificaciones y comentarios que envíes sobre un profesional pueden mostrarse públicamente
+      en su perfil. Evita incluir en ellos datos personales tuyos o de otras personas. Publicar una
+      reseña no autoriza su uso en campañas publicitarias.
+    </p>
+    <p>
+      Hoy nos comunicamos contigo mediante las notificaciones de la aplicación. No realizamos
+      campañas comerciales por correo electrónico ni por WhatsApp. Si en el futuro se ofrecen
+      promociones, se te pedirá una elección separada y voluntaria, y rechazarlas no te impedirá
+      reservar ni usar tu cuenta.
+    </p>
+    <p>
+      La fecha de nacimiento no autoriza por sí sola campañas de cumpleaños ni la creación de
+      perfiles publicitarios.
+    </p>
+  </section>
+
+  <section class="legal__section" id="autorizacion">
+    <h2 tabindex="-1">4. Autorización</h2>
+    <p>
+      El tratamiento de tus datos personales requiere tu autorización previa, expresa e informada,
+      salvo en los casos en que la ley no la exige. Navegar por el sitio, guardar silencio o
+      encontrar una casilla ya marcada no equivalen a una autorización.
+    </p>
+    <p>
+      El permiso que das al navegador para recibir notificaciones es un ajuste técnico: no reemplaza
+      la autorización para recibir promociones.
+    </p>
+  </section>
+
+  <section class="legal__section" id="menores">
+    <h2 tabindex="-1">5. Menores de edad</h2>
+    <p>
+      Las cuentas destinadas a la atención de menores de edad deben ser creadas y gestionadas por
+      una persona adulta responsable. El menor no debe administrar por sí mismo la cuenta ni las
+      autorizaciones.
+    </p>
+    <p>
+      El tratamiento de los datos de un menor requiere la autorización de su representante legal y
+      debe respetar sus derechos, su interés superior y su opinión según su madurez. Acompañar al
+      menor o ser mayor de edad no acredita por sí solo la representación legal.
+    </p>
+    <p>
+      Si tienes preguntas sobre la cuenta o los datos de un menor, escríbenos a
+      <a [href]="'mailto:' + operator.email">{{ operator.email }}</a
+      >.
+    </p>
+  </section>
+
+  <section class="legal__section" id="acceso">
+    <h2 tabindex="-1">6. Acceso y proveedores</h2>
+    <p>
+      El personal accede a la información según las funciones que cumple: los profesionales, a lo
+      necesario para atender sus citas; la administración, a lo necesario para las operaciones que
+      tiene autorizadas. Esto no hace público tu historial.
+    </p>
+    <p>
+      La plataforma funciona con proveedores de alojamiento web, base de datos, almacenamiento de
+      archivos y envío de notificaciones, que tratan información por cuenta de
+      {{ operator.tradeName }}. Algunos de ellos pueden tratarla fuera de Colombia. Esta política no
+      autoriza entregar tus datos a terceros para fines distintos de los aquí descritos.
+    </p>
+    <p>
+      La página principal puede mostrar un mapa de un proveedor externo, y los enlaces de WhatsApp
+      abren un servicio de terceros. Al cargarse el mapa o al abrir esos enlaces, el proveedor
+      correspondiente puede recibir datos técnicos de tu navegador y aplicar sus propias
+      condiciones.
+    </p>
+  </section>
+
+  <section class="legal__section" id="almacenamiento">
+    <h2 tabindex="-1">7. Cookies y almacenamiento del dispositivo</h2>
+    <p>
+      Para mantener tu sesión, la aplicación usa una cookie de renovación de sesión y guarda en el
+      almacenamiento de tu navegador información de la sesión, de la instalación de la aplicación y
+      de tus preferencias de notificaciones. La aplicación instalada también puede guardar archivos
+      del sitio para funcionar mejor. Si borras estos datos, es posible que se cierre tu sesión o se
+      restablezcan tus preferencias.
+    </p>
+    <p>Si se incorporan tecnologías opcionales de terceros, se informarán por separado.</p>
+  </section>
+
+  <section class="legal__section" id="derechos">
+    <h2 tabindex="-1">8. Tus derechos</h2>
+    <p>
+      De acuerdo con la
+      <a
+        href="https://www.funcionpublica.gov.co/eva/gestornormativo/norma.php?i=49981"
+        target="_blank"
+        rel="noopener noreferrer"
+        >Ley 1581 de 2012<span class="legal__sr-only"> (se abre en una pestaña nueva)</span></a
+      >, como titular de los datos puedes:
+    </p>
+    <ul>
+      <li>Conocer, actualizar y rectificar tus datos.</li>
+      <li>Pedir prueba de la autorización otorgada y saber cómo se han usado tus datos.</li>
+      <li>Acceder de forma gratuita a tus datos.</li>
+      <li>Revocar la autorización o pedir la supresión de tus datos cuando proceda.</li>
+      <li>
+        Presentar quejas ante la Superintendencia de Industria y Comercio (SIC), después de agotar
+        el trámite previo ante el responsable.
+      </li>
+    </ul>
+    <p>
+      Responder preguntas sobre datos sensibles es facultativo, y su tratamiento sigue reglas
+      especiales.
+    </p>
+    <h3>Cómo presentar una solicitud</h3>
+    <p>
+      Escribe a <a [href]="'mailto:' + operator.email">{{ operator.email }}</a> indicando quién
+      presenta la solicitud, el derecho que quieres ejercer, los hechos y el medio por el que
+      quieres recibir la respuesta. Podremos verificar tu identidad o tu representación de forma
+      proporcional; nunca te pediremos tu contraseña.
+    </p>
+    <p>
+      Por ahora la aplicación no tiene una opción para eliminar directamente tu cuenta o tus datos:
+      las solicitudes de supresión o de revocatoria se presentan por el correo indicado.
+    </p>
+    <p>
+      La ley fija los plazos de respuesta: hasta diez días hábiles para las consultas y hasta quince
+      días hábiles para los reclamos, prorrogables en los casos y términos que ella establece.
+    </p>
+    <p>
+      Una solicitud sobre tus datos personales es distinta de la reclamación de un perfil de cliente
+      que se hace dentro de la aplicación.
+    </p>
+  </section>
+
+  <section class="legal__section" id="conservacion">
+    <h2 tabindex="-1">9. Conservación y seguridad</h2>
+    <p>
+      Los datos se conservan mientras sean necesarios para la finalidad informada y durante los
+      plazos legales que apliquen. Cerrar una cuenta o retirar una autorización no elimina
+      automáticamente los soportes contables, las obligaciones pendientes ni la información que deba
+      conservarse por ley; cuando proceda, se restringirá su uso y se suprimirá o anonimizará la
+      información que ya no sea necesaria.
+    </p>
+    <p>
+      Aplicamos medidas de acceso, confidencialidad y seguridad acordes con los riesgos. Ninguna
+      medida elimina por completo la posibilidad de un incidente.
+    </p>
+  </section>
+
+  <section class="legal__section" id="cambios">
+    <h2 tabindex="-1">10. Cambios de esta política</h2>
+    <p>
+      Si esta política cambia de forma relevante, lo informaremos antes de aplicar los cambios. Las
+      nuevas finalidades que requieran autorización se consultarán de nuevo, sin presumir que las
+      aceptaste. La versión y la fecha de la última actualización aparecen al inicio de esta página.
+    </p>
+    <p>
+      Normas de referencia:
+      <a
+        href="https://www.funcionpublica.gov.co/eva/gestornormativo/norma.php?i=49981"
+        target="_blank"
+        rel="noopener noreferrer"
+        >Ley 1581 de 2012<span class="legal__sr-only"> (se abre en una pestaña nueva)</span></a
+      >
+      y
+      <a
+        href="https://www.cancilleria.gov.co/sites/default/files/Normograma/docs/decreto_1074_2015_pr025.htm"
+        target="_blank"
+        rel="noopener noreferrer"
+        >Decreto 1074 de 2015, capítulo 25<span class="legal__sr-only">
+          (se abre en una pestaña nueva)</span
+        ></a
+      >. Consulta también los <a [routerLink]="routes.terms">términos de uso</a>.
+    </p>
+  </section>
+</app-legal-document>

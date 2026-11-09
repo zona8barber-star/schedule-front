@@ -107,6 +107,16 @@ const loadPublicProductDetailPage = () =>
     (module) => module.PublicProductDetailPageComponent,
   );
 
+const loadPrivacyPolicyPage = () =>
+  import('./features/legal/pages/privacy-policy-page/privacy-policy-page.component').then(
+    (module) => module.PrivacyPolicyPageComponent,
+  );
+
+const loadTermsOfUsePage = () =>
+  import('./features/legal/pages/terms-of-use-page/terms-of-use-page.component').then(
+    (module) => module.TermsOfUsePageComponent,
+  );
+
 const loadAdminCustomersListPage = () =>
   import('./features/admin/customers/pages/admin-customers-list-page/admin-customers-list-page.component').then(
     (module) => module.AdminCustomersListPageComponent,
@@ -464,6 +474,17 @@ export const routes: Routes = [
     path: 'productos/:categoryCode/:productCode',
     loadComponent: loadPublicProductDetailPage,
     title: 'Producto',
+  },
+  {
+    // Public legal pages: no guard, reachable signed in or not, from the site footer or by direct URL.
+    path: 'privacidad',
+    loadComponent: loadPrivacyPolicyPage,
+    title: 'Política de tratamiento de datos',
+  },
+  {
+    path: 'terminos',
+    loadComponent: loadTermsOfUsePage,
+    title: 'Términos de uso',
   },
   {
     path: 'admin',
