@@ -209,12 +209,14 @@ export class CustomerProfilePageComponent implements OnInit {
     this.isPwdSaving.set(true);
 
     try {
-      await firstValueFrom(
+      const session = await firstValueFrom(
         this.profileApiService.changePassword({
           currentPassword: currentPassword ?? '',
           newPassword: newPassword ?? '',
         }),
       );
+      // Every other session was closed by the server; this device continues with the session it just got.
+      this.authService.adoptSession(session);
       this.pwdForm.reset();
       this.pwdSubmitted.set(false);
       this.pwdSuccess.set('Tu contraseña fue actualizada correctamente.');

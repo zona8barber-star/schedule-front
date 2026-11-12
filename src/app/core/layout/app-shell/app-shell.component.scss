@@ -406,13 +406,22 @@ $phone-max: 720px;
   border-right: 1px solid var(--z-hairline-dark);
 }
 
+// Content column: the page grows to fill the screen and the shared site footer always closes it (beside the side
+// menu on wide work layouts, under the content everywhere else).
+.app-shell__main {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-width: 0;
+}
+
 // The content padding is published as custom properties, so full-bleed pages can cancel exactly the padding in
 // effect instead of a fixed value (a fixed -1.5rem overflowed by 8px on phones, where the side padding is 1rem).
 .app-shell__content {
   --shell-content-padding-block: 1.5rem;
   --shell-content-padding-inline: 1.5rem;
 
-  flex: 1 1 auto;
+  flex: 1 0 auto;
   min-width: 0;
   padding: var(--shell-content-padding-block) var(--shell-content-padding-inline);
 }
@@ -979,10 +988,9 @@ $phone-max: 720px;
     font-size: 0.9rem;
   }
 
+  // The bottom clearance for the shortcut bar now lives in the site footer, which always closes the page.
   .app-shell__content {
     --shell-content-padding-inline: 1rem;
-
-    padding-bottom: calc(4.75rem + env(safe-area-inset-bottom, 0px));
   }
 
   .app-shell__install {

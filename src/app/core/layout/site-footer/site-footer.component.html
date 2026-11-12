@@ -1,0 +1,41 @@
+<footer class="site-footer" data-testid="site-footer">
+  <div class="site-footer__inner">
+    <p class="site-footer__copy" data-testid="site-footer-copy">
+      © {{ currentYear }} {{ tradeName }}
+    </p>
+
+    <nav class="site-footer__legal" aria-label="Información legal">
+      <ul class="site-footer__links">
+        <li>
+          <a
+            class="site-footer__link"
+            [routerLink]="routes.privacy"
+            routerLinkActive="is-active"
+            ariaCurrentWhenActive="page"
+            data-testid="footer-privacy-link"
+          >
+            Política de tratamiento de datos
+          </a>
+        </li>
+        <li>
+          <a
+            class="site-footer__link"
+            [routerLink]="routes.terms"
+            routerLinkActive="is-active"
+            ariaCurrentWhenActive="page"
+            data-testid="footer-terms-link"
+          >
+            Términos de uso
+          </a>
+        </li>
+      </ul>
+    </nav>
+
+    @if (developerCredit; as credit) {
+      <p class="site-footer__credit" data-testid="developer-credit">
+        Desarrollado por
+        <a class="site-footer__credit-link" [href]="credit.href">{{ credit.name }}</a>
+      </p>
+    }
+  </div>
+</footer>

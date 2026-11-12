@@ -330,4 +330,23 @@ describe('AppShellComponent navigation', () => {
 
     expect(auth.logout).toHaveBeenCalledTimes(1);
   });
+
+  it.each([
+    ['a visitor on the landing', null, '/'],
+    ['a visitor on the sign-in page', null, '/auth/login'],
+    ['a customer on an account page', [ROLE_NAMES.customer], '/customer/profile'],
+    ['an admin on a back-office page', [ROLE_NAMES.admin], '/admin/income'],
+  ])('closes the page with exactly one site footer for %s', async (_case, roles, url) => {
+    if (roles) {
+      auth.currentUser.set(user(roles));
+    }
+    await renderAt(url);
+
+    const footers = element.querySelectorAll('app-site-footer');
+    expect(footers).toHaveLength(1);
+    expect(element.querySelectorAll('footer')).toHaveLength(1);
+    // Under the content, in the same column (beside the side menu on wide work layouts), never inside <main>.
+    expect(footers[0].parentElement?.classList).toContain('app-shell__main');
+    expect(element.querySelector('main app-site-footer')).toBeNull();
+  });
 });

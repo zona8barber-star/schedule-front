@@ -2,6 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 
 import { RuntimeConfigService } from '../config/runtime-config.service';
+import { AuthResponse } from '../models/auth.models';
 import {
   CustomerPasswordChangeRequest,
   CustomerProfileResponse,
@@ -49,8 +50,18 @@ export class CustomerProfileApiService {
     );
   }
 
+  /**
+   * Changing the password signs out every session of the account; the response is the new session of this device
+   * (same shape as login). `withCredentials` so the browser stores the new refresh cookie.
+   */
   changePassword(request: CustomerPasswordChangeRequest) {
-    return this.httpClient.post<void>(this.buildUrl('/customer/profile/password'), request);
+    return this.httpClient.post<AuthResponse>(
+      this.buildUrl('/customer/profile/password'),
+      request,
+      {
+        withCredentials: true,
+      },
+    );
   }
 
   private buildUrl(path: string): string {

@@ -37,7 +37,6 @@ export class PublicStaffListPageComponent implements OnInit {
     hour12: false,
   });
 
-  readonly currentYear = new Date().getFullYear();
   readonly searchControl = new FormControl('', { nonNullable: true });
   readonly isLoading = signal(true);
   readonly errorMessage = signal<string | null>(null);
