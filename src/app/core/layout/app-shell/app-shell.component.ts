@@ -20,6 +20,7 @@ import { filter, fromEvent, interval } from 'rxjs';
 import { ConfirmModalComponent } from '../../../shared/components/confirm-modal/confirm-modal.component';
 import { NotificationBellComponent } from '../notification-bell/notification-bell.component';
 import { NavMenuComponent } from '../nav-menu/nav-menu.component';
+import { SiteFooterComponent } from '../site-footer/site-footer.component';
 import { ToastOutletComponent } from '../../../shared/components/toast-outlet/toast-outlet.component';
 import { BUSINESS_CONTACT } from '../../config/business-contact.config';
 import {
@@ -56,6 +57,7 @@ const WIDE_LAYOUT_MIN_WIDTH = 1024;
     ConfirmModalComponent,
     NotificationBellComponent,
     NavMenuComponent,
+    SiteFooterComponent,
   ],
   templateUrl: './app-shell.component.html',
   styleUrl: './app-shell.component.scss',

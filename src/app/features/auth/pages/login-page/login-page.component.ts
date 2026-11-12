@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, computed, effect, inject, signal } from '@angular/core';
 import {
   AbstractControl,
   FormBuilder,
@@ -28,7 +28,6 @@ export class LoginPageComponent {
 
   readonly authService = inject(AuthService);
 
-  readonly currentYear = new Date().getFullYear();
   readonly minimumPasswordLength = 8;
   readonly maximumPasswordLength = 128;
 
@@ -79,8 +78,40 @@ export class LoginPageComponent {
     },
   );
 
+  /** A session is stored on this device but could not be checked (offline or server unavailable). BUG-014. */
+  readonly sessionUnavailable = computed(() => this.authService.status() === 'unavailable');
+  readonly retryingSession = signal(false);
+
   constructor() {
     this.authService.clearError();
+
+    // When the stored session is restored (manual retry or the network coming back), continue to the destination.
+    let wasUnavailable = this.authService.status() === 'unavailable';
+    effect(() => {
+      const status = this.authService.status();
+      if (status === 'unavailable') {
+        wasUnavailable = true;
+      } else if (wasUnavailable && status === 'authenticated') {
+        wasUnavailable = false;
+        void this.goToDestination();
+      }
+    });
+  }
+
+  async retrySession(): Promise<void> {
+    this.retryingSession.set(true);
+    try {
+      await this.authService.retryRestore();
+    } finally {
+      this.retryingSession.set(false);
+    }
+  }
+
+  private async goToDestination(): Promise<void> {
+    await this.router.navigateByUrl(
+      this.authService.resolvePostAuthUrl(this.route.snapshot.queryParamMap.get('returnUrl')),
+      { replaceUrl: true },
+    );
   }
 
   async submitLogin(): Promise<void> {

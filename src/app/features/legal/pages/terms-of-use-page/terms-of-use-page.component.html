@@ -1,0 +1,162 @@
+<app-legal-document
+  title="Términos de uso"
+  lead="Las condiciones para usar el sitio web y la aplicación de Zona 8: tu cuenta, las reservas, las membresías y los puntos."
+  [meta]="meta"
+  [sections]="sections"
+  [related]="{ label: 'Ver la política de tratamiento de datos', route: routes.privacy }"
+>
+  <section class="legal__section" id="operador">
+    <h2 tabindex="-1">1. Quién presta el servicio</h2>
+    <p>
+      El sitio y la aplicación de {{ operator.tradeName }} son operados por
+      <strong>{{ operator.responsibleName }}</strong
+      >, en {{ operator.city }}.
+    </p>
+    <dl class="legal__contact">
+      <dt>Dirección</dt>
+      <dd>{{ operator.address }}</dd>
+      <dt>Correo</dt>
+      <dd>
+        <a [href]="'mailto:' + operator.email">{{ operator.email }}</a>
+      </dd>
+      <dt>WhatsApp</dt>
+      <dd>{{ operator.whatsapp }}</dd>
+    </dl>
+    <p>
+      Estos términos regulan el uso de la plataforma. El tratamiento de tus datos se rige por la
+      <a [routerLink]="routes.privacy">Política de tratamiento de datos</a>. Aceptar estos términos
+      y autorizar el tratamiento de tus datos son decisiones distintas.
+    </p>
+  </section>
+
+  <section class="legal__section" id="cuenta">
+    <h2 tabindex="-1">2. Tu cuenta y uso permitido</h2>
+    <p>
+      La información de tu cuenta debe ser veraz y mantenerse actualizada. Protege tu contraseña y
+      avísanos si detectas un acceso que no reconoces.
+    </p>
+    <p>
+      No está permitido suplantar a otras personas, acceder a datos ajenos, automatizar reservas de
+      forma abusiva, alterar saldos o puntos ni interferir con la seguridad de la plataforma.
+    </p>
+    <p>
+      Las cuentas destinadas a la atención de menores de edad deben ser creadas y gestionadas por
+      una persona adulta responsable, que se encarga de las reservas y comunicaciones de esa cuenta.
+      El menor no debe gestionar la cuenta por sí mismo. La autorización para tratar sus datos debe
+      provenir de su representante legal; acompañar al menor o ser mayor de edad no acredita por sí
+      solo esa representación.
+    </p>
+  </section>
+
+  <section class="legal__section" id="citas">
+    <h2 tabindex="-1">3. Citas y servicios</h2>
+    <p>
+      La reserva te permite elegir profesional, día, servicio y un horario disponible. La cita
+      confirmada conserva su duración. Los horarios pueden cambiar hasta que confirmes la reserva:
+      si otra persona ocupa el espacio antes, deberás elegir otro disponible.
+    </p>
+    <p>
+      El precio y cualquier cargo aplicable se informarán antes de prestar el servicio, y cualquier
+      cambio se acordará contigo.
+    </p>
+    <p>
+      Los cambios o cancelaciones se hacen con las opciones disponibles en la aplicación o por los
+      canales de contacto. Estos términos no establecen multas, anticipos ni penalizaciones por
+      inasistencia.
+    </p>
+    <p>
+      Si {{ operator.tradeName }} necesita modificar una cita, procurará avisarte y acordar una
+      alternativa. Tus derechos como consumidor se mantienen.
+    </p>
+  </section>
+
+  <section class="legal__section" id="membresias">
+    <h2 tabindex="-1">4. Membresías y puntos</h2>
+    <p>
+      Cada membresía tiene sus propias condiciones, servicios incluidos y vigencia, que se informan
+      antes de su venta. La membresía conserva las condiciones con que la adquiriste; estos términos
+      no las sustituyen ni las cambian de forma retroactiva.
+    </p>
+    <p>
+      El programa de fidelización acredita puntos según sus reglas. En tu cuenta puedes consultar
+      tus puntos disponibles, reservados, sus vencimientos y movimientos. La vigencia se cuenta en
+      días calendario, en hora de Colombia, e incluye el día de la acreditación: un lote con
+      vigencia de un día vale solo el día en que se acredita y deja de poder usarse al empezar el
+      día siguiente.
+    </p>
+    <p>
+      Al solicitar un canje, los puntos correspondientes quedan reservados; al entregarlo, se
+      consume esa reserva sin volver a descontarlos. Los plazos de aprobación y entrega se muestran
+      en el detalle de cada solicitud. Si la solicitud se rechaza, se cancela o vence, los puntos se
+      liberan con su vencimiento original: los que ya vencieron no recuperan vigencia.
+    </p>
+    <p>
+      Las recompensas que consisten en un servicio requieren coordinar la atención: su aprobación no
+      reserva por sí sola un horario. Si encuentras un error en tu historial, repórtalo por los
+      canales de contacto para revisarlo.
+    </p>
+  </section>
+
+  <section class="legal__section" id="productos">
+    <h2 tabindex="-1">5. Catálogo de productos</h2>
+    <p>
+      La sección de productos permite consultar categorías, características y precios. No incluye
+      carrito, pagos ni compras en línea. Las fotografías son una referencia del producto; antes de
+      comprar en la barbería puedes confirmar su presentación y disponibilidad.
+    </p>
+  </section>
+
+  <section class="legal__section" id="resenas">
+    <h2 tabindex="-1">6. Reseñas, imágenes y notificaciones</h2>
+    <p>
+      Las calificaciones y comentarios que envíes pueden mostrarse públicamente en el perfil del
+      profesional. No publiques datos privados de otras personas ni contenido ilícito. Una foto de
+      perfil o una reseña no otorgan permiso para usarlas en campañas publicitarias o en redes
+      sociales.
+    </p>
+    <p>
+      Hoy nos comunicamos contigo mediante las notificaciones de la aplicación, que puedes activar o
+      desactivar desde la configuración de notificaciones de tu cuenta. No realizamos campañas
+      comerciales por correo electrónico ni por WhatsApp. Puedes usar los canales de contacto
+      publicados para pedir atención.
+    </p>
+  </section>
+
+  <section class="legal__section" id="responsabilidad">
+    <h2 tabindex="-1">7. Disponibilidad, enlaces externos y responsabilidad</h2>
+    <p>
+      La plataforma puede tener interrupciones o mantenimientos. Si una falla afecta una reserva,
+      una membresía, tus puntos o una solicitud, contáctanos para revisarla. Una falla no exonera a
+      {{ operator.tradeName }} de las obligaciones que le impone la ley.
+    </p>
+    <p>
+      Los mapas y los enlaces externos llevan a servicios de terceros, que tienen sus propias
+      condiciones.
+    </p>
+    <p>
+      Nada de lo previsto aquí limita los derechos irrenunciables del consumidor, impone una
+      renuncia general a reclamar ni excluye las responsabilidades que legalmente correspondan,
+      conforme al Estatuto del Consumidor (<a
+        href="https://www.funcionpublica.gov.co/eva/gestornormativo/norma.php?i=44306"
+        target="_blank"
+        rel="noopener noreferrer"
+        >Ley 1480 de 2011<span class="legal__sr-only"> (se abre en una pestaña nueva)</span></a
+      >).
+    </p>
+  </section>
+
+  <section class="legal__section" id="atencion">
+    <h2 tabindex="-1">8. Atención y cambios</h2>
+    <p>
+      Si tienes un problema con una cita, una membresía, tus puntos o un producto, escríbenos a
+      <a [href]="'mailto:' + operator.email">{{ operator.email }}</a> o por WhatsApp al
+      {{ operator.whatsapp }}. Para ejercer tus derechos sobre datos personales, sigue lo indicado
+      en la <a [routerLink]="routes.privacy">Política de tratamiento de datos</a>.
+    </p>
+    <p>
+      Los cambios sustanciales de estos términos se informarán oportunamente, sin afectar de forma
+      retroactiva los derechos que ya hayas adquirido ni presumir que aceptas nuevas finalidades de
+      tratamiento de datos. Estos términos se rigen por la ley colombiana.
+    </p>
+  </section>
+</app-legal-document>

@@ -4,19 +4,15 @@
 
 // ── Root: escapa el padding del app-shell__content ────────────────
 .lp {
-  margin: -1.5rem;
+  // Cancels exactly the shell padding (1rem inline on phones), so the page never overflows horizontally.
+  margin: calc(-1 * var(--shell-content-padding-block, 1.5rem))
+    calc(-1 * var(--shell-content-padding-inline, 1.5rem));
   background: var(--z-bone);
   color: var(--z-text-on-light);
   font-family: var(--z-font-body);
   font-size: 15px;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
-}
-
-@media (display-mode: standalone) {
-  .lp__foot {
-    display: none;
-  }
 }
 
 // ── Contenedor centrado ───────────────────────────────────────────
@@ -619,60 +615,6 @@
   svg { flex-shrink: 0; }
 }
 
-// ── FOOTER ────────────────────────────────────────────────────────
-.lp__foot {
-  background: var(--z-ink);
-  border-top: 1px solid var(--z-hairline-dark);
-  padding: 28px 0;
-}
-
-.lp__foot-in {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-}
-
-.lp__foot-brand {
-  font-family: var(--z-font-display);
-  font-weight: 700;
-  font-size: 18px;
-  letter-spacing: 2px;
-  color: var(--z-bone);
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  text-transform: uppercase;
-}
-
-.lp__foot-logo {
-  height: 32px;
-  width: auto;
-  object-fit: contain;
-  display: block;
-}
-
-.lp__foot-mark {
-  width: 34px;
-  height: 34px;
-  border: 1px solid var(--z-hairline-dark);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  font-family: var(--z-font-display);
-  font-weight: 700;
-  font-size: 14px;
-  flex-shrink: 0;
-}
-
-.lp__foot-copy {
-  font-family: var(--z-font-mono);
-  font-size: 10px;
-  letter-spacing: 1.5px;
-  color: var(--z-steel);
-  text-transform: uppercase;
-}
-
 // ── RESPONSIVE ────────────────────────────────────────────────────
 @media (max-width: 880px) {
   .lp__wrap {
@@ -741,17 +683,6 @@
 
   .lp__chanl-v {
     font-size: 16px;
-  }
-
-  .lp__foot {
-    padding: 20px 0;
-  }
-
-  .lp__foot-in {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 10px;
-    padding: 0 16px;
   }
 }
 

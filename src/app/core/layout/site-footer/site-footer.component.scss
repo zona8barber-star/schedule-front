@@ -1,0 +1,124 @@
+// Phones (≤ 720px) show the fixed shortcut bar; it mirrors $phone-max in app-shell.component.scss.
+$phone-max: 720px;
+
+// Lane kept free on the right for the floating WhatsApp button (styles.scss: 3.25rem wide, 1.5rem from the edge).
+$fab-lane: 5.25rem;
+
+:host {
+  display: block;
+}
+
+.site-footer {
+  // Contrast on --z-ink: bone 18:1, concrete 11:1, steel-hi 7.3:1, steel 5.1:1 (all ≥ 4.5:1, WCAG AA).
+  padding: 1.1rem $fab-lane calc(1.1rem + env(safe-area-inset-bottom, 0px)) 1.5rem;
+  background: var(--z-ink);
+  border-top: 1px solid var(--z-hairline-dark);
+  color: var(--z-steel-hi);
+  font-family: var(--z-font-body);
+  font-size: 0.8125rem;
+  line-height: 1.5;
+}
+
+.site-footer__inner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem 1.5rem;
+  max-width: 1160px;
+  margin: 0 auto;
+}
+
+.site-footer__copy,
+.site-footer__credit {
+  margin: 0;
+}
+
+.site-footer__copy {
+  font-family: var(--z-font-mono);
+  font-size: 0.75rem;
+  letter-spacing: 0.06em;
+}
+
+.site-footer__links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 1.25rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.site-footer__link,
+.site-footer__credit-link {
+  border-radius: 2px;
+  text-underline-offset: 0.2em;
+}
+
+.site-footer__link {
+  display: inline-block;
+  padding-block: 0.2rem;
+  color: var(--z-concrete);
+  text-decoration: none;
+
+  &:hover {
+    color: var(--z-bone);
+    text-decoration: underline;
+  }
+
+  &.is-active {
+    color: var(--z-bone);
+    text-decoration: underline;
+    text-decoration-color: var(--z-brass);
+  }
+}
+
+// Secondary: smaller and quieter than the legal links, but still AA on the dark background.
+.site-footer__credit {
+  margin-left: auto;
+  color: var(--z-steel);
+  font-size: 0.75rem;
+}
+
+.site-footer__credit-link {
+  color: var(--z-steel-hi);
+  text-decoration: underline;
+  text-decoration-color: rgba(154, 160, 166, 0.45);
+
+  &:hover {
+    color: var(--z-bone);
+    text-decoration-color: currentColor;
+  }
+}
+
+.site-footer__link:focus-visible,
+.site-footer__credit-link:focus-visible {
+  outline: 2px solid var(--z-brass);
+  outline-offset: 3px;
+}
+
+@media (max-width: $phone-max) {
+  .site-footer {
+    // Clears the fixed shortcut bar (same clearance the content area used to reserve on phones).
+    padding: 1rem $fab-lane calc(4.75rem + env(safe-area-inset-bottom, 0px)) 1rem;
+  }
+
+  .site-footer__inner {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.4rem;
+  }
+
+  .site-footer__links {
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .site-footer__link {
+    // Comfortable touch target (≥ 24px tall) when stacked.
+    padding-block: 0.3rem;
+  }
+
+  .site-footer__credit {
+    margin-left: 0;
+  }
+}

@@ -83,4 +83,8 @@ export interface ApiProblemDetails {
   errors?: Record<string, string[]>;
 }
 
-export type AuthStatus = 'anonymous' | 'restoring' | 'authenticated';
+/**
+ * `unavailable`: a session is stored on this device but the server could not confirm it (offline, server down).
+ * Nothing private is accessible until it is confirmed; the credentials are kept and the restore is retried.
+ */
+export type AuthStatus = 'anonymous' | 'restoring' | 'authenticated' | 'unavailable';

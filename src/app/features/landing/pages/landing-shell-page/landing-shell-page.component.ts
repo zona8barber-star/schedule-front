@@ -49,7 +49,6 @@ export class LandingShellPageComponent implements OnInit {
   });
 
   readonly isAuthenticated = computed(() => this.authService.isAuthenticated());
-  readonly currentYear = new Date().getFullYear();
 
   readonly landingContent = signal<LandingContentResponse | null>(null);
   readonly branding = signal<BrandingSettingsResponse | null>(null);

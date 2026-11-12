@@ -1,0 +1,51 @@
+<article class="legal" data-testid="legal-document">
+  <header class="legal__hero">
+    <div class="legal__wrap">
+      <p class="legal__kicker">Información legal</p>
+      <h1 class="legal__title">{{ title() }}</h1>
+      <p class="legal__lead">{{ lead() }}</p>
+      <p class="legal__meta" data-testid="legal-meta">
+        Versión {{ meta().version }} · Última actualización:
+        {{ meta().updatedOn | date: 'longDate' : 'UTC' }}
+        @if (meta().effectiveOn; as effectiveOn) {
+          · Vigencia: desde el {{ effectiveOn | date: 'longDate' : 'UTC' }}
+        }
+      </p>
+    </div>
+  </header>
+
+  <div class="legal__wrap legal__layout">
+    @if (!meta().effectiveOn) {
+      <p class="legal__notice" role="note" data-testid="legal-review-notice">
+        Este documento está en revisión y todavía no tiene fecha de entrada en vigor. Su contenido
+        puede cambiar antes de adoptarse.
+      </p>
+    }
+
+    <nav class="legal__toc" aria-labelledby="legal-toc-title">
+      <h2 class="legal__toc-title" id="legal-toc-title">Contenido</h2>
+      <ol class="legal__toc-list">
+        @for (section of sections(); track section.id) {
+          <li>
+            <a
+              class="legal__toc-link"
+              [attr.href]="sectionHref(section.id)"
+              (click)="goToSection($event, section.id)"
+            >
+              {{ section.title }}
+            </a>
+          </li>
+        }
+      </ol>
+    </nav>
+
+    <div class="legal__content">
+      <ng-content />
+
+      <nav class="legal__related" aria-label="Otros documentos">
+        <a class="legal__related-link" [routerLink]="related().route">{{ related().label }}</a>
+        <a class="legal__related-link" routerLink="/">Volver al inicio</a>
+      </nav>
+    </div>
+  </div>
+</article>

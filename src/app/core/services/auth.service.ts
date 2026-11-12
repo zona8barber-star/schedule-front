@@ -1,5 +1,7 @@
 import { isPlatformBrowser } from '@angular/common';
-import { Injectable, PLATFORM_ID, computed, inject, signal } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
+import { DestroyRef, Injectable, PLATFORM_ID, computed, inject, signal } from '@angular/core';
+import { ActivatedRouteSnapshot, Router } from '@angular/router';
 import { Observable, firstValueFrom } from 'rxjs';
 
 import {
@@ -29,11 +31,16 @@ const legacyRefreshTokenKey = 'barbershop.auth.refreshToken';
 
 const authEntryPaths = new Set(['/auth/login', '/auth/register']);
 
+// Web Lock shared by every tab of the app: a refresh token can be used once (the server rotates it), so tabs take
+// turns instead of racing with the same token.
+const refreshLockName = 'barbershop.auth.refresh';
+
 @Injectable({
   providedIn: 'root',
 })
 export class AuthService {
   private readonly authApiService = inject(AuthApiService);
+  private readonly router = inject(Router);
   private readonly platformId = inject(PLATFORM_ID);
   private readonly browser = isPlatformBrowser(this.platformId);
 
@@ -61,13 +68,51 @@ export class AuthService {
     () => this.statusState() === 'authenticated' && this.currentUserState() !== null,
   );
 
+  constructor() {
+    if (!this.browser) {
+      return;
+    }
+
+    // BUG-013: another tab signed out (or its session was rejected): this tab must not keep showing private data.
+    const onStorage = (event: StorageEvent) => {
+      if ((event.key === sessionFlagStorageKey || event.key === null) && !this.readStorage(sessionFlagStorageKey)) {
+        this.endSessionFromAnotherTab();
+      }
+    };
+
+    // BUG-014: the session could not be checked (offline, server down); try again as soon as the network is back.
+    const onOnline = () => {
+      if (this.statusState() === 'unavailable') {
+        void this.retryRestore();
+      }
+    };
+
+    globalThis.addEventListener?.('storage', onStorage);
+    globalThis.addEventListener?.('online', onOnline);
+    inject(DestroyRef).onDestroy(() => {
+      globalThis.removeEventListener?.('storage', onStorage);
+      globalThis.removeEventListener?.('online', onOnline);
+    });
+  }
+
   async bootstrap(): Promise<void> {
     await this.ensureInitialized();
   }
 
   async ensureInitialized(): Promise<void> {
+    // A restore that failed for a transient reason is attempted again on the next check.
+    if (this.statusState() === 'unavailable') {
+      this.bootstrapPromise = null;
+    }
+
     this.bootstrapPromise ??= this.initializeSession();
     await this.bootstrapPromise;
+  }
+
+  /** Tries again to restore a session that could not be checked before (e.g. the device was offline). */
+  async retryRestore(): Promise<boolean> {
+    await this.ensureInitialized();
+    return this.isAuthenticated();
   }
 
   async register(request: RegisterRequest): Promise<AuthUserResponse> {
@@ -93,7 +138,8 @@ export class AuthService {
     try {
       if (this.accessTokenState()) {
         await Promise.allSettled(this.beforeLogoutHooks.map((hook) => hook()));
-        await firstValueFrom(this.authApiService.logout());
+        // Also the stored token: on iOS standalone the cookie does not reach the server.
+        await firstValueFrom(this.authApiService.logout(this.readStorage(refreshTokenStorageKey)));
       }
     } catch {
       // The local session should still be cleared even if the server call fails.
@@ -119,6 +165,11 @@ export class AuthService {
 
   handleUnauthorized(): void {
     this.clearSession(true);
+  }
+
+  /** Continues with a session the server just issued outside login/refresh (e.g. after changing the password). */
+  adoptSession(response: AuthResponse): void {
+    this.applySession(response);
   }
 
   clearError(): void {
@@ -191,7 +242,9 @@ export class AuthService {
 
     try {
       const newToken = await this.refreshAccessToken();
-      if (!newToken) {
+      // A transient failure leaves the status 'unavailable' and keeps the stored credentials (BUG-014): nothing
+      // private is shown until the server confirms the session, but the user is not asked for the password again.
+      if (!newToken && this.statusState() !== 'unavailable') {
         this.clearSession(true);
       }
       // refreshAccessToken → applySession already sets currentUser + status = 'authenticated'
@@ -218,16 +271,85 @@ export class AuthService {
     }
   }
 
-  private async refreshSession(): Promise<string | null> {
-    try {
-      const storedRefreshToken = this.readStorage(refreshTokenStorageKey);
-      const response = await firstValueFrom(this.authApiService.refresh(storedRefreshToken));
-      this.applySession(response);
-      return response.accessToken;
-    } catch {
-      this.handleUnauthorized();
-      return null;
+  private refreshSession(): Promise<string | null> {
+    return this.withRefreshLock(async () => {
+      // Read inside the lock: another tab may have just rotated the token.
+      const sentRefreshToken = this.readStorage(refreshTokenStorageKey);
+
+      try {
+        return await this.requestRefresh(sentRefreshToken);
+      } catch (error) {
+        if (isTransientFailure(error)) {
+          return this.keepSessionForLater();
+        }
+
+        // Browsers without Web Locks: another tab may have rotated the token while this request was in flight.
+        // Its newer token (and cookie) is still valid, so try once with it instead of closing the session that
+        // tab just renewed.
+        const latestRefreshToken = this.readStorage(refreshTokenStorageKey);
+        if (latestRefreshToken && latestRefreshToken !== sentRefreshToken) {
+          try {
+            return await this.requestRefresh(latestRefreshToken);
+          } catch (retryError) {
+            if (isTransientFailure(retryError)) {
+              return this.keepSessionForLater();
+            }
+          }
+        }
+
+        // Only the server saying the session is no longer valid ends it.
+        this.handleUnauthorized();
+        return null;
+      }
+    });
+  }
+
+  /**
+   * The refresh failed for a reason unrelated to the session (no network, server down, rate limit): the stored
+   * credentials are kept. While restoring, the status becomes 'unavailable' (nothing private is accessible yet);
+   * an already open session keeps its state and the next request retries.
+   */
+  private keepSessionForLater(): null {
+    if (this.statusState() !== 'authenticated') {
+      this.currentUserState.set(null);
+      this.accessTokenState.set(null);
+      this.statusState.set('unavailable');
     }
+
+    return null;
+  }
+
+  /** Mirrors a sign-out done in another tab: memory only (that tab already cleared the storage). */
+  private endSessionFromAnotherTab(): void {
+    if (this.statusState() === 'anonymous') {
+      return;
+    }
+
+    this.currentUserState.set(null);
+    this.accessTokenState.set(null);
+    this.statusState.set('anonymous');
+    this.bootstrapPromise = null;
+
+    const currentUrl = this.router.url;
+    if (isPrivateRoute(this.router.routerState.snapshot.root)) {
+      void this.router.navigate(['/auth/login'], { queryParams: { returnUrl: currentUrl } });
+    }
+  }
+
+  private async requestRefresh(refreshToken: string | null): Promise<string> {
+    const response = await firstValueFrom(this.authApiService.refresh(refreshToken));
+    this.applySession(response);
+    return response.accessToken;
+  }
+
+  /** Runs `work` while holding the cross-tab refresh lock, or directly where Web Locks are not available. */
+  private withRefreshLock<T>(work: () => Promise<T>): Promise<T> {
+    const locks = this.browser ? globalThis.navigator?.locks : undefined;
+    if (!locks?.request) {
+      return work();
+    }
+
+    return locks.request(refreshLockName, () => work()) as Promise<T>;
   }
 
   private applySession(response: AuthResponse): void {
@@ -286,4 +408,29 @@ export class AuthService {
       // Keep in-memory session state even if browser storage is unavailable.
     }
   }
+}
+
+/** Errors that say nothing about the session: no connection, timeouts, rate limit or server failures. */
+function isTransientFailure(error: unknown): boolean {
+  if (!(error instanceof HttpErrorResponse)) {
+    return false;
+  }
+
+  return error.status === 0 || error.status === 408 || error.status === 429 || error.status >= 500;
+}
+
+/** Whether the current route is guarded for signed-in users (every guarded route except sign-in/registration). */
+function isPrivateRoute(root: ActivatedRouteSnapshot): boolean {
+  let node: ActivatedRouteSnapshot | null = root;
+  while (node) {
+    const guarded = (node.routeConfig?.canActivate?.length ?? 0) > 0;
+    const path = `/${node.routeConfig?.path ?? ''}`;
+    if (guarded && !authEntryPaths.has(path)) {
+      return true;
+    }
+
+    node = node.firstChild;
+  }
+
+  return false;
 }
