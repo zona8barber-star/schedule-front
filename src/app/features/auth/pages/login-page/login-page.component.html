@@ -83,6 +83,24 @@
 
         <app-api-feedback severity="error" [message]="authService.error()" />
 
+        @if (sessionUnavailable()) {
+          <div class="auth-session-unavailable" role="status" data-testid="session-unavailable">
+            <p>
+              No pudimos comprobar tu sesión porque no hay conexión con el servidor. Tu sesión sigue
+              guardada en este dispositivo: vuelve a intentarlo cuando tengas conexión.
+            </p>
+            <button
+              class="auth-submit auth-submit--secondary"
+              type="button"
+              (click)="retrySession()"
+              [disabled]="retryingSession()"
+              data-testid="session-retry"
+            >
+              {{ retryingSession() ? 'Reintentando…' : 'Reintentar' }}
+            </button>
+          </div>
+        }
+
         @if (!isRegisterTab) {
           <form [formGroup]="loginForm" (ngSubmit)="submitLogin()" novalidate>
             <div class="auth-field">

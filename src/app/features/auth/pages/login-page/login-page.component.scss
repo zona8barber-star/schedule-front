@@ -279,6 +279,29 @@
   }
 }
 
+// Stored session that could not be checked (BUG-014): informative, with a retry.
+.auth-session-unavailable {
+  margin: 0 0 1.25rem;
+  padding: 0.9rem 1rem;
+  border-left: 3px solid var(--z-brass);
+  background: rgba(176, 138, 74, 0.1);
+  font-size: 0.9rem;
+  line-height: 1.5;
+
+  p {
+    margin: 0 0 0.75rem;
+  }
+}
+
+.auth-submit--secondary {
+  background: transparent;
+  color: inherit;
+
+  &:hover:not([disabled]) {
+    background: rgba(176, 138, 74, 0.18);
+  }
+}
+
 .auth-link {
   font-family: var(--z-font-mono);
   font-size: 0.72rem;

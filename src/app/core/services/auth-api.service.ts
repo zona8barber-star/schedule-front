@@ -32,9 +32,11 @@ export class AuthApiService {
     });
   }
 
-  // Refresh token is read from the HttpOnly cookie server-side — no body needed.
-  logout() {
-    return this.httpClient.post<void>(this.buildUrl('/auth/logout'), {}, {
+  // The server revokes the cookie token and, for iOS standalone where the cookie does not travel, the one in
+  // the body. It only ever revokes tokens of the signed-in account.
+  logout(refreshToken?: string | null) {
+    const body = refreshToken ? { refreshToken } : {};
+    return this.httpClient.post<void>(this.buildUrl('/auth/logout'), body, {
       withCredentials: true,
     });
   }
