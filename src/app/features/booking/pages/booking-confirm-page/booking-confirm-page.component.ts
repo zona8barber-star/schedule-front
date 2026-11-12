@@ -16,6 +16,7 @@ import { getApiErrorMessage } from '../../../../core/utils/api-error.utils';
 import { BOGOTA_TIME_ZONE, bogotaDateKey } from '../../../../core/utils/bogota-date.utils';
 import { ApiFeedbackComponent } from '../../../../shared/components/api-feedback/api-feedback.component';
 import { PageStateComponent } from '../../../../shared/components/page-state/page-state.component';
+import { whatsAppUrl } from '../../../../core/utils/whatsapp-link.utils';
 
 @Component({
   selector: 'app-booking-confirm-page',
@@ -86,13 +87,8 @@ export class BookingConfirmPageComponent implements OnInit {
     const staff = this.staffProfile();
     if (!appointment || !staff?.phoneNumber) return null;
 
-    const phone = staff.phoneNumber.replace(/\D/g, '');
-    if (!phone) return null;
-
     const formattedDate = this.formatDateTime(appointment.startsAtUtc);
-    const message = `Hola ${staff.displayName}, tengo una cita el ${formattedDate}`;
-
-    return `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
+    return whatsAppUrl(staff.phoneNumber, `Hola ${staff.displayName}, tengo una cita el ${formattedDate}`);
   });
 
   async ngOnInit(): Promise<void> {

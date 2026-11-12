@@ -359,7 +359,7 @@ export class AdminStaffAvailabilityPageComponent {
   }
 
   formatPeriodWindow(period: UnavailablePeriod): string {
-    return `${this.formatTimestamp(period.startsAtUtc)} - ${this.formatTimestamp(period.endsAtUtc)}`;
+    return `${this.formatTimestamp(period.startsAtUtc)} — ${this.formatTimestamp(period.endsAtUtc)}`;
   }
 
   formatTimestamp(value: string): string {

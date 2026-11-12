@@ -195,7 +195,7 @@
                 @for (period of recentAbsences(); track period.id) {
                   <tr [class.avail-page__row--past]="isAbsencePast(period)">
                     <td>{{ formatPeriodWindow(period) }}</td>
-                    <td class="avail-page__table-reason">{{ period.reason || '-' }}</td>
+                    <td class="avail-page__table-reason">{{ period.reason || '—' }}</td>
                     <td class="avail-page__table-created">
                       {{ formatTimestamp(period.createdAtUtc) }}
                     </td>
@@ -273,7 +273,7 @@
             <span class="modal__allday-hint">
               {{
                 absenceForm.controls.isAllDay.value
-                  ? 'Selecciona solo dias - el ausentismo cubre todo el dia'
+                  ? 'Selecciona solo dias — el ausentismo cubre todo el dia'
                   : 'Selecciona fecha y hora exactas'
               }}
             </span>
@@ -346,7 +346,7 @@
                 id="modal-reason"
                 rows="3"
                 formControlName="reason"
-                placeholder="Opcional - vacaciones, cita medica, etc."
+                placeholder="Opcional — vacaciones, cita medica, etc."
               ></textarea>
               @if (showAbsenceControlError('reason', 'maxlength')) {
                 <p class="avail-page__error">El motivo debe tener 500 caracteres o menos.</p>
@@ -356,7 +356,7 @@
 
           @if (showAbsenceGroupError('pastStart')) {
             <p class="avail-page__error">
-              La fecha de inicio debe ser a partir de manana - no se permiten ausentismos del dia
+              La fecha de inicio debe ser a partir de mañana — no se permiten ausentismos del dia
               actual hacia atras.
             </p>
           }

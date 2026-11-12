@@ -25,6 +25,7 @@ import {
   dateKeyToUtcNoon,
   isDateKey,
 } from '../../../../../core/utils/bogota-date.utils';
+import { whatsAppUrl } from '../../../../../core/utils/whatsapp-link.utils';
 
 /** Days offered as quick buttons in the first booking step (today included); others through "Otra fecha". */
 const BOOKING_DAY_OPTIONS = 14;
@@ -124,13 +125,7 @@ export class PublicStaffProfilePageComponent implements OnInit {
   readonly displayReviewCount = computed(
     () => this.reviewsSummary()?.totalReviews ?? this.staffProfile()?.reviewCount ?? 0,
   );
-  readonly whatsappHref = computed(() => {
-    const phone = this.staffProfile()?.phoneNumber;
-    if (!phone) return null;
-    const digits = phone.replace(/\D/g, '');
-    const number = digits.startsWith('57') ? digits : `57${digits}`;
-    return `https://wa.me/${number}`;
-  });
+  readonly whatsappHref = computed(() => whatsAppUrl(this.staffProfile()?.phoneNumber));
 
   async ngOnInit(): Promise<void> {
     await this.loadProfile();
