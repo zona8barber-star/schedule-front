@@ -12,15 +12,7 @@
   <article class="booking-confirm-page__panel">
     <app-api-feedback severity="error" [message]="errorMessage()" />
 
-    @if (!canSubmit()) {
-      <app-page-state
-        kind="empty"
-        title="Faltan datos para reservar"
-        message="Selecciona un horario desde la disponibilidad publica para continuar."
-      >
-        <a routerLink="/staff" class="booking-confirm-page__link">Ver profesionales y disponibilidad</a>
-      </app-page-state>
-    } @else if (successAppointment()) {
+    @if (successAppointment()) {
       <section class="booking-confirm-page__success">
         <p class="booking-confirm-page__eyebrow">Reserva confirmada</p>
         <h2>Tu cita fue creada correctamente</h2>
@@ -44,6 +36,18 @@
           </a>
         </div>
       </section>
+    } @else if (isLoadingBooked()) {
+      <app-page-state kind="loading" title="Cargando tu reserva" message="Un momento..." />
+    } @else if (bookedAppointmentId()) {
+      <a routerLink="/customer/appointments" class="booking-confirm-page__link">Ver mis citas</a>
+    } @else if (!canSubmit()) {
+      <app-page-state
+        kind="empty"
+        title="Faltan datos para reservar"
+        message="Selecciona un horario desde la disponibilidad publica para continuar."
+      >
+        <a routerLink="/staff" class="booking-confirm-page__link">Ver profesionales y disponibilidad</a>
+      </app-page-state>
     } @else {
       <section class="booking-confirm-page__summary">
         <div>

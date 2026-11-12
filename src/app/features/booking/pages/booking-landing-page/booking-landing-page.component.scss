@@ -99,3 +99,31 @@
     transform: translateY(-1px);
   }
 }
+
+.booking-landing-page__next {
+  display: grid;
+  gap: 0.35rem;
+  line-height: 1.5;
+
+  strong {
+    font-size: 1.05rem;
+  }
+}
+
+.booking-landing-page__status {
+  justify-self: start;
+  padding: 0.2rem 0.65rem;
+  border: 1px solid var(--z-hairline-light);
+  border-radius: 999px;
+  font-family: var(--z-font-mono);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.booking-landing-page__link,
+.booking-landing-page__empty a {
+  color: var(--brand-primary, #b08a4a);
+  font-weight: 700;
+}

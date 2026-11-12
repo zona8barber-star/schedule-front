@@ -86,8 +86,8 @@
 
                   @if (dayGroup.controls.isActive.value) {
                     <div class="avail-page__blocks" formArrayName="blocks">
-                      @for (blockGroup of blocksOf(di).controls; track $index; let bi = $index) {
-                        <div class="avail-page__block" [formGroupName]="bi">
+                      @for (blockGroup of blocksOf(di).controls; track blockGroup; let bi = $index) {
+                        <div class="avail-page__block" [formGroup]="blockGroup">
                           <div class="avail-page__block-fields">
                             <div class="avail-page__field">
                               <label [for]="'start-' + di + '-' + bi">Desde</label>

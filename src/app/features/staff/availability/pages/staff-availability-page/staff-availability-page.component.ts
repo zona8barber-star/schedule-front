@@ -27,6 +27,12 @@ import {
   toUtcIsoString,
 } from '../../../../../core/utils/availability-form.utils';
 import { getApiErrorMessage } from '../../../../../core/utils/api-error.utils';
+import {
+  bogotaDateKeyFromToday,
+  bogotaDateTimeFormat,
+  bogotaStartOfDay,
+  bogotaToday,
+} from '../../../../../core/utils/bogota-date.utils';
 import { ApiFeedbackComponent } from '../../../../../shared/components/api-feedback/api-feedback.component';
 import { PageStateComponent } from '../../../../../shared/components/page-state/page-state.component';
 
@@ -40,7 +46,7 @@ export class StaffAvailabilityPageComponent {
   private readonly staffAvailabilityApiService = inject(StaffAvailabilityApiService);
   private readonly staffProfileApiService = inject(StaffProfileApiService);
   private readonly confirmModal = inject(ConfirmModalService);
-  private readonly dateTimeFormatter = new Intl.DateTimeFormat('es-AR', {
+  private readonly dateTimeFormatter = bogotaDateTimeFormat('es-AR', {
     dateStyle: 'medium',
     timeStyle: 'short',
   });
@@ -95,21 +101,10 @@ export class StaffAvailabilityPageComponent {
   });
 
   // Min date/datetime for absence form (tomorrow, not today)
-  readonly minStartDate: string = (() => {
-    const d = new Date();
-    d.setDate(d.getDate() + 1);
-    const y = d.getFullYear();
-    const m = String(d.getMonth() + 1).padStart(2, '0');
-    const day = String(d.getDate()).padStart(2, '0');
-    return `${y}-${m}-${day}`;
-  })();
+  readonly minStartDate: string = bogotaDateKeyFromToday(1);
 
   get minStartDatetime(): string {
-    const tomorrow = new Date();
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    tomorrow.setHours(0, 0, 0, 0);
-    const offset = tomorrow.getTimezoneOffset() * 60_000;
-    return new Date(tomorrow.getTime() - offset).toISOString().slice(0, 16);
+    return `${bogotaDateKeyFromToday(1)}T00:00`;
   }
 
   // ── Forms ──────────────────────────────────────────────────────────────
@@ -292,9 +287,7 @@ export class StaffAvailabilityPageComponent {
   // ── Absence methods ────────────────────────────────────────────────────
 
   isAbsencePast(period: UnavailablePeriod): boolean {
-    const todayStart = new Date();
-    todayStart.setHours(0, 0, 0, 0);
-    return new Date(period.startsAtUtc) < todayStart;
+    return new Date(period.startsAtUtc) < bogotaStartOfDay(bogotaToday());
   }
 
   openAbsenceModal(period?: UnavailablePeriod): void {

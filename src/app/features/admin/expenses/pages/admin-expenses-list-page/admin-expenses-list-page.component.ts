@@ -8,17 +8,17 @@ import { ExpenseEntryView } from '../../../../../core/models/expense.models';
 import { AdminExpensesApiService } from '../../../../../core/services/admin-expenses-api.service';
 import { ConfirmModalService } from '../../../../../core/services/confirm-modal.service';
 import { getApiErrorMessage } from '../../../../../core/utils/api-error.utils';
+import { bogotaToday } from '../../../../../core/utils/bogota-date.utils';
 import { ApiFeedbackComponent } from '../../../../../shared/components/api-feedback/api-feedback.component';
 import { AdminExpenseFormModalComponent } from '../../components/admin-expense-form-modal/admin-expense-form-modal.component';
 
+/** Bogotá's month and day, whatever the device timezone (SONDA BUG-033). */
 function currentMonthIso(): string {
-  const now = new Date();
-  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+  return bogotaToday().slice(0, 7);
 }
 
 function todayIso(): string {
-  const now = new Date();
-  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+  return bogotaToday();
 }
 
 @Component({

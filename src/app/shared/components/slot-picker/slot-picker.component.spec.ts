@@ -66,11 +66,41 @@ describe('SlotPickerComponent', () => {
     expect(todayButton.disabled).toBe(true);
   });
 
-  it('keeps the requested initial day even when it has no free time', async () => {
+  // SONDA BUG-026: opened with ?fecha=<today> when today has no free time left.
+  it('moves from a requested day without free time to the first day with free time', async () => {
     fixture.componentRef.setInput('initialDate', '2026-10-07');
     await render();
 
-    expect(fixture.componentInstance.selectedDate()).toBe('2026-10-07');
+    expect(fixture.componentInstance.selectedDate()).toBe('2026-10-08');
+    expect(fixture.nativeElement.textContent).not.toContain('No hay horarios libres este día');
+    const times = Array.from(fixture.nativeElement.querySelectorAll('.sp__slot') as NodeListOf<HTMLElement>).map(
+      (button) => button.textContent?.trim(),
+    );
+    expect(times).toEqual(['10:00', '10:30']);
+  });
+
+  it('looks for free time from the requested day on, never before it', async () => {
+    // Free time tomorrow (Oct 8) and on Oct 10; the link asks for Oct 9.
+    slots = [...tomorrowSlots, { startAtUtc: '2026-10-10T14:00:00Z', endAtUtc: '2026-10-10T14:30:00Z' }];
+    fixture.componentRef.setInput('initialDate', '2026-10-09');
+    await render();
+
+    expect(fixture.componentInstance.selectedDate()).toBe('2026-10-10');
+  });
+
+  it('keeps a requested day that has free time', async () => {
+    fixture.componentRef.setInput('initialDate', '2026-10-08');
+    await render();
+
+    expect(fixture.componentInstance.selectedDate()).toBe('2026-10-08');
+  });
+
+  it('stays on the requested day when no later day of the two weeks has free time', async () => {
+    slots = [];
+    fixture.componentRef.setInput('initialDate', '2026-10-09');
+    await render();
+
+    expect(fixture.componentInstance.selectedDate()).toBe('2026-10-09');
     expect(fixture.nativeElement.textContent).toContain('No hay horarios libres este día');
   });
 

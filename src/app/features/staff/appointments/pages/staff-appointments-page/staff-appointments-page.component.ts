@@ -20,6 +20,8 @@ import { ServiceRecordEligibilityService } from '../../../../../core/services/se
 import { ConfirmModalService } from '../../../../../core/services/confirm-modal.service';
 import { StaffAppointmentsApiService } from '../../../../../core/services/staff-appointments-api.service';
 import { getApiErrorMessage } from '../../../../../core/utils/api-error.utils';
+import { formatDateTimeLocal, toUtcIsoString } from '../../../../../core/utils/availability-form.utils';
+import { addDaysToDateKey, bogotaDateTimeFormat, bogotaToday } from '../../../../../core/utils/bogota-date.utils';
 import {
   QueryValue,
   readDateParam,
@@ -82,9 +84,9 @@ export class StaffAppointmentsPageComponent implements OnInit {
   private loadSequence = 0;
   /** Permission plus an active professional profile; completed appointments are registered from that page. */
   readonly canRegisterServices = inject(ServiceRecordEligibilityService).canRegister;
-  private readonly dateFormatter = new Intl.DateTimeFormat('es-AR', { dateStyle: 'medium' });
-  private readonly timeFormatter = new Intl.DateTimeFormat('es-AR', { timeStyle: 'short' });
-  private readonly dateTimeFormatter = new Intl.DateTimeFormat('es-AR', {
+  // Bogotá time whatever the device timezone (SONDA BUG-033).
+  private readonly timeFormatter = bogotaDateTimeFormat('es-AR', { timeStyle: 'short' });
+  private readonly dateTimeFormatter = bogotaDateTimeFormat('es-AR', {
     dateStyle: 'medium',
     timeStyle: 'short',
   });
@@ -107,7 +109,7 @@ export class StaffAppointmentsPageComponent implements OnInit {
   readonly rangeError = signal<string | null>(null);
   /** The window the history queries: the last 30 days (today included) by default. */
   readonly historyRange = computed<HistoryRange>(() =>
-    resolveHistoryRange(this.historyFrom(), this.historyTo(), localDateStr(new Date())),
+    resolveHistoryRange(this.historyFrom(), this.historyTo(), bogotaToday()),
   );
   readonly page = signal(1);
   readonly pageSize = signal(DEFAULT_PAGE_SIZE);
@@ -321,6 +323,22 @@ export class StaffAppointmentsPageComponent implements OnInit {
   }
 
   // ── Status actions ─────────────────────────────────────────────────────
+  /** A pending booking is approved by the professional; only pending ones offer it (SONDA BUG-028). */
+  canConfirm(appointment: AppointmentResponse): boolean {
+    return appointment.status === APPOINTMENT_STATUS.pending;
+  }
+
+  async confirmAppointment(appointment: AppointmentResponse): Promise<void> {
+    if (!this.canConfirm(appointment)) return;
+
+    await this.executeStatusAction(
+      appointment,
+      'confirm',
+      () => this.staffAppointmentsApiService.confirm(appointment.id),
+      'Cita confirmada. Le avisamos al cliente.',
+    );
+  }
+
   async markCompleted(appointment: AppointmentResponse): Promise<void> {
     await this.executeStatusAction(
       appointment,
@@ -548,13 +566,13 @@ export class StaffAppointmentsPageComponent implements OnInit {
   }
 
   private currentFilters(): StaffAppointmentsListFilters {
-    const today = localDateStr(new Date());
+    const today = bogotaToday();
     const paging = { page: this.page(), pageSize: this.pageSize() };
     switch (this.activeTab()) {
       case 'today':
         return { from: today, to: today, status: ACTIVE_STATUSES, sort: 'Asc', scope: 'Agenda', ...paging };
       case 'upcoming':
-        return { from: addDays(today, 1), status: ACTIVE_STATUSES, sort: 'Asc', scope: 'Agenda', ...paging };
+        return { from: addDaysToDateKey(today, 1), status: ACTIVE_STATUSES, sort: 'Asc', scope: 'Agenda', ...paging };
       case 'history':
         return {
           ...this.historyRange(),
@@ -600,23 +618,6 @@ function normalizeOptionalText(value: string | null | undefined): string | null 
   return v || null;
 }
 
-function toUtcIsoString(value: string): string {
-  return new Date(value).toISOString();
-}
-
-function formatDateTimeLocal(value: string): string {
-  const date = new Date(value);
-  const offsetInMinutes = date.getTimezoneOffset();
-  return new Date(date.getTime() - offsetInMinutes * 60_000).toISOString().slice(0, 16);
-}
-
-function localDateStr(date: Date): string {
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, '0');
-  const d = String(date.getDate()).padStart(2, '0');
-  return `${y}-${m}-${d}`;
-}
-
 function getStaffAppointmentErrorMessage(
   error: unknown,
   action: 'create' | 'update' | 'status',
@@ -643,7 +644,3 @@ function isHttpConflict(error: unknown): boolean {
   return error instanceof HttpErrorResponse && error.status === 409;
 }
 
-function addDays(isoDate: string, days: number): string {
-  const [year, month, day] = isoDate.split('-').map(Number);
-  return localDateStr(new Date(year, month - 1, day + days));
-}

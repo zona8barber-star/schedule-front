@@ -13,6 +13,7 @@ import {
 import { AdminMediaApiService } from '../../../../core/services/admin-media-api.service';
 import { ConfirmModalService } from '../../../../core/services/confirm-modal.service';
 import { getApiErrorMessage } from '../../../../core/utils/api-error.utils';
+import { bogotaDateTimeFormat } from '../../../../core/utils/bogota-date.utils';
 import { ApiFeedbackComponent } from '../../../../shared/components/api-feedback/api-feedback.component';
 import {
   FileUploadComponent,
@@ -33,7 +34,7 @@ type MediaStatusFilter = MediaStatus | typeof allFilterValue;
 export class AdminMediaManagerPageComponent implements OnInit {
   private readonly adminMediaApiService = inject(AdminMediaApiService);
   private readonly confirmModal = inject(ConfirmModalService);
-  private readonly dateTimeFormatter = new Intl.DateTimeFormat('es-AR', {
+  private readonly dateTimeFormatter = bogotaDateTimeFormat('es-AR', {
     dateStyle: 'medium',
     timeStyle: 'short',
   });

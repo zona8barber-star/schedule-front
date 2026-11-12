@@ -17,6 +17,7 @@ import {
 import { AdminContentApiService } from '../../../../../core/services/admin-content-api.service';
 import { ConfirmModalService } from '../../../../../core/services/confirm-modal.service';
 import { getApiErrorMessage } from '../../../../../core/utils/api-error.utils';
+import { bogotaDateTimeFormat, bogotaLocalToUtcIso, utcToBogotaLocal } from '../../../../../core/utils/bogota-date.utils';
 import { ApiFeedbackComponent } from '../../../../../shared/components/api-feedback/api-feedback.component';
 import { PageStateComponent } from '../../../../../shared/components/page-state/page-state.component';
 
@@ -30,7 +31,7 @@ export class AdminBannersPageComponent implements OnInit {
   private readonly formBuilder = inject(FormBuilder);
   private readonly adminContentApiService = inject(AdminContentApiService);
   private readonly confirmModal = inject(ConfirmModalService);
-  private readonly dateTimeFormatter = new Intl.DateTimeFormat('es-AR', {
+  private readonly dateTimeFormatter = bogotaDateTimeFormat('es-AR', {
     dateStyle: 'medium',
     timeStyle: 'short',
   });
@@ -244,7 +245,8 @@ function normalizeOptionalText(value: string | null | undefined): string | null 
 
 function normalizeDateTime(value: string | null | undefined): string | null {
   const normalized = value?.trim();
-  return normalized ? new Date(normalized).toISOString() : null;
+  // The schedule is entered in Bogotá time, whatever the device timezone (SONDA BUG-033).
+  return normalized ? bogotaLocalToUtcIso(normalized) : null;
 }
 
 function toDateTimeLocalInput(value: string | null): string {
@@ -257,9 +259,7 @@ function toDateTimeLocalInput(value: string | null): string {
     return '';
   }
 
-  const timezoneOffsetMs = date.getTimezoneOffset() * 60_000;
-  const localDate = new Date(date.getTime() - timezoneOffsetMs);
-  return localDate.toISOString().slice(0, 16);
+  return utcToBogotaLocal(date);
 }
 
 function optionalUuidValidator(): ValidatorFn {
