@@ -5,6 +5,7 @@ import { firstValueFrom } from 'rxjs';
 import { LandingContentResponse } from '../../../../../core/models/content.models';
 import { AdminContentApiService } from '../../../../../core/services/admin-content-api.service';
 import { getApiErrorMessage } from '../../../../../core/utils/api-error.utils';
+import { googleMapsUrlValidator } from '../../../../../core/utils/safe-url.utils';
 import { ApiFeedbackComponent } from '../../../../../shared/components/api-feedback/api-feedback.component';
 import { PageStateComponent } from '../../../../../shared/components/page-state/page-state.component';
 
@@ -32,7 +33,7 @@ export class AdminLandingContentPageComponent implements OnInit {
     aboutTitle: ['', [Validators.maxLength(200)]],
     aboutText: ['', [Validators.maxLength(3000)]],
     contactPhone: ['', [Validators.maxLength(120)]],
-    mapsUrl: ['', [Validators.maxLength(2000)]],
+    mapsUrl: ['', [Validators.maxLength(2000), googleMapsUrlValidator()]],
     address: ['', [Validators.maxLength(400)]],
   });
 
@@ -76,7 +77,7 @@ export class AdminLandingContentPageComponent implements OnInit {
     }
   }
 
-  showError(controlName: 'heroTitle', errorName: string): boolean {
+  showError(controlName: 'heroTitle' | 'mapsUrl', errorName: string): boolean {
     const control = this.landingForm.controls[controlName];
     return control.hasError(errorName) && (control.touched || this.submitted());
   }

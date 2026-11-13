@@ -17,6 +17,7 @@ import {
 import { AdminContentApiService } from '../../../../../core/services/admin-content-api.service';
 import { ConfirmModalService } from '../../../../../core/services/confirm-modal.service';
 import { getApiErrorMessage } from '../../../../../core/utils/api-error.utils';
+import { httpUrlValidator } from '../../../../../core/utils/safe-url.utils';
 import { bogotaDateTimeFormat, bogotaLocalToUtcIso, utcToBogotaLocal } from '../../../../../core/utils/bogota-date.utils';
 import { ApiFeedbackComponent } from '../../../../../shared/components/api-feedback/api-feedback.component';
 import { PageStateComponent } from '../../../../../shared/components/page-state/page-state.component';
@@ -59,7 +60,7 @@ export class AdminBannersPageComponent implements OnInit {
       title: ['', [Validators.required, Validators.maxLength(200)]],
       subtitle: ['', [Validators.maxLength(500)]],
       imageMediaAssetId: ['', [optionalUuidValidator()]],
-      linkUrl: ['', [optionalUrlValidator()]],
+      linkUrl: ['', [httpUrlValidator(), Validators.maxLength(2048)]],
       sortOrder: [0, [Validators.required]],
       isActive: [true],
       startsAtUtc: [''],
@@ -272,22 +273,6 @@ function optionalUuidValidator(): ValidatorFn {
     }
 
     return uuidPattern.test(String(value).trim()) ? null : { uuid: true };
-  };
-}
-
-function optionalUrlValidator(): ValidatorFn {
-  return (control: AbstractControl): ValidationErrors | null => {
-    const value = control.value;
-    if (value === null || value === undefined || value === '') {
-      return null;
-    }
-
-    try {
-      const url = new URL(String(value).trim());
-      return url.protocol === 'http:' || url.protocol === 'https:' ? null : { url: true };
-    } catch {
-      return { url: true };
-    }
   };
 }
 

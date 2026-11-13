@@ -25,6 +25,7 @@ describe('PublicStaffProfilePageComponent (booking by service)', () => {
   const beard: PublicStaffServiceResponse = { ...cut, generalServiceId: 'g-beard', name: 'Barba', durationMinutes: 20 };
 
   let phoneNumber: string | null = null;
+  let socials: Partial<PublicStaffProfileResponse> = {};
 
   const profile = (services: PublicStaffServiceResponse[]): PublicStaffProfileResponse => ({
     staffProfileId: 'st-1',
@@ -44,6 +45,7 @@ describe('PublicStaffProfilePageComponent (booking by service)', () => {
     tikTokUrl: null,
     youtubeUrl: null,
     xUrl: null,
+    ...socials,
   });
 
   const slot = { startAtUtc: '2026-11-07T15:00:00Z', endAtUtc: '2026-11-07T15:30:00Z' };
@@ -56,6 +58,7 @@ describe('PublicStaffProfilePageComponent (booking by service)', () => {
   afterEach(() => {
     vi.useRealTimers();
     phoneNumber = null;
+    socials = {};
   });
 
   async function open(services: PublicStaffServiceResponse[], queryParams: Record<string, string> = {}): Promise<void> {
@@ -222,6 +225,27 @@ describe('PublicStaffProfilePageComponent (booking by service)', () => {
       await open([cut]);
 
       expect(whatsappLink()).toBeNull();
+    });
+  });
+
+  describe('social links (SONDA BUG-047)', () => {
+    function socialHrefs(): string[] {
+      return Array.from(fixture.nativeElement.querySelectorAll('.psp__social') as NodeListOf<HTMLAnchorElement>).map(
+        (link) => link.getAttribute('href')!,
+      );
+    }
+
+    it('links only the http(s) networks and hides unsafe or incomplete ones', async () => {
+      socials = {
+        instagramUrl: 'https://instagram.com/zona8',
+        facebookUrl: 'javascript:alert(document.domain)',
+        tikTokUrl: 'tiktok.com/@zona8',
+        youtubeUrl: 'data:text/html,<script>alert(1)</script>',
+        xUrl: 'http://x.com/zona8',
+      };
+      await open([cut]);
+
+      expect(socialHrefs()).toEqual(['https://instagram.com/zona8', 'http://x.com/zona8']);
     });
   });
 });

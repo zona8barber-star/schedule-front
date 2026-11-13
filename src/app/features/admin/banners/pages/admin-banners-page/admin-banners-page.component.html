@@ -54,7 +54,12 @@
             <label for="linkUrl">Enlace (URL)</label>
             <input id="linkUrl" type="url" formControlName="linkUrl" />
             @if (showError('linkUrl', 'url')) {
-              <p class="admin-banners-page__error">Ingresa una URL valida (http/https).</p>
+              <p class="admin-banners-page__error">
+                Ingresa una dirección web completa que empiece por https:// (por ejemplo https://instagram.com/zona8).
+              </p>
+            }
+            @if (showError('linkUrl', 'maxlength')) {
+              <p class="admin-banners-page__error">El enlace no puede superar 2048 caracteres.</p>
             }
           </div>
 

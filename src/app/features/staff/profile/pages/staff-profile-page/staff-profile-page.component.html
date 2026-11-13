@@ -233,6 +233,9 @@
             @if (showError('instagramUrl', 'maxlength')) {
               <p class="profile-page__error">URL demasiado larga.</p>
             }
+            @if (showError('instagramUrl', 'url')) {
+              <p class="profile-page__error">Escribe la dirección completa, empezando por https://.</p>
+            }
           </div>
 
           <div class="profile-page__field">
@@ -245,6 +248,9 @@
             />
             @if (showError('facebookUrl', 'maxlength')) {
               <p class="profile-page__error">URL demasiado larga.</p>
+            }
+            @if (showError('facebookUrl', 'url')) {
+              <p class="profile-page__error">Escribe la dirección completa, empezando por https://.</p>
             }
           </div>
 
@@ -259,6 +265,9 @@
             @if (showError('tikTokUrl', 'maxlength')) {
               <p class="profile-page__error">URL demasiado larga.</p>
             }
+            @if (showError('tikTokUrl', 'url')) {
+              <p class="profile-page__error">Escribe la dirección completa, empezando por https://.</p>
+            }
           </div>
 
           <div class="profile-page__field">
@@ -272,6 +281,9 @@
             @if (showError('youtubeUrl', 'maxlength')) {
               <p class="profile-page__error">URL demasiado larga.</p>
             }
+            @if (showError('youtubeUrl', 'url')) {
+              <p class="profile-page__error">Escribe la dirección completa, empezando por https://.</p>
+            }
           </div>
 
           <div class="profile-page__field">
@@ -284,6 +296,9 @@
             />
             @if (showError('xUrl', 'maxlength')) {
               <p class="profile-page__error">URL demasiado larga.</p>
+            }
+            @if (showError('xUrl', 'url')) {
+              <p class="profile-page__error">Escribe la dirección completa, empezando por https://.</p>
             }
           </div>
         </div>

@@ -60,6 +60,14 @@
                 formControlName="mapsUrl"
                 placeholder="https://maps.google.com/?q=..."
               />
+              @if (showError('mapsUrl', 'mapsUrl')) {
+                <p class="admin-content-page__error">
+                  Usa un enlace de Google Maps que empiece por https:// (por ejemplo https://www.google.com/maps/…).
+                </p>
+              }
+              @if (showError('mapsUrl', 'maxlength')) {
+                <p class="admin-content-page__error">El enlace no puede superar 2000 caracteres.</p>
+              }
               <p class="admin-content-page__hint">
                 Pega el enlace <strong>completo</strong> de Google Maps (no el link corto
                 <em>maps.app.goo.gl</em>). Si usas link corto, el mapa se mostrara usando la

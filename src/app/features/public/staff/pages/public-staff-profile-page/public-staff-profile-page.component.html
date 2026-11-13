@@ -58,9 +58,9 @@
         }
 
         <div class="psp__socials">
-          @if (staffProfile()!.instagramUrl) {
+          @if (safeUrl(staffProfile()!.instagramUrl); as href) {
             <a
-              [href]="staffProfile()!.instagramUrl!"
+              [href]="href"
               target="_blank"
               rel="noopener noreferrer"
               aria-label="Instagram"
@@ -69,9 +69,9 @@
               <img src="assets/social/IG.svg" alt="Instagram" />
             </a>
           }
-          @if (staffProfile()!.facebookUrl) {
+          @if (safeUrl(staffProfile()!.facebookUrl); as href) {
             <a
-              [href]="staffProfile()!.facebookUrl!"
+              [href]="href"
               target="_blank"
               rel="noopener noreferrer"
               aria-label="Facebook"
@@ -80,9 +80,9 @@
               <img src="assets/social/face.svg" alt="Facebook" />
             </a>
           }
-          @if (staffProfile()!.tikTokUrl) {
+          @if (safeUrl(staffProfile()!.tikTokUrl); as href) {
             <a
-              [href]="staffProfile()!.tikTokUrl!"
+              [href]="href"
               target="_blank"
               rel="noopener noreferrer"
               aria-label="TikTok"
@@ -91,9 +91,9 @@
               <img src="assets/social/tt.svg" alt="TikTok" />
             </a>
           }
-          @if (staffProfile()!.youtubeUrl) {
+          @if (safeUrl(staffProfile()!.youtubeUrl); as href) {
             <a
-              [href]="staffProfile()!.youtubeUrl!"
+              [href]="href"
               target="_blank"
               rel="noopener noreferrer"
               aria-label="YouTube"
@@ -102,9 +102,9 @@
               <img src="assets/social/yt.svg" alt="YouTube" />
             </a>
           }
-          @if (staffProfile()!.xUrl) {
+          @if (safeUrl(staffProfile()!.xUrl); as href) {
             <a
-              [href]="staffProfile()!.xUrl!"
+              [href]="href"
               target="_blank"
               rel="noopener noreferrer"
               aria-label="X"
