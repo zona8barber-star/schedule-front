@@ -81,7 +81,7 @@ export class AdminMediaManagerPageComponent implements OnInit {
     try {
       await firstValueFrom(this.adminMediaApiService.upload(request.file, request.purpose));
       await this.loadAssets();
-      this.successMessage.set('El archivo se subio correctamente y ya esta en la biblioteca.');
+      this.successMessage.set('El archivo se subió correctamente y ya está en la biblioteca.');
     } catch (error) {
       this.errorMessage.set(getMediaUploadErrorMessage(error));
     } finally {
@@ -201,13 +201,13 @@ function getMediaUploadErrorMessage(error: unknown): string {
     }
 
     if (error.status === 503) {
-      return 'El servicio de archivos no esta disponible temporalmente. Intenta nuevamente.';
+      return 'El servicio de archivos no está disponible temporalmente. Intenta nuevamente.';
     }
 
     if (error.status === 422) {
       return getApiErrorMessage(
         error,
-        'Archivo invalido. Usa JPG, PNG, WEBP, GIF o PDF y verifica el tamaño máximo de 10 MB.',
+        'Archivo inválido. Usa JPG, PNG, WEBP, GIF o PDF y verifica el tamaño máximo de 10 MB.',
       );
     }
   }

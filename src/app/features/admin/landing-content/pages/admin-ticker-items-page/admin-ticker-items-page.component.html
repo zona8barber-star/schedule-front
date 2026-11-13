@@ -1,7 +1,7 @@
 <section class="admin-ticker-items-page">
   <header class="admin-ticker-items-page__hero">
     <div>
-      <p class="admin-ticker-items-page__eyebrow">Gestion</p>
+      <p class="admin-ticker-items-page__eyebrow">Gestión</p>
       <h1>Ticker</h1>
       <p>Gestiona las frases que rotan en el ticker animado de la landing.</p>
     </div>
@@ -23,7 +23,7 @@
         <div class="admin-ticker-items-page__grid">
           <div class="admin-ticker-items-page__field admin-ticker-items-page__field--wide">
             <label for="text">Texto</label>
-            <input id="text" type="text" formControlName="text" />
+            <input maxlength="120" id="text" type="text" formControlName="text" />
             @if (showError('text', 'required')) {
               <p class="admin-ticker-items-page__error">El texto es obligatorio.</p>
             }
@@ -56,7 +56,7 @@
             [disabled]="isBusy()"
             (click)="resetForm()"
           >
-            Cancelar edicion
+            Cancelar edición
           </button>
         }
       </div>

@@ -196,7 +196,7 @@ export class AppShellComponent {
 
     effect(() => {
       if (this.connectivityService.justReconnected()) {
-        this.toastService.success('Conexion recuperada');
+        this.toastService.success('Conexión recuperada');
         this.connectivityService.acknowledgeReconnect();
       }
     });

@@ -9,14 +9,17 @@ import { AdminFixedExpensesApiService } from '../../../../../core/services/admin
 import { MoneyConfirmationService } from '../../../../../core/services/money-confirmation.service';
 import { getApiErrorMessage } from '../../../../../core/utils/api-error.utils';
 import { ApiFeedbackComponent } from '../../../../../shared/components/api-feedback/api-feedback.component';
+import { trimmedMinLength, trimmedRequired } from '../../../../../core/utils/form-validators';
 
 function integerValidator(control: AbstractControl): ValidationErrors | null {
   return Number.isInteger(control.value) ? null : { integer: true };
 }
 
+import { FieldErrorComponent } from '../../../../../shared/components/field-error/field-error.component';
+
 @Component({
   selector: 'app-admin-expense-form-modal',
-  imports: [ReactiveFormsModule, ApiFeedbackComponent],
+  imports: [FieldErrorComponent, ReactiveFormsModule, ApiFeedbackComponent],
   templateUrl: './admin-expense-form-modal.component.html',
   styleUrl: './admin-expense-form-modal.component.scss',
 })
@@ -38,7 +41,7 @@ export class AdminExpenseFormModalComponent implements OnInit {
   readonly isBusy = computed(() => this.isSaving() || this.isLoading());
 
   readonly form = this.formBuilder.nonNullable.group({
-    name: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(120)]],
+    name: ['', [trimmedRequired, trimmedMinLength(2), Validators.maxLength(120)]],
     amount: [0, [Validators.required, Validators.min(0), integerValidator]],
     occurredOn: ['', [Validators.required]],
   });

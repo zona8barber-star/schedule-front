@@ -3,7 +3,7 @@
     <p class="profile-page__eyebrow">Mi cuenta</p>
     <h1>Mi perfil</h1>
     <p class="profile-page__subtitle">
-      Actualiza tu informacion de presentacion y tus redes sociales.
+      Actualiza tu información de presentación y tus redes sociales.
     </p>
   </div>
 
@@ -36,7 +36,7 @@
       <div class="profile-page__media-card">
         <p class="profile-page__media-label">Foto de perfil</p>
         <p class="profile-page__media-hint">
-          Cualquier imagen. Max. 10 MB. Si subes una nueva reemplaza la actual.
+          Cualquier imagen. Máx. 10 MB. Si subes una nueva reemplaza la actual.
         </p>
 
         @if (photoPreviewUrl() || profile()?.photoUrl) {
@@ -103,7 +103,7 @@
       <div class="profile-page__media-card">
         <p class="profile-page__media-label">QR de propinas</p>
         <p class="profile-page__media-hint">
-          Imagen o PDF. Max. 10 MB. Si subes uno nuevo reemplaza el actual.
+          Imagen o PDF. Máx. 10 MB. Si subes uno nuevo reemplaza el actual.
         </p>
 
         @if (qrPreviewUrl() || profile()?.tipsQrUrl) {
@@ -171,19 +171,20 @@
 
     <form class="profile-page__form" [formGroup]="profileForm" (ngSubmit)="submit()" novalidate>
       <fieldset [disabled]="isBusy()">
-        <p class="profile-page__section-title">Informacion de presentacion</p>
+        <p class="profile-page__section-title">Información de presentación</p>
         <div class="profile-page__grid">
           <div class="profile-page__field profile-page__field--wide">
             <label for="displayName"
               >Nombre visible <span class="profile-page__required">*</span></label
             >
-            <input
+            <input maxlength="120"
               id="displayName"
               type="text"
               formControlName="displayName"
               placeholder="Como te veran tus clientes"
               autocomplete="nickname"
             />
+            <app-field-error controlName="displayName" />
             @if (showError('displayName', 'required')) {
               <p class="profile-page__error">El nombre visible es obligatorio.</p>
             }
@@ -193,8 +194,8 @@
           </div>
 
           <div class="profile-page__field">
-            <label for="phoneNumber">Telefono</label>
-            <input
+            <label for="phoneNumber">Teléfono</label>
+            <input maxlength="40"
               id="phoneNumber"
               type="tel"
               formControlName="phoneNumber"
@@ -208,7 +209,7 @@
 
           <div class="profile-page__field profile-page__field--wide">
             <label for="bio">Bio</label>
-            <textarea
+            <textarea maxlength="2000"
               id="bio"
               rows="4"
               formControlName="bio"
@@ -224,7 +225,7 @@
         <div class="profile-page__grid">
           <div class="profile-page__field">
             <label for="instagramUrl">Instagram</label>
-            <input
+            <input maxlength="2048"
               id="instagramUrl"
               type="url"
               formControlName="instagramUrl"
@@ -240,7 +241,7 @@
 
           <div class="profile-page__field">
             <label for="facebookUrl">Facebook</label>
-            <input
+            <input maxlength="2048"
               id="facebookUrl"
               type="url"
               formControlName="facebookUrl"
@@ -256,7 +257,7 @@
 
           <div class="profile-page__field">
             <label for="tikTokUrl">TikTok</label>
-            <input
+            <input maxlength="2048"
               id="tikTokUrl"
               type="url"
               formControlName="tikTokUrl"
@@ -272,7 +273,7 @@
 
           <div class="profile-page__field">
             <label for="youtubeUrl">YouTube</label>
-            <input
+            <input maxlength="2048"
               id="youtubeUrl"
               type="url"
               formControlName="youtubeUrl"
@@ -288,7 +289,7 @@
 
           <div class="profile-page__field">
             <label for="xUrl">X (Twitter)</label>
-            <input
+            <input maxlength="2048"
               id="xUrl"
               type="url"
               formControlName="xUrl"
@@ -322,7 +323,7 @@
         [disabled]="isSigningOut()"
         (click)="logout()"
       >
-        {{ isSigningOut() ? 'Cerrando sesion...' : 'Cerrar sesion' }}
+        {{ isSigningOut() ? 'Cerrando sesión...' : 'Cerrar sesión' }}
       </button>
     </div>
   }

@@ -326,7 +326,8 @@
 
               <div class="ap-field">
                 <label for="createCustomerName">Nombre del cliente</label>
-                <input id="createCustomerName" type="text" formControlName="customerName" autocomplete="off" />
+                <input maxlength="120" id="createCustomerName" type="text" formControlName="customerName" autocomplete="off" />
+                <app-field-error controlName="customerName" [kinds]="['minlength', 'maxlength']" />
                 @if (showCreateError('customerName', 'required')) {
                   <p class="ap-error">Ingresa el nombre del cliente.</p>
                 }
@@ -334,12 +335,14 @@
 
               <div class="ap-field">
                 <label for="createCustomerPhone">Teléfono (opcional)</label>
-                <input id="createCustomerPhone" type="tel" formControlName="customerPhone" autocomplete="off" />
+                <input maxlength="40" id="createCustomerPhone" type="tel" formControlName="customerPhone" autocomplete="off" />
+                <app-field-error controlName="customerPhone" />
               </div>
 
               <div class="ap-field">
                 <label for="createCustomerEmail">Email (opcional)</label>
-                <input id="createCustomerEmail" type="email" formControlName="customerEmail" autocomplete="off" />
+                <input maxlength="256" id="createCustomerEmail" type="email" formControlName="customerEmail" autocomplete="off" />
+                <app-field-error controlName="customerEmail" />
                 @if (showCreateError('customerEmail', 'email')) {
                   <p class="ap-error">Ingresa un correo válido.</p>
                 }
@@ -347,7 +350,8 @@
 
               <div class="ap-field ap-field--wide">
                 <label for="createNotes">Notas (opcional)</label>
-                <textarea id="createNotes" rows="3" formControlName="notes"></textarea>
+                <textarea maxlength="2000" id="createNotes" rows="3" formControlName="notes"></textarea>
+                <app-field-error controlName="notes" />
               </div>
 
             </div>
@@ -457,7 +461,8 @@
 
               <div class="ap-field">
                 <label for="editCustomerName">Nombre del cliente</label>
-                <input id="editCustomerName" type="text" formControlName="customerName" />
+                <input maxlength="120" id="editCustomerName" type="text" formControlName="customerName" />
+                <app-field-error controlName="customerName" [kinds]="['minlength', 'maxlength']" />
                 @if (showEditError('customerName', 'required')) {
                   <p class="ap-error">Ingresa el nombre del cliente.</p>
                 }
@@ -465,12 +470,14 @@
 
               <div class="ap-field">
                 <label for="editCustomerPhone">Teléfono (opcional)</label>
-                <input id="editCustomerPhone" type="tel" formControlName="customerPhone" />
+                <input maxlength="40" id="editCustomerPhone" type="tel" formControlName="customerPhone" />
+                <app-field-error controlName="customerPhone" />
               </div>
 
               <div class="ap-field">
                 <label for="editCustomerEmail">Email (opcional)</label>
-                <input id="editCustomerEmail" type="email" formControlName="customerEmail" />
+                <input maxlength="256" id="editCustomerEmail" type="email" formControlName="customerEmail" />
+                <app-field-error controlName="customerEmail" />
                 @if (showEditError('customerEmail', 'email')) {
                   <p class="ap-error">Ingresa un correo válido.</p>
                 }
@@ -478,7 +485,8 @@
 
               <div class="ap-field ap-field--wide">
                 <label for="editNotes">Notas (opcional)</label>
-                <textarea id="editNotes" rows="3" formControlName="notes"></textarea>
+                <textarea maxlength="2000" id="editNotes" rows="3" formControlName="notes"></textarea>
+                <app-field-error controlName="notes" />
               </div>
 
             </div>

@@ -44,7 +44,7 @@ export const MEDIA_PURPOSE_OPTIONS: readonly MediaPurposeOption[] = [
   {
     value: MEDIA_PURPOSE.logo,
     label: 'Logo',
-    hint: 'Logotipo principal de la aplicacion o marca.',
+    hint: 'Logotipo principal de la aplicación o marca.',
   },
   {
     value: MEDIA_PURPOSE.appIcon,
@@ -54,7 +54,7 @@ export const MEDIA_PURPOSE_OPTIONS: readonly MediaPurposeOption[] = [
   {
     value: MEDIA_PURPOSE.banner,
     label: 'Banner',
-    hint: 'Imagenes de hero o promocionales para landing.',
+    hint: 'Imágenes de hero o promocionales para landing.',
   },
   {
     value: MEDIA_PURPOSE.staffPhoto,
@@ -64,7 +64,7 @@ export const MEDIA_PURPOSE_OPTIONS: readonly MediaPurposeOption[] = [
   {
     value: MEDIA_PURPOSE.tipsQr,
     label: 'QR propinas',
-    hint: 'Codigo QR vinculado al staff.',
+    hint: 'Código QR vinculado al staff.',
   },
   {
     value: MEDIA_PURPOSE.customerReference,

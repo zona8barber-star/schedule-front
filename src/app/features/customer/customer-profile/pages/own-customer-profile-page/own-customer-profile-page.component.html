@@ -58,6 +58,7 @@
             <label class="own-profile__field">
               <span>Nombre completo</span>
               <input type="text" formControlName="fullName" maxlength="120" autocomplete="name" />
+              <app-field-error controlName="fullName" [kinds]="['minlength']" />
             </label>
             @if (form.controls.fullName.touched && form.controls.fullName.invalid) {
               <small class="own-profile__error">El nombre debe tener entre 2 y 120 caracteres.</small>

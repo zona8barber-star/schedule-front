@@ -18,6 +18,8 @@ import { getApiErrorMessage } from '../../../../../core/utils/api-error.utils';
 import { ApiFeedbackComponent } from '../../../../../shared/components/api-feedback/api-feedback.component';
 import { PageStateComponent } from '../../../../../shared/components/page-state/page-state.component';
 import { LoadErrorComponent } from '../../../../../shared/components/load-error/load-error.component';
+import { NotFoundStateComponent } from '../../../../../shared/components/not-found-state/not-found-state.component';
+import { isGuid } from '../../../../../core/utils/route-id.utils';
 import { PhotoPlaceholderComponent } from '../../../../../shared/components/photo-placeholder/photo-placeholder.component';
 import { SlotPickerComponent } from '../../../../../shared/components/slot-picker/slot-picker.component';
 import {
@@ -58,6 +60,7 @@ function trimDot(value: string): string {
     ApiFeedbackComponent,
     PageStateComponent,
     LoadErrorComponent,
+    NotFoundStateComponent,
     PhotoPlaceholderComponent,
     SlotPickerComponent,
   ],
@@ -225,6 +228,14 @@ export class PublicStaffProfilePageComponent implements OnInit {
     const staffProfileId = this.staffProfileId();
     if (!staffProfileId) {
       this.errorMessage.set('No se recibió el identificador del profesional.');
+      this.isLoading.set(false);
+      return;
+    }
+
+    // SONDA BUG-044: an id that is not a GUID cannot exist; no request is sent and the page says so.
+    if (!isGuid(staffProfileId)) {
+      this.staffProfile.set(null);
+      this.loadError.set(null);
       this.isLoading.set(false);
       return;
     }

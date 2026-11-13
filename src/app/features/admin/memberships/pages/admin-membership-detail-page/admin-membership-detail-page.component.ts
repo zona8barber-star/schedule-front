@@ -17,6 +17,8 @@ import { AuthService } from '../../../../../core/services/auth.service';
 import { ConfirmModalService } from '../../../../../core/services/confirm-modal.service';
 import { ToastService } from '../../../../../core/services/toast.service';
 import { getApiErrorMessage } from '../../../../../core/utils/api-error.utils';
+import { isGuid, isNotFoundError } from '../../../../../core/utils/route-id.utils';
+import { NotFoundStateComponent } from '../../../../../shared/components/not-found-state/not-found-state.component';
 import { ApiFeedbackComponent } from '../../../../../shared/components/api-feedback/api-feedback.component';
 import { PageStateComponent } from '../../../../../shared/components/page-state/page-state.component';
 import { GIFT_CONDITION_LABELS } from '../../../membership-plans/membership-plan-defaults';
@@ -43,7 +45,7 @@ type MembershipModal =
 
 @Component({
   selector: 'app-admin-membership-detail-page',
-  imports: [BogotaDatePipe, 
+  imports: [NotFoundStateComponent, BogotaDatePipe, 
     DecimalPipe,
     RouterLink,
     ApiFeedbackComponent,
@@ -81,6 +83,8 @@ export class AdminMembershipDetailPageComponent implements OnInit {
 
   readonly isLoading = signal(true);
   readonly errorMessage = signal<string | null>(null);
+  /** SONDA BUG-044: the membership of the link does not exist. */
+  readonly notFound = signal(false);
   readonly membership = signal<CustomerMembershipDetailView | null>(null);
   readonly openModal = signal<MembershipModal | null>(null);
   readonly isBusy = signal(false);
@@ -322,12 +326,24 @@ export class AdminMembershipDetailPageComponent implements OnInit {
   private async load(membershipId: string): Promise<void> {
     this.isLoading.set(true);
     this.errorMessage.set(null);
+    this.notFound.set(false);
+    // SONDA BUG-044: an id that is not a GUID cannot exist; no request is sent.
+    if (!isGuid(membershipId)) {
+      this.membership.set(null);
+      this.notFound.set(true);
+      this.isLoading.set(false);
+      return;
+    }
     this.openModal.set(null);
     try {
       this.membership.set(await firstValueFrom(this.membershipsApi.getById(membershipId)));
     } catch (error) {
       this.membership.set(null);
-      this.errorMessage.set(getApiErrorMessage(error));
+      if (isNotFoundError(error)) {
+        this.notFound.set(true);
+      } else {
+        this.errorMessage.set(getApiErrorMessage(error));
+      }
     } finally {
       this.isLoading.set(false);
     }

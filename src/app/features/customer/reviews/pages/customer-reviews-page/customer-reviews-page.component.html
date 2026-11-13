@@ -2,8 +2,8 @@
   <header class="customer-reviews-page__hero">
     <div>
       <p class="customer-reviews-page__eyebrow">Cuenta</p>
-      <h1>Mis resenas</h1>
-      <p>Revisa el historial de resenas enviadas desde tus citas completadas.</p>
+      <h1>Mis reseñas</h1>
+      <p>Revisa el historial de reseñas enviadas desde tus citas completadas.</p>
     </div>
   </header>
 
@@ -11,12 +11,12 @@
     <app-api-feedback severity="error" [message]="errorMessage()" />
 
     @if (isLoading()) {
-      <app-page-state kind="loading" message="Cargando resenas..." />
+      <app-page-state kind="loading" message="Cargando reseñas..." />
     } @else if (!reviews().length) {
       <app-page-state
         kind="empty"
-        title="Aun no tienes resenas"
-        message="Cuando completes una cita podras calificarla desde Mis citas."
+        title="Aún no tienes reseñas"
+        message="Cuando completes una cita podrás calificarla desde Mis citas."
       >
         <a class="customer-reviews-page__link" routerLink="/customer/appointments"
           >Ir a mis citas</a

@@ -10,7 +10,7 @@ import { PublicStaffReviewsApiService } from '../../../../../core/services/publi
 import { PublicStaffProfilePageComponent } from './public-staff-profile-page.component';
 
 const profile: PublicStaffProfileResponse = {
-  staffProfileId: 'st-1',
+  staffProfileId: '5a1f0000-0000-4000-8000-000000000001',
   displayName: 'Alex',
   bio: null,
   phoneNumber: null,
@@ -43,7 +43,7 @@ describe('PublicStaffProfilePageComponent (load errors)', () => {
         {
           provide: ActivatedRoute,
           useValue: {
-            snapshot: { paramMap: convertToParamMap({ staffProfileId: 'st-1' }), queryParamMap: convertToParamMap({}) },
+            snapshot: { paramMap: convertToParamMap({ staffProfileId: '5a1f0000-0000-4000-8000-000000000001' }), queryParamMap: convertToParamMap({}) },
           },
         },
         { provide: PublicStaffApiService, useValue: { getById } },

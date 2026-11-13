@@ -19,7 +19,7 @@ const page = (path: string, title: string) => ({ path, component: PageStubCompon
 
 const TEST_ROUTES = [
   page('', 'Zona 8'),
-  page('auth/login', 'Iniciar sesion'),
+  page('auth/login', 'Iniciar sesión'),
   page('booking', 'Reservar'),
   page('staff', 'Profesionales'),
   page('customer/appointments', 'Mis citas'),

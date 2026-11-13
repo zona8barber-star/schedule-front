@@ -151,7 +151,8 @@
       <form [formGroup]="editForm" (ngSubmit)="saveEdit()" novalidate class="ul-modal__form">
         <div class="ul-modal__field">
           <label for="editFullName">Nombre completo</label>
-          <input id="editFullName" type="text" formControlName="fullName" autocomplete="off" />
+          <input maxlength="120" id="editFullName" type="text" formControlName="fullName" autocomplete="off" />
+          <app-field-error controlName="fullName" />
           @if (showFieldError('fullName', 'required')) {
             <p class="ul-modal__error">El nombre es requerido.</p>
           }
@@ -169,7 +170,7 @@
 
         <div class="ul-modal__field">
           <label for="editPhone">Teléfono (opcional)</label>
-          <input id="editPhone" type="tel" formControlName="phoneNumber" autocomplete="off" />
+          <input maxlength="40" id="editPhone" type="tel" formControlName="phoneNumber" autocomplete="off" />
           @if (showFieldError('phoneNumber', 'maxlength')) {
             <p class="ul-modal__error">El teléfono debe tener 40 caracteres o menos.</p>
           }

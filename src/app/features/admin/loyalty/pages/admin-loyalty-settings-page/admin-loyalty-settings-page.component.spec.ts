@@ -182,7 +182,41 @@ describe('AdminLoyaltySettingsPageComponent', () => {
 
     const text = fixture.nativeElement.textContent as string;
     expect(component.errorMessage()).toContain('Ya no tienes permiso para administrar la fidelización');
-    expect(text).toContain('No se pudo cargar el historial.');
+    expect(text).toContain('No pudimos cargar el historial de cambios');
     expect(text).not.toContain('Aún no se ha modificado la configuración.');
+  });
+
+  // SONDA BUG-087: a failed history must not hide the configuration form nor show the raw server error.
+  it('keeps the configuration form when only the history fails, and retries the history alone', async () => {
+    await TestBed.configureTestingModule({
+      imports: [AdminLoyaltySettingsPageComponent],
+      providers: [provideHttpClient(), provideHttpClientTesting()],
+    }).compileComponents();
+    fixture = TestBed.createComponent(AdminLoyaltySettingsPageComponent);
+    component = fixture.componentInstance;
+    httpMock = TestBed.inject(HttpTestingController);
+    fixture.detectChanges();
+
+    httpMock.expectOne(settingsUrl).flush(defaults);
+    httpMock
+      .expectOne(`${settingsUrl}/changes?page=1&pageSize=25`)
+      .flush({ title: 'Unexpected server error', detail: 'An unexpected error occurred while processing the request.' }, { status: 500, statusText: 'Error' });
+    await flushMicrotasks();
+    fixture.detectChanges();
+
+    const element = fixture.nativeElement as HTMLElement;
+    expect(element.querySelector('form')).not.toBeNull();
+    expect(component.errorMessage()).toBeNull();
+    expect(element.textContent).not.toContain('An unexpected error');
+    const retry = element.querySelector<HTMLButtonElement>('[data-testid="load-error-retry"]');
+    expect(retry).not.toBeNull();
+
+    retry!.click();
+    httpMock.expectOne(`${settingsUrl}/changes?page=1&pageSize=25`).flush(pagedChanges([]));
+    await flushMicrotasks();
+    fixture.detectChanges();
+
+    expect(element.querySelector('[data-testid="load-error"]')).toBeNull();
+    expect(element.textContent).toContain('Aún no se ha modificado la configuración.');
   });
 });

@@ -35,11 +35,13 @@ import {
   bogotaToday,
 } from '../../../../../core/utils/bogota-date.utils';
 import { ApiFeedbackComponent } from '../../../../../shared/components/api-feedback/api-feedback.component';
+import { NotFoundStateComponent } from '../../../../../shared/components/not-found-state/not-found-state.component';
+import { isGuid, isNotFoundError } from '../../../../../core/utils/route-id.utils';
 import { PageStateComponent } from '../../../../../shared/components/page-state/page-state.component';
 
 @Component({
   selector: 'app-admin-staff-availability-page',
-  imports: [ReactiveFormsModule, RouterLink, ApiFeedbackComponent, PageStateComponent],
+  imports: [ReactiveFormsModule, RouterLink, ApiFeedbackComponent, PageStateComponent, NotFoundStateComponent],
   templateUrl: './admin-staff-availability-page.component.html',
   styleUrl: '../../../../../shared/styles/availability-page.scss',
 })
@@ -69,6 +71,8 @@ export class AdminStaffAvailabilityPageComponent {
   readonly rulesSubmitted = signal(false);
   readonly absenceSubmitted = signal(false);
   readonly pageErrorMessage = signal<string | null>(null);
+  /** SONDA BUG-044: the professional of the link does not exist. */
+  readonly notFound = signal(false);
   readonly rulesErrorMessage = signal<string | null>(null);
   readonly rulesSuccessMessage = signal<string | null>(null);
   readonly absenceErrorMessage = signal<string | null>(null);
@@ -90,7 +94,7 @@ export class AdminStaffAvailabilityPageComponent {
   readonly durationWarning = computed(() => {
     const d = this.summary()?.defaultAppointmentDurationMinutes ?? 0;
     return d <= 0
-      ? 'La duracion base de citas es 0. Actualizala en los datos del profesional para que los turnos se calculen correctamente.'
+      ? 'La duración base de citas es 0. Actualízala en los datos del profesional para que los turnos se calculen correctamente.'
       : null;
   });
 
@@ -374,6 +378,14 @@ export class AdminStaffAvailabilityPageComponent {
   private loadAvailability(): void {
     this.isLoading.set(true);
     this.pageErrorMessage.set(null);
+    this.notFound.set(false);
+
+    // SONDA BUG-044: an id that is not a GUID cannot exist; no request is sent.
+    if (!isGuid(this.staffId)) {
+      this.notFound.set(true);
+      this.isLoading.set(false);
+      return;
+    }
 
     forkJoin([
       toSettledResult(this.adminStaffApiService.getById(this.staffId)),
@@ -384,7 +396,11 @@ export class AdminStaffAvailabilityPageComponent {
         (r): r is { ok: false; error: unknown } => !r.ok,
       );
 
-      if (errorResult) {
+      if (errorResult && isNotFoundError(errorResult.error)) {
+        this.notFound.set(true);
+        this.summary.set(null);
+        this.unavailablePeriods.set([]);
+      } else if (errorResult) {
         this.pageErrorMessage.set(getApiErrorMessage(errorResult.error));
         this.summary.set(null);
         this.unavailablePeriods.set([]);

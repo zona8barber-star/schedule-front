@@ -11,7 +11,12 @@
       (retry)="reload()"
     />
   } @else if (!staffProfile()) {
-    <app-page-state kind="empty" message="No encontramos este perfil profesional." />
+    <app-not-found-state
+      title="No encontramos este perfil profesional"
+      message="Es posible que el enlace esté mal escrito o que el profesional ya no atienda."
+      backLink="/staff"
+      backLabel="Ver los profesionales"
+    />
   } @else {
     <!-- ── Header: foto pequeña + info ─────────────────────── -->
     <div class="psp__header">
@@ -163,7 +168,7 @@
       <article class="psp__panel psp__tips">
         <h2 class="psp__section-title">Propinas</h2>
         <p class="psp__tips-desc">
-          Si mi trabajo te gustó, podés dejarme una propina escaneando el código.
+          Si mi trabajo te gustó, puedes dejarme una propina escaneando el código.
         </p>
         <img
           class="psp__tips-qr"

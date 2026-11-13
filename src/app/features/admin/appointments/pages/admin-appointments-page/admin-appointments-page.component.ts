@@ -50,6 +50,7 @@ import {
 import { ApiFeedbackComponent } from '../../../../../shared/components/api-feedback/api-feedback.component';
 import { PageStateComponent } from '../../../../../shared/components/page-state/page-state.component';
 import { PaginatorComponent } from '../../../../../shared/components/paginator/paginator.component';
+import { trimmedMinLength, trimmedRequired } from '../../../../../core/utils/form-validators';
 
 type AppointmentsTab = 'today' | 'upcoming' | 'past';
 
@@ -61,9 +62,11 @@ const STATUSES: readonly AppointmentStatus[] = Object.values(APPOINTMENT_STATUS)
  * with professional, status, general service, customer and date range filters kept in the URL.
  */
 
+import { FieldErrorComponent } from '../../../../../shared/components/field-error/field-error.component';
+
 @Component({
   selector: 'app-admin-appointments-page',
-  imports: [ReactiveFormsModule, ApiFeedbackComponent, PageStateComponent, PaginatorComponent],
+  imports: [FieldErrorComponent, ReactiveFormsModule, ApiFeedbackComponent, PageStateComponent, PaginatorComponent],
   templateUrl: './admin-appointments-page.component.html',
   styleUrl: './admin-appointments-page.component.scss',
 })
@@ -151,7 +154,7 @@ export class AdminAppointmentsPageComponent implements OnInit {
       null as number | null,
       [Validators.required, Validators.min(APPOINTMENT_DURATION_RANGE.min), Validators.max(APPOINTMENT_DURATION_RANGE.max)],
     ],
-    customerName: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(120)]],
+    customerName: ['', [trimmedRequired, trimmedMinLength(2), Validators.maxLength(120)]],
     customerEmail: ['', [Validators.email, Validators.maxLength(256)]],
     customerPhone: ['', [Validators.maxLength(40)]],
     notes: ['', [Validators.maxLength(2000)]],
@@ -165,7 +168,7 @@ export class AdminAppointmentsPageComponent implements OnInit {
       null as number | null,
       [Validators.required, Validators.min(APPOINTMENT_DURATION_RANGE.min), Validators.max(APPOINTMENT_DURATION_RANGE.max)],
     ],
-    customerName: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(120)]],
+    customerName: ['', [trimmedRequired, trimmedMinLength(2), Validators.maxLength(120)]],
     customerEmail: ['', [Validators.email, Validators.maxLength(256)]],
     customerPhone: ['', [Validators.maxLength(40)]],
     notes: ['', [Validators.maxLength(2000)]],

@@ -25,9 +25,12 @@ import { AdminStaffApiService } from '../../../../../core/services/admin-staff-a
 import { getApiErrorMessage } from '../../../../../core/utils/api-error.utils';
 import { ApiFeedbackComponent } from '../../../../../shared/components/api-feedback/api-feedback.component';
 
+import { FieldErrorComponent } from '../../../../../shared/components/field-error/field-error.component';
+import { trimmedMinLength, trimmedRequired } from '../../../../../core/utils/form-validators';
+
 @Component({
   selector: 'app-admin-staff-form-modal',
-  imports: [ReactiveFormsModule, ApiFeedbackComponent],
+  imports: [FieldErrorComponent, ReactiveFormsModule, ApiFeedbackComponent],
   templateUrl: './admin-staff-form-modal.component.html',
   styleUrl: './admin-staff-form-modal.component.scss',
 })
@@ -61,10 +64,10 @@ export class AdminStaffFormModalComponent implements OnInit, OnDestroy {
   readonly isBusy = computed(() => this.isLoading() || this.isSubmitting());
 
   readonly staffForm = this.formBuilder.group({
-    fullName: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(120)]],
+    fullName: ['', [trimmedRequired, trimmedMinLength(2), Validators.maxLength(120)]],
     email: ['', [Validators.required, Validators.email]],
     initialPassword: ['', [Validators.minLength(8), Validators.maxLength(128)]],
-    displayName: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(120)]],
+    displayName: ['', [trimmedRequired, trimmedMinLength(2), Validators.maxLength(120)]],
     phoneNumber: ['', [Validators.maxLength(40)]],
     isActive: [true],
   });

@@ -115,7 +115,7 @@
             {{ landingContent()?.aboutTitle || 'Quiénes somos' }}
           </h2>
           <p class="lp__about-p">
-            {{ landingContent()?.aboutText || 'Estamos preparando el contenido publico. Mientras tanto puedes revisar profesionales y disponibilidad.' }}
+            {{ landingContent()?.aboutText || 'Estamos preparando el contenido público. Mientras tanto puedes revisar profesionales y disponibilidad.' }}
           </p>
         </div>
 
@@ -297,7 +297,7 @@
         <button class="lp-modal__close" type="button" (click)="closeAvailabilityModal()" aria-label="Cerrar">✕</button>
       </div>
 
-      <p class="lp-modal__sub">Elegí el día y seleccioná el horario que más te convenga.</p>
+      <p class="lp-modal__sub">Elige el día y selecciona el horario que más te convenga.</p>
 
       @if (!activeStaff()!.services.length) {
         <p class="lp-modal__msg">Este profesional aún no tiene servicios disponibles para reservar.</p>
@@ -334,7 +334,7 @@
         } @else if (!slots().length) {
           <p class="lp-modal__msg">No hay horarios disponibles para este día.</p>
         } @else {
-          <p class="lp-modal__hint">Seleccioná un horario para continuar</p>
+          <p class="lp-modal__hint">Selecciona un horario para continuar</p>
           <div class="lp-modal__slots">
             @for (slot of slots(); track slot.startAtUtc) {
               <button class="lp-modal__slot" type="button" (click)="selectSlot(slot)">

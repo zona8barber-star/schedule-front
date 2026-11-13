@@ -27,6 +27,7 @@ import { AuthService } from '../../../../../core/services/auth.service';
 import { MoneyConfirmationService } from '../../../../../core/services/money-confirmation.service';
 import { getApiErrorMessage } from '../../../../../core/utils/api-error.utils';
 import { ApiFeedbackComponent } from '../../../../../shared/components/api-feedback/api-feedback.component';
+import { trimmedMinLength, trimmedRequired } from '../../../../../core/utils/form-validators';
 
 export interface GeneralServiceOptionGroup {
   categoryName: string;
@@ -37,9 +38,11 @@ function integerValidator(control: AbstractControl): ValidationErrors | null {
   return Number.isInteger(control.value) ? null : { integer: true };
 }
 
+import { FieldErrorComponent } from '../../../../../shared/components/field-error/field-error.component';
+
 @Component({
   selector: 'app-admin-service-form-modal',
-  imports: [ReactiveFormsModule, ApiFeedbackComponent],
+  imports: [FieldErrorComponent, ReactiveFormsModule, ApiFeedbackComponent],
   templateUrl: './admin-service-form-modal.component.html',
   styleUrl: './admin-service-form-modal.component.scss',
 })
@@ -87,7 +90,7 @@ export class AdminServiceFormModalComponent implements OnInit {
 
   readonly form = this.formBuilder.nonNullable.group({
     generalServiceId: ['', [Validators.required]],
-    name: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(120)]],
+    name: ['', [trimmedRequired, trimmedMinLength(2), Validators.maxLength(120)]],
     basePrice: [0, [Validators.required, Validators.min(0), integerValidator]],
     businessPercentage: [0, [Validators.required, Validators.min(0), Validators.max(100), integerValidator]],
     loyaltyPoints: [

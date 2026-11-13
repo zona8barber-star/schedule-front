@@ -18,15 +18,18 @@ import { getApiErrorMessage } from '../../../../../core/utils/api-error.utils';
 import { PaginatorComponent } from '../../../../../shared/components/paginator/paginator.component';
 import { ApiFeedbackComponent } from '../../../../../shared/components/api-feedback/api-feedback.component';
 import { PageStateComponent } from '../../../../../shared/components/page-state/page-state.component';
+import { trimmedMinLength, trimmedRequired } from '../../../../../core/utils/form-validators';
 
 /**
  * Rewards catalog (loyalty.rewards.manage, ADR-0015 R1–R2): fixed cost in points, a catalog service or another reward
  * without stock, deactivation instead of deletion and an audited history. Requests keep their own copy, so editing
  * here never changes them.
  */
+import { FieldErrorComponent } from '../../../../../shared/components/field-error/field-error.component';
+
 @Component({
   selector: 'app-admin-loyalty-rewards-page',
-  imports: [BogotaDatePipe, ReactiveFormsModule, ApiFeedbackComponent, PageStateComponent, PaginatorComponent],
+  imports: [FieldErrorComponent, BogotaDatePipe, ReactiveFormsModule, ApiFeedbackComponent, PageStateComponent, PaginatorComponent],
   templateUrl: './admin-loyalty-rewards-page.component.html',
   styleUrls: [
     '../admin-loyalty-settings-page/admin-loyalty-settings-page.component.scss',
@@ -56,7 +59,7 @@ export class AdminLoyaltyRewardsPageComponent implements OnInit {
   readonly historyPageSize = DEFAULT_PAGE_SIZE;
 
   readonly form = this.formBuilder.nonNullable.group({
-    name: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(120)]],
+    name: ['', [trimmedRequired, trimmedMinLength(2), Validators.maxLength(120)]],
     description: ['', [Validators.maxLength(500)]],
     kind: this.formBuilder.nonNullable.control<LoyaltyRewardKind>('Other'),
     serviceId: [''],

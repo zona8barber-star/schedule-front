@@ -34,6 +34,7 @@ import {
   MEMBERSHIP_MAX_DURATION_DAYS,
   MEMBERSHIP_MAX_QUANTITY,
 } from '../../membership-plan-defaults';
+import { trimmedMinLength, trimmedRequired } from '../../../../../core/utils/form-validators';
 
 function integerValidator(control: AbstractControl): ValidationErrors | null {
   return control.value === null || Number.isInteger(control.value) ? null : { integer: true };
@@ -81,7 +82,7 @@ export class AdminMembershipPlanFormModalComponent implements OnInit {
   readonly serviceOptions = signal<ServiceOption[]>([]);
 
   readonly form = this.formBuilder.group({
-    name: this.formBuilder.nonNullable.control('', [Validators.required, Validators.minLength(2), Validators.maxLength(120)]),
+    name: this.formBuilder.nonNullable.control('', [trimmedRequired, trimmedMinLength(2), Validators.maxLength(120)]),
     description: this.formBuilder.nonNullable.control('', [Validators.maxLength(1000)]),
     price: this.formBuilder.nonNullable.control(0, [Validators.required, Validators.min(0), integerValidator]),
     mode: this.formBuilder.nonNullable.control<MembershipPlanMode>('Pool'),
@@ -377,7 +378,7 @@ export class AdminMembershipPlanFormModalComponent implements OnInit {
       serviceId: this.formBuilder.nonNullable.control(gift.serviceId, isService ? [Validators.required] : []),
       description: this.formBuilder.nonNullable.control(
         gift.description,
-        isService ? [] : [Validators.required, Validators.minLength(2), Validators.maxLength(200)],
+        isService ? [] : [trimmedRequired, trimmedMinLength(2), Validators.maxLength(200)],
       ),
       quantity: this.formBuilder.nonNullable.control(gift.quantity, quantityValidators),
       condition: this.formBuilder.nonNullable.control<MembershipGiftCondition>(gift.condition),

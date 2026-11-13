@@ -91,7 +91,7 @@ export class StaffAvailabilityPageComponent {
   readonly durationWarning = computed(() => {
     const d = this.summary()?.defaultAppointmentDurationMinutes ?? 0;
     return d <= 0
-      ? 'La duracion base de citas es 0. Actualizala en Mi Perfil para que los turnos se calculen correctamente.'
+      ? 'La duración base de citas es 0. Actualízala en Mi Perfil para que los turnos se calculen correctamente.'
       : null;
   });
 

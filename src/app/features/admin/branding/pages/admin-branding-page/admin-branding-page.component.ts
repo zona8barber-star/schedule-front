@@ -13,12 +13,15 @@ import { BrandingSettingsResponse } from '../../../../../core/models/content.mod
 import { AdminContentApiService } from '../../../../../core/services/admin-content-api.service';
 import { ThemeService } from '../../../../../core/services/theme.service';
 import { getApiErrorMessage } from '../../../../../core/utils/api-error.utils';
+import { trimmedMinLength, trimmedRequired } from '../../../../../core/utils/form-validators';
 import { ApiFeedbackComponent } from '../../../../../shared/components/api-feedback/api-feedback.component';
 import { PageStateComponent } from '../../../../../shared/components/page-state/page-state.component';
 
+import { FieldErrorComponent } from '../../../../../shared/components/field-error/field-error.component';
+
 @Component({
   selector: 'app-admin-branding-page',
-  imports: [ReactiveFormsModule, ApiFeedbackComponent, PageStateComponent],
+  imports: [FieldErrorComponent, ReactiveFormsModule, ApiFeedbackComponent, PageStateComponent],
   templateUrl: './admin-branding-page.component.html',
   styleUrl: './admin-branding-page.component.scss',
 })
@@ -36,7 +39,7 @@ export class AdminBrandingPageComponent implements OnInit {
   readonly submitLabel = computed(() => (this.isSubmitting() ? 'Guardando...' : 'Guardar cambios'));
 
   readonly brandingForm = this.formBuilder.group({
-    appName: ['', [Validators.required, Validators.maxLength(200)]],
+    appName: ['', [trimmedRequired, trimmedMinLength(2), Validators.maxLength(120)]],
     primaryColor: ['', [Validators.required, hexColorValidator()]],
     secondaryColor: ['', [Validators.required, hexColorValidator()]],
     logoMediaAssetId: ['', [optionalUuidValidator()]],

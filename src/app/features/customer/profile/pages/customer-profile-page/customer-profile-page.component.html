@@ -107,7 +107,7 @@
               <label for="cp-name">
                 Nombre completo <span class="cp__required">*</span>
               </label>
-              <input
+              <input maxlength="120"
                 id="cp-name"
                 type="text"
                 formControlName="fullName"
@@ -140,7 +140,7 @@
             <!-- Teléfono -->
             <div class="cp__field">
               <label for="cp-phone">Teléfono</label>
-              <input
+              <input maxlength="40"
                 id="cp-phone"
                 type="tel"
                 formControlName="phoneNumber"
@@ -213,13 +213,14 @@
               <label for="cp-new-pwd">
                 Nueva contraseña <span class="cp__required">*</span>
               </label>
-              <input
+              <input maxlength="256"
                 id="cp-new-pwd"
                 type="password"
                 formControlName="newPassword"
                 placeholder="Mínimo 8 caracteres"
                 autocomplete="new-password"
               />
+              <app-field-error controlName="newPassword" />
               @if (showPwdError('newPassword', 'required')) {
                 <p class="cp__field-error">La nueva contraseña es requerida.</p>
               }

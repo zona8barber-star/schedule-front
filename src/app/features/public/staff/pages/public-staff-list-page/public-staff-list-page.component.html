@@ -161,7 +161,7 @@
         >✕</button>
       </div>
 
-      <p class="psl-modal__sub">Elegí el día y seleccioná el horario que más te convenga.</p>
+      <p class="psl-modal__sub">Elige el día y selecciona el horario que más te convenga.</p>
 
       @if (!activeStaff()!.services.length) {
         <p class="psl-modal__msg">Este profesional aún no tiene servicios disponibles para reservar.</p>
@@ -198,7 +198,7 @@
         } @else if (!slots().length) {
           <p class="psl-modal__msg">No hay horarios disponibles para este día.</p>
         } @else {
-          <p class="psl-modal__hint">Seleccioná un horario para continuar</p>
+          <p class="psl-modal__hint">Selecciona un horario para continuar</p>
           <div class="psl-modal__slots">
             @for (slot of slots(); track slot.startAtUtc) {
               <button class="psl-modal__slot" type="button" (click)="selectSlot(slot)">

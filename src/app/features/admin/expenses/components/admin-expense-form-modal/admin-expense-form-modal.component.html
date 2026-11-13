@@ -18,6 +18,7 @@
             autocomplete="off"
             (input)="onNameChange(form.controls.name.value)"
           />
+          <app-field-error controlName="name" [kinds]="['minlength', 'maxlength']" />
           <datalist id="fixed-expense-options">
             @for (option of fixedExpenses(); track option.id) {
               <option [value]="option.name"></option>

@@ -7,6 +7,8 @@
 
   @if (isLoading()) {
     <app-page-state kind="loading" message="Cargando membresía..." />
+  } @else if (notFound()) {
+    <app-not-found-state title="No encontramos esta membresía" backLink="/admin/memberships" backLabel="Volver a membresías" />
   } @else if (membership(); as m) {
     <header class="membership-detail__header">
       <div>

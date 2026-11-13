@@ -14,9 +14,12 @@ import { AuthService } from '../../../../core/services/auth.service';
 import { AuthApiService } from '../../../../core/services/auth-api.service';
 import { ApiFeedbackComponent } from '../../../../shared/components/api-feedback/api-feedback.component';
 
+import { FieldErrorComponent } from '../../../../shared/components/field-error/field-error.component';
+import { trimmedMinLength, trimmedRequired } from '../../../../core/utils/form-validators';
+
 @Component({
   selector: 'app-login-page',
-  imports: [ReactiveFormsModule, RouterLink, ApiFeedbackComponent],
+  imports: [FieldErrorComponent, ReactiveFormsModule, RouterLink, ApiFeedbackComponent],
   templateUrl: './login-page.component.html',
   styleUrl: './login-page.component.scss',
 })
@@ -60,7 +63,7 @@ export class LoginPageComponent {
 
   readonly registerForm = this.formBuilder.nonNullable.group(
     {
-      fullName: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(120)]],
+      fullName: ['', [trimmedRequired, trimmedMinLength(2), Validators.maxLength(120)]],
       email: ['', [Validators.required, Validators.email]],
       phoneNumber: ['', [Validators.maxLength(40)]],
       password: [
@@ -147,7 +150,7 @@ export class LoginPageComponent {
 
     try {
       await this.authService.register({
-        fullName: formValue.fullName,
+        fullName: (formValue.fullName ?? '').trim(),
         email: formValue.email,
         password: formValue.password,
         phoneNumber: formValue.phoneNumber.trim() ? formValue.phoneNumber.trim() : null,

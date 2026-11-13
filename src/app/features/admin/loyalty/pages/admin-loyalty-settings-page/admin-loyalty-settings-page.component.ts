@@ -18,6 +18,7 @@ import { getApiErrorMessage } from '../../../../../core/utils/api-error.utils';
 import { PaginatorComponent } from '../../../../../shared/components/paginator/paginator.component';
 import { ApiFeedbackComponent } from '../../../../../shared/components/api-feedback/api-feedback.component';
 import { PageStateComponent } from '../../../../../shared/components/page-state/page-state.component';
+import { LoadErrorComponent } from '../../../../../shared/components/load-error/load-error.component';
 
 const FORBIDDEN_MESSAGE = 'Ya no tienes permiso para administrar la fidelización. Si crees que es un error, pide a un administrador que revise tu rol.';
 
@@ -27,7 +28,7 @@ function integerValidator(control: AbstractControl): ValidationErrors | null {
 
 @Component({
   selector: 'app-admin-loyalty-settings-page',
-  imports: [BogotaDatePipe, ReactiveFormsModule, ApiFeedbackComponent, PageStateComponent, PaginatorComponent],
+  imports: [BogotaDatePipe, ReactiveFormsModule, ApiFeedbackComponent, PageStateComponent, PaginatorComponent, LoadErrorComponent],
   templateUrl: './admin-loyalty-settings-page.component.html',
   styleUrl: './admin-loyalty-settings-page.component.scss',
 })
@@ -54,6 +55,9 @@ export class AdminLoyaltySettingsPageComponent implements OnInit {
   readonly changesPageSize = DEFAULT_PAGE_SIZE;
   /** The history could not be read, so "no changes yet" would be misleading. */
   readonly historyUnavailable = signal(false);
+  /** Why the history could not be loaded (shown only in its section). */
+  readonly historyError = signal<unknown>(null);
+  readonly isLoadingHistory = signal(false);
   readonly isBusy = computed(() => this.isLoading() || this.isSubmitting());
   readonly submitLabel = computed(() => (this.isSubmitting() ? 'Guardando...' : 'Guardar configuración'));
 
@@ -133,20 +137,45 @@ export class AdminLoyaltySettingsPageComponent implements OnInit {
     this.errorMessage.set(null);
     this.successMessage.set(null);
     this.hasConflict.set(false);
+    // SONDA BUG-087: the history is secondary; if it fails, the settings form stays available and only the history
+    // section shows the error, with «Reintentar».
+    const [settings] = await Promise.all([
+      firstValueFrom(this.loyaltyApiService.getSettings()).then(
+        (value) => ({ ok: true as const, value }),
+        (error: unknown) => ({ ok: false as const, error }),
+      ),
+      this.loadHistory(),
+    ]);
+
+    if (settings.ok) {
+      this.applySettings(settings.value);
+    } else {
+      this.errorMessage.set(this.describeError(settings.error));
+    }
+
+    this.isLoading.set(false);
+  }
+
+  /** «Reintentar» of the history section. */
+  async retryHistory(): Promise<void> {
+    await this.loadHistory();
+  }
+
+  private async loadHistory(): Promise<void> {
+    this.isLoadingHistory.set(true);
+    this.historyError.set(null);
     try {
-      const [settings, changes] = await Promise.all([
-        firstValueFrom(this.loyaltyApiService.getSettings()),
-        firstValueFrom(this.loyaltyApiService.listSettingsChanges({ page: this.changesPage(), pageSize: this.changesPageSize })),
-      ]);
-      this.applySettings(settings);
+      const changes = await firstValueFrom(
+        this.loyaltyApiService.listSettingsChanges({ page: this.changesPage(), pageSize: this.changesPageSize }),
+      );
       this.changes.set(changes.items);
       this.changesTotal.set(changes.totalCount);
       this.historyUnavailable.set(false);
     } catch (error) {
       this.historyUnavailable.set(true);
-      this.errorMessage.set(this.describeError(error));
+      this.historyError.set(error ?? new Error('history failed'));
     } finally {
-      this.isLoading.set(false);
+      this.isLoadingHistory.set(false);
     }
   }
 

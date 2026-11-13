@@ -20,6 +20,7 @@
         <div class="admin-content-page__field">
           <label for="rewardName">Nombre</label>
           <input id="rewardName" type="text" formControlName="name" maxlength="120" />
+          <app-field-error controlName="name" [kinds]="['minlength']" />
         </div>
 
         <div class="admin-content-page__field">

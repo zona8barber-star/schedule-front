@@ -291,7 +291,7 @@ export class LandingShellPageComponent implements OnInit {
 
     if (failedSections.length > 0 && hasAnyContent) {
       this.infoMessage.set(
-        `Se cargo el home con datos parciales. Falto: ${failedSections.join(', ')}.`,
+        `Se cargó el home con datos parciales. Faltó: ${failedSections.join(', ')}.`,
       );
     }
 

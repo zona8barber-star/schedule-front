@@ -116,6 +116,27 @@ describe('StaffAppointmentsPageComponent (service and duration)', () => {
     expect(body).not.toHaveProperty('durationMinutes');
   });
 
+  // SONDA BUG-027: «Nueva cita» accepted any length and only the server answered, with a technical 400.
+  it('limits «Nueva cita» to the server lengths and explains an over-long or blank name', async () => {
+    component.openCreateModal();
+    await render();
+    const element = fixture.nativeElement as HTMLElement;
+    const limit = (selector: string) => element.querySelector<HTMLInputElement>(selector)?.maxLength;
+
+    expect(limit('#createCustomerName')).toBe(120);
+    expect(limit('#createCustomerPhone')).toBe(40);
+    expect(element.querySelector<HTMLTextAreaElement>('#createNotes')?.maxLength).toBe(2000);
+
+    component.createForm.patchValue({ startsAt: '2026-11-07T10:00', generalServiceId: 'g-cut', customerName: 'a'.repeat(121) });
+    component.createForm.controls.customerName.markAsTouched();
+    fixture.detectChanges();
+    expect(element.textContent).toContain('Puede tener como máximo 120 caracteres (ahora tiene 121).');
+
+    component.createForm.patchValue({ customerName: '   ' });
+    await component.submitCreate();
+    expect(api.createManual).not.toHaveBeenCalled();
+  });
+
   it('requires a service to create', async () => {
     component.openCreateModal();
     await render();

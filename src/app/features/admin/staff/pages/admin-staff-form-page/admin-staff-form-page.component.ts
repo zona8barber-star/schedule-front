@@ -16,13 +16,18 @@ import { AuthService } from '../../../../../core/services/auth.service';
 import { ConfirmModalService } from '../../../../../core/services/confirm-modal.service';
 import { getApiErrorMessage } from '../../../../../core/utils/api-error.utils';
 import { ApiFeedbackComponent } from '../../../../../shared/components/api-feedback/api-feedback.component';
+import { NotFoundStateComponent } from '../../../../../shared/components/not-found-state/not-found-state.component';
+import { isGuid, isNotFoundError } from '../../../../../core/utils/route-id.utils';
 import { AdminStaffOfferingsSectionComponent } from '../../components/admin-staff-offerings-section/admin-staff-offerings-section.component';
+import { trimmedMinLength, trimmedRequired } from '../../../../../core/utils/form-validators';
 
 const MAX_FILE_BYTES = 10_485_760; // 10 MB
 
+import { FieldErrorComponent } from '../../../../../shared/components/field-error/field-error.component';
+
 @Component({
   selector: 'app-admin-staff-form-page',
-  imports: [ReactiveFormsModule, RouterLink, ApiFeedbackComponent, AdminStaffOfferingsSectionComponent],
+  imports: [FieldErrorComponent, ReactiveFormsModule, RouterLink, ApiFeedbackComponent, AdminStaffOfferingsSectionComponent, NotFoundStateComponent],
   templateUrl: './admin-staff-form-page.component.html',
   styleUrl: './admin-staff-form-page.component.scss',
 })
@@ -45,6 +50,8 @@ export class AdminStaffFormPageComponent {
   readonly successMessage = signal<string | null>(null);
   readonly staffId = signal<string | null>(this.route.snapshot.paramMap.get('staffId'));
   readonly hasRecord = signal(!this.route.snapshot.paramMap.get('staffId'));
+  /** SONDA BUG-044: the professional of the link does not exist. */
+  readonly notFound = signal(false);
   readonly isEditMode = computed(() => this.staffId() !== null);
   readonly staff = signal<StaffResponse | null>(null);
   readonly photoUploading = signal(false);
@@ -69,10 +76,10 @@ export class AdminStaffFormPageComponent {
   );
 
   readonly staffForm = this.formBuilder.group({
-    fullName: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(120)]],
+    fullName: ['', [trimmedRequired, trimmedMinLength(2), Validators.maxLength(120)]],
     email: ['', [Validators.required, Validators.email]],
     initialPassword: ['', [Validators.minLength(8), Validators.maxLength(128)]],
-    displayName: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(120)]],
+    displayName: ['', [trimmedRequired, trimmedMinLength(2), Validators.maxLength(120)]],
     phoneNumber: ['', [Validators.maxLength(40)]],
     bio: ['', [Validators.maxLength(2000)]],
     defaultAppointmentDurationMinutes: [Number(STAFF_DURATION_RANGE.suggested), [
@@ -179,7 +186,7 @@ export class AdminStaffFormPageComponent {
     if (!file || !this.staffId()) return;
     this.photoError.set(null);
     if (file.size > MAX_FILE_BYTES) {
-      this.photoError.set('El archivo no puede superar 10 MB. Si subes uno nuevo reemplazara el actual.');
+      this.photoError.set('El archivo no puede superar 10 MB. Si subes uno nuevo reemplazará el actual.');
       resetFileInput(event);
       return;
     }
@@ -194,7 +201,7 @@ export class AdminStaffFormPageComponent {
     try {
       const refreshedAccessToken = await this.authService.refreshAccessToken();
       if (!refreshedAccessToken) {
-        this.photoError.set('Tu sesion expiro. Inicia sesion nuevamente e intenta subir la foto otra vez.');
+        this.photoError.set('Tu sesión expiró. Inicia sesión nuevamente e intenta subir la foto otra vez.');
         return;
       }
 
@@ -222,7 +229,7 @@ export class AdminStaffFormPageComponent {
     if (!this.staffId()) return;
     const confirmed = await this.confirmModal.confirm({
       title: 'Eliminar foto de perfil?',
-      message: 'Se eliminara la foto actual de este profesional.',
+      message: 'Se eliminará la foto actual de este profesional.',
     });
     if (!confirmed) return;
 
@@ -245,7 +252,7 @@ export class AdminStaffFormPageComponent {
     if (!file || !this.staffId()) return;
     this.qrError.set(null);
     if (file.size > MAX_FILE_BYTES) {
-      this.qrError.set('El archivo no puede superar 10 MB. Si subes uno nuevo reemplazara el actual.');
+      this.qrError.set('El archivo no puede superar 10 MB. Si subes uno nuevo reemplazará el actual.');
       resetFileInput(event);
       return;
     }
@@ -260,7 +267,7 @@ export class AdminStaffFormPageComponent {
     try {
       const refreshedAccessToken = await this.authService.refreshAccessToken();
       if (!refreshedAccessToken) {
-        this.qrError.set('Tu sesion expiro. Inicia sesion nuevamente e intenta subir el archivo otra vez.');
+        this.qrError.set('Tu sesión expiró. Inicia sesión nuevamente e intenta subir el archivo otra vez.');
         return;
       }
 
@@ -288,7 +295,7 @@ export class AdminStaffFormPageComponent {
     if (!this.staffId()) return;
     const confirmed = await this.confirmModal.confirm({
       title: 'Eliminar QR de propinas?',
-      message: 'Se eliminara el QR actual de este profesional.',
+      message: 'Se eliminará el QR actual de este profesional.',
     });
     if (!confirmed) return;
 
@@ -309,6 +316,15 @@ export class AdminStaffFormPageComponent {
   private async loadStaff(): Promise<void> {
     this.isLoading.set(true);
     this.errorMessage.set(null);
+    this.notFound.set(false);
+
+    // SONDA BUG-044: an id that is not a GUID cannot exist; no request is sent.
+    if (!isGuid(this.staffId())) {
+      this.notFound.set(true);
+      this.hasRecord.set(false);
+      this.isLoading.set(false);
+      return;
+    }
 
     try {
       const staff = await firstValueFrom(this.adminStaffApiService.getById(this.staffId()!));
@@ -316,7 +332,11 @@ export class AdminStaffFormPageComponent {
       this.applyStaffToForm(staff);
       this.hasRecord.set(true);
     } catch (error) {
-      this.errorMessage.set(getApiErrorMessage(error));
+      if (isNotFoundError(error)) {
+        this.notFound.set(true);
+      } else {
+        this.errorMessage.set(getApiErrorMessage(error));
+      }
       this.hasRecord.set(false);
     } finally {
       this.isLoading.set(false);

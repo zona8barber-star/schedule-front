@@ -7,15 +7,18 @@ import { AdminServiceCatalogApiService } from '../../../../../core/services/admi
 import { ConfirmModalService } from '../../../../../core/services/confirm-modal.service';
 import { getApiErrorMessage } from '../../../../../core/utils/api-error.utils';
 import { ApiFeedbackComponent } from '../../../../../shared/components/api-feedback/api-feedback.component';
+import { trimmedMinLength, trimmedRequired } from '../../../../../core/utils/form-validators';
 
 function integerValidator(control: AbstractControl): ValidationErrors | null {
   return Number.isInteger(control.value) ? null : { integer: true };
 }
 
 /** Master of service categories (ADR-0016 B1), independent from product categories. */
+import { FieldErrorComponent } from '../../../../../shared/components/field-error/field-error.component';
+
 @Component({
   selector: 'app-admin-service-categories-page',
-  imports: [ReactiveFormsModule, ApiFeedbackComponent],
+  imports: [FieldErrorComponent, ReactiveFormsModule, ApiFeedbackComponent],
   templateUrl: './admin-service-categories-page.component.html',
   styleUrl: '../../catalog-page.scss',
 })
@@ -37,7 +40,7 @@ export class AdminServiceCategoriesPageComponent implements OnInit {
   readonly modalTitle = computed(() => (this.editing() ? 'Editar categoría' : 'Nueva categoría'));
 
   readonly form = this.formBuilder.nonNullable.group({
-    name: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(80)]],
+    name: ['', [trimmedRequired, trimmedMinLength(2), Validators.maxLength(80)]],
     sortOrder: [0, [Validators.required, Validators.min(0), Validators.max(CATALOG_MAX_SORT_ORDER), integerValidator]],
   });
 

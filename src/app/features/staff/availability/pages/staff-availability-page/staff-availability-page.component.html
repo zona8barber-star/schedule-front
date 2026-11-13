@@ -15,7 +15,7 @@
     <!-- Stats strip -->
     <div class="avail-page__stats">
       <div class="avail-page__stat">
-        <span>Duracion de cita</span>
+        <span>Duración de cita</span>
         @if (editingDuration()) {
           <div class="avail-page__duration-edit">
             <input
@@ -85,7 +85,7 @@
             <button
               class="avail-page__edit-btn"
               type="button"
-              title="Editar duracion de cita"
+              title="Editar duración de cita"
               (click)="startEditDuration()"
             >
               <svg
@@ -108,7 +108,7 @@
         }
       </div>
       <div class="avail-page__stat">
-        <span>Dias activos</span>
+        <span>Días activos</span>
         <strong>{{ getActiveDaysCount() }}</strong>
       </div>
       <div class="avail-page__stat">
@@ -173,7 +173,7 @@
                       <span class="avail-page__toggle-label">{{ dayOptions[di].label }}</span>
                     </label>
                     <span class="avail-page__day-status">
-                      {{ dayGroup.controls.isActive.value ? 'Disponible' : 'Sin atencion' }}
+                      {{ dayGroup.controls.isActive.value ? 'Disponible' : 'Sin atención' }}
                     </span>
                   </div>
 
@@ -255,7 +255,7 @@
       <div class="avail-page__panel">
         <div class="avail-page__absences-header">
           <div>
-            <p class="avail-page__section-label">Ultimos 60 dias</p>
+            <p class="avail-page__section-label">Últimos 60 días</p>
             <h2>Ausentismos</h2>
           </div>
           <button
@@ -272,7 +272,7 @@
 
         @if (recentAbsences().length === 0) {
           <div class="avail-page__empty">
-            No hay ausentismos registrados en los ultimos 60 dias.
+            No hay ausentismos registrados en los últimos 60 días.
           </div>
         } @else {
           <div class="avail-page__table-wrap">
@@ -363,12 +363,12 @@
                 formControlName="isAllDay"
                 (change)="onAllDayChange()"
               />
-              <span class="avail-page__toggle-label">Dia completo</span>
+              <span class="avail-page__toggle-label">Día completo</span>
             </label>
             <span class="modal__allday-hint">
               {{
                 absenceForm.controls.isAllDay.value
-                  ? 'Selecciona solo dias — el ausentismo cubre todo el dia'
+                  ? 'Selecciona solo días — el ausentismo cubre todo el día'
                   : 'Selecciona fecha y hora exactas'
               }}
             </span>
@@ -379,7 +379,7 @@
             @if (absenceForm.controls.isAllDay.value) {
               <div class="avail-page__field">
                 <label for="modal-startValue">
-                  Desde el dia <span class="avail-page__required">*</span>
+                  Desde el día <span class="avail-page__required">*</span>
                 </label>
                 <input
                   id="modal-startValue"
@@ -393,7 +393,7 @@
               </div>
               <div class="avail-page__field">
                 <label for="modal-endValue">
-                  Hasta el dia <span class="avail-page__required">*</span>
+                  Hasta el día <span class="avail-page__required">*</span>
                 </label>
                 <input
                   id="modal-endValue"
@@ -438,7 +438,7 @@
 
             <div class="avail-page__field modal__field--wide">
               <label for="modal-reason">Motivo</label>
-              <textarea
+              <textarea maxlength="500"
                 id="modal-reason"
                 rows="3"
                 formControlName="reason"
@@ -452,7 +452,7 @@
 
           @if (showAbsenceGroupError('pastStart')) {
             <p class="avail-page__error">
-              La fecha de inicio debe ser a partir de mañana — no se permiten ausentismos del dia
+              La fecha de inicio debe ser a partir de mañana — no se permiten ausentismos del día
               actual hacia atras.
             </p>
           }

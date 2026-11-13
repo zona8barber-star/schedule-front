@@ -48,6 +48,7 @@ import { ApiFeedbackComponent } from '../../../../../shared/components/api-feedb
 import { PageStateComponent } from '../../../../../shared/components/page-state/page-state.component';
 import { PaginatorComponent } from '../../../../../shared/components/paginator/paginator.component';
 import { PullToRefreshDirective } from '../../../../../shared/directives/pull-to-refresh.directive';
+import { trimmedMinLength, trimmedRequired } from '../../../../../core/utils/form-validators';
 
 type AgendaTab = 'today' | 'upcoming' | 'history';
 
@@ -60,9 +61,11 @@ const ACTIVE_STATUSES = `${APPOINTMENT_STATUS.pending},${APPOINTMENT_STATUS.conf
  * The professional's agenda (ADR-0016 B7): today and upcoming (active appointments, soonest first) and the history
  * (date range and status, newest first), each paginated on the server; the tab and the filters live in the URL.
  */
+import { FieldErrorComponent } from '../../../../../shared/components/field-error/field-error.component';
+
 @Component({
   selector: 'app-staff-appointments-page',
-  imports: [
+  imports: [FieldErrorComponent, 
     NgClass,
     ReactiveFormsModule,
     RouterLink,
@@ -131,7 +134,7 @@ export class StaffAppointmentsPageComponent implements OnInit {
   readonly createForm = this.formBuilder.nonNullable.group({
     startsAt: ['', [Validators.required]],
     generalServiceId: ['', [Validators.required]],
-    customerName: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(120)]],
+    customerName: ['', [trimmedRequired, trimmedMinLength(2), Validators.maxLength(120)]],
     customerEmail: ['', [Validators.email, Validators.maxLength(256)]],
     customerPhone: ['', [Validators.maxLength(40)]],
     notes: ['', [Validators.maxLength(2000)]],
@@ -141,7 +144,7 @@ export class StaffAppointmentsPageComponent implements OnInit {
     startsAt: ['', [Validators.required]],
     /** '' keeps the current service (appointments booked before services existed). */
     generalServiceId: [''],
-    customerName: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(120)]],
+    customerName: ['', [trimmedRequired, trimmedMinLength(2), Validators.maxLength(120)]],
     customerEmail: ['', [Validators.email, Validators.maxLength(256)]],
     customerPhone: ['', [Validators.maxLength(40)]],
     notes: ['', [Validators.maxLength(2000)]],
@@ -624,7 +627,7 @@ function getStaffAppointmentErrorMessage(
 ): string {
   if (isHttpConflict(error)) {
     if (action === 'create') {
-      return 'El horario seleccionado no está disponible. Puede estar ocupado o fuera de tu configuracion de disponibilidad. Elige otro turno.';
+      return 'El horario seleccionado no está disponible. Puede estar ocupado o fuera de tu configuración de disponibilidad. Elige otro turno.';
     }
     if (action === 'update') {
       return 'No se pudo actualizar la cita porque el nuevo horario entra en conflicto.';

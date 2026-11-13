@@ -62,9 +62,11 @@ type ReviewFormGroup = FormGroup<{
   comment: FormControl<string>;
 }>;
 
+import { FieldErrorComponent } from '../../../../../shared/components/field-error/field-error.component';
+
 @Component({
   selector: 'app-customer-appointments-page',
-  imports: [
+  imports: [FieldErrorComponent, 
     ReactiveFormsModule,
     ApiFeedbackComponent,
     PageStateComponent,
@@ -357,6 +359,15 @@ export class CustomerAppointmentsPageComponent implements OnInit {
         this.rescheduleError.set('Esa hora se acaba de ocupar. Elige otra.');
         this.rescheduleSlot.set(null);
         await this.reschedulePicker()?.reload();
+      } else if (isHttpStatus(error, 422) || isHttpStatus(error, 404)) {
+        // SONDA BUG-063: the appointment changed meanwhile (cancelled, completed, removed). Keeping the modal open
+        // offered a reschedule that can no longer happen: it closes and the list shows the real state.
+        this.isRescheduling.set(false);
+        this.closeReschedule();
+        this.toastService.error(
+          getApiErrorMessage(error, 'Esta cita ya no se puede reprogramar porque cambió de estado. Revisa tu lista de citas.'),
+        );
+        await this.loadAppointments();
       } else {
         this.rescheduleError.set(getApiErrorMessage(error));
       }

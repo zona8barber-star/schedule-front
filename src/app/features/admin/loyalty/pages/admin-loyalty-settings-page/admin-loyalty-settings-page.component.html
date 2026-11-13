@@ -1,7 +1,7 @@
 <section class="admin-content-page">
   <header class="admin-content-page__hero">
     <div>
-      <p class="admin-content-page__eyebrow">Gestion</p>
+      <p class="admin-content-page__eyebrow">Gestión</p>
       <h1>Fidelización</h1>
       <p>
         Configuración global del programa de puntos. Los puntos de cada servicio y de cada tipo de membresía se
@@ -125,7 +125,12 @@
   <article class="admin-content-page__panel">
     <h2>Historial de cambios</h2>
     @if (historyUnavailable()) {
-      <p>No se pudo cargar el historial.</p>
+      <app-load-error
+        subject="el historial de cambios"
+        [error]="historyError()"
+        [retrying]="isLoadingHistory()"
+        (retry)="retryHistory()"
+      />
     } @else if (!isLoading() && !changes().length) {
       <p>Aún no se ha modificado la configuración.</p>
     } @else if (changes().length) {

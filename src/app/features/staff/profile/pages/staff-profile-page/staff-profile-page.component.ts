@@ -23,12 +23,15 @@ import { getApiErrorMessage } from '../../../../../core/utils/api-error.utils';
 import { httpUrlValidator } from '../../../../../core/utils/safe-url.utils';
 import { ApiFeedbackComponent } from '../../../../../shared/components/api-feedback/api-feedback.component';
 import { PageStateComponent } from '../../../../../shared/components/page-state/page-state.component';
+import { trimmedMinLength, trimmedRequired } from '../../../../../core/utils/form-validators';
 
 const MAX_FILE_BYTES = 10_485_760; // 10 MB
 
+import { FieldErrorComponent } from '../../../../../shared/components/field-error/field-error.component';
+
 @Component({
   selector: 'app-staff-profile-page',
-  imports: [ReactiveFormsModule, ApiFeedbackComponent, PageStateComponent],
+  imports: [FieldErrorComponent, ReactiveFormsModule, ApiFeedbackComponent, PageStateComponent],
   templateUrl: './staff-profile-page.component.html',
   styleUrl: './staff-profile-page.component.scss',
 })
@@ -61,7 +64,7 @@ export class StaffProfilePageComponent implements OnInit {
   readonly submitLabel = computed(() => (this.isSubmitting() ? 'Guardando...' : 'Guardar cambios'));
 
   readonly profileForm = this.formBuilder.group({
-    displayName: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(120)]],
+    displayName: ['', [trimmedRequired, trimmedMinLength(2), Validators.maxLength(120)]],
     bio: ['', [Validators.maxLength(2000)]],
     phoneNumber: ['', [Validators.maxLength(40)]],
     instagramUrl: ['', [Validators.maxLength(2048), httpUrlValidator()]],

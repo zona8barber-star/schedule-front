@@ -16,9 +16,12 @@ import { AdminRolesApiService } from '../../../../../core/services/admin-roles-a
 import { getApiErrorMessage } from '../../../../../core/utils/api-error.utils';
 import { ApiFeedbackComponent } from '../../../../../shared/components/api-feedback/api-feedback.component';
 
+import { FieldErrorComponent } from '../../../../../shared/components/field-error/field-error.component';
+import { trimmedMinLength, trimmedRequired } from '../../../../../core/utils/form-validators';
+
 @Component({
   selector: 'app-admin-role-form-modal',
-  imports: [ReactiveFormsModule, ApiFeedbackComponent],
+  imports: [FieldErrorComponent, ReactiveFormsModule, ApiFeedbackComponent],
   templateUrl: './admin-role-form-modal.component.html',
   styleUrl: './admin-role-form-modal.component.scss',
 })
@@ -36,7 +39,7 @@ export class AdminRoleFormModalComponent implements OnChanges {
   readonly selectedPermissionIds = signal<Set<string>>(new Set());
 
   readonly form = this.formBuilder.nonNullable.group({
-    name: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(50)]],
+    name: ['', [trimmedRequired, trimmedMinLength(2), Validators.maxLength(50)]],
   });
 
   get isEditing(): boolean {

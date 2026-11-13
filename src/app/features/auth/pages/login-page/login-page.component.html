@@ -152,7 +152,8 @@
           <form [formGroup]="registerForm" (ngSubmit)="submitRegister()" novalidate>
             <div class="auth-field">
               <label for="fullName">Nombre completo</label>
-              <input id="fullName" type="text" formControlName="fullName" autocomplete="name" />
+              <input maxlength="120" id="fullName" type="text" formControlName="fullName" autocomplete="name" />
+              <app-field-error controlName="fullName" />
               @if (showRegisterError('fullName', 'required')) {
                 <p class="auth-field__error">Ingresa tu nombre completo.</p>
               }
@@ -174,7 +175,7 @@
 
             <div class="auth-field">
               <label for="phoneNumber">Teléfono (opcional)</label>
-              <input id="phoneNumber" type="tel" formControlName="phoneNumber" autocomplete="tel" />
+              <input maxlength="40" id="phoneNumber" type="tel" formControlName="phoneNumber" autocomplete="tel" />
               @if (showRegisterError('phoneNumber', 'maxlength')) {
                 <p class="auth-field__error">El teléfono debe tener 40 caracteres o menos.</p>
               }

@@ -17,7 +17,7 @@
       <p class="agenda-page__eyebrow">Mi cuenta</p>
       <h1>Mi agenda</h1>
       <p class="agenda-page__subtitle">
-        Gestiona tus citas, registra turnos manuales y actualiza el estado de cada atencion.
+        Gestiona tus citas, registra turnos manuales y actualiza el estado de cada atención.
       </p>
     </div>
     <div class="agenda-page__header-actions">
@@ -61,7 +61,7 @@
         [attr.aria-selected]="activeTab() === 'upcoming'"
         (click)="setTab('upcoming')"
       >
-        Proximas
+        Próximas
         @if (activeTab() === 'upcoming' && totalCount() > 0) {
           <span class="agenda-page__tab-badge">{{ totalCount() }}</span>
         }
@@ -148,7 +148,7 @@
                 }
                 @if (appointment.customerPhone) {
                   <div class="appt-card__info-item">
-                    <span class="appt-card__info-label">Telefono</span>
+                    <span class="appt-card__info-label">Teléfono</span>
                     <span class="appt-card__info-value">{{ appointment.customerPhone }}</span>
                   </div>
                 }
@@ -261,33 +261,37 @@
                           <label for="editCustomerName">
                             Nombre cliente <span class="agenda-page__required">*</span>
                           </label>
-                          <input id="editCustomerName" type="text" formControlName="customerName" />
+                          <input maxlength="120" id="editCustomerName" type="text" formControlName="customerName" />
+                          <app-field-error controlName="customerName" />
                           @if (showEditError('customerName', 'required')) {
                             <p class="agenda-page__error">Ingresa el nombre del cliente.</p>
                           }
                         </div>
                         <div class="agenda-page__field">
                           <label for="editCustomerEmail">Email (opcional)</label>
-                          <input
+                          <input maxlength="256"
                             id="editCustomerEmail"
                             type="email"
                             formControlName="customerEmail"
                           />
+                          <app-field-error controlName="customerEmail" />
                           @if (showEditError('customerEmail', 'email')) {
                             <p class="agenda-page__error">Ingresa un correo valido.</p>
                           }
                         </div>
                         <div class="agenda-page__field">
-                          <label for="editCustomerPhone">Telefono (opcional)</label>
-                          <input
+                          <label for="editCustomerPhone">Teléfono (opcional)</label>
+                          <input maxlength="40"
                             id="editCustomerPhone"
                             type="tel"
                             formControlName="customerPhone"
                           />
+                          <app-field-error controlName="customerPhone" />
                         </div>
                         <div class="agenda-page__field agenda-page__field--wide">
                           <label for="editNotes">Notas (opcional)</label>
-                          <textarea id="editNotes" rows="3" formControlName="notes"></textarea>
+                          <textarea maxlength="2000" id="editNotes" rows="3" formControlName="notes"></textarea>
+                          <app-field-error controlName="notes" />
                         </div>
                       </div>
                     </fieldset>
@@ -405,12 +409,13 @@
               <label for="createCustomerName">
                 Nombre del cliente <span class="agenda-page__required">*</span>
               </label>
-              <input
+              <input maxlength="120"
                 id="createCustomerName"
                 type="text"
                 formControlName="customerName"
-                placeholder="Ej: Juan Perez"
+                placeholder="Ej: Juan Pérez"
               />
+              <app-field-error controlName="customerName" />
               @if (showCreateError('customerName', 'required')) {
                 <p class="agenda-page__error">Ingresa el nombre del cliente.</p>
               }
@@ -419,34 +424,37 @@
               }
             </div>
             <div class="agenda-page__field">
-              <label for="createCustomerPhone">Telefono (opcional)</label>
-              <input
+              <label for="createCustomerPhone">Teléfono (opcional)</label>
+              <input maxlength="40"
                 id="createCustomerPhone"
                 type="tel"
                 formControlName="customerPhone"
                 placeholder="+54 9 11 ..."
               />
+              <app-field-error controlName="customerPhone" />
             </div>
             <div class="agenda-page__field agenda-page__field--wide">
               <label for="createCustomerEmail">Email (opcional)</label>
-              <input
+              <input maxlength="256"
                 id="createCustomerEmail"
                 type="email"
                 formControlName="customerEmail"
                 placeholder="cliente@email.com"
               />
+              <app-field-error controlName="customerEmail" />
               @if (showCreateError('customerEmail', 'email')) {
                 <p class="agenda-page__error">Ingresa un correo valido.</p>
               }
             </div>
             <div class="agenda-page__field agenda-page__field--wide">
               <label for="createNotes">Notas (opcional)</label>
-              <textarea
+              <textarea maxlength="2000"
                 id="createNotes"
                 rows="3"
                 formControlName="notes"
-                placeholder="Ej: corte + barba, primer turno del dia..."
+                placeholder="Ej: corte + barba, primer turno del día..."
               ></textarea>
+              <app-field-error controlName="notes" />
             </div>
           </div>
         </fieldset>

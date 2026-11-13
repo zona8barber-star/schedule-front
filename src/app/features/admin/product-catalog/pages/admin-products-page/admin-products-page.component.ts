@@ -22,6 +22,7 @@ import {
 } from '../../../../../core/utils/list-query.utils';
 import { ApiFeedbackComponent } from '../../../../../shared/components/api-feedback/api-feedback.component';
 import { PaginatorComponent } from '../../../../../shared/components/paginator/paginator.component';
+import { trimmedMinLength, trimmedRequired } from '../../../../../core/utils/form-validators';
 
 const MAX_IMAGE_BYTES = 10_485_760; // 10 MB, same limit as the API
 
@@ -33,9 +34,11 @@ function integerValidator(control: AbstractControl): ValidationErrors | null {
  * Master of the products of the public catalog, each in a product category (ADR-0016 B5). The list is paginated on the
  * server with text, category and status filters kept in the URL (B7).
  */
+import { FieldErrorComponent } from '../../../../../shared/components/field-error/field-error.component';
+
 @Component({
   selector: 'app-admin-products-page',
-  imports: [ReactiveFormsModule, RouterLink, ApiFeedbackComponent, PaginatorComponent],
+  imports: [FieldErrorComponent, ReactiveFormsModule, RouterLink, ApiFeedbackComponent, PaginatorComponent],
   templateUrl: './admin-products-page.component.html',
   styleUrl: '../../../service-catalog/catalog-page.scss',
 })
@@ -86,7 +89,7 @@ export class AdminProductsPageComponent implements OnInit {
 
   readonly form = this.formBuilder.nonNullable.group({
     categoryId: ['', [Validators.required]],
-    name: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(120)]],
+    name: ['', [trimmedRequired, trimmedMinLength(2), Validators.maxLength(120)]],
     description: ['', [Validators.maxLength(1000)]],
     price: [0, [Validators.required, Validators.min(0), integerValidator]],
     sortOrder: [0, [Validators.required, Validators.min(0), Validators.max(CATALOG_MAX_SORT_ORDER), integerValidator]],

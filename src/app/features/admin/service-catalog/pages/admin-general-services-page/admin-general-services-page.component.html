@@ -114,6 +114,7 @@
         <label class="catalog-modal__field">
           <span>Nombre</span>
           <input type="text" formControlName="name" maxlength="120" autocomplete="off" />
+          <app-field-error controlName="name" [kinds]="['minlength']" />
         </label>
         @if (form.controls.name.touched && form.controls.name.invalid) {
           <small class="catalog-modal__error">El nombre debe tener entre 2 y 120 caracteres.</small>

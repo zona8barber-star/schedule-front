@@ -362,6 +362,7 @@
           maxlength="2000"
           placeholder="Cuéntanos sobre tu experiencia..."
         ></textarea>
+        <app-field-error controlName="comment" />
         <div class="my-appts__char-count">{{ reviewCommentLength() }}/2000</div>
         @if (showCommentError()) {
           <p class="my-appts__field-error">Máximo 2000 caracteres.</p>

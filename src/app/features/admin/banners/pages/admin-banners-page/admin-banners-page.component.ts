@@ -17,14 +17,17 @@ import {
 import { AdminContentApiService } from '../../../../../core/services/admin-content-api.service';
 import { ConfirmModalService } from '../../../../../core/services/confirm-modal.service';
 import { getApiErrorMessage } from '../../../../../core/utils/api-error.utils';
+import { trimmedMinLength, trimmedRequired } from '../../../../../core/utils/form-validators';
 import { httpUrlValidator } from '../../../../../core/utils/safe-url.utils';
 import { bogotaDateTimeFormat, bogotaLocalToUtcIso, utcToBogotaLocal } from '../../../../../core/utils/bogota-date.utils';
 import { ApiFeedbackComponent } from '../../../../../shared/components/api-feedback/api-feedback.component';
 import { PageStateComponent } from '../../../../../shared/components/page-state/page-state.component';
 
+import { FieldErrorComponent } from '../../../../../shared/components/field-error/field-error.component';
+
 @Component({
   selector: 'app-admin-banners-page',
-  imports: [ReactiveFormsModule, ApiFeedbackComponent, PageStateComponent],
+  imports: [FieldErrorComponent, ReactiveFormsModule, ApiFeedbackComponent, PageStateComponent],
   templateUrl: './admin-banners-page.component.html',
   styleUrl: './admin-banners-page.component.scss',
 })
@@ -57,8 +60,8 @@ export class AdminBannersPageComponent implements OnInit {
 
   readonly bannerForm = this.formBuilder.group(
     {
-      title: ['', [Validators.required, Validators.maxLength(200)]],
-      subtitle: ['', [Validators.maxLength(500)]],
+      title: ['', [trimmedRequired, trimmedMinLength(2), Validators.maxLength(160)]],
+      subtitle: ['', [Validators.maxLength(300)]],
       imageMediaAssetId: ['', [optionalUuidValidator()]],
       linkUrl: ['', [httpUrlValidator(), Validators.maxLength(2048)]],
       sortOrder: [0, [Validators.required]],

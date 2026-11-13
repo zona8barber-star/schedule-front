@@ -1,9 +1,9 @@
 <section class="media-manager-page">
   <header class="media-manager-page__hero">
     <div>
-      <p class="media-manager-page__eyebrow">Gestion</p>
+      <p class="media-manager-page__eyebrow">Gestión</p>
       <h1>Biblioteca de archivos</h1>
-      <p>Gestiona archivos y subidas por categoria para profesionales y banners.</p>
+      <p>Gestiona archivos y subidas por categoría para profesionales y banners.</p>
     </div>
   </header>
 
@@ -41,7 +41,7 @@
 
     <div class="media-manager-page__filters">
       <label class="media-manager-page__field">
-        <span>Categoria</span>
+        <span>Categoría</span>
         <select
           #purposeFilterSelect
           [value]="purposeFilter()"
@@ -74,7 +74,7 @@
     @if (isLoading()) {
       <app-page-state kind="loading" message="Cargando biblioteca de archivos..." />
     } @else if (!assets().length) {
-      <app-page-state kind="empty" message="No hay archivos cargados aun." />
+      <app-page-state kind="empty" message="No hay archivos cargados aún." />
     } @else if (!filteredAssets().length) {
       <app-page-state kind="empty" message="No hay archivos para los filtros seleccionados." />
     } @else {
@@ -106,7 +106,7 @@
                 <dd>{{ asset.contentType }}</dd>
               </div>
               <div>
-                <dt>Tamano</dt>
+                <dt>Tamaño</dt>
                 <dd>{{ formatBytes(asset.sizeBytes) }}</dd>
               </div>
               <div>
@@ -123,7 +123,7 @@
                   @if (asset.publicUrl) {
                     <a [href]="asset.publicUrl" target="_blank" rel="noreferrer">Abrir archivo</a>
                   } @else {
-                    Sin URL publica
+                    Sin URL pública
                   }
                 </dd>
               </div>

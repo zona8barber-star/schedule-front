@@ -3,13 +3,13 @@
     <a class="staff-form-page__back" routerLink="/admin/staff">Volver al listado</a>
 
     <div class="staff-form-page__hero-copy">
-      <p class="staff-form-page__eyebrow">Gestion</p>
+      <p class="staff-form-page__eyebrow">Gestión</p>
       <h1>{{ pageTitle() }}</h1>
       <p>
         {{
           isEditMode()
             ? 'Actualiza los datos operativos del perfil y define si queda activo en la agenda.'
-            : 'Crea un nuevo profesional con su contrasena inicial y datos de perfil.'
+            : 'Crea un nuevo profesional con su contraseña inicial y datos de perfil.'
         }}
       </p>
     </div>
@@ -22,6 +22,12 @@
 
       @if (isLoading()) {
         <section class="staff-form-page__state">Cargando formulario...</section>
+      } @else if (isEditMode() && notFound()) {
+        <app-not-found-state
+          title="No encontramos este profesional"
+          backLink="/admin/staff"
+          backLabel="Volver al listado de profesionales"
+        />
       } @else if (isEditMode() && !hasRecord()) {
         <section class="staff-form-page__state">No se pudo cargar el perfil solicitado.</section>
       } @else {
@@ -30,7 +36,7 @@
             <div class="staff-form-page__media-card">
               <p class="staff-form-page__media-label">Foto de perfil</p>
               <p class="staff-form-page__media-hint">
-                Cualquier imagen. Max. 10 MB. Si subes una nueva reemplaza la actual.
+                Cualquier imagen. Máx. 10 MB. Si subes una nueva reemplaza la actual.
               </p>
 
               @if (photoPreviewUrl() || staff()?.photoUrl) {
@@ -86,7 +92,7 @@
             <div class="staff-form-page__media-card">
               <p class="staff-form-page__media-label">QR de propinas</p>
               <p class="staff-form-page__media-hint">
-                Imagen o PDF. Max. 10 MB. Si subes uno nuevo reemplaza el actual.
+                Imagen o PDF. Máx. 10 MB. Si subes uno nuevo reemplaza el actual.
               </p>
 
               @if (qrPreviewUrl() || staff()?.tipsQrUrl) {
@@ -140,7 +146,7 @@
           </div>
         } @else {
           <p class="staff-form-page__media-hint">
-            Podras subir la foto y el QR de propinas una vez que crees el profesional.
+            Podrás subir la foto y el QR de propinas una vez que crees el profesional.
           </p>
         }
 
@@ -149,7 +155,8 @@
             <div class="staff-form-page__grid">
               <div class="staff-form-page__field staff-form-page__field--wide">
                 <label for="fullName">Nombre completo</label>
-                <input id="fullName" type="text" formControlName="fullName" autocomplete="name" />
+                <input maxlength="120" id="fullName" type="text" formControlName="fullName" autocomplete="name" />
+                <app-field-error controlName="fullName" />
                 @if (showError('fullName', 'required')) {
                   <p class="staff-form-page__error">Ingresa el nombre completo.</p>
                 }
@@ -159,10 +166,10 @@
               </div>
 
               <div class="staff-form-page__field">
-                <label for="email">Correo electronico</label>
+                <label for="email">Correo electrónico</label>
                 <input id="email" type="email" formControlName="email" autocomplete="email" />
                 @if (showError('email', 'required')) {
-                  <p class="staff-form-page__error">Ingresa el correo electronico.</p>
+                  <p class="staff-form-page__error">Ingresa el correo electrónico.</p>
                 }
                 @if (showError('email', 'email')) {
                   <p class="staff-form-page__error">Ingresa un correo valido.</p>
@@ -171,19 +178,20 @@
 
               @if (!isEditMode()) {
                 <div class="staff-form-page__field">
-                  <label for="initialPassword">Contrasena inicial</label>
-                  <input
+                  <label for="initialPassword">Contraseña inicial</label>
+                  <input maxlength="128"
                     id="initialPassword"
                     type="password"
                     formControlName="initialPassword"
                     autocomplete="new-password"
                   />
+                  <app-field-error controlName="initialPassword" />
                   @if (showError('initialPassword', 'required')) {
-                    <p class="staff-form-page__error">Ingresa una contrasena inicial.</p>
+                    <p class="staff-form-page__error">Ingresa una contraseña inicial.</p>
                   }
                   @if (showError('initialPassword', 'minlength')) {
                     <p class="staff-form-page__error">
-                      La contrasena debe tener al menos 8 caracteres.
+                      La contraseña debe tener al menos 8 caracteres.
                     </p>
                   }
                 </div>
@@ -191,7 +199,8 @@
 
               <div class="staff-form-page__field">
                 <label for="displayName">Nombre visible</label>
-                <input id="displayName" type="text" formControlName="displayName" />
+                <input maxlength="120" id="displayName" type="text" formControlName="displayName" />
+                <app-field-error controlName="displayName" />
                 @if (showError('displayName', 'required')) {
                   <p class="staff-form-page__error">Ingresa el nombre visible.</p>
                 }
@@ -203,8 +212,8 @@
               </div>
 
               <div class="staff-form-page__field">
-                <label for="phoneNumber">Telefono</label>
-                <input
+                <label for="phoneNumber">Teléfono</label>
+                <input maxlength="40"
                   id="phoneNumber"
                   type="tel"
                   formControlName="phoneNumber"
@@ -212,13 +221,13 @@
                 />
                 @if (showError('phoneNumber', 'maxlength')) {
                   <p class="staff-form-page__error">
-                    El telefono debe tener 40 caracteres o menos.
+                    El teléfono debe tener 40 caracteres o menos.
                   </p>
                 }
               </div>
 
               <div class="staff-form-page__field">
-                <label for="defaultAppointmentDurationMinutes">Duracion base</label>
+                <label for="defaultAppointmentDurationMinutes">Duración base</label>
                 <input
                   id="defaultAppointmentDurationMinutes"
                   type="number"
@@ -227,23 +236,23 @@
                   [max]="durationRange.max"
                 />
                 @if (showError('defaultAppointmentDurationMinutes', 'required')) {
-                  <p class="staff-form-page__error">Ingresa la duracion base.</p>
+                  <p class="staff-form-page__error">Ingresa la duración base.</p>
                 }
                 @if (showError('defaultAppointmentDurationMinutes', 'min')) {
                   <p class="staff-form-page__error">
-                    La duracion minima es {{ durationRange.min }} minutos.
+                    La duración mínima es {{ durationRange.min }} minutos.
                   </p>
                 }
                 @if (showError('defaultAppointmentDurationMinutes', 'max')) {
                   <p class="staff-form-page__error">
-                    La duracion maxima es {{ durationRange.max }} minutos.
+                    La duración máxima es {{ durationRange.max }} minutos.
                   </p>
                 }
               </div>
 
               <div class="staff-form-page__field staff-form-page__field--wide">
                 <label for="bio">Bio</label>
-                <textarea id="bio" rows="4" formControlName="bio"></textarea>
+                <textarea maxlength="2000" id="bio" rows="4" formControlName="bio"></textarea>
                 @if (showError('bio', 'maxlength')) {
                   <p class="staff-form-page__error">La bio debe tener 2000 caracteres o menos.</p>
                 }
@@ -269,7 +278,7 @@
     @if (isEditMode() && hasRecord()) {
       <aside class="staff-form-page__aside">
         <h2>Disponibilidad</h2>
-        <p>Edita el horario semanal y los ausentismos de este profesional en su propia pagina.</p>
+        <p>Edita el horario semanal y los ausentismos de este profesional en su propia página.</p>
         <a
           data-testid="availability-link"
           class="staff-form-page__secondary"

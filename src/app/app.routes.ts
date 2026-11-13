@@ -292,7 +292,7 @@ export const routes: Routes = [
     path: 'public',
     loadComponent: loadScaffoldSection,
     data: {
-      title: 'Area publica',
+      title: 'Área pública',
       description: 'Explora la landing, los perfiles profesionales y su disponibilidad.',
     },
   },
@@ -311,7 +311,7 @@ export const routes: Routes = [
           import('./features/auth/pages/login-page/login-page.component').then(
             (module) => module.LoginPageComponent,
           ),
-        title: 'Iniciar sesion',
+        title: 'Iniciar sesión',
       },
       {
         path: 'register',
@@ -410,7 +410,7 @@ export const routes: Routes = [
     data: {
       roles: [ROLE_NAMES.customer],
     },
-    title: 'Mis resenas',
+    title: 'Mis reseñas',
   },
   {
     path: 'staff/profile',
@@ -500,7 +500,7 @@ export const routes: Routes = [
     data: {
       roles: [ROLE_NAMES.admin],
     },
-    title: 'Gestion de profesionales',
+    title: 'Gestión de profesionales',
   },
   {
     path: 'admin/appointments',

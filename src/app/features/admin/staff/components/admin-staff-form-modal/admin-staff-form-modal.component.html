@@ -3,7 +3,7 @@
 <div class="staff-modal__panel" role="dialog" aria-modal="true" [attr.aria-label]="pageTitle()">
   <div class="staff-modal__header">
     <div>
-      <p class="staff-modal__eyebrow">Gestion</p>
+      <p class="staff-modal__eyebrow">Gestión</p>
       <h2>{{ pageTitle() }}</h2>
     </div>
     <button
@@ -43,12 +43,13 @@
           <div class="staff-modal__grid">
             <div class="staff-modal__field staff-modal__field--wide">
               <label for="modal-fullName">Nombre completo</label>
-              <input
+              <input maxlength="120"
                 id="modal-fullName"
                 type="text"
                 formControlName="fullName"
                 autocomplete="name"
               />
+              <app-field-error controlName="fullName" />
               @if (showError('fullName', 'required')) {
                 <p class="staff-modal__error">Ingresa el nombre completo.</p>
               }
@@ -58,10 +59,10 @@
             </div>
 
             <div class="staff-modal__field">
-              <label for="modal-email">Correo electronico</label>
+              <label for="modal-email">Correo electrónico</label>
               <input id="modal-email" type="email" formControlName="email" autocomplete="email" />
               @if (showError('email', 'required')) {
-                <p class="staff-modal__error">Ingresa el correo electronico.</p>
+                <p class="staff-modal__error">Ingresa el correo electrónico.</p>
               }
               @if (showError('email', 'email')) {
                 <p class="staff-modal__error">Ingresa un correo valido.</p>
@@ -70,25 +71,27 @@
 
             @if (!isEditMode()) {
               <div class="staff-modal__field">
-                <label for="modal-initialPassword">Contrasena inicial</label>
-                <input
+                <label for="modal-initialPassword">Contraseña inicial</label>
+                <input maxlength="128"
                   id="modal-initialPassword"
                   type="password"
                   formControlName="initialPassword"
                   autocomplete="new-password"
                 />
+                <app-field-error controlName="initialPassword" />
                 @if (showError('initialPassword', 'required')) {
-                  <p class="staff-modal__error">Ingresa una contrasena inicial.</p>
+                  <p class="staff-modal__error">Ingresa una contraseña inicial.</p>
                 }
                 @if (showError('initialPassword', 'minlength')) {
-                  <p class="staff-modal__error">La contrasena debe tener al menos 8 caracteres.</p>
+                  <p class="staff-modal__error">La contraseña debe tener al menos 8 caracteres.</p>
                 }
               </div>
             }
 
             <div class="staff-modal__field">
               <label for="modal-displayName">Nombre visible</label>
-              <input id="modal-displayName" type="text" formControlName="displayName" />
+              <input maxlength="120" id="modal-displayName" type="text" formControlName="displayName" />
+              <app-field-error controlName="displayName" />
               @if (showError('displayName', 'required')) {
                 <p class="staff-modal__error">Ingresa el nombre visible.</p>
               }
@@ -100,15 +103,15 @@
             </div>
 
             <div class="staff-modal__field">
-              <label for="modal-phoneNumber">Telefono (opcional)</label>
-              <input
+              <label for="modal-phoneNumber">Teléfono (opcional)</label>
+              <input maxlength="40"
                 id="modal-phoneNumber"
                 type="tel"
                 formControlName="phoneNumber"
                 autocomplete="tel"
               />
               @if (showError('phoneNumber', 'maxlength')) {
-                <p class="staff-modal__error">El telefono debe tener 40 caracteres o menos.</p>
+                <p class="staff-modal__error">El teléfono debe tener 40 caracteres o menos.</p>
               }
             </div>
 

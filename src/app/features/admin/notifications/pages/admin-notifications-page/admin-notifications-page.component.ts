@@ -157,7 +157,7 @@ export class AdminNotificationsPageComponent implements OnInit {
 
     try {
       const campaign = await firstValueFrom(this.notificationsApiService.broadcast(request));
-      this.successMessage.set(`Notificacion enviada a ${campaign.recipientCount} cliente(s).`);
+      this.successMessage.set(`Notificación enviada a ${campaign.recipientCount} cliente(s).`);
       this.resetForm();
       await this.loadCampaigns();
     } catch (error) {

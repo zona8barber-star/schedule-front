@@ -1,5 +1,6 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { trimmedMinLength, trimmedRequired } from '../../../../../core/utils/form-validators';
 import { firstValueFrom } from 'rxjs';
 
 import { LandingContentResponse } from '../../../../../core/models/content.models';
@@ -9,9 +10,11 @@ import { googleMapsUrlValidator } from '../../../../../core/utils/safe-url.utils
 import { ApiFeedbackComponent } from '../../../../../shared/components/api-feedback/api-feedback.component';
 import { PageStateComponent } from '../../../../../shared/components/page-state/page-state.component';
 
+import { FieldErrorComponent } from '../../../../../shared/components/field-error/field-error.component';
+
 @Component({
   selector: 'app-admin-landing-content-page',
-  imports: [ReactiveFormsModule, ApiFeedbackComponent, PageStateComponent],
+  imports: [FieldErrorComponent, ReactiveFormsModule, ApiFeedbackComponent, PageStateComponent],
   templateUrl: './admin-landing-content-page.component.html',
   styleUrl: './admin-landing-content-page.component.scss',
 })
@@ -28,13 +31,13 @@ export class AdminLandingContentPageComponent implements OnInit {
   readonly submitLabel = computed(() => (this.isSubmitting() ? 'Guardando...' : 'Guardar cambios'));
 
   readonly landingForm = this.formBuilder.group({
-    heroTitle: ['', [Validators.required, Validators.maxLength(200)]],
-    heroSubtitle: ['', [Validators.maxLength(500)]],
+    heroTitle: ['', [trimmedRequired, trimmedMinLength(2), Validators.maxLength(200)]],
+    heroSubtitle: ['', [Validators.maxLength(400)]],
     aboutTitle: ['', [Validators.maxLength(200)]],
-    aboutText: ['', [Validators.maxLength(3000)]],
-    contactPhone: ['', [Validators.maxLength(120)]],
+    aboutText: ['', [Validators.maxLength(4000)]],
+    contactPhone: ['', [Validators.maxLength(40)]],
     mapsUrl: ['', [Validators.maxLength(2000), googleMapsUrlValidator()]],
-    address: ['', [Validators.maxLength(400)]],
+    address: ['', [Validators.maxLength(300)]],
   });
 
   async ngOnInit(): Promise<void> {

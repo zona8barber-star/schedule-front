@@ -11,14 +11,17 @@ import { getApiErrorMessage } from '../../../../../core/utils/api-error.utils';
 import { bogotaToday } from '../../../../../core/utils/bogota-date.utils';
 import { ApiFeedbackComponent } from '../../../../../shared/components/api-feedback/api-feedback.component';
 import { PageStateComponent } from '../../../../../shared/components/page-state/page-state.component';
+import { trimmedMinLength, trimmedRequired } from '../../../../../core/utils/form-validators';
 
 const MAX_FILE_BYTES = 10_485_760; // 10 MB
 
 type ProfileTab = 'info' | 'password';
 
+import { FieldErrorComponent } from '../../../../../shared/components/field-error/field-error.component';
+
 @Component({
   selector: 'app-customer-profile-page',
-  imports: [ReactiveFormsModule, ApiFeedbackComponent, PageStateComponent],
+  imports: [FieldErrorComponent, ReactiveFormsModule, ApiFeedbackComponent, PageStateComponent],
   templateUrl: './customer-profile-page.component.html',
   styleUrl: './customer-profile-page.component.scss',
 })
@@ -57,7 +60,7 @@ export class CustomerProfilePageComponent implements OnInit {
   readonly todayIso = () => bogotaToday();
 
   readonly infoForm = this.fb.group({
-    fullName: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(120)]],
+    fullName: ['', [trimmedRequired, trimmedMinLength(2), Validators.maxLength(120)]],
     phoneNumber: ['', [Validators.maxLength(40)]],
     // SONDA BUG-059: the API range, 1900-01-01 to today in Bogotá.
     dateOfBirth: ['', [dateOfBirthValidator()]],

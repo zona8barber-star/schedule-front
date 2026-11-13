@@ -1,9 +1,9 @@
 <section class="admin-content-page">
   <header class="admin-content-page__hero">
     <div>
-      <p class="admin-content-page__eyebrow">Gestion</p>
+      <p class="admin-content-page__eyebrow">Gestión</p>
       <h1>Marca</h1>
-      <p>Configura nombre y colores principales para la experiencia publica.</p>
+      <p>Configura nombre y colores principales para la experiencia pública.</p>
     </div>
   </header>
 
@@ -12,14 +12,15 @@
     <app-api-feedback severity="info" [message]="successMessage()" />
 
     @if (isLoading()) {
-      <app-page-state kind="loading" message="Cargando configuracion de marca..." />
+      <app-page-state kind="loading" message="Cargando configuración de marca..." />
     } @else {
       <form [formGroup]="brandingForm" (ngSubmit)="submit()" novalidate>
         <fieldset [disabled]="isBusy()">
           <div class="admin-content-page__grid">
             <div class="admin-content-page__field admin-content-page__field--wide">
               <label for="appName">Nombre visible</label>
-              <input id="appName" type="text" formControlName="appName" />
+              <input maxlength="120" id="appName" type="text" formControlName="appName" />
+              <app-field-error controlName="appName" [kinds]="['minlength', 'maxlength']" />
               @if (showError('appName', 'required')) {
                 <p class="admin-content-page__error">El nombre de la app es obligatorio.</p>
               }
