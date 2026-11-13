@@ -5,21 +5,56 @@
     <p>Elegi un profesional, revisa su disponibilidad y reserva en segundos.</p>
   </header>
 
-  <article class="booking-landing-page__panel">
-    <h2 class="booking-landing-page__section-title">Proximo turno</h2>
-    <p class="booking-landing-page__empty">Todavia no tenes citas agendadas.</p>
-  </article>
+  @if (showsNextAppointment()) {
+    <article class="booking-landing-page__panel" data-testid="next-appointment">
+      <h2 class="booking-landing-page__section-title">Próximo turno</h2>
+      @switch (nextState()) {
+        @case ('loading') {
+          <p class="booking-landing-page__empty">Cargando tu próximo turno...</p>
+        }
+        @case ('anonymous') {
+          <p class="booking-landing-page__empty">
+            <a routerLink="/auth/login" [queryParams]="{ returnUrl: '/booking' }">Inicia sesión</a>
+            para ver tu próximo turno.
+          </p>
+        }
+        @case ('ready') {
+          @if (nextAppointment(); as next) {
+            <div class="booking-landing-page__next">
+              <strong>{{ formatDateTime(next.startsAtUtc) }}</strong>
+              <span>
+                {{ next.staffName ?? 'Tu profesional' }}@if (next.generalServiceName) {
+                  · {{ next.generalServiceName }}
+                }
+              </span>
+              <span class="booking-landing-page__status">{{ statusLabel(next) }}</span>
+              <a routerLink="/customer/appointments" class="booking-landing-page__link">Ver mis citas</a>
+            </div>
+          }
+        }
+        @case ('none') {
+          <p class="booking-landing-page__empty">Todavía no tienes citas agendadas.</p>
+        }
+        @case ('error') {
+          <p class="booking-landing-page__empty">
+            No pudimos cargar tu próximo turno.
+            <a routerLink="/customer/appointments">Revisa tus citas</a>.
+          </p>
+        }
+      }
+    </article>
+  }
 
-  <!-- TODO(visual-refresh): wire to real services list -->
-  <article class="booking-landing-page__panel">
-    <h2 class="booking-landing-page__section-title">Servicios populares</h2>
-    <div class="booking-landing-page__chips">
-      <span class="booking-landing-page__chip">Corte clasico</span>
-      <span class="booking-landing-page__chip">Barba</span>
-      <span class="booking-landing-page__chip">Corte + Barba</span>
-      <span class="booking-landing-page__chip">Color</span>
-    </div>
-  </article>
+  @if (servicesLoaded() && services().length) {
+    <article class="booking-landing-page__panel" data-testid="services">
+      <h2 class="booking-landing-page__section-title">Servicios disponibles</h2>
+      <div class="booking-landing-page__chips">
+        @for (service of services(); track service.generalServiceId) {
+          <span class="booking-landing-page__chip">{{ service.name }}</span>
+        }
+      </div>
+    </article>
+  }
 
   <a class="booking-landing-page__cta" routerLink="/staff">Reservar cita</a>
 </section>

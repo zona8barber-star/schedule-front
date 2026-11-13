@@ -1,5 +1,5 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 
 import {
@@ -10,12 +10,14 @@ import {
   PublicStaffProfileResponse,
   PublicStaffServiceResponse,
 } from '../../../../core/models/content.models';
+import { MAX_PAGE_SIZE } from '../../../../core/models/paged-result.models';
 import { CustomerAppointmentsApiService } from '../../../../core/services/customer-appointments-api.service';
 import { PublicStaffApiService } from '../../../../core/services/public-staff-api.service';
 import { getApiErrorMessage } from '../../../../core/utils/api-error.utils';
 import { BOGOTA_TIME_ZONE, bogotaDateKey } from '../../../../core/utils/bogota-date.utils';
 import { ApiFeedbackComponent } from '../../../../shared/components/api-feedback/api-feedback.component';
 import { PageStateComponent } from '../../../../shared/components/page-state/page-state.component';
+import { whatsAppUrl } from '../../../../core/utils/whatsapp-link.utils';
 
 @Component({
   selector: 'app-booking-confirm-page',
@@ -25,6 +27,7 @@ import { PageStateComponent } from '../../../../shared/components/page-state/pag
 })
 export class BookingConfirmPageComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
   private readonly customerAppointmentsApiService = inject(CustomerAppointmentsApiService);
   private readonly publicStaffApiService = inject(PublicStaffApiService);
   private readonly dateTimeFormatter = new Intl.DateTimeFormat('es-CO', {
@@ -41,6 +44,9 @@ export class BookingConfirmPageComponent implements OnInit {
   readonly generalServiceId = signal<string | null>(
     this.route.snapshot.queryParamMap.get('generalServiceId'),
   );
+  /** Set once the booking exists: the page then shows it instead of offering to book again (SONDA BUG-043). */
+  readonly bookedAppointmentId = signal<string | null>(this.route.snapshot.queryParamMap.get('appointmentId'));
+  readonly isLoadingBooked = signal(false);
   readonly staffProfile = signal<PublicStaffProfileResponse | null>(null);
   readonly isSubmitting = signal(false);
   readonly errorMessage = signal<string | null>(null);
@@ -86,17 +92,17 @@ export class BookingConfirmPageComponent implements OnInit {
     const staff = this.staffProfile();
     if (!appointment || !staff?.phoneNumber) return null;
 
-    const phone = staff.phoneNumber.replace(/\D/g, '');
-    if (!phone) return null;
-
     const formattedDate = this.formatDateTime(appointment.startsAtUtc);
-    const message = `Hola ${staff.displayName}, tengo una cita el ${formattedDate}`;
-
-    return `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
+    return whatsAppUrl(staff.phoneNumber, `Hola ${staff.displayName}, tengo una cita el ${formattedDate}`);
   });
 
   async ngOnInit(): Promise<void> {
-    const staffProfileId = this.staffProfileId();
+    const bookedAppointmentId = this.bookedAppointmentId();
+    if (bookedAppointmentId) {
+      await this.showBookedAppointment(bookedAppointmentId);
+    }
+
+    const staffProfileId = this.staffProfileId() ?? this.successAppointment()?.staffProfileId;
     if (!staffProfileId) return;
 
     try {
@@ -133,14 +139,61 @@ export class BookingConfirmPageComponent implements OnInit {
         notes: null,
       };
 
-      this.successAppointment.set(
-        await firstValueFrom(this.customerAppointmentsApiService.create(request)),
-      );
+      this.showSuccess(await firstValueFrom(this.customerAppointmentsApiService.create(request)));
     } catch (error) {
-      this.slotTaken.set(isHttpConflict(error));
-      this.errorMessage.set(getBookingErrorMessage(error));
+      // The customer may already hold this very slot (a second tab, an old link): that is not "taken".
+      const own = isHttpConflict(error) ? await this.findOwnBooking(staffProfileId, startsAtUtc) : null;
+      if (own) {
+        this.showSuccess(own);
+      } else {
+        this.slotTaken.set(isHttpConflict(error));
+        this.errorMessage.set(getBookingErrorMessage(error));
+      }
     } finally {
       this.isSubmitting.set(false);
+    }
+  }
+
+  /**
+   * Shows the booking and replaces the URL with one that points to it: reloading or coming back to this page
+   * shows the booking again instead of "Confirmar reserva" for a slot the customer already took (SONDA BUG-043).
+   */
+  private showSuccess(appointment: AppointmentResponse): void {
+    this.successAppointment.set(appointment);
+    this.bookedAppointmentId.set(appointment.id);
+    void this.router
+      .navigate(['/booking/confirm'], { queryParams: { appointmentId: appointment.id }, replaceUrl: true })
+      .catch(() => undefined);
+  }
+
+  private async showBookedAppointment(appointmentId: string): Promise<void> {
+    this.isLoadingBooked.set(true);
+    try {
+      this.successAppointment.set(await firstValueFrom(this.customerAppointmentsApiService.getById(appointmentId)));
+    } catch (error) {
+      this.errorMessage.set(getApiErrorMessage(error, 'No pudimos cargar tu reserva. Revísala en «Mis citas».'));
+    } finally {
+      this.isLoadingBooked.set(false);
+    }
+  }
+
+  /** An active upcoming appointment of this customer with this professional at this exact time, if any. */
+  private async findOwnBooking(staffProfileId: string, startsAtUtc: string): Promise<AppointmentResponse | null> {
+    try {
+      const upcoming = await firstValueFrom(
+        this.customerAppointmentsApiService.list({ scope: 'Upcoming', pageSize: MAX_PAGE_SIZE }),
+      );
+      const startsAt = Date.parse(startsAtUtc);
+      return (
+        upcoming.items.find(
+          (appointment) =>
+            appointment.staffProfileId === staffProfileId &&
+            Date.parse(appointment.startsAtUtc) === startsAt &&
+            (appointment.status === 'Pending' || appointment.status === 'Confirmed'),
+        ) ?? null
+      );
+    } catch {
+      return null;
     }
   }
 

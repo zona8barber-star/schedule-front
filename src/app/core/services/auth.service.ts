@@ -213,20 +213,39 @@ export class AuthService {
     return '/';
   }
 
+  /**
+   * A path of this app to come back to after signing in, with its query string and fragment (SONDA BUG-064), or
+   * null. Anything else (another origin, "//host", backslashes, encoded slashes that the router would read as an
+   * empty segment such as "/%2F%2Fevil.example", the sign-in pages) falls back to the destination by role
+   * (SONDA BUG-011).
+   */
   private normalizeReturnUrl(returnUrl?: string | null): string | null {
-    if (!returnUrl?.startsWith('/')) {
+    if (!returnUrl?.startsWith('/') || returnUrl.startsWith('//') || returnUrl.includes('\\')) {
       return null;
     }
 
     try {
       const parsed = new URL(returnUrl, 'http://localhost');
+      if (parsed.origin !== 'http://localhost') {
+        return null;
+      }
 
-      if (parsed.origin !== 'http://localhost' || authEntryPaths.has(parsed.pathname)) {
+      const segments = parsed.pathname.split('/').slice(1).map((segment) => decodeURIComponent(segment));
+      if (segments.length > 1 && segments[segments.length - 1] === '') {
+        segments.pop(); // a trailing slash is harmless
+      }
+      const isRoot = segments.length === 1 && segments[0] === '';
+      const hasUnsafeSegment = segments.some(
+        (segment) =>
+          segment === '' || /[/\\]/.test(segment) || [...segment].some((character) => character.charCodeAt(0) < 0x20),
+      );
+      if ((!isRoot && hasUnsafeSegment) || authEntryPaths.has(`/${segments.join('/')}`)) {
         return null;
       }
 
       return `${parsed.pathname}${parsed.search}${parsed.hash}`;
     } catch {
+      // Malformed percent-encoding.
       return null;
     }
   }

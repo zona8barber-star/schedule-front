@@ -38,6 +38,7 @@ import { PublicContentApiService } from '../../services/public-content-api.servi
 import { PushNotificationService } from '../../services/push-notification.service';
 import { ToastService } from '../../services/toast.service';
 import { TabHighlightStyle, computeTabHighlightStyle } from '../../utils/tab-highlight.utils';
+import { whatsAppUrl } from '../../utils/whatsapp-link.utils';
 
 interface FooterSocialLink {
   label: string;
@@ -80,10 +81,7 @@ export class AppShellComponent {
   // Alimenta el botón flotante de WhatsApp visible en toda la app.
   private readonly contactPhone = signal<string | null>(null);
 
-  readonly whatsappUrl = computed<string | null>(() => {
-    const digits = this.contactPhone()?.replace(/\D/g, '') ?? '';
-    return digits ? `https://wa.me/+57${digits}` : null;
-  });
+  readonly whatsappUrl = computed<string | null>(() => whatsAppUrl(this.contactPhone()));
 
   readonly isSigningOut = signal(false);
 

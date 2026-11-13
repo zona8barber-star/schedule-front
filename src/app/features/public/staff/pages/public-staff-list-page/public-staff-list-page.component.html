@@ -14,12 +14,12 @@
   <div class="ps__wrap ps__search-wrap">
     <div class="ps__search-card">
       <span class="ps__kicker">Buscar por nombre</span>
-      <form class="ps__search-row" (ngSubmit)="submitSearch()" novalidate>
+      <form class="ps__search-row" [formGroup]="searchForm" (ngSubmit)="submitSearch()" novalidate>
         <input
           class="ps__search-input"
           id="staffSearch"
           type="search"
-          [formControl]="searchControl"
+          formControlName="search"
           placeholder="Ejemplo: fade, barba, Marco…"
           autocomplete="off"
         />

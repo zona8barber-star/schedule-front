@@ -1,5 +1,6 @@
 import { Component, input, output } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { safeGoogleMapsUrl, safeHttpUrl } from '../../../../core/utils/safe-url.utils';
 
 import {
   BannerResponse,
@@ -16,6 +17,10 @@ import {
   styleUrl: './native-home.component.scss',
 })
 export class NativeHomeComponent {
+  /** Links from the CMS are shown only when they are http(s) (SONDA BUG-047). */
+  readonly safeUrl = safeHttpUrl;
+  readonly safeMapsUrl = safeGoogleMapsUrl;
+
   readonly greetingName = input<string | null>(null);
   readonly landingContent = input<LandingContentResponse | null>(null);
   readonly isOpenNow = input(false);

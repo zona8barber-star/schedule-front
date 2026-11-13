@@ -157,7 +157,9 @@ export class SlotPickerComponent implements OnInit {
     }
 
     this.initialized = true;
-    void this.loadWindow(!hasInitialDate);
+    // Also with a requested day (e.g. ?fecha=hoy): a day without free time moves on to the next one that has
+    // some (SONDA BUG-026).
+    void this.loadWindow(true);
   }
 
   formatTime(slot: PublicAvailabilitySlotResponse): string {
@@ -206,7 +208,9 @@ export class SlotPickerComponent implements OnInit {
     }
 
     if (selectFirstAvailable && this.selectedSlots()?.length === 0) {
-      const firstWithSlots = this.days().find((day) => (day.slotCount ?? 0) > 0);
+      // The first day with free time from the selected one on (today when nothing was requested).
+      const from = this.selectedDate();
+      const firstWithSlots = this.days().find((day) => day.date >= from && (day.slotCount ?? 0) > 0);
       if (firstWithSlots) {
         this.selectedDate.set(firstWithSlots.date);
         this.scrollSelectedDayIntoView();

@@ -127,6 +127,12 @@ function resolveErrorMessage(
   const method = requestMethod.toUpperCase();
 
   if (method === 'GET') {
+    // The forms that ask for a professional's services show their own message next to the field; a toast about
+    // "the appointments" there was false, they had loaded (SONDA BUG-032).
+    if (requestPath.endsWith('/appointments/service-options')) {
+      return null;
+    }
+
     if (requestPath.startsWith('/public/content')) {
       return 'No pudimos cargar el contenido principal por ahora.';
     }
@@ -179,6 +185,11 @@ function resolveErrorMessage(
     if (requestPath.startsWith('/admin/content')) {
       return 'No pudimos cargar este contenido por ahora.';
     }
+  }
+
+  // The booking page explains a conflict itself, and it may be the customer's own appointment (SONDA BUG-043).
+  if (error.status === 409 && method === 'POST' && requestPath === '/customer/appointments') {
+    return null;
   }
 
   if (error.status === 409 && requestPath.includes('/appointments')) {

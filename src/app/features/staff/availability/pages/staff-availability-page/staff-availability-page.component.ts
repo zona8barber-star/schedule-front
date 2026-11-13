@@ -27,6 +27,12 @@ import {
   toUtcIsoString,
 } from '../../../../../core/utils/availability-form.utils';
 import { getApiErrorMessage } from '../../../../../core/utils/api-error.utils';
+import {
+  bogotaDateKeyFromToday,
+  bogotaDateTimeFormat,
+  bogotaStartOfDay,
+  bogotaToday,
+} from '../../../../../core/utils/bogota-date.utils';
 import { ApiFeedbackComponent } from '../../../../../shared/components/api-feedback/api-feedback.component';
 import { PageStateComponent } from '../../../../../shared/components/page-state/page-state.component';
 
@@ -40,14 +46,14 @@ export class StaffAvailabilityPageComponent {
   private readonly staffAvailabilityApiService = inject(StaffAvailabilityApiService);
   private readonly staffProfileApiService = inject(StaffProfileApiService);
   private readonly confirmModal = inject(ConfirmModalService);
-  private readonly dateTimeFormatter = new Intl.DateTimeFormat('es-AR', {
+  private readonly dateTimeFormatter = bogotaDateTimeFormat('es-AR', {
     dateStyle: 'medium',
     timeStyle: 'short',
   });
 
   readonly dayOptions = STAFF_AVAILABILITY_DAYS;
 
-  // â”€â”€ State â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── State ──────────────────────────────────────────────────────────────
   readonly activeTab = signal<'availability' | 'absences'>('availability');
   readonly showAbsenceModal = signal(false);
   readonly summary = signal<AvailabilitySummary | null>(null);
@@ -67,7 +73,7 @@ export class StaffAvailabilityPageComponent {
   readonly absenceErrorMessage = signal<string | null>(null);
   readonly durationErrorMessage = signal<string | null>(null);
 
-  // â”€â”€ Computed â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Computed ───────────────────────────────────────────────────────────
   readonly isRulesBusy = computed(() => this.isLoading() || this.isSavingRules());
   readonly isAbsenceBusy = computed(
     () => this.isLoading() || this.isSavingAbsence() || this.deletingAbsenceId() !== null,
@@ -95,24 +101,13 @@ export class StaffAvailabilityPageComponent {
   });
 
   // Min date/datetime for absence form (tomorrow, not today)
-  readonly minStartDate: string = (() => {
-    const d = new Date();
-    d.setDate(d.getDate() + 1);
-    const y = d.getFullYear();
-    const m = String(d.getMonth() + 1).padStart(2, '0');
-    const day = String(d.getDate()).padStart(2, '0');
-    return `${y}-${m}-${day}`;
-  })();
+  readonly minStartDate: string = bogotaDateKeyFromToday(1);
 
   get minStartDatetime(): string {
-    const tomorrow = new Date();
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    tomorrow.setHours(0, 0, 0, 0);
-    const offset = tomorrow.getTimezoneOffset() * 60_000;
-    return new Date(tomorrow.getTime() - offset).toISOString().slice(0, 16);
+    return `${bogotaDateKeyFromToday(1)}T00:00`;
   }
 
-  // â”€â”€ Forms â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Forms ──────────────────────────────────────────────────────────────
   readonly daysForm = new FormGroup({
     days: new FormArray<DayRuleFormGroup>(
       STAFF_AVAILABILITY_DAYS.map((d) => createDayRuleForm(d.dayOfWeek)),
@@ -138,7 +133,7 @@ export class StaffAvailabilityPageComponent {
     void this.loadAvailability();
   }
 
-  // â”€â”€ Accessors â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Accessors ──────────────────────────────────────────────────────────
   get daysArray(): FormArray<DayRuleFormGroup> {
     return this.daysForm.controls.days;
   }
@@ -200,7 +195,7 @@ export class StaffAvailabilityPageComponent {
     }
   }
 
-  // â”€â”€ Rule methods â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Rule methods ───────────────────────────────────────────────────────
 
   /** Normal method (not computed) so it re-evaluates on every change detection
    *  when Angular re-renders the template. */
@@ -289,12 +284,10 @@ export class StaffAvailabilityPageComponent {
     }
   }
 
-  // â”€â”€ Absence methods â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Absence methods ────────────────────────────────────────────────────
 
   isAbsencePast(period: UnavailablePeriod): boolean {
-    const todayStart = new Date();
-    todayStart.setHours(0, 0, 0, 0);
-    return new Date(period.startsAtUtc) < todayStart;
+    return new Date(period.startsAtUtc) < bogotaStartOfDay(bogotaToday());
   }
 
   openAbsenceModal(period?: UnavailablePeriod): void {
@@ -418,16 +411,16 @@ export class StaffAvailabilityPageComponent {
     );
   }
 
-  // â”€â”€ Formatting â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Formatting ─────────────────────────────────────────────────────────
   formatPeriodWindow(period: UnavailablePeriod): string {
-    return `${this.formatTimestamp(period.startsAtUtc)} â€” ${this.formatTimestamp(period.endsAtUtc)}`;
+    return `${this.formatTimestamp(period.startsAtUtc)} — ${this.formatTimestamp(period.endsAtUtc)}`;
   }
 
   formatTimestamp(value: string): string {
     return this.dateTimeFormatter.format(new Date(value));
   }
 
-  // â”€â”€ Private â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Private ────────────────────────────────────────────────────────────
   private async loadAvailability(): Promise<void> {
     this.isLoading.set(true);
     this.pageErrorMessage.set(null);

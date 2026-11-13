@@ -74,6 +74,33 @@ describe('AdminStaffAvailabilityPageComponent', () => {
     expect(fixture.componentInstance.summary()?.rules.length).toBe(1);
   });
 
+  it('renders absences with an em dash, like the staff screen (SONDA BUG-029)', async () => {
+    const period = {
+      id: 'p1',
+      startsAtUtc: '2030-11-23T14:00:00Z',
+      endsAtUtc: '2030-11-23T15:00:00Z',
+      reason: null,
+      createdAtUtc: '2030-11-01T00:00:00Z',
+    };
+    fixture.detectChanges();
+    httpMock.expectOne(staffUrl).flush(staffView);
+    httpMock.expectOne(availabilityBase).flush({
+      staffProfileId: staffId,
+      defaultAppointmentDurationMinutes: 30,
+      rules: [],
+      unavailablePeriods: [period],
+    });
+    httpMock.expectOne(`${availabilityBase}/unavailable-periods`).flush([period]);
+    await new Promise<void>((resolve) => setTimeout(resolve, 0));
+    fixture.componentInstance.activeTab.set('absences');
+    fixture.detectChanges();
+
+    const row = (fixture.nativeElement as HTMLElement).querySelector('.avail-page__table tbody tr')!;
+    const cells = Array.from(row.querySelectorAll('td')).map((cell) => cell.textContent!.trim());
+    expect(fixture.componentInstance.formatPeriodWindow(period)).toContain(' — ');
+    expect(cells).toContain('—');
+  });
+
   it('shows a page error when the staff profile cannot be loaded', () => {
     fixture.detectChanges();
 

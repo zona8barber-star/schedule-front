@@ -8,6 +8,7 @@ import {
 } from '@angular/forms';
 
 import { UnavailablePeriod } from '../models/availability.models';
+import { bogotaDateKeyFromToday, bogotaLocalToUtcIso, bogotaToday, utcToBogotaLocal } from './bogota-date.utils';
 
 export type TimeBlockFormGroup = FormGroup<{
   startTime: FormControl<string>;
@@ -53,23 +54,14 @@ export function absenceValidator(): ValidatorFn {
 
     const errors: ValidationErrors = {};
 
+    // "Today" and "tomorrow" are Bogotá days, whatever the device timezone (SONDA BUG-030).
     if (isAllDay) {
-      const today = new Date();
-      const y = today.getFullYear();
-      const m = String(today.getMonth() + 1).padStart(2, '0');
-      const d = String(today.getDate()).padStart(2, '0');
-      const todayStr = `${y}-${m}-${d}`;
-
-      if (start <= todayStr) errors['pastStart'] = true;
+      if (start <= bogotaToday()) errors['pastStart'] = true;
       if (end < start) errors['timeRange'] = true;
     } else {
-      const tomorrow = new Date();
-      tomorrow.setDate(tomorrow.getDate() + 1);
-      tomorrow.setHours(0, 0, 0, 0);
-      const offset = tomorrow.getTimezoneOffset() * 60_000;
-      const tomorrowLocal = new Date(tomorrow.getTime() - offset).toISOString().slice(0, 16);
+      const tomorrowStart = `${bogotaDateKeyFromToday(1)}T00:00`;
 
-      if (start < tomorrowLocal) errors['pastStart'] = true;
+      if (start < tomorrowStart) errors['pastStart'] = true;
       if (end <= start) errors['timeRange'] = true;
     }
 
@@ -82,14 +74,17 @@ export function normalizeOptional(value: string | null | undefined): string | nu
   return v || null;
 }
 
+/**
+ * The value of a `datetime-local` input, read as Bogotá time (the shop's time), as a UTC ISO instant.
+ * Using the device timezone stored the periods shifted when the browser was not in Bogotá (SONDA BUG-030).
+ */
 export function toUtcIsoString(value: string): string {
-  return new Date(value).toISOString();
+  return bogotaLocalToUtcIso(value);
 }
 
+/** A UTC instant as the Bogotá value of a `datetime-local` input. */
 export function formatDateTimeLocal(value: string): string {
-  const date = new Date(value);
-  const offsetMs = date.getTimezoneOffset() * 60_000;
-  return new Date(date.getTime() - offsetMs).toISOString().slice(0, 16);
+  return utcToBogotaLocal(value);
 }
 
 export function sortPeriods(periods: UnavailablePeriod[]): UnavailablePeriod[] {
