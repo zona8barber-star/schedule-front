@@ -1,4 +1,4 @@
-import { DatePipe } from '@angular/common';
+import { BogotaDatePipe } from '../../../../../shared/pipes/bogota-date.pipe';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
@@ -17,7 +17,7 @@ type Choice = 'new' | 'existing' | null;
 /** The customer's own customer profile: shows it, or lets them create one or ask to be linked to their historical one. */
 @Component({
   selector: 'app-own-customer-profile-page',
-  imports: [DatePipe, ReactiveFormsModule, RouterLink, ApiFeedbackComponent, PageStateComponent],
+  imports: [BogotaDatePipe, ReactiveFormsModule, RouterLink, ApiFeedbackComponent, PageStateComponent],
   templateUrl: './own-customer-profile-page.component.html',
   styleUrl: './own-customer-profile-page.component.scss',
 })

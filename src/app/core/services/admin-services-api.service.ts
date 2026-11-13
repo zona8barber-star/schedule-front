@@ -6,6 +6,7 @@ import {
   ServiceCreateRequest,
   ServiceStatusUpdateRequest,
   ServiceUpdateRequest,
+  ServiceUsageView,
   ServiceListQuery,
   ServiceView,
 } from '../models/service.models';
@@ -54,6 +55,11 @@ export class AdminServicesApiService {
       this.buildUrl(`/admin/services/${serviceId}/status`),
       request,
     );
+  }
+
+  /** Active plans and rewards that use the rate (SONDA BUG-103), to warn before deleting it. */
+  getUsage(serviceId: string) {
+    return this.httpClient.get<ServiceUsageView>(this.buildUrl(`/admin/services/${serviceId}/usage`));
   }
 
   remove(serviceId: string) {

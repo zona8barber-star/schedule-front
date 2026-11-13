@@ -1,4 +1,4 @@
-import { DatePipe } from '@angular/common';
+import { BogotaDatePipe } from '../../../../../shared/pipes/bogota-date.pipe';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -26,7 +26,7 @@ import { PageStateComponent } from '../../../../../shared/components/page-state/
  */
 @Component({
   selector: 'app-admin-loyalty-rewards-page',
-  imports: [DatePipe, ReactiveFormsModule, ApiFeedbackComponent, PageStateComponent, PaginatorComponent],
+  imports: [BogotaDatePipe, ReactiveFormsModule, ApiFeedbackComponent, PageStateComponent, PaginatorComponent],
   templateUrl: './admin-loyalty-rewards-page.component.html',
   styleUrls: [
     '../admin-loyalty-settings-page/admin-loyalty-settings-page.component.scss',

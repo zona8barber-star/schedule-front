@@ -35,6 +35,7 @@ import { ConnectivityService } from '../../services/connectivity.service';
 import { HttpActivityService } from '../../services/http-activity.service';
 import { InstallPromptService } from '../../services/install-prompt.service';
 import { PublicContentApiService } from '../../services/public-content-api.service';
+import { PublicBrandingStore } from '../../services/public-branding.store';
 import { PushNotificationService } from '../../services/push-notification.service';
 import { ToastService } from '../../services/toast.service';
 import { TabHighlightStyle, computeTabHighlightStyle } from '../../utils/tab-highlight.utils';
@@ -75,6 +76,8 @@ export class AppShellComponent {
   private readonly swUpdate = inject(SwUpdate);
   private readonly toastService = inject(ToastService);
   private readonly publicContentApiService = inject(PublicContentApiService);
+  /** SONDA BUG-100: name and logo configured in «Marca», with the static ones as fallback. */
+  readonly brandingStore = inject(PublicBrandingStore);
   private readonly injector = inject(Injector);
 
   // Teléfono de contacto de la barbería, cargado una vez al iniciar el shell.
@@ -153,6 +156,9 @@ export class AppShellComponent {
   constructor() {
     // El shell se monta una sola vez por sesión, así que esta carga ocurre junto
     // con el arranque inicial (no se repite al navegar entre rutas).
+    // The shell is mounted once per session: the branding is read here (and shared with the landing).
+    void this.brandingStore.load().catch(() => undefined);
+
     this.publicContentApiService
       .getLanding()
       .pipe(takeUntilDestroyed())

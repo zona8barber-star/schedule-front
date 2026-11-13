@@ -1,4 +1,5 @@
-import { DatePipe, DecimalPipe } from '@angular/common';
+import { BogotaDatePipe } from '../../../../../shared/pipes/bogota-date.pipe';
+import { DecimalPipe } from '@angular/common';
 import { Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
@@ -14,7 +15,7 @@ import { MY_GIFT_STATUS_LABELS, MY_MEMBERSHIP_STATUS_LABELS, balanceAvailability
 /** Read-only detail of one of the signed-in customer's memberships. */
 @Component({
   selector: 'app-customer-membership-detail-page',
-  imports: [DatePipe, DecimalPipe, RouterLink, ApiFeedbackComponent, PageStateComponent],
+  imports: [BogotaDatePipe, DecimalPipe, RouterLink, ApiFeedbackComponent, PageStateComponent],
   templateUrl: './customer-membership-detail-page.component.html',
   styleUrl: '../../my-memberships.scss',
 })

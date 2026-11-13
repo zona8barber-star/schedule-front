@@ -103,7 +103,7 @@
               <span class="my-memberships__muted">{{ partsLabel(consumption) }}</span>
               @if (consumption.isReversed) {
                 <span class="my-memberships__muted">
-                  La barbería anuló este registro el {{ consumption.reversedAt | date: 'mediumDate' }}; esas unidades
+                  La barbería anuló este registro el {{ consumption.reversedAt | bogotaDate: 'mediumDate' }}; esas unidades
                   volvieron a tu saldo.
                 </span>
               }

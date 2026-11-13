@@ -6,7 +6,7 @@
       @if (!claim.accountIsActive) {
         · <strong>cuenta inactiva</strong>
       }
-      · enviada {{ claim.submittedAt | date: 'medium' }}
+      · enviada {{ claim.submittedAt | bogotaDate: 'medium' }}
     </p>
 
     <app-api-feedback severity="error" [message]="errorMessage()" />

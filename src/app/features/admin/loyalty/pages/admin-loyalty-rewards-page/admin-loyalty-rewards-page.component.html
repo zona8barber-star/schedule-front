@@ -97,7 +97,7 @@
               <ul class="rewards__history">
                 @for (change of history(); track change.id) {
                   <li>
-                    {{ change.changedAt | date: 'medium' }} · {{ change.changedByName ?? 'Usuario eliminado' }} ·
+                    {{ change.changedAt | bogotaDate: 'medium' }} · {{ change.changedByName ?? 'Usuario eliminado' }} ·
                     @if (change.changeType === 'Created') {
                       creada con {{ change.newPointsCost }} pts
                     } @else {

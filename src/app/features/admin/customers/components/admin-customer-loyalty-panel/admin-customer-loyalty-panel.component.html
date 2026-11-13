@@ -71,9 +71,9 @@
           <li>
             <strong>{{ debt.outstandingPoints }} / {{ debt.amount }} pts pendientes</strong>
             <span class="loyalty-panel__muted">
-              {{ debt.origin === 'MergeTransfer' ? 'Recibida por fusión' : 'Deuda' }} · originada {{ debt.incurredAt | date: 'mediumDate' }}
+              {{ debt.origin === 'MergeTransfer' ? 'Recibida por fusión' : 'Deuda' }} · originada {{ debt.incurredAt | bogotaDate: 'mediumDate' }}
               @if (debt.origin === 'MergeTransfer') {
-                · traspasada {{ debt.createdAt | date: 'mediumDate' }}
+                · traspasada {{ debt.createdAt | bogotaDate: 'mediumDate' }}
               }
             </span>
           </li>
@@ -99,7 +99,7 @@
             <strong>{{ redemption.rewardName }} · {{ redemption.pointsCost }} pts</strong>
             <span>{{ statusLabel(redemption.status) }}{{ redemption.isPastDeadline ? ' (plazo vencido)' : '' }}</span>
             <span class="loyalty-panel__muted">
-              Pedido {{ redemption.requestedAt | date: 'mediumDate' }}{{ redemption.channel === 'Counter' ? ' en mostrador' : '' }}
+              Pedido {{ redemption.requestedAt | bogotaDate: 'mediumDate' }}{{ redemption.channel === 'Counter' ? ' en mostrador' : '' }}
               @if (redemption.status === 'Requested') {
                 · aprobar hasta {{ redemption.approveBy | date: 'mediumDate' }}
               }
@@ -192,7 +192,7 @@
               <strong>{{ movementSign(movement.type) }}{{ movement.points }}</strong>
               <span>{{ movementLabel(movement.type) }}</span>
               <span class="loyalty-panel__muted">
-                {{ movement.performedAt | date: 'short' }}
+                {{ movement.performedAt | bogotaDate: 'short' }}
                 @if (movement.performedByName) {
                   · {{ movement.performedByName }}
                 }

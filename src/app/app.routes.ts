@@ -5,6 +5,7 @@ import { guestGuard } from './core/guards/guest.guard';
 import { permissionGuard } from './core/guards/permission.guard';
 import { roleGuard } from './core/guards/role.guard';
 import { PERMISSION_CODES, ROLE_NAMES } from './core/models/auth.models';
+import { brandTitleResolver } from './core/services/public-branding.store';
 import { customerClaimsQueryGuard } from './features/admin/customer-claims/customer-claims-query.guard';
 
 const loadScaffoldSection = () =>
@@ -284,7 +285,8 @@ export const routes: Routes = [
       import('./features/landing/pages/landing-shell-page/landing-shell-page.component').then(
         (module) => module.LandingShellPageComponent,
       ),
-    title: 'Zona 8',
+    // SONDA BUG-100: the tab shows the name configured in «Marca» (the static name only as fallback).
+    title: brandTitleResolver,
   },
   {
     path: 'public',

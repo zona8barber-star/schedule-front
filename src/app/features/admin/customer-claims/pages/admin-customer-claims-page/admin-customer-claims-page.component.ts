@@ -1,4 +1,4 @@
-import { DatePipe } from '@angular/common';
+import { BogotaDatePipe } from '../../../../../shared/pipes/bogota-date.pipe';
 import { Component, DestroyRef, OnInit, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, ParamMap, Router } from '@angular/router';
@@ -29,7 +29,7 @@ const STATUSES: readonly CustomerClaimStatus[] = TABS.map((tab) => tab.status);
  */
 @Component({
   selector: 'app-admin-customer-claims-page',
-  imports: [DatePipe, ApiFeedbackComponent, PageStateComponent, PaginatorComponent, AdminCustomerClaimReviewModalComponent],
+  imports: [BogotaDatePipe, ApiFeedbackComponent, PageStateComponent, PaginatorComponent, AdminCustomerClaimReviewModalComponent],
   templateUrl: './admin-customer-claims-page.component.html',
   styleUrl: '../../../service-records/pages/admin-service-records-page/admin-service-records-page.component.scss',
 })

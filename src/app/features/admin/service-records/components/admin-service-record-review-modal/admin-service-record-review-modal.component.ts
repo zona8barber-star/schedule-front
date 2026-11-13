@@ -78,6 +78,8 @@ export class AdminServiceRecordReviewModalComponent implements OnInit {
   readonly submitted = signal(false);
   readonly rejecting = signal(false);
   readonly customer = signal<ServiceRecordCustomerOption | null>(null);
+  /** Name of the live profile when the registered one was merged into it (SONDA BUG-105); null otherwise. */
+  readonly mergedInto = signal<string | null>(null);
   readonly customerResults = signal<ServiceRecordCustomerOption[]>([]);
   readonly isSearching = signal(false);
   readonly creatingCustomer = signal(false);
@@ -226,7 +228,20 @@ export class AdminServiceRecordReviewModalComponent implements OnInit {
     });
     void this.loadRelated();
 
-    if (this.record.customerId) {
+    // SONDA BUG-085: the memberships offered must be valid on the service date; a new date refreshes them.
+    this.form.controls.performedOn.valueChanges.subscribe(() => void this.refreshCustomerMemberships());
+
+    if (this.record.customerId && this.record.suggestedCustomerId) {
+      // SONDA BUG-105: the registered profile was merged; the live one (MergedIntoCustomerId) is preselected and said.
+      const results = await this.searchSilently(this.record.suggestedCustomerName ?? '');
+      this.mergedInto.set(this.record.suggestedCustomerName ?? 'otro perfil');
+      this.customer.set(results.find((option) => option.id === this.record.suggestedCustomerId) ?? {
+        id: this.record.suggestedCustomerId,
+        fullName: this.record.suggestedCustomerName ?? 'Cliente',
+        phoneHint: '',
+        memberships: [],
+      });
+    } else if (this.record.customerId) {
       // Preselect the customer the registration already identified (from the appointment).
       const results = await this.searchSilently(this.record.customerName ?? '');
       this.customer.set(results.find((option) => option.id === this.record.customerId) ?? {
@@ -247,6 +262,7 @@ export class AdminServiceRecordReviewModalComponent implements OnInit {
 
   selectCustomer(option: ServiceRecordCustomerOption): void {
     this.customer.set(option);
+    this.mergedInto.set(null);
     this.customerResults.set([]);
     this.form.controls.customerMembershipId.setValue(option.memberships.length === 1 ? option.memberships[0].id : '');
     this.applyPointsRule();
@@ -273,6 +289,7 @@ export class AdminServiceRecordReviewModalComponent implements OnInit {
 
   clearCustomer(): void {
     this.customer.set(null);
+    this.mergedInto.set(null);
     this.form.controls.customerMembershipId.setValue('');
     this.applyPointsRule();
     void this.refreshRedemptionOptions();
@@ -422,10 +439,24 @@ export class AdminServiceRecordReviewModalComponent implements OnInit {
     }
   }
 
+  /** Re-reads the selected customer's memberships for the current service date (SONDA BUG-085). */
+  private async refreshCustomerMemberships(): Promise<void> {
+    const selected = this.customer();
+    if (!selected) return;
+    const results = await this.searchSilently(selected.fullName);
+    const fresh = results.find((option) => option.id === selected.id);
+    const memberships = fresh?.memberships ?? [];
+    this.customer.set({ ...selected, memberships });
+    const chosen = this.form.controls.customerMembershipId.value;
+    if (chosen && !memberships.some((membership) => membership.id === chosen)) {
+      this.form.controls.customerMembershipId.setValue(memberships.length === 1 ? memberships[0].id : '');
+    }
+  }
+
   private async searchSilently(query: string): Promise<ServiceRecordCustomerOption[]> {
     this.isSearching.set(true);
     try {
-      return await firstValueFrom(this.api.customerOptions(query));
+      return await firstValueFrom(this.api.customerOptions(query, this.form.controls.performedOn.value || null));
     } catch (error) {
       this.errorMessage.set(getApiErrorMessage(error));
       return [];

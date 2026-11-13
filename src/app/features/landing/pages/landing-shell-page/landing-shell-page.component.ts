@@ -19,6 +19,7 @@ import { PublicAvailabilityApiService } from '../../../../core/services/public-a
 import { PublicContentApiService } from '../../../../core/services/public-content-api.service';
 import { PublicStaffApiService } from '../../../../core/services/public-staff-api.service';
 import { ThemeService } from '../../../../core/services/theme.service';
+import { PublicBrandingStore } from '../../../../core/services/public-branding.store';
 import { getApiErrorMessage } from '../../../../core/utils/api-error.utils';
 import { ApiFeedbackComponent } from '../../../../shared/components/api-feedback/api-feedback.component';
 import { PageStateComponent } from '../../../../shared/components/page-state/page-state.component';
@@ -46,6 +47,7 @@ export class LandingShellPageComponent implements OnInit {
   private readonly publicStaffApiService = inject(PublicStaffApiService);
   private readonly publicAvailabilityApiService = inject(PublicAvailabilityApiService);
   private readonly themeService = inject(ThemeService);
+  private readonly brandingStore = inject(PublicBrandingStore);
   private readonly sanitizer = inject(DomSanitizer);
 
   private readonly timeFormatter = new Intl.DateTimeFormat('es-CO', {
@@ -227,7 +229,8 @@ export class LandingShellPageComponent implements OnInit {
     const [landingResult, brandingResult, bannersResult, staffResult, scheduleResult, tickerItemsResult] =
       await Promise.allSettled([
         firstValueFrom(this.publicContentApiService.getLanding()),
-        firstValueFrom(this.publicContentApiService.getBranding()),
+        // Shared with the shell header and the tab title (SONDA BUG-100): one request for all of them.
+        this.brandingStore.load(),
         firstValueFrom(this.publicContentApiService.getBanners()),
         firstValueFrom(this.publicStaffApiService.list()),
         firstValueFrom(this.publicContentApiService.getBusinessSchedule()),

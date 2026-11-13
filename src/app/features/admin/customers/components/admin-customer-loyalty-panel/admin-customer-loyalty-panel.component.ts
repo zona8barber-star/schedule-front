@@ -1,3 +1,4 @@
+import { BogotaDatePipe } from '../../../../../shared/pipes/bogota-date.pipe';
 import { DatePipe } from '@angular/common';
 import { Component, DestroyRef, Input, OnInit, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -42,7 +43,7 @@ import { PaginatorComponent } from '../../../../../shared/components/paginator/p
 // movementFrom, movementTo and movementPage, so they do not clash with the other lists of the customer page.
 @Component({
   selector: 'app-admin-customer-loyalty-panel',
-  imports: [DatePipe, FormsModule, RouterLink, ApiFeedbackComponent, PaginatorComponent],
+  imports: [BogotaDatePipe, DatePipe, FormsModule, RouterLink, ApiFeedbackComponent, PaginatorComponent],
   templateUrl: './admin-customer-loyalty-panel.component.html',
   styleUrl: './admin-customer-loyalty-panel.component.scss',
 })

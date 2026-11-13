@@ -1,3 +1,4 @@
+import { BogotaDatePipe } from '../../../../../shared/pipes/bogota-date.pipe';
 import { DatePipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
@@ -60,7 +61,7 @@ const REDEMPTION_STATUSES: readonly LoyaltyRedemptionStatus[] = [
 // 30 days by default and at most 30 days per query (a pending status chosen there behaves like a queue).
 @Component({
   selector: 'app-admin-loyalty-redemptions-page',
-  imports: [DatePipe, FormsModule, ApiFeedbackComponent, PageStateComponent, PaginatorComponent],
+  imports: [BogotaDatePipe, DatePipe, FormsModule, ApiFeedbackComponent, PageStateComponent, PaginatorComponent],
   templateUrl: './admin-loyalty-redemptions-page.component.html',
   styleUrls: [
     '../../../service-records/pages/admin-service-records-page/admin-service-records-page.component.scss',

@@ -1,3 +1,4 @@
+import { BogotaDatePipe } from '../../../../../shared/pipes/bogota-date.pipe';
 import { DatePipe } from '@angular/common';
 import { Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -43,7 +44,7 @@ import { PaginatorComponent } from '../../../../../shared/components/paginator/p
  */
 @Component({
   selector: 'app-my-loyalty-page',
-  imports: [DatePipe, RouterLink, ApiFeedbackComponent, PageStateComponent, PaginatorComponent],
+  imports: [BogotaDatePipe, DatePipe, RouterLink, ApiFeedbackComponent, PageStateComponent, PaginatorComponent],
   templateUrl: './my-loyalty-page.component.html',
   styleUrl: '../../../memberships/my-memberships.scss',
 })

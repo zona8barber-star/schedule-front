@@ -98,7 +98,7 @@
 
         @if (settings()?.updatedAt) {
           <p class="admin-content-page__hint">
-            Última modificación: {{ settings()?.updatedAt | date: 'medium' }}
+            Última modificación: {{ settings()?.updatedAt | bogotaDate: 'medium' }}
             @if (settings()?.updatedByName) {
               por {{ settings()?.updatedByName }}
             }
@@ -133,7 +133,7 @@
         @for (change of changes(); track change.id) {
           <li>
             <span class="loyalty-settings__history-when">
-              {{ change.changedAt | date: 'medium' }} · {{ change.changedByName ?? 'Usuario eliminado' }}
+              {{ change.changedAt | bogotaDate: 'medium' }} · {{ change.changedByName ?? 'Usuario eliminado' }}
             </span>
             @if (change.previousIsEnabled !== change.newIsEnabled) {
               <span>Estado: {{ statusLabel(change.previousIsEnabled) }} → {{ statusLabel(change.newIsEnabled) }}</span>

@@ -1,4 +1,4 @@
-import { DatePipe } from '@angular/common';
+import { BogotaDatePipe } from '../../../../../shared/pipes/bogota-date.pipe';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, EventEmitter, Input, OnInit, Output, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -15,7 +15,7 @@ import { ApiFeedbackComponent } from '../../../../../shared/components/api-feedb
  */
 @Component({
   selector: 'app-admin-customer-claim-review-modal',
-  imports: [DatePipe, ReactiveFormsModule, ApiFeedbackComponent],
+  imports: [BogotaDatePipe, ReactiveFormsModule, ApiFeedbackComponent],
   templateUrl: './admin-customer-claim-review-modal.component.html',
   styleUrl: '../../../service-records/components/admin-service-record-review-modal/admin-service-record-review-modal.component.scss',
 })

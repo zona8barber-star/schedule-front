@@ -28,7 +28,7 @@
     </button>
 
     <a class="app-shell__brand" data-testid="brand" routerLink="/">
-      <img class="app-shell__brand-logo" src="assets/images/logo_black.jpeg" alt="Logo de la barberia" />
+      <img class="app-shell__brand-logo" [src]="brandingStore.logoUrl()" [alt]="'Logo de ' + brandingStore.appName()" />
     </a>
 
     <p class="app-shell__title" data-testid="page-title">{{ navigation.pageTitle() }}</p>
@@ -181,8 +181,8 @@
       <div class="app-shell__loader-card">
         <img
           class="app-shell__loader-logo"
-          src="assets/images/logo_black.jpeg"
-          alt="Logo de la barberia"
+          [src]="brandingStore.logoUrl()"
+          [alt]="'Logo de ' + brandingStore.appName()"
         />
         <span class="app-shell__loader-text">Cargando</span>
       </div>
