@@ -8,6 +8,7 @@ import { AdminRolesApiService } from '../../../../../core/services/admin-roles-a
 import { AdminUsersApiService } from '../../../../../core/services/admin-users-api.service';
 import { ConfirmModalService } from '../../../../../core/services/confirm-modal.service';
 import { getApiErrorMessage } from '../../../../../core/utils/api-error.utils';
+import { BOGOTA_TIME_ZONE } from '../../../../../core/utils/bogota-date.utils';
 import { ApiFeedbackComponent } from '../../../../../shared/components/api-feedback/api-feedback.component';
 import { PageStateComponent } from '../../../../../shared/components/page-state/page-state.component';
 
@@ -157,7 +158,9 @@ export class AdminUsersListPageComponent implements OnInit {
   }
 
   formatDate(iso: string): string {
+    // The Bogotá day, the same from any device timezone (SONDA BUG-033).
     return new Date(iso).toLocaleDateString('es-CO', {
+      timeZone: BOGOTA_TIME_ZONE,
       year: 'numeric',
       month: 'short',
       day: 'numeric',

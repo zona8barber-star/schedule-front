@@ -12,6 +12,7 @@ import { StaffListItem } from '../../../../../core/models/staff.models';
 import { AdminStaffApiService } from '../../../../../core/services/admin-staff-api.service';
 import { NotificationsApiService } from '../../../../../core/services/notifications-api.service';
 import { getApiErrorMessage } from '../../../../../core/utils/api-error.utils';
+import { bogotaDateTimeFormat } from '../../../../../core/utils/bogota-date.utils';
 import { ApiFeedbackComponent } from '../../../../../shared/components/api-feedback/api-feedback.component';
 import { PageStateComponent } from '../../../../../shared/components/page-state/page-state.component';
 
@@ -27,7 +28,7 @@ export class AdminNotificationsPageComponent implements OnInit {
   private readonly formBuilder = inject(FormBuilder);
   private readonly notificationsApiService = inject(NotificationsApiService);
   private readonly adminStaffApiService = inject(AdminStaffApiService);
-  private readonly dateTimeFormatter = new Intl.DateTimeFormat('es-CO', {
+  private readonly dateTimeFormatter = bogotaDateTimeFormat('es-CO', {
     dateStyle: 'medium',
     timeStyle: 'short',
   });

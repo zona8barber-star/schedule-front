@@ -1,12 +1,14 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 
 import { AppointmentResponse, AppointmentServiceOption } from '../../../../../core/models/appointment.models';
 import { StaffListItem } from '../../../../../core/models/staff.models';
 import { AdminAppointmentsApiService } from '../../../../../core/services/admin-appointments-api.service';
 import { AdminServiceCatalogApiService } from '../../../../../core/services/admin-service-catalog-api.service';
 import { AdminStaffApiService } from '../../../../../core/services/admin-staff-api.service';
+import { setDeviceTimeZone } from '../../../../../testing/device-time-zone';
 import { AdminAppointmentsPageComponent } from './admin-appointments-page.component';
 
 describe('AdminAppointmentsPageComponent (service and duration)', () => {
@@ -235,5 +237,147 @@ describe('AdminAppointmentsPageComponent (service and duration)', () => {
     expect(api.list).toHaveBeenLastCalledWith(expect.objectContaining({ from: '2026-11-07', to: null, sort: 'Asc', scope: 'Agenda' }));
     const cell = fixture.nativeElement.querySelector('[data-testid="appointment-service"]') as HTMLElement;
     expect(cell.textContent?.trim()).toBe('Corte · 40 min');
+  });
+});
+
+describe('AdminAppointmentsPageComponent with inactive professionals and a device outside Bogotá', () => {
+  let fixture: ComponentFixture<AdminAppointmentsPageComponent>;
+  let component: AdminAppointmentsPageComponent;
+  let restoreTimeZone: () => void;
+  let api: {
+    list: ReturnType<typeof vi.fn>;
+    serviceOptions: ReturnType<typeof vi.fn>;
+    update: ReturnType<typeof vi.fn>;
+  };
+
+  const staffMember = (id: string, name: string, isActive: boolean): StaffListItem => ({
+    staffProfileId: id,
+    userId: `u-${id}`,
+    fullName: name,
+    email: `${id}@example.com`,
+    phoneNumber: null,
+    displayName: name,
+    bio: null,
+    defaultAppointmentDurationMinutes: 30,
+    photoMediaAssetId: null,
+    photoUrl: null,
+    tipsQrMediaAssetId: null,
+    tipsQrUrl: null,
+    instagramUrl: null,
+    facebookUrl: null,
+    tikTokUrl: null,
+    youtubeUrl: null,
+    xUrl: null,
+    isActive,
+    createdAt: '',
+    updatedAt: null,
+  });
+
+  // 08:45 in Bogotá (13:45Z).
+  const appointment: AppointmentResponse = {
+    id: 'a-1',
+    staffProfileId: 'st-active',
+    staffName: 'Alex',
+    customerUserId: null,
+    customerName: 'Carla',
+    customerEmail: null,
+    customerPhone: null,
+    startsAtUtc: '2026-11-10T13:45:00Z',
+    endsAtUtc: '2026-11-10T14:15:00Z',
+    status: 'Confirmed',
+    source: 'Manual',
+    notes: null,
+    generalServiceId: 'g-cut',
+    generalServiceName: 'Corte',
+    reservedDurationMinutes: 30,
+    createdAtUtc: '2026-11-06T15:00:00Z',
+    updatedAtUtc: null,
+  };
+
+  // SONDA BUG-033: the admin's device is in UTC.
+  beforeAll(() => (restoreTimeZone = setDeviceTimeZone('UTC')));
+  afterAll(() => restoreTimeZone());
+
+  beforeEach(async () => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    // 21:00 on Nov 6 in Bogotá: the UTC device already says Nov 7.
+    vi.setSystemTime(new Date('2026-11-07T02:00:00Z'));
+
+    api = {
+      list: vi.fn(() => of({ items: [appointment], page: 1, pageSize: 20, totalCount: 1 })),
+      serviceOptions: vi.fn((staffProfileId: string) =>
+        staffProfileId === 'st-active'
+          ? of([{ generalServiceId: 'g-cut', name: 'Corte', categoryId: 'c', categoryName: 'Barbería', durationMinutes: 30 }])
+          : throwError(() => new HttpErrorResponse({ status: 404, error: { detail: 'The staff profile was not found.' } })),
+      ),
+      update: vi.fn(() => of(appointment)),
+    };
+
+    await TestBed.configureTestingModule({
+      imports: [AdminAppointmentsPageComponent],
+      providers: [
+        provideRouter([]),
+        { provide: AdminServiceCatalogApiService, useValue: { listGeneralServices: () => of([]) } },
+        { provide: AdminAppointmentsApiService, useValue: api },
+        {
+          provide: AdminStaffApiService,
+          // The inactive professional comes first, as in QA.
+          useValue: { list: () => of([staffMember('st-inactive', 'Inactivo', false), staffMember('st-active', 'Alex', true)]) },
+        },
+      ],
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(AdminAppointmentsPageComponent);
+    component = fixture.componentInstance;
+    await render();
+  });
+
+  afterEach(() => vi.useRealTimers());
+
+  async function render(): Promise<void> {
+    fixture.detectChanges();
+    await new Promise<void>((resolve) => setTimeout(resolve, 0));
+    fixture.detectChanges();
+  }
+
+  // SONDA BUG-032
+  it('preselects an active professional and never asks for the services of an inactive one', async () => {
+    component.openCreateForm();
+    await render();
+
+    expect(component.createForm.controls.staffProfileId.value).toBe('st-active');
+    expect(api.serviceOptions).not.toHaveBeenCalledWith('st-inactive');
+    expect(component.serviceOptionsError()).toBeNull();
+
+    const createSelect = fixture.nativeElement.querySelector('#createStaffProfileId') as HTMLSelectElement;
+    expect(Array.from(createSelect.options).map((option) => option.value)).toEqual(['', 'st-active']);
+  });
+
+  it('explains in Spanish when the chosen professional cannot take appointments', async () => {
+    component.openCreateForm();
+    component.createForm.controls.staffProfileId.setValue('st-inactive');
+    await render();
+
+    expect(component.serviceOptionsError()).toBe('Este profesional no está activo. Elige otro para agendar la cita.');
+    expect(fixture.nativeElement.textContent).not.toContain('The staff profile was not found.');
+  });
+
+  it('still lets the history be filtered by an inactive professional', () => {
+    expect(component.staffMembers().map((staffMember) => staffMember.staffProfileId)).toContain('st-inactive');
+  });
+
+  // SONDA BUG-033
+  it('asks for the agenda of the Bogotá day and shows Bogotá times', () => {
+    expect(api.list).toHaveBeenLastCalledWith(expect.objectContaining({ from: '2026-11-06', to: '2026-11-06' }));
+    expect(component.formatTime(appointment.startsAtUtc)).toMatch(/^8:45/);
+    expect(component.formatDateTimeRange(appointment.startsAtUtc, appointment.endsAtUtc)).toMatch(/10 nov 2026 8:45.*9:15/);
+  });
+
+  it('edits in Bogotá time and sends the same instant back', async () => {
+    component.startEdit(appointment);
+    expect(component.editForm.controls.startsAt.value).toBe('2026-11-10T08:45');
+
+    await component.submitEdit();
+    expect(api.update.mock.calls[0][1].startsAtUtc).toBe('2026-11-10T13:45:00.000Z');
   });
 });

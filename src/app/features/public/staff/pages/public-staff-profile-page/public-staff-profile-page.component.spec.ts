@@ -24,11 +24,14 @@ describe('PublicStaffProfilePageComponent (booking by service)', () => {
   };
   const beard: PublicStaffServiceResponse = { ...cut, generalServiceId: 'g-beard', name: 'Barba', durationMinutes: 20 };
 
+  let phoneNumber: string | null = null;
+  let socials: Partial<PublicStaffProfileResponse> = {};
+
   const profile = (services: PublicStaffServiceResponse[]): PublicStaffProfileResponse => ({
     staffProfileId: 'st-1',
     displayName: 'Alex',
     bio: null,
-    phoneNumber: null,
+    phoneNumber,
     photoMediaAssetId: null,
     photoUrl: null,
     tipsQrMediaAssetId: null,
@@ -42,6 +45,7 @@ describe('PublicStaffProfilePageComponent (booking by service)', () => {
     tikTokUrl: null,
     youtubeUrl: null,
     xUrl: null,
+    ...socials,
   });
 
   const slot = { startAtUtc: '2026-11-07T15:00:00Z', endAtUtc: '2026-11-07T15:30:00Z' };
@@ -53,6 +57,8 @@ describe('PublicStaffProfilePageComponent (booking by service)', () => {
 
   afterEach(() => {
     vi.useRealTimers();
+    phoneNumber = null;
+    socials = {};
   });
 
   async function open(services: PublicStaffServiceResponse[], queryParams: Record<string, string> = {}): Promise<void> {
@@ -200,5 +206,46 @@ describe('PublicStaffProfilePageComponent (booking by service)', () => {
 
     expect(text()).toContain('Este profesional aún no tiene servicios disponibles para reservar.');
     expect(fixture.nativeElement.querySelector('app-slot-picker')).toBeNull();
+  });
+
+  describe('WhatsApp link (SONDA BUG-048)', () => {
+    function whatsappLink(): HTMLAnchorElement | null {
+      return fixture.nativeElement.querySelector('.psp__whatsapp');
+    }
+
+    it('links to wa.me with the country code once and no "+"', async () => {
+      phoneNumber = '+57 300 123 4567';
+      await open([cut]);
+
+      expect(whatsappLink()!.getAttribute('href')).toBe('https://wa.me/573001234567');
+    });
+
+    it('renders no link for a phone that is not a usable number', async () => {
+      phoneNumber = '+57 (300) abc';
+      await open([cut]);
+
+      expect(whatsappLink()).toBeNull();
+    });
+  });
+
+  describe('social links (SONDA BUG-047)', () => {
+    function socialHrefs(): string[] {
+      return Array.from(fixture.nativeElement.querySelectorAll('.psp__social') as NodeListOf<HTMLAnchorElement>).map(
+        (link) => link.getAttribute('href')!,
+      );
+    }
+
+    it('links only the http(s) networks and hides unsafe or incomplete ones', async () => {
+      socials = {
+        instagramUrl: 'https://instagram.com/zona8',
+        facebookUrl: 'javascript:alert(document.domain)',
+        tikTokUrl: 'tiktok.com/@zona8',
+        youtubeUrl: 'data:text/html,<script>alert(1)</script>',
+        xUrl: 'http://x.com/zona8',
+      };
+      await open([cut]);
+
+      expect(socialHrefs()).toEqual(['https://instagram.com/zona8', 'http://x.com/zona8']);
+    });
   });
 });

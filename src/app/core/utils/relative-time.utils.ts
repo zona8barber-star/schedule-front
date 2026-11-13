@@ -1,5 +1,7 @@
+import { BOGOTA_TIME_ZONE } from './bogota-date.utils';
+
 const relativeFormatter = new Intl.RelativeTimeFormat('es-CO', { numeric: 'auto' });
-const dateFormatter = new Intl.DateTimeFormat('es-CO', { day: 'numeric', month: 'short' });
+const dateFormatter = new Intl.DateTimeFormat('es-CO', { day: 'numeric', month: 'short', timeZone: BOGOTA_TIME_ZONE });
 
 const minute = 60;
 const hour = 60 * minute;

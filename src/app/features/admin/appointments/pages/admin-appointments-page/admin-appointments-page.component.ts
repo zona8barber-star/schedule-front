@@ -28,6 +28,8 @@ import {
   getAppointmentStatusLabel,
 } from '../../../../../core/utils/appointment-labels.utils';
 import { getApiErrorMessage } from '../../../../../core/utils/api-error.utils';
+import { formatDateTimeLocal, toUtcIsoString } from '../../../../../core/utils/availability-form.utils';
+import { addDaysToDateKey, bogotaDateTimeFormat, bogotaToday } from '../../../../../core/utils/bogota-date.utils';
 import {
   QueryValue,
   readDateParam,
@@ -74,9 +76,10 @@ export class AdminAppointmentsPageComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly destroyRef = inject(DestroyRef);
   private loadSequence = 0;
-  private readonly dateFormatter = new Intl.DateTimeFormat('es-AR', { dateStyle: 'medium' });
-  private readonly timeFormatter = new Intl.DateTimeFormat('es-AR', { timeStyle: 'short' });
-  private readonly todayStr = toLocalDateStr(new Date());
+  // Bogotá time and Bogotá days whatever the device timezone (SONDA BUG-033).
+  private readonly dateFormatter = bogotaDateTimeFormat('es-AR', { dateStyle: 'medium' });
+  private readonly timeFormatter = bogotaDateTimeFormat('es-AR', { timeStyle: 'short' });
+  private readonly todayStr = bogotaToday();
   readonly rangeHint = HISTORY_RANGE_HINT;
   /** Set when the history range in the URL cannot be queried (reversed or over 30 days); nothing is requested then. */
   readonly rangeError = signal<string | null>(null);
@@ -113,6 +116,12 @@ export class AdminAppointmentsPageComponent implements OnInit {
   /** Bookable offerings of the professional of the appointment being edited. */
   readonly editServiceOptions = signal<AppointmentServiceOption[]>([]);
   readonly serviceOptionsError = signal<string | null>(null);
+
+  /**
+   * Who can take a new appointment: active professionals only. The list (and the filter) also has inactive ones
+   * for the history, but the API answers 404 to their service options (SONDA BUG-032).
+   */
+  readonly bookableStaff = computed(() => this.staffMembers().filter((staffMember) => staffMember.isActive));
 
   readonly staffById = computed(() =>
     this.staffMembers().reduce<Record<string, StaffListItem>>((acc, s) => {
@@ -226,7 +235,7 @@ export class AdminAppointmentsPageComponent implements OnInit {
   }
 
   private yesterday(): string {
-    return addDays(this.todayStr, -1);
+    return addDaysToDateKey(this.todayStr, -1);
   }
 
   onFilterChange(patch: Record<string, QueryValue>): void {
@@ -499,8 +508,14 @@ export class AdminAppointmentsPageComponent implements OnInit {
   private resetCreateForm(): void {
     this.createSubmitted.set(false);
     this.createForm.reset(undefined, { emitEvent: false });
-    if (this.staffMembers().length > 0) {
-      this.createForm.patchValue({ staffProfileId: this.staffMembers()[0].staffProfileId });
+    this.preselectBookableStaff();
+  }
+
+  /** Preselects the first active professional; with none, nothing is chosen and nothing is requested. */
+  private preselectBookableStaff(): void {
+    const first = this.bookableStaff()[0];
+    if (first) {
+      this.createForm.patchValue({ staffProfileId: first.staffProfileId });
     }
   }
 
@@ -529,7 +544,7 @@ export class AdminAppointmentsPageComponent implements OnInit {
         this.createServiceOptions.set(options);
       }
     } catch (error) {
-      this.serviceOptionsError.set(getApiErrorMessage(error, 'No pudimos cargar los servicios del profesional.'));
+      this.serviceOptionsError.set(serviceOptionsErrorMessage(error));
     }
   }
 
@@ -541,16 +556,14 @@ export class AdminAppointmentsPageComponent implements OnInit {
         this.editServiceOptions.set(options);
       }
     } catch (error) {
-      this.serviceOptionsError.set(getApiErrorMessage(error, 'No pudimos cargar los servicios del profesional.'));
+      this.serviceOptionsError.set(serviceOptionsErrorMessage(error));
     }
   }
 
   private async bootstrap(): Promise<void> {
     try {
       this.staffMembers.set(await firstValueFrom(this.adminStaffApiService.list()));
-      if (this.staffMembers().length > 0) {
-        this.createForm.patchValue({ staffProfileId: this.staffMembers()[0].staffProfileId });
-      }
+      this.preselectBookableStaff();
     } catch (error) {
       this.errorMessage.set(getApiErrorMessage(error));
     }
@@ -624,7 +637,7 @@ export class AdminAppointmentsPageComponent implements OnInit {
       tab === 'today'
         ? { from: today, to: today, sort: 'Asc', scope: 'Agenda' }
         : tab === 'upcoming'
-          ? { from: maxDate(addDays(today, 1), from), to: to || null, sort: 'Asc', scope: 'Agenda' }
+          ? { from: maxDate(addDaysToDateKey(today, 1), from), to: to || null, sort: 'Asc', scope: 'Agenda' }
           : { ...this.pastRange(), sort: 'Desc', scope: 'History' };
     return {
       ...window,
@@ -664,15 +677,6 @@ export class AdminAppointmentsPageComponent implements OnInit {
   }
 }
 
-function toLocalDateStr(date: Date): string {
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
-}
-
-function addDays(isoDate: string, days: number): string {
-  const [year, month, day] = isoDate.split('-').map(Number);
-  return toLocalDateStr(new Date(year, month - 1, day + days));
-}
-
 function maxDate(base: string, other: string): string {
   return other && other > base ? other : base;
 }
@@ -699,16 +703,15 @@ function getAdminAppointmentErrorMessage(error: unknown, action: 'create' | 'upd
   return getApiErrorMessage(error, fallback);
 }
 
+/** The professional is inactive or gone (404): say so in Spanish instead of the API's English detail. */
+function serviceOptionsErrorMessage(error: unknown): string {
+  if (error instanceof HttpErrorResponse && error.status === 404) {
+    return 'Este profesional no está activo. Elige otro para agendar la cita.';
+  }
+
+  return getApiErrorMessage(error, 'No pudimos cargar los servicios del profesional.');
+}
+
 function isHttpConflict(error: unknown): boolean {
   return error instanceof HttpErrorResponse && error.status === 409;
-}
-
-function toUtcIsoString(value: string): string {
-  return new Date(value).toISOString();
-}
-
-function formatDateTimeLocal(value: string): string {
-  const date = new Date(value);
-  const offsetInMinutes = date.getTimezoneOffset();
-  return new Date(date.getTime() - offsetInMinutes * 60_000).toISOString().slice(0, 16);
 }

@@ -112,10 +112,10 @@
         <span class="native-home__contact-val">{{ formattedSchedule() }}</span>
       </div>
     </div>
-    @if (landingContent()?.mapsUrl) {
+    @if (safeMapsUrl(landingContent()?.mapsUrl); as mapsHref) {
       <a
         class="native-home__maps-btn"
-        [href]="landingContent()!.mapsUrl!"
+        [href]="mapsHref"
         target="_blank"
         rel="noopener noreferrer"
       >📍 Abrir en Google Maps</a>
@@ -136,8 +136,8 @@
               @if (banner.subtitle) {
                 <p class="native-home__banner-sub">{{ banner.subtitle }}</p>
               }
-              @if (banner.linkUrl) {
-                <a class="native-home__banner-link" [href]="banner.linkUrl" target="_blank" rel="noreferrer">Ver más →</a>
+              @if (safeUrl(banner.linkUrl); as bannerHref) {
+                <a class="native-home__banner-link" [href]="bannerHref" target="_blank" rel="noreferrer">Ver más →</a>
               }
             </div>
           </article>

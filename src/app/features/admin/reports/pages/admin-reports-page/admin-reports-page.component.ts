@@ -8,10 +8,12 @@ import { firstValueFrom } from 'rxjs';
 import { ReportSummaryView } from '../../../../../core/models/report.models';
 import { AdminReportsApiService } from '../../../../../core/services/admin-reports-api.service';
 import { getApiErrorMessage } from '../../../../../core/utils/api-error.utils';
+import { bogotaToday } from '../../../../../core/utils/bogota-date.utils';
 import { ApiFeedbackComponent } from '../../../../../shared/components/api-feedback/api-feedback.component';
 
-function isoDate(date: Date): string {
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+/** First day of the current Bogotá month: "today" is Bogotá's, whatever the device timezone (SONDA BUG-033). */
+function bogotaMonthStart(): string {
+  return `${bogotaToday().slice(0, 8)}01`;
 }
 
 @Component({
@@ -23,8 +25,8 @@ function isoDate(date: Date): string {
 export class AdminReportsPageComponent implements OnInit {
   private readonly api = inject(AdminReportsApiService);
 
-  readonly from = signal(isoDate(new Date(new Date().getFullYear(), new Date().getMonth(), 1)));
-  readonly to = signal(isoDate(new Date()));
+  readonly from = signal(bogotaMonthStart());
+  readonly to = signal(bogotaToday());
   readonly summary = signal<ReportSummaryView | null>(null);
   readonly isLoading = signal(true);
   readonly errorMessage = signal<string | null>(null);
@@ -88,16 +90,15 @@ export class AdminReportsPageComponent implements OnInit {
   }
 
   setToday(): void {
-    const today = isoDate(new Date());
+    const today = bogotaToday();
     this.from.set(today);
     this.to.set(today);
     void this.load();
   }
 
   setThisMonth(): void {
-    const now = new Date();
-    this.from.set(isoDate(new Date(now.getFullYear(), now.getMonth(), 1)));
-    this.to.set(isoDate(now));
+    this.from.set(bogotaMonthStart());
+    this.to.set(bogotaToday());
     void this.load();
   }
 

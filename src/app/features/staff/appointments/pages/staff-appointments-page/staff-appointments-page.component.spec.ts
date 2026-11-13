@@ -6,6 +6,7 @@ import { of } from 'rxjs';
 import { AppointmentResponse, AppointmentServiceOption } from '../../../../../core/models/appointment.models';
 import { ServiceRecordEligibilityService } from '../../../../../core/services/service-record-eligibility.service';
 import { StaffAppointmentsApiService } from '../../../../../core/services/staff-appointments-api.service';
+import { setDeviceTimeZone } from '../../../../../testing/device-time-zone';
 import { StaffAppointmentsPageComponent } from './staff-appointments-page.component';
 
 describe('StaffAppointmentsPageComponent (service and duration)', () => {
@@ -190,5 +191,127 @@ describe('StaffAppointmentsPageComponent (service and duration)', () => {
     expect(component.editDurationMinutes(legacy)).toBe(30);
     await component.submitEdit();
     expect(api.update.mock.calls[0][1].generalServiceId).toBeNull();
+  });
+});
+
+describe('StaffAppointmentsPageComponent in Bogotá time, with a confirm action', () => {
+  let fixture: ComponentFixture<StaffAppointmentsPageComponent>;
+  let component: StaffAppointmentsPageComponent;
+  let restoreTimeZone: () => void;
+  let api: {
+    list: ReturnType<typeof vi.fn>;
+    serviceOptions: ReturnType<typeof vi.fn>;
+    update: ReturnType<typeof vi.fn>;
+    confirm: ReturnType<typeof vi.fn>;
+  };
+
+  // A booking at 09:00 in Bogotá (14:00Z), pending approval, and one already confirmed.
+  const pending: AppointmentResponse = {
+    id: 'a-pending',
+    staffProfileId: 'st-1',
+    staffName: 'Alex',
+    customerUserId: 'u-1',
+    customerName: 'Carla',
+    customerEmail: null,
+    customerPhone: null,
+    startsAtUtc: '2026-11-10T14:00:00Z',
+    endsAtUtc: '2026-11-10T14:30:00Z',
+    status: 'Pending',
+    source: 'CustomerBooking',
+    notes: null,
+    generalServiceId: 'g-cut',
+    generalServiceName: 'Corte',
+    reservedDurationMinutes: 30,
+    createdAtUtc: '2026-11-06T15:00:00Z',
+    updatedAtUtc: null,
+  };
+  const confirmed: AppointmentResponse = { ...pending, id: 'a-confirmed', status: 'Confirmed', customerName: 'Diego' };
+
+  // SONDA BUG-033: the device is in UTC.
+  beforeAll(() => (restoreTimeZone = setDeviceTimeZone('UTC')));
+  afterAll(() => restoreTimeZone());
+
+  beforeEach(async () => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    // 21:00 on Nov 6 in Bogotá: the UTC device already says Nov 7.
+    vi.setSystemTime(new Date('2026-11-07T02:00:00Z'));
+
+    api = {
+      list: vi.fn(() => of({ items: [pending, confirmed], page: 1, pageSize: 20, totalCount: 2 })),
+      serviceOptions: vi.fn(() => of([])),
+      update: vi.fn(() => of(pending)),
+      confirm: vi.fn(() => of({ ...pending, status: 'Confirmed' })),
+    };
+
+    await TestBed.configureTestingModule({
+      imports: [StaffAppointmentsPageComponent],
+      providers: [
+        provideRouter([]),
+        { provide: StaffAppointmentsApiService, useValue: api },
+        { provide: ServiceRecordEligibilityService, useValue: { canRegister: signal(false) } },
+      ],
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(StaffAppointmentsPageComponent);
+    component = fixture.componentInstance;
+    await render();
+  });
+
+  afterEach(() => vi.useRealTimers());
+
+  async function render(): Promise<void> {
+    fixture.detectChanges();
+    await new Promise<void>((resolve) => setTimeout(resolve, 0));
+    fixture.detectChanges();
+  }
+
+  const cards = () => Array.from((fixture.nativeElement as HTMLElement).querySelectorAll<HTMLElement>('.appt-card'));
+  const buttonsOf = (card: HTMLElement) =>
+    Array.from(card.querySelectorAll<HTMLButtonElement>('button')).map((button) => button.textContent!.trim());
+
+  it('asks for the agenda of the Bogotá day, not the device day', () => {
+    expect(api.list).toHaveBeenLastCalledWith(expect.objectContaining({ from: '2026-11-06', to: '2026-11-06' }));
+  });
+
+  it('shows the appointment at 9:00 (Bogotá), not at the device time', () => {
+    expect(component.formatTime(pending.startsAtUtc)).toMatch(/^9:00/);
+    expect(cards()[0].textContent).toMatch(/10 nov 2026, 9:00/);
+    expect(cards()[0].textContent).not.toMatch(/2:00\s*p/);
+  });
+
+  it('edits in Bogotá time and sends the same instant back', async () => {
+    component.startEdit(pending);
+    expect(component.editForm.controls.startsAt.value).toBe('2026-11-10T09:00');
+
+    component.editForm.controls.startsAt.setValue('2026-11-10T10:30');
+    await component.submitEdit();
+    expect(api.update.mock.calls[0][1].startsAtUtc).toBe('2026-11-10T15:30:00.000Z');
+  });
+
+  // SONDA BUG-028: the professional approves online bookings from the agenda.
+  it('offers «Confirmar» only on pending appointments', () => {
+    const [pendingCard, confirmedCard] = cards();
+    expect(buttonsOf(pendingCard)).toContain('Confirmar');
+    expect(buttonsOf(confirmedCard)).not.toContain('Confirmar');
+    expect(buttonsOf(confirmedCard)).toContain('Completar');
+  });
+
+  it('confirms a pending appointment and reloads the agenda', async () => {
+    const callsBefore = api.list.mock.calls.length;
+    const confirmButton = Array.from(cards()[0].querySelectorAll<HTMLButtonElement>('button')).find(
+      (button) => button.textContent!.trim() === 'Confirmar',
+    )!;
+
+    confirmButton.click();
+    await render();
+
+    expect(api.confirm).toHaveBeenCalledWith('a-pending');
+    expect(api.list.mock.calls.length).toBe(callsBefore + 1);
+    expect(component.successMessage()).toBe('Cita confirmada. Le avisamos al cliente.');
+  });
+
+  it('does not confirm an appointment that is not pending', async () => {
+    await component.confirmAppointment(confirmed);
+    expect(api.confirm).not.toHaveBeenCalled();
   });
 });

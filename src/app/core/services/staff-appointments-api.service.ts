@@ -76,6 +76,11 @@ export class StaffAppointmentsApiService {
     );
   }
 
+  /** Pending → Confirmed (the customer is notified by the API). SONDA BUG-028. */
+  confirm(appointmentId: string) {
+    return this.updateStatus(appointmentId, APPOINTMENT_STATUS.confirmed, 'confirm');
+  }
+
   markCompleted(appointmentId: string) {
     return this.updateStatus(appointmentId, APPOINTMENT_STATUS.completed, 'complete');
   }

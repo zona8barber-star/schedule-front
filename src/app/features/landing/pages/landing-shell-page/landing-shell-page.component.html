@@ -142,10 +142,10 @@
               <span class="lp__chanl-v">{{ formattedSchedule() }}</span>
             </div>
           </div>
-          @if (landingContent()?.mapsUrl) {
+          @if (safeMapsUrl(landingContent()?.mapsUrl); as mapsHref) {
             <a
               class="lp__maps-link"
-              [href]="landingContent()!.mapsUrl!"
+              [href]="mapsHref"
               target="_blank"
               rel="noopener noreferrer"
             >📍 Abrir en Google Maps</a>
@@ -175,8 +175,8 @@
                 @if (banner.subtitle) {
                   <p class="lp__banner-sub">{{ banner.subtitle }}</p>
                 }
-                @if (banner.linkUrl) {
-                  <a class="lp__banner-link" [href]="banner.linkUrl" target="_blank" rel="noreferrer">
+                @if (safeUrl(banner.linkUrl); as bannerHref) {
+                  <a class="lp__banner-link" [href]="bannerHref" target="_blank" rel="noreferrer">
                     Ver más →
                   </a>
                 }

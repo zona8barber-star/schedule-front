@@ -9,8 +9,14 @@ import {
   sortPeriods,
   toUtcIsoString,
 } from './availability-form.utils';
+import { setDeviceTimeZone } from '../../testing/device-time-zone';
 
 describe('availability-form.utils', () => {
+  // SONDA BUG-030: the device is in UTC, the shop in Bogotá (UTC-5). Every value below is Bogotá time.
+  let restoreTimeZone: () => void;
+  beforeAll(() => (restoreTimeZone = setDeviceTimeZone('UTC')));
+  afterAll(() => restoreTimeZone());
+
   it('createTimeBlockForm defaults to a 09:00-17:00 block', () => {
     const block = createTimeBlockForm();
     expect(block.getRawValue()).toEqual({ startTime: '09:00', endTime: '17:00' });
@@ -30,15 +36,16 @@ describe('availability-form.utils', () => {
     expect(normalizeOptional(undefined)).toBeNull();
   });
 
-  it('toUtcIsoString converts a local datetime string to an ISO UTC string', () => {
-    const result = toUtcIsoString('2026-09-01T10:00');
-    expect(new Date(result).toISOString()).toBe(result);
+  it('toUtcIsoString reads the datetime-local value as Bogotá time, not device time (SONDA BUG-030)', () => {
+    // A 09:00-10:00 absence entered on a UTC device must block 09:00-10:00 in Bogotá: 14:00Z-15:00Z.
+    expect(toUtcIsoString('2026-11-25T09:00')).toBe('2026-11-25T14:00:00.000Z');
+    expect(toUtcIsoString('2026-11-25T10:00')).toBe('2026-11-25T15:00:00.000Z');
   });
 
-  it('formatDateTimeLocal round-trips through toUtcIsoString for the same wall-clock time', () => {
+  it('formatDateTimeLocal shows the stored instant in Bogotá time and round-trips', () => {
+    expect(formatDateTimeLocal('2026-11-25T14:00:00Z')).toBe('2026-11-25T09:00');
     const local = '2026-09-01T10:00';
-    const utc = toUtcIsoString(local);
-    expect(formatDateTimeLocal(utc)).toBe(local);
+    expect(formatDateTimeLocal(toUtcIsoString(local))).toBe(local);
   });
 
   it('sortPeriods orders periods by startsAtUtc ascending without mutating the input', () => {
@@ -52,12 +59,11 @@ describe('availability-form.utils', () => {
   });
 
   describe('absenceValidator', () => {
-    // The validator compares against the browser's local "today"/"tomorrow". Pin the clock to a local
-    // evening (21:30 on 2026-10-28): from 19:00 in Bogotá (UTC-5) the UTC date is already the next day,
-    // which is exactly when building the expected dates from UTC used to break these tests.
+    // The validator compares against Bogotá's "today"/"tomorrow". Pin the clock to 21:30 in Bogotá on
+    // 2026-10-28 (02:30Z on the 29th): the UTC device already says the 29th, Bogotá still says the 28th.
     beforeEach(() => {
       vi.useFakeTimers({ toFake: ['Date'] });
-      vi.setSystemTime(new Date(2026, 9, 28, 21, 30));
+      vi.setSystemTime(new Date('2026-10-29T02:30:00Z'));
     });
 
     afterEach(() => {
@@ -102,7 +108,7 @@ describe('availability-form.utils', () => {
     });
 
     it('flags a timed range starting before tomorrow as pastStart', () => {
-      // Local "now" and the last minute of today are both before tomorrow 00:00.
+      // Bogotá "now" and the last minute of today are both before tomorrow 00:00.
       const now = buildGroup({ isAllDay: false, startValue: '2026-10-28T21:30', endValue: '2026-10-28T21:30' });
       expect(absenceValidator()(now)?.['pastStart']).toBe(true);
 
@@ -110,7 +116,7 @@ describe('availability-form.utils', () => {
       expect(absenceValidator()(lastMinute)).toEqual({ pastStart: true });
     });
 
-    it('accepts a timed range starting at tomorrow 00:00 local', () => {
+    it('accepts a timed range starting at tomorrow 00:00 in Bogotá', () => {
       const group = buildGroup({ isAllDay: false, startValue: '2026-10-29T00:00', endValue: '2026-10-29T08:00' });
       expect(absenceValidator()(group)).toBeNull();
     });

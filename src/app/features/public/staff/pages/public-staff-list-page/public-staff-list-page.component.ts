@@ -1,5 +1,5 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
-import { FormControl, ReactiveFormsModule } from '@angular/forms';
+import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 
@@ -38,6 +38,8 @@ export class PublicStaffListPageComponent implements OnInit {
   });
 
   readonly searchControl = new FormControl('', { nonNullable: true });
+  /** [formGroup] binds FormGroupDirective, which emits ngSubmit and cancels the native submit (BUG-046). */
+  readonly searchForm = new FormGroup({ search: this.searchControl });
   readonly isLoading = signal(true);
   readonly errorMessage = signal<string | null>(null);
   readonly staffMembers = signal<PublicStaffListItemResponse[]>([]);

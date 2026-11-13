@@ -213,6 +213,8 @@
   transition: background 0.18s;
   border: 1px solid transparent;
 }
+.appt-card__btn--confirm  { background: rgba(176,138,74,0.14); border-color: rgba(176,138,74,0.45); color: var(--brand-primary,#b08a4a); }
+.appt-card__btn--confirm:hover:not(:disabled) { background: rgba(176,138,74,0.24); }
 .appt-card__btn--edit     { background: rgba(110,96,74,0.1); border-color: rgba(110,96,74,0.35); color: var(--color-text-secondary,#b8b0a4); }
 .appt-card__btn--edit:hover:not(:disabled) { background: rgba(110,96,74,0.2); }
 .appt-card__btn--complete { background: rgba(72,153,100,0.1); border-color: rgba(72,153,100,0.35); color: #72be88; }

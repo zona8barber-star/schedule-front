@@ -266,14 +266,14 @@
 
       <div class="ap-modal__body">
         <form [formGroup]="createForm" (ngSubmit)="submitCreate()" novalidate>
-          <fieldset [disabled]="isCreating() || !staffMembers().length">
+          <fieldset [disabled]="isCreating() || !bookableStaff().length">
             <div class="ap-form-grid">
 
               <div class="ap-field">
                 <label for="createStaffProfileId">Profesional</label>
                 <select id="createStaffProfileId" formControlName="staffProfileId">
                   <option value="">Selecciona un profesional</option>
-                  @for (s of staffMembers(); track s.staffProfileId) {
+                  @for (s of bookableStaff(); track s.staffProfileId) {
                     <option [value]="s.staffProfileId">{{ staffDisplayLabel(s) }}</option>
                   }
                 </select>
@@ -354,7 +354,7 @@
           </fieldset>
 
           <div class="ap-form-actions">
-            <button class="ap-btn ap-btn--primary" type="submit" [disabled]="isCreating() || !staffMembers().length">
+            <button class="ap-btn ap-btn--primary" type="submit" [disabled]="isCreating() || !bookableStaff().length">
               {{ isCreating() ? 'Guardando...' : 'Crear cita manual' }}
             </button>
             <button class="ap-btn ap-btn--ghost" type="button" [disabled]="isCreating()" (click)="closeCreateForm()">

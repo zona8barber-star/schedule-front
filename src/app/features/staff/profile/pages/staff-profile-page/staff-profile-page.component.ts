@@ -20,6 +20,7 @@ import { AuthService } from '../../../../../core/services/auth.service';
 import { ConfirmModalService } from '../../../../../core/services/confirm-modal.service';
 import { StaffProfileApiService } from '../../../../../core/services/staff-profile-api.service';
 import { getApiErrorMessage } from '../../../../../core/utils/api-error.utils';
+import { httpUrlValidator } from '../../../../../core/utils/safe-url.utils';
 import { ApiFeedbackComponent } from '../../../../../shared/components/api-feedback/api-feedback.component';
 import { PageStateComponent } from '../../../../../shared/components/page-state/page-state.component';
 
@@ -63,11 +64,11 @@ export class StaffProfilePageComponent implements OnInit {
     displayName: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(120)]],
     bio: ['', [Validators.maxLength(2000)]],
     phoneNumber: ['', [Validators.maxLength(40)]],
-    instagramUrl: ['', [Validators.maxLength(2048)]],
-    facebookUrl: ['', [Validators.maxLength(2048)]],
-    tikTokUrl: ['', [Validators.maxLength(2048)]],
-    youtubeUrl: ['', [Validators.maxLength(2048)]],
-    xUrl: ['', [Validators.maxLength(2048)]],
+    instagramUrl: ['', [Validators.maxLength(2048), httpUrlValidator()]],
+    facebookUrl: ['', [Validators.maxLength(2048), httpUrlValidator()]],
+    tikTokUrl: ['', [Validators.maxLength(2048), httpUrlValidator()]],
+    youtubeUrl: ['', [Validators.maxLength(2048), httpUrlValidator()]],
+    xUrl: ['', [Validators.maxLength(2048), httpUrlValidator()]],
   });
 
   ngOnInit(): void {

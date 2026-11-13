@@ -25,6 +25,8 @@ import {
   dateKeyToUtcNoon,
   isDateKey,
 } from '../../../../../core/utils/bogota-date.utils';
+import { whatsAppUrl } from '../../../../../core/utils/whatsapp-link.utils';
+import { safeHttpUrl } from '../../../../../core/utils/safe-url.utils';
 
 /** Days offered as quick buttons in the first booking step (today included); others through "Otra fecha". */
 const BOOKING_DAY_OPTIONS = 14;
@@ -60,6 +62,9 @@ function trimDot(value: string): string {
   styleUrl: './public-staff-profile-page.component.scss',
 })
 export class PublicStaffProfilePageComponent implements OnInit {
+  /** Social links are shown only when they are http(s) (SONDA BUG-047). */
+  readonly safeUrl = safeHttpUrl;
+
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly publicStaffApiService = inject(PublicStaffApiService);
@@ -124,13 +129,7 @@ export class PublicStaffProfilePageComponent implements OnInit {
   readonly displayReviewCount = computed(
     () => this.reviewsSummary()?.totalReviews ?? this.staffProfile()?.reviewCount ?? 0,
   );
-  readonly whatsappHref = computed(() => {
-    const phone = this.staffProfile()?.phoneNumber;
-    if (!phone) return null;
-    const digits = phone.replace(/\D/g, '');
-    const number = digits.startsWith('57') ? digits : `57${digits}`;
-    return `https://wa.me/${number}`;
-  });
+  readonly whatsappHref = computed(() => whatsAppUrl(this.staffProfile()?.phoneNumber));
 
   async ngOnInit(): Promise<void> {
     await this.loadProfile();
