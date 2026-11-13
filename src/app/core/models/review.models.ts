@@ -16,8 +16,8 @@ export interface CustomerReviewResponse {
   createdAtUtc: string;
 }
 
+/** A public review: stars, comment and date only (SONDA BUG-041, no appointment id). */
 export interface PublicStaffReviewResponse {
-  appointmentId: string;
   stars: ReviewStars;
   comment: string | null;
   createdAtUtc: string;

@@ -132,7 +132,7 @@
         <app-page-state kind="empty" message="Aún no hay reseñas para este profesional." />
       } @else {
         <div class="psp__reviews">
-          @for (review of reviews().slice(0, 5); track review.appointmentId + review.createdAtUtc) {
+          @for (review of reviews().slice(0, 5); track $index) {
             <article class="psp__review-card">
               <span class="psp__review-stars" [attr.aria-label]="review.stars + ' de 5 estrellas'">
                 <span [class.active]="review.stars >= 1">★</span>

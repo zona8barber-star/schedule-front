@@ -5,14 +5,14 @@ import { firstValueFrom } from 'rxjs';
 
 import { PublicAvailabilitySlotResponse } from '../../../../core/models/availability.models';
 import {
-  BannerResponse,
-  BrandingSettingsResponse,
+  PublicBannerResponse,
+  PublicBrandingResponse,
   BusinessScheduleDayResponse,
   BusinessScheduleResponse,
-  LandingContentResponse,
+  PublicLandingContentResponse,
   PublicStaffListItemResponse,
   PublicStaffServiceResponse,
-  TickerItemResponse,
+  PublicTickerItemResponse,
 } from '../../../../core/models/content.models';
 import { AuthService } from '../../../../core/services/auth.service';
 import { PublicAvailabilityApiService } from '../../../../core/services/public-availability-api.service';
@@ -56,10 +56,10 @@ export class LandingShellPageComponent implements OnInit {
 
   readonly isAuthenticated = computed(() => this.authService.isAuthenticated());
 
-  readonly landingContent = signal<LandingContentResponse | null>(null);
-  readonly branding = signal<BrandingSettingsResponse | null>(null);
-  readonly banners = signal<BannerResponse[]>([]);
-  readonly tickerItems = signal<TickerItemResponse[]>([]);
+  readonly landingContent = signal<PublicLandingContentResponse | null>(null);
+  readonly branding = signal<PublicBrandingResponse | null>(null);
+  readonly banners = signal<PublicBannerResponse[]>([]);
+  readonly tickerItems = signal<PublicTickerItemResponse[]>([]);
   readonly tickerLoopItems = computed(() => {
     const items = this.tickerItems();
     return items.length ? [...items, ...items] : [];
@@ -95,12 +95,8 @@ export class LandingShellPageComponent implements OnInit {
   /** General service the free times are computed for (ADR-0016 B3). */
   readonly selectedServiceId = signal<string | null>(null);
 
-  readonly activeBanners = computed(() =>
-    this.banners()
-      .filter((banner) => banner.isActive)
-      .slice()
-      .sort((first, second) => first.sortOrder - second.sortOrder),
-  );
+  /** The public API already returns only the active banners, in their order (SONDA BUG-101). */
+  readonly activeBanners = computed(() => this.banners());
 
   readonly mapEmbedUrl = computed<SafeResourceUrl | null>(() => {
     const content = this.landingContent();

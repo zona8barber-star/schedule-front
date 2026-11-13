@@ -127,7 +127,11 @@ export class AdminCustomerFormModalComponent implements OnInit {
       }
 
       const result = this.customer
-        ? await firstValueFrom(this.adminCustomersApiService.update(this.customer.id, payload))
+        ? // The version the form was opened on: another edit saved meanwhile answers 409 instead of being
+          // overwritten in silence (SONDA BUG-061); the API message asks to reload.
+          await firstValueFrom(
+            this.adminCustomersApiService.update(this.customer.id, { ...payload, version: this.customer.version }),
+          )
         : await firstValueFrom(this.adminCustomersApiService.create(payload));
       this.saved.emit(result);
     } catch (error) {

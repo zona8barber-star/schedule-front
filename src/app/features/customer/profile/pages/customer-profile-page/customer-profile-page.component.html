@@ -159,7 +159,12 @@
                 id="cp-dob"
                 type="date"
                 formControlName="dateOfBirth"
+                [min]="minDateOfBirth"
+                [max]="todayIso()"
               />
+              @if (showInfoError('dateOfBirth', 'dateRange')) {
+                <p class="cp__field-error">La fecha de nacimiento debe estar entre el 1 de enero de 1900 y hoy.</p>
+              }
             </div>
           </div>
 

@@ -1,5 +1,5 @@
 import { Component, DestroyRef, ElementRef, OnInit, computed, inject, signal, viewChild } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { AbstractControl, FormBuilder, ReactiveFormsModule, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 
@@ -8,6 +8,7 @@ import { AuthService } from '../../../../../core/services/auth.service';
 import { ConfirmModalService } from '../../../../../core/services/confirm-modal.service';
 import { CustomerProfileApiService } from '../../../../../core/services/customer-profile-api.service';
 import { getApiErrorMessage } from '../../../../../core/utils/api-error.utils';
+import { bogotaToday } from '../../../../../core/utils/bogota-date.utils';
 import { ApiFeedbackComponent } from '../../../../../shared/components/api-feedback/api-feedback.component';
 import { PageStateComponent } from '../../../../../shared/components/page-state/page-state.component';
 
@@ -52,10 +53,14 @@ export class CustomerProfilePageComponent implements OnInit {
 
   readonly isBusy = computed(() => this.isInfoSaving() || this.photoUploading() || this.isPwdSaving());
 
+  readonly minDateOfBirth = MIN_DATE_OF_BIRTH;
+  readonly todayIso = () => bogotaToday();
+
   readonly infoForm = this.fb.group({
     fullName: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(120)]],
     phoneNumber: ['', [Validators.maxLength(40)]],
-    dateOfBirth: [''],
+    // SONDA BUG-059: the API range, 1900-01-01 to today in Bogotá.
+    dateOfBirth: ['', [dateOfBirthValidator()]],
   });
 
   readonly pwdForm = this.fb.group({
@@ -262,4 +267,15 @@ export class CustomerProfilePageComponent implements OnInit {
       dateOfBirth: data.dateOfBirth ?? '',
     });
   }
+}
+
+const MIN_DATE_OF_BIRTH = '1900-01-01';
+
+/** Empty is valid; otherwise between 1900-01-01 and today in Bogotá (SONDA BUG-059). ISO dates compare as text. */
+export function dateOfBirthValidator(): ValidatorFn {
+  return (control: AbstractControl): ValidationErrors | null => {
+    const value = String(control.value ?? '').trim();
+    if (!value) return null;
+    return value < MIN_DATE_OF_BIRTH || value > bogotaToday() ? { dateRange: true } : null;
+  };
 }

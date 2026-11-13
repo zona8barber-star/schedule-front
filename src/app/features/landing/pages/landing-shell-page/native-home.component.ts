@@ -3,10 +3,10 @@ import { RouterLink } from '@angular/router';
 import { safeGoogleMapsUrl, safeHttpUrl } from '../../../../core/utils/safe-url.utils';
 
 import {
-  BannerResponse,
-  LandingContentResponse,
+  PublicBannerResponse,
+  PublicLandingContentResponse,
   PublicStaffListItemResponse,
-  TickerItemResponse,
+  PublicTickerItemResponse,
 } from '../../../../core/models/content.models';
 
 @Component({
@@ -22,12 +22,12 @@ export class NativeHomeComponent {
   readonly safeMapsUrl = safeGoogleMapsUrl;
 
   readonly greetingName = input<string | null>(null);
-  readonly landingContent = input<LandingContentResponse | null>(null);
+  readonly landingContent = input<PublicLandingContentResponse | null>(null);
   readonly isOpenNow = input(false);
   readonly formattedSchedule = input('');
   readonly staffMembers = input<PublicStaffListItemResponse[]>([]);
-  readonly activeBanners = input<BannerResponse[]>([]);
-  readonly tickerItems = input<TickerItemResponse[]>([]);
+  readonly activeBanners = input<PublicBannerResponse[]>([]);
+  readonly tickerItems = input<PublicTickerItemResponse[]>([]);
   readonly isLoading = input(false);
   readonly whatsappUrl = input<string | null>(null);
 
