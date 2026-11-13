@@ -8,6 +8,7 @@ import { GeneralServiceView } from '../../../../../core/models/service-catalog.m
 import { ServiceView } from '../../../../../core/models/service.models';
 import { AuthService } from '../../../../../core/services/auth.service';
 import { AdminServiceFormModalComponent } from './admin-service-form-modal.component';
+import { MoneyConfirmationService } from '../../../../../core/services/money-confirmation.service';
 
 describe('AdminServiceFormModalComponent', () => {
   let fixture: ComponentFixture<AdminServiceFormModalComponent>;
@@ -53,6 +54,8 @@ describe('AdminServiceFormModalComponent', () => {
     await TestBed.configureTestingModule({
       imports: [AdminServiceFormModalComponent],
       providers: [
+        // Saving money values asks for confirmation (BUG-080 decision); these specs cover the save itself.
+        { provide: MoneyConfirmationService, useValue: { confirm: () => Promise.resolve(true) } },
         provideHttpClient(),
         provideHttpClientTesting(),
         { provide: AuthService, useValue: { hasPermission: (code: PermissionCode) => permissions.includes(code) } },
@@ -82,6 +85,7 @@ describe('AdminServiceFormModalComponent', () => {
     component.form.patchValue({ generalServiceId: 'g-beard', name: 'Barba', basePrice: 15000, businessPercentage: 30, loyaltyPoints: 8 });
 
     const submitting = component.submit();
+    await new Promise<void>((resolve) => setTimeout(resolve, 0)); // the amount confirmation resolves first
     const req = httpMock.expectOne(`${api}/admin/services`);
     expect(req.request.method).toBe('POST');
     expect(req.request.body).toEqual({ generalServiceId: 'g-beard', name: 'Barba', basePrice: 15000, businessPercentage: 30, loyaltyPoints: 8 });
@@ -118,6 +122,7 @@ describe('AdminServiceFormModalComponent', () => {
 
     component.form.patchValue({ name: 'Corte clásico' });
     const submitting = component.submit();
+    await new Promise<void>((resolve) => setTimeout(resolve, 0)); // the amount confirmation resolves first
     const req = httpMock.expectOne(`${api}/admin/services/s-cut`);
     expect(req.request.body).toEqual({ generalServiceId: 'g-cut', name: 'Corte clásico', basePrice: 25000, businessPercentage: 30 });
     req.flush({ ...haircut, name: 'Corte clásico' });
@@ -129,6 +134,7 @@ describe('AdminServiceFormModalComponent', () => {
     component.form.patchValue({ loyaltyPoints: 20 });
 
     const submitting = component.submit();
+    await new Promise<void>((resolve) => setTimeout(resolve, 0)); // the amount confirmation resolves first
     httpMock.expectOne(`${api}/admin/services/s-cut`).flush(
       { detail: 'No tienes permiso para configurar los puntos de fidelización.' },
       { status: 403, statusText: 'Forbidden' },
@@ -169,6 +175,7 @@ describe('AdminServiceFormModalComponent', () => {
 
     component.form.patchValue({ generalServiceId: 'g-face' });
     const submitting = component.submit();
+    await new Promise<void>((resolve) => setTimeout(resolve, 0)); // the amount confirmation resolves first
     const req = httpMock.expectOne(`${api}/admin/services/s-cut`);
     expect(req.request.body.generalServiceId).toBe('g-face');
     req.flush({ ...haircut, generalServiceId: 'g-face' });

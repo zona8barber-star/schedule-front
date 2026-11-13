@@ -43,6 +43,21 @@ describe('StaffAvailabilityPageComponent absences', () => {
 
   afterEach(() => httpMock.verify());
 
+  /** SONDA BUG-036: the duration accepts the server range (10–240), not 5–480. */
+  it.each([
+    [5, false],
+    [9, false],
+    [10, true],
+    [240, true],
+    [241, false],
+    [480, false],
+  ])('accepts a default duration of %d minutes: %s', (minutes, valid) => {
+    const control = fixture.componentInstance.durationControl;
+    control.setValue(minutes);
+
+    expect(control.valid).toBe(valid);
+  });
+
   it('separates the period window with an em dash and shows one for a missing reason', () => {
     const row = (fixture.nativeElement as HTMLElement).querySelector('.avail-page__table tbody tr')!;
     const cells = Array.from(row.querySelectorAll('td')).map((cell) => cell.textContent!.trim());

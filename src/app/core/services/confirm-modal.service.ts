@@ -6,6 +6,10 @@ export interface ConfirmOptions {
   confirmLabel?: string;
   cancelLabel?: string;
   danger?: boolean;
+  /** Highlighted notice shown above the actions (for example an unusually high amount). */
+  warning?: string;
+  /** Header icon: a bin (default, for deletions) or money (amount confirmations). */
+  icon?: 'trash' | 'money';
 }
 
 interface ConfirmModalState {

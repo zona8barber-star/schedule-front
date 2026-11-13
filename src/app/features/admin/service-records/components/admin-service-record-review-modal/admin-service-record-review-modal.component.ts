@@ -18,6 +18,7 @@ import {
 } from '../../../../../core/models/service-record.models';
 import { AuthService } from '../../../../../core/services/auth.service';
 import { ServiceRecordsApiService } from '../../../../../core/services/service-records-api.service';
+import { MoneyConfirmationService } from '../../../../../core/services/money-confirmation.service';
 import { getApiErrorMessage } from '../../../../../core/utils/api-error.utils';
 import { bogotaToday } from '../../../../../core/utils/bogota-date.utils';
 import { ApiFeedbackComponent } from '../../../../../shared/components/api-feedback/api-feedback.component';
@@ -49,6 +50,7 @@ function singleActiveRate(services: ServiceRecordServiceOption[], generalService
 })
 export class AdminServiceRecordReviewModalComponent implements OnInit {
   private readonly formBuilder = inject(FormBuilder);
+  private readonly moneyConfirmation = inject(MoneyConfirmationService);
   private readonly api = inject(ServiceRecordsApiService);
   private readonly authService = inject(AuthService);
 
@@ -285,6 +287,15 @@ export class AdminServiceRecordReviewModalComponent implements OnInit {
 
     const value = this.form.getRawValue();
     const operation = value.operationType;
+    // Only a paid service carries a charged value; the other operations have no amount to confirm.
+    if (operation === 'Paid' && typeof value.chargedAmount === 'number') {
+      const confirmed = await this.moneyConfirmation.confirm({
+        action: 'Aprobar el servicio con un valor cobrado',
+        amount: value.chargedAmount,
+      });
+      if (!confirmed) return;
+    }
+
     await this.run(() =>
       this.api.approve(this.record.id, {
         version: this.record.version,

@@ -47,7 +47,8 @@ export class AdminMediaManagerPageComponent implements OnInit {
     { value: MEDIA_STATUS.archived, label: 'Archivado' },
     { value: MEDIA_STATUS.failed, label: 'Fallido' },
   ] as const;
-  readonly maxUploadSizeBytes = 5 * 1024 * 1024;
+  /** Same limit as the API (FileStorage:MaxUploadBytes = 10 MB), decided by the user on 2026-11-13. */
+  readonly maxUploadSizeBytes = 10_485_760;
   readonly allowedFileAccept = 'image/jpeg,image/png,image/webp,image/gif,application/pdf';
 
   readonly assets = signal<MediaAssetView[]>([]);
@@ -196,7 +197,7 @@ export class AdminMediaManagerPageComponent implements OnInit {
 function getMediaUploadErrorMessage(error: unknown): string {
   if (error instanceof HttpErrorResponse) {
     if (error.status === 413) {
-      return 'El archivo supera el tamano maximo permitido de 5 MB.';
+      return 'El archivo supera el tamaño máximo permitido de 10 MB.';
     }
 
     if (error.status === 503) {
@@ -206,7 +207,7 @@ function getMediaUploadErrorMessage(error: unknown): string {
     if (error.status === 422) {
       return getApiErrorMessage(
         error,
-        'Archivo invalido. Usa JPG, PNG, WEBP, GIF o PDF y verifica el tamano maximo de 5 MB.',
+        'Archivo invalido. Usa JPG, PNG, WEBP, GIF o PDF y verifica el tamaño máximo de 10 MB.',
       );
     }
   }

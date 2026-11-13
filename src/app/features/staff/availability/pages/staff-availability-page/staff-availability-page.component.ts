@@ -116,7 +116,8 @@ export class StaffAvailabilityPageComponent {
 
   readonly durationControl = new FormControl<number>(30, {
     nonNullable: true,
-    validators: [Validators.required, Validators.min(5), Validators.max(480)],
+    // Same range as the server (10–240, SONDA BUG-036).
+    validators: [Validators.required, Validators.min(10), Validators.max(240)],
   });
 
   readonly absenceForm: AbsenceFormGroup = new FormGroup(

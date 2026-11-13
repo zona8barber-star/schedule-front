@@ -25,6 +25,7 @@ import { ServiceView } from '../../../../../core/models/service.models';
 import { AdminMembershipPlansApiService } from '../../../../../core/services/admin-membership-plans-api.service';
 import { AdminServicesApiService } from '../../../../../core/services/admin-services-api.service';
 import { AuthService } from '../../../../../core/services/auth.service';
+import { MoneyConfirmationService } from '../../../../../core/services/money-confirmation.service';
 import { getApiErrorMessage } from '../../../../../core/utils/api-error.utils';
 import { ApiFeedbackComponent } from '../../../../../shared/components/api-feedback/api-feedback.component';
 import {
@@ -53,6 +54,7 @@ interface ServiceOption {
   styleUrl: './admin-membership-plan-form-modal.component.scss',
 })
 export class AdminMembershipPlanFormModalComponent implements OnInit {
+  private readonly moneyConfirmation = inject(MoneyConfirmationService);
   private readonly formBuilder = inject(FormBuilder);
   private readonly membershipPlansApiService = inject(AdminMembershipPlansApiService);
   private readonly servicesApiService = inject(AdminServicesApiService);
@@ -220,10 +222,17 @@ export class AdminMembershipPlanFormModalComponent implements OnInit {
       return;
     }
 
+    const request = this.buildRequest();
+    const confirmed = await this.moneyConfirmation.confirm({
+      action: this.planId ? 'Guardar el plan' : 'Crear el plan',
+      amount: request.price,
+      detail: request.name,
+    });
+    if (!confirmed) return;
+
     this.isSaving.set(true);
     this.errorMessage.set(null);
     try {
-      const request = this.buildRequest();
       const result = this.planId
         ? await firstValueFrom(this.membershipPlansApiService.update(this.planId, request))
         : await firstValueFrom(this.membershipPlansApiService.create(request));

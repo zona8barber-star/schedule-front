@@ -9,6 +9,7 @@ import { ProductCategoryView, ProductView, formatCop } from '../../../../../core
 import { CATALOG_MAX_SORT_ORDER } from '../../../../../core/models/service-catalog.models';
 import { AdminProductCatalogApiService } from '../../../../../core/services/admin-product-catalog-api.service';
 import { AuthService } from '../../../../../core/services/auth.service';
+import { MoneyConfirmationService } from '../../../../../core/services/money-confirmation.service';
 import { ConfirmModalService } from '../../../../../core/services/confirm-modal.service';
 import { getApiErrorMessage } from '../../../../../core/utils/api-error.utils';
 import {
@@ -42,6 +43,7 @@ export class AdminProductsPageComponent implements OnInit {
   private readonly api = inject(AdminProductCatalogApiService);
   private readonly authService = inject(AuthService);
   private readonly confirmModal = inject(ConfirmModalService);
+  private readonly moneyConfirmation = inject(MoneyConfirmationService);
   private readonly formBuilder = inject(FormBuilder);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
@@ -150,6 +152,13 @@ export class AdminProductsPageComponent implements OnInit {
       this.form.markAllAsTouched();
       return;
     }
+
+    const confirmed = await this.moneyConfirmation.confirm({
+      action: this.editing() ? 'Guardar el precio del producto' : 'Crear el producto',
+      amount: Math.trunc(this.form.controls.price.value),
+      detail: this.form.controls.name.value.trim() || undefined,
+    });
+    if (!confirmed) return;
 
     this.isSaving.set(true);
     this.formError.set(null);

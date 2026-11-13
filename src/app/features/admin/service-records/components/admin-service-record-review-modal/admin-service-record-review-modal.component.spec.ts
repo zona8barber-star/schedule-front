@@ -12,6 +12,7 @@ import {
   ServiceRecordView,
 } from '../../../../../core/models/service-record.models';
 import { AdminServiceRecordReviewModalComponent } from './admin-service-record-review-modal.component';
+import { MoneyConfirmationService } from '../../../../../core/services/money-confirmation.service';
 
 describe('AdminServiceRecordReviewModalComponent', () => {
   let fixture: ComponentFixture<AdminServiceRecordReviewModalComponent>;
@@ -83,6 +84,8 @@ describe('AdminServiceRecordReviewModalComponent', () => {
     await TestBed.configureTestingModule({
       imports: [AdminServiceRecordReviewModalComponent],
       providers: [
+        // Saving money values asks for confirmation (BUG-080 decision); these specs cover the save itself.
+        { provide: MoneyConfirmationService, useValue: { confirm: () => Promise.resolve(true) } },
         provideHttpClient(),
         provideHttpClientTesting(),
         { provide: AuthService, useValue: { hasPermission: (code: PermissionCode) => permissions.includes(code) } },
@@ -138,6 +141,7 @@ describe('AdminServiceRecordReviewModalComponent', () => {
 
     // 4. Confirming works without choosing the redemption again.
     const approving = component.approve();
+    await new Promise<void>((resolve) => setTimeout(resolve, 0)); // the amount confirmation resolves first
     const req = httpMock.expectOne(`${base}/r-1/approve`);
     expect(req.request.body).toEqual(expect.objectContaining({ operationType: 'LoyaltyReward', loyaltyRedemptionId: 'd-1' }));
     req.flush({ ...record, status: 'Approved' });
@@ -172,6 +176,7 @@ describe('AdminServiceRecordReviewModalComponent', () => {
     expect(component.problems()).toEqual([]);
 
     const approving = component.approve();
+    await new Promise<void>((resolve) => setTimeout(resolve, 0)); // the amount confirmation resolves first
     const req = httpMock.expectOne(`${base}/r-1/approve`);
     expect(req.request.body).toEqual(
       expect.objectContaining({ operationType: 'LoyaltyReward', customerId: 'c-1', chargedAmount: null, loyaltyRedemptionId: 'd-1', accruesLoyaltyPoints: false }),
@@ -188,6 +193,7 @@ describe('AdminServiceRecordReviewModalComponent', () => {
     component.reviewed.subscribe((value) => emitted.push(value));
 
     const approving = component.approve();
+    await new Promise<void>((resolve) => setTimeout(resolve, 0)); // the amount confirmation resolves first
     const req = httpMock.expectOne(`${base}/r-1/approve`);
     expect(req.request.body).toEqual({
       version: 41,
@@ -244,6 +250,7 @@ describe('AdminServiceRecordReviewModalComponent', () => {
 
     component.selectCustomer(carla); // single active membership: preselected
     const approving = component.approve();
+    await new Promise<void>((resolve) => setTimeout(resolve, 0)); // the amount confirmation resolves first
     const req = httpMock.expectOne(`${base}/r-1/approve`);
     expect(req.request.body.operationType).toBe('MembershipConsumption');
     expect(req.request.body.customerId).toBe('c-1');
@@ -276,6 +283,7 @@ describe('AdminServiceRecordReviewModalComponent', () => {
     component.staleDetected.subscribe(() => stale++);
 
     const approving = component.approve();
+    await new Promise<void>((resolve) => setTimeout(resolve, 0)); // the amount confirmation resolves first
     httpMock.expectOne(`${base}/r-1/approve`).flush(
       { detail: 'Este servicio ya fue revisado por otra persona. Recarga la bandeja.' },
       { status: 409, statusText: 'Conflict' },
@@ -308,6 +316,7 @@ describe('AdminServiceRecordReviewModalComponent', () => {
     expect(text).toContain('ahora figura como cancelada');
 
     const approving = component.approve();
+    await new Promise<void>((resolve) => setTimeout(resolve, 0)); // the amount confirmation resolves first
     httpMock.expectOne(`${base}/r-1/approve`).flush({ ...record, status: 'Approved' });
     await approving;
   });
@@ -392,6 +401,7 @@ describe('AdminServiceRecordReviewModalComponent', () => {
       expect(component.form.controls.chargedAmount.value).toBe(60000);
 
       const approving = component.approve();
+      await new Promise<void>((resolve) => setTimeout(resolve, 0)); // the amount confirmation resolves first
       const req = httpMock.expectOne(`${base}/r-1/approve`);
       expect(req.request.body).toEqual(expect.objectContaining({ generalServiceId: 'g-color', serviceId: 's-color' }));
       req.flush({ ...record, status: 'Approved' });

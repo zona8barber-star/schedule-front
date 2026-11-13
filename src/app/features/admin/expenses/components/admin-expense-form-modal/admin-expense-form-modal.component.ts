@@ -6,6 +6,7 @@ import { ExpenseEntryView } from '../../../../../core/models/expense.models';
 import { FixedExpenseView } from '../../../../../core/models/fixed-expense.models';
 import { AdminExpensesApiService } from '../../../../../core/services/admin-expenses-api.service';
 import { AdminFixedExpensesApiService } from '../../../../../core/services/admin-fixed-expenses-api.service';
+import { MoneyConfirmationService } from '../../../../../core/services/money-confirmation.service';
 import { getApiErrorMessage } from '../../../../../core/utils/api-error.utils';
 import { ApiFeedbackComponent } from '../../../../../shared/components/api-feedback/api-feedback.component';
 
@@ -21,6 +22,7 @@ function integerValidator(control: AbstractControl): ValidationErrors | null {
 })
 export class AdminExpenseFormModalComponent implements OnInit {
   private readonly formBuilder = inject(FormBuilder);
+  private readonly moneyConfirmation = inject(MoneyConfirmationService);
   private readonly expensesApi = inject(AdminExpensesApiService);
   private readonly fixedExpensesApi = inject(AdminFixedExpensesApiService);
 
@@ -82,6 +84,12 @@ export class AdminExpenseFormModalComponent implements OnInit {
       this.form.markAllAsTouched();
       return;
     }
+
+    const confirmed = await this.moneyConfirmation.confirm({
+      action: this.entry ? 'Guardar el gasto' : 'Registrar gasto',
+      amount: Math.trunc(this.form.controls.amount.value),
+    });
+    if (!confirmed) return;
 
     this.isSaving.set(true);
     this.errorMessage.set(null);

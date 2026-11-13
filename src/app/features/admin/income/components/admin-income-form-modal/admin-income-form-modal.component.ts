@@ -7,6 +7,7 @@ import { IncomeEntryView, IncomeKind } from '../../../../../core/models/income.m
 import { AdminIncomeApiService } from '../../../../../core/services/admin-income-api.service';
 import { AdminServicesApiService } from '../../../../../core/services/admin-services-api.service';
 import { AdminStaffApiService } from '../../../../../core/services/admin-staff-api.service';
+import { MoneyConfirmationService } from '../../../../../core/services/money-confirmation.service';
 import { getApiErrorMessage } from '../../../../../core/utils/api-error.utils';
 import { ApiFeedbackComponent } from '../../../../../shared/components/api-feedback/api-feedback.component';
 
@@ -22,6 +23,7 @@ function integerValidator(control: AbstractControl): ValidationErrors | null {
 })
 export class AdminIncomeFormModalComponent implements OnInit {
   private readonly formBuilder = inject(FormBuilder);
+  private readonly moneyConfirmation = inject(MoneyConfirmationService);
   private readonly incomeApi = inject(AdminIncomeApiService);
   private readonly servicesApi = inject(AdminServicesApiService);
   private readonly staffApi = inject(AdminStaffApiService);
@@ -134,6 +136,12 @@ export class AdminIncomeFormModalComponent implements OnInit {
       this.form.markAllAsTouched();
       return;
     }
+
+    const confirmed = await this.moneyConfirmation.confirm({
+      action: this.entry ? 'Guardar el ingreso' : 'Registrar ingreso',
+      amount: Math.trunc(this.form.controls.amount.value),
+    });
+    if (!confirmed) return;
 
     this.isSaving.set(true);
     this.errorMessage.set(null);

@@ -24,6 +24,7 @@ import { ServiceView } from '../../../../../core/models/service.models';
 import { AdminServiceCatalogApiService } from '../../../../../core/services/admin-service-catalog-api.service';
 import { AdminServicesApiService } from '../../../../../core/services/admin-services-api.service';
 import { AuthService } from '../../../../../core/services/auth.service';
+import { MoneyConfirmationService } from '../../../../../core/services/money-confirmation.service';
 import { getApiErrorMessage } from '../../../../../core/utils/api-error.utils';
 import { ApiFeedbackComponent } from '../../../../../shared/components/api-feedback/api-feedback.component';
 
@@ -43,6 +44,7 @@ function integerValidator(control: AbstractControl): ValidationErrors | null {
   styleUrl: './admin-service-form-modal.component.scss',
 })
 export class AdminServiceFormModalComponent implements OnInit {
+  private readonly moneyConfirmation = inject(MoneyConfirmationService);
   private readonly formBuilder = inject(FormBuilder);
   private readonly adminServicesApiService = inject(AdminServicesApiService);
   private readonly catalogApi = inject(AdminServiceCatalogApiService);
@@ -130,6 +132,13 @@ export class AdminServiceFormModalComponent implements OnInit {
       this.form.markAllAsTouched();
       return;
     }
+
+    const confirmed = await this.moneyConfirmation.confirm({
+      action: this.serviceId ? 'Guardar la tarifa' : 'Crear la tarifa',
+      amount: Math.trunc(this.form.controls.basePrice.value),
+      detail: this.form.controls.name.value.trim() || undefined,
+    });
+    if (!confirmed) return;
 
     this.isSaving.set(true);
     this.errorMessage.set(null);
