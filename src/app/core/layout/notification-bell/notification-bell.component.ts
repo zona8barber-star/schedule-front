@@ -69,7 +69,7 @@ export class NotificationBellComponent {
     });
     this.now.set(Date.now());
     this.isOpen.set(true);
-    void this.center.refresh();
+    void this.center.refresh({ firstPage: true });
   }
 
   close(): void {
@@ -89,6 +89,10 @@ export class NotificationBellComponent {
     if (item.url?.startsWith('/')) {
       await this.router.navigateByUrl(item.url);
     }
+  }
+
+  loadMore(): void {
+    void this.center.loadMore();
   }
 
   markAllAsRead(): void {

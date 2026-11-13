@@ -154,7 +154,7 @@
 
       <div class="admin-notifications-page__actions">
         <button type="submit" [disabled]="isBusy()">
-          {{ isSubmitting() ? 'Enviando...' : 'Enviar notificacion' }}
+          {{ isSubmitting() ? 'Enviando...' : isPreviewing() ? 'Calculando destinatarios...' : 'Enviar notificacion' }}
         </button>
       </div>
     </form>

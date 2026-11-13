@@ -31,6 +31,17 @@
             {{ push.isEnabling() ? 'Activando...' : 'Activar en este dispositivo' }}
           </button>
         }
+        @case ('unconfirmed') {
+          <button
+            class="ns__btn ns__btn--primary"
+            type="button"
+            data-testid="push-retry"
+            [disabled]="push.isEnabling()"
+            (click)="enable()"
+          >
+            {{ push.isEnabling() ? 'Reintentando...' : 'Reintentar' }}
+          </button>
+        }
         @case ('enabled') {
           <button
             class="ns__btn ns__btn--outline"

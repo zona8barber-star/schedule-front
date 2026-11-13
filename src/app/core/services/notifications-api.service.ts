@@ -3,6 +3,7 @@ import { Injectable, inject } from '@angular/core';
 
 import {
   CustomerSummaryResponse,
+  NotificationBroadcastPreviewResponse,
   NotificationBroadcastRequest,
   NotificationCampaignResponse,
   NotificationInboxResponse,
@@ -31,10 +32,9 @@ export class NotificationsApiService {
     return this.httpClient.get<PushClientConfigResponse>(this.buildUrl('/notifications/push-config'));
   }
 
-  getInbox(limit: number) {
-    return this.httpClient.get<NotificationInboxResponse>(this.buildUrl('/notifications/inbox'), {
-      params: { limit },
-    });
+  getInbox(limit: number, offset = 0) {
+    const params: Record<string, number> = offset > 0 ? { limit, offset } : { limit };
+    return this.httpClient.get<NotificationInboxResponse>(this.buildUrl('/notifications/inbox'), { params });
   }
 
   markNotificationAsRead(notificationId: string) {
@@ -46,6 +46,14 @@ export class NotificationsApiService {
 
   markAllNotificationsAsRead() {
     return this.httpClient.post<void>(this.buildUrl('/notifications/inbox/read-all'), {});
+  }
+
+  /** BUG-110: a quién llegaría la difusión, sin enviarla. */
+  previewBroadcast(request: NotificationBroadcastRequest) {
+    return this.httpClient.post<NotificationBroadcastPreviewResponse>(
+      this.buildUrl('/admin/notifications/broadcast/preview'),
+      request,
+    );
   }
 
   broadcast(request: NotificationBroadcastRequest) {

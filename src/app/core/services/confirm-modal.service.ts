@@ -8,8 +8,10 @@ export interface ConfirmOptions {
   danger?: boolean;
   /** Highlighted notice shown above the actions (for example an unusually high amount). */
   warning?: string;
-  /** Header icon: a bin (default, for deletions) or money (amount confirmations). */
-  icon?: 'trash' | 'money';
+  /** Header icon: a bin (default, for deletions), money (amount confirmations) or a bell (notifications). */
+  icon?: 'trash' | 'money' | 'bell';
+  /** BUG-110: how a notification will look, shown before sending it. */
+  preview?: { title: string; body: string };
 }
 
 interface ConfirmModalState {

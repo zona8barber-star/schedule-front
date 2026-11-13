@@ -185,3 +185,28 @@
     flex-direction: column;
   }
 }
+
+/* BUG-110: how the notification will look before it is sent. */
+.confirm-modal__preview {
+  margin: 0.25rem 0 0;
+  padding: 0.625rem 0.75rem;
+  border: 1px solid var(--color-border, rgba(176, 138, 74, 0.35));
+  border-radius: 8px;
+  text-align: left;
+  font-size: 0.875rem;
+  line-height: 1.45;
+  max-height: 12rem;
+  overflow-y: auto;
+  overflow-wrap: anywhere;
+
+  strong {
+    display: block;
+    color: var(--color-text, #f2eee6);
+  }
+
+  p {
+    margin: 0.25rem 0 0;
+    color: var(--color-text-secondary, #b8b0a4);
+    white-space: pre-line;
+  }
+}

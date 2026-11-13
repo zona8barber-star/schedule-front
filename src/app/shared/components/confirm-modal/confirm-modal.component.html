@@ -16,6 +16,11 @@
             <circle cx="12" cy="12" r="2.5" />
             <path d="M6 12h.01M18 12h.01" />
           </svg>
+        } @else if (state.options.icon === 'bell') {
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9" />
+            <path d="M13.7 21a2 2 0 0 1-3.4 0" />
+          </svg>
         } @else {
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6" />
@@ -30,6 +35,12 @@
         <h2 class="confirm-modal__title">{{ state.options.title }}</h2>
         @if (state.options.message) {
           <p class="confirm-modal__message">{{ state.options.message }}</p>
+        }
+        @if (state.options.preview; as preview) {
+          <div class="confirm-modal__preview" data-testid="confirm-modal-preview">
+            <strong>{{ preview.title }}</strong>
+            <p>{{ preview.body }}</p>
+          </div>
         }
         @if (state.options.warning) {
           <p class="confirm-modal__warning" role="alert">{{ state.options.warning }}</p>

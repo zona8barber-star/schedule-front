@@ -27,6 +27,8 @@ export interface UserNotificationItem {
 export interface NotificationInboxResponse {
   unreadCount: number;
   items: UserNotificationItem[];
+  /** BUG-107: hay más notificaciones después de esta página (el panel ofrece «Ver más»). */
+  hasMore?: boolean;
 }
 
 export type NotificationBroadcastTargetType = 'all' | 'selected' | 'filter';
@@ -37,6 +39,12 @@ export interface NotificationBroadcastRequest {
   targetType: NotificationBroadcastTargetType;
   customerUserIds?: string[] | null;
   staffProfileId?: string | null;
+}
+
+/** BUG-110: destinatarios de una difusión antes de enviarla. */
+export interface NotificationBroadcastPreviewResponse {
+  recipientCount: number;
+  targetSummary: string;
 }
 
 export interface NotificationCampaignResponse {

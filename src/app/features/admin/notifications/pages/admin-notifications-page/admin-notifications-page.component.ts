@@ -10,6 +10,7 @@ import {
 } from '../../../../../core/models/notification.models';
 import { StaffListItem } from '../../../../../core/models/staff.models';
 import { AdminStaffApiService } from '../../../../../core/services/admin-staff-api.service';
+import { ConfirmModalService } from '../../../../../core/services/confirm-modal.service';
 import { NotificationsApiService } from '../../../../../core/services/notifications-api.service';
 import { getApiErrorMessage } from '../../../../../core/utils/api-error.utils';
 import { bogotaDateTimeFormat } from '../../../../../core/utils/bogota-date.utils';
@@ -28,6 +29,7 @@ export class AdminNotificationsPageComponent implements OnInit {
   private readonly formBuilder = inject(FormBuilder);
   private readonly notificationsApiService = inject(NotificationsApiService);
   private readonly adminStaffApiService = inject(AdminStaffApiService);
+  private readonly confirmModal = inject(ConfirmModalService);
   private readonly dateTimeFormatter = bogotaDateTimeFormat('es-CO', {
     dateStyle: 'medium',
     timeStyle: 'short',
@@ -39,6 +41,8 @@ export class AdminNotificationsPageComponent implements OnInit {
   readonly isLoadingCampaigns = signal(true);
   readonly isLoadingStaff = signal(true);
   readonly isSubmitting = signal(false);
+  /** BUG-110: counting the recipients before the confirmation. */
+  readonly isPreviewing = signal(false);
   readonly errorMessage = signal<string | null>(null);
   readonly successMessage = signal<string | null>(null);
   readonly campaigns = signal<NotificationCampaignResponse[]>([]);
@@ -49,12 +53,13 @@ export class AdminNotificationsPageComponent implements OnInit {
   readonly isSearchingCustomers = signal(false);
   readonly selectedCustomers = signal<CustomerSummaryResponse[]>([]);
 
-  readonly isBusy = computed(() => this.isSubmitting());
+  readonly isBusy = computed(() => this.isSubmitting() || this.isPreviewing());
 
   readonly broadcastForm = this.formBuilder.group({
     title: ['', [Validators.required, Validators.maxLength(160)]],
     body: ['', [Validators.required, Validators.maxLength(1000)]],
-    targetType: ['all', [Validators.required]],
+    // BUG-110: no audience is chosen by default; «Todos los clientes» must be picked on purpose.
+    targetType: ['', [Validators.required]],
     staffProfileId: [''],
   });
 
@@ -62,8 +67,8 @@ export class AdminNotificationsPageComponent implements OnInit {
     await Promise.all([this.loadCampaigns(), this.loadStaff()]);
   }
 
-  get targetType(): NotificationBroadcastTargetType {
-    return this.broadcastForm.controls.targetType.value as NotificationBroadcastTargetType;
+  get targetType(): NotificationBroadcastTargetType | null {
+    return (this.broadcastForm.controls.targetType.value || null) as NotificationBroadcastTargetType | null;
   }
 
   selectTargetType(targetType: NotificationBroadcastTargetType): void {
@@ -111,12 +116,18 @@ export class AdminNotificationsPageComponent implements OnInit {
     this.errorMessage.set(null);
     this.successMessage.set(null);
 
+    const targetType = this.targetType;
+
+    if (!targetType) {
+      this.broadcastForm.markAllAsTouched();
+      this.errorMessage.set('Elige a quién enviar la notificación.');
+      return;
+    }
+
     if (this.broadcastForm.invalid) {
       this.broadcastForm.markAllAsTouched();
       return;
     }
-
-    const targetType = this.targetType;
 
     if (targetType === 'selected' && this.selectedCustomers().length === 0) {
       this.errorMessage.set('Selecciona al menos un cliente.');
@@ -128,19 +139,23 @@ export class AdminNotificationsPageComponent implements OnInit {
       return;
     }
 
+    const value = this.broadcastForm.getRawValue();
+    const request: NotificationBroadcastRequest = {
+      title: (value.title ?? '').trim(),
+      body: (value.body ?? '').trim(),
+      targetType,
+      customerUserIds:
+        targetType === 'selected' ? this.selectedCustomers().map((customer) => customer.id) : null,
+      staffProfileId: targetType === 'filter' ? value.staffProfileId || null : null,
+    };
+
+    if (!(await this.confirmRecipients(request))) {
+      return;
+    }
+
     this.isSubmitting.set(true);
 
     try {
-      const value = this.broadcastForm.getRawValue();
-      const request: NotificationBroadcastRequest = {
-        title: (value.title ?? '').trim(),
-        body: (value.body ?? '').trim(),
-        targetType,
-        customerUserIds:
-          targetType === 'selected' ? this.selectedCustomers().map((customer) => customer.id) : null,
-        staffProfileId: targetType === 'filter' ? value.staffProfileId || null : null,
-      };
-
       const campaign = await firstValueFrom(this.notificationsApiService.broadcast(request));
       this.successMessage.set(`Notificacion enviada a ${campaign.recipientCount} cliente(s).`);
       this.resetForm();
@@ -155,7 +170,7 @@ export class AdminNotificationsPageComponent implements OnInit {
   resetForm(): void {
     this.submitted.set(false);
     this.broadcastForm.reset(
-      { title: '', body: '', targetType: 'all', staffProfileId: '' },
+      { title: '', body: '', targetType: '', staffProfileId: '' },
       { emitEvent: false },
     );
     this.selectedCustomers.set([]);
@@ -170,6 +185,40 @@ export class AdminNotificationsPageComponent implements OnInit {
 
   formatDateTime(value: string): string {
     return this.dateTimeFormatter.format(new Date(value));
+  }
+
+  /**
+   * BUG-110: before sending, asks the server how many customers the broadcast reaches and shows that number with
+   * the notice as it will look. Nothing is sent without that confirmation.
+   */
+  private async confirmRecipients(request: NotificationBroadcastRequest): Promise<boolean> {
+    this.isPreviewing.set(true);
+    let preview: { recipientCount: number; targetSummary: string };
+
+    try {
+      preview = await firstValueFrom(this.notificationsApiService.previewBroadcast(request));
+    } catch (error) {
+      this.errorMessage.set(getApiErrorMessage(error));
+      return false;
+    } finally {
+      this.isPreviewing.set(false);
+    }
+
+    const { recipientCount, targetSummary } = preview;
+    if (recipientCount === 0) {
+      this.errorMessage.set('Ningún cliente activo coincide con estos destinatarios; no hay a quién enviarla.');
+      return false;
+    }
+
+    const customers = recipientCount === 1 ? '1 cliente' : `${recipientCount} clientes`;
+    return this.confirmModal.confirm({
+      title: '¿Enviar esta notificación?',
+      message: `Llegará a ${customers} (${targetSummary}). Así se verá:`,
+      preview: { title: request.title, body: request.body },
+      confirmLabel: `Enviar a ${customers}`,
+      danger: false,
+      icon: 'bell',
+    });
   }
 
   /** Increases with every search; results of an earlier term are dropped (same pattern as SONDA BUG-082). */

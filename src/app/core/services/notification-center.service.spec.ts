@@ -6,7 +6,11 @@ import { Subject, of, throwError } from 'rxjs';
 import { AuthUserResponse } from '../models/auth.models';
 import { NotificationInboxResponse, UserNotificationItem } from '../models/notification.models';
 import { AuthService } from './auth.service';
-import { NOTIFICATION_INBOX_LIMIT, NotificationCenterService } from './notification-center.service';
+import {
+  NOTIFICATION_INBOX_LIMIT,
+  NOTIFICATION_INBOX_MAX_LIMIT,
+  NotificationCenterService,
+} from './notification-center.service';
 import { NotificationsApiService } from './notifications-api.service';
 
 function item(id: string, read = false): UserNotificationItem {
@@ -101,6 +105,55 @@ describe('NotificationCenterService', () => {
     expect(api.markAllNotificationsAsRead).toHaveBeenCalled();
     await vi.waitFor(() => expect(api.getInbox).toHaveBeenCalledTimes(2));
     expect(service.unreadCount()).toBe(2);
+  });
+
+  // BUG-107: el contador cuenta todas las sin leer; «Ver más» deja llegar a las que no caben en la primera página.
+  it('offers «Ver más» while the server has more and widens the list from the start', async () => {
+    inbox = { unreadCount: 7, items: [1, 2, 3, 4, 5].map((n) => item(`n${n}`)), hasMore: true };
+    const service = createAndLogin();
+    await vi.waitFor(() => expect(service.hasLoaded()).toBe(true));
+    expect(service.hasMore()).toBe(true);
+
+    inbox = { unreadCount: 7, items: [1, 2, 3, 4, 5, 6, 7].map((n) => item(`n${n}`)), hasMore: false };
+    await service.loadMore();
+
+    expect(api.getInbox).toHaveBeenLastCalledWith(NOTIFICATION_INBOX_LIMIT * 2);
+    expect(service.items().map((entry) => entry.id)).toEqual(['n1', 'n2', 'n3', 'n4', 'n5', 'n6', 'n7']);
+    expect(service.hasMore()).toBe(false);
+
+    // Without more pages, «Ver más» does nothing.
+    await service.loadMore();
+    expect(api.getInbox).toHaveBeenCalledTimes(2);
+  });
+
+  it('goes back to the first page when the panel asks for it', async () => {
+    inbox = { unreadCount: 7, items: [1, 2, 3, 4, 5].map((n) => item(`n${n}`)), hasMore: true };
+    const service = createAndLogin();
+    await vi.waitFor(() => expect(service.hasLoaded()).toBe(true));
+    await service.loadMore();
+
+    await service.refresh({ firstPage: true });
+
+    expect(api.getInbox).toHaveBeenLastCalledWith(NOTIFICATION_INBOX_LIMIT);
+  });
+
+  it('past the API maximum, continues by offset without repeating notifications', async () => {
+    const firstFifty = Array.from({ length: NOTIFICATION_INBOX_MAX_LIMIT }, (_, index) => item(`p${index}`));
+    inbox = { unreadCount: 60, items: firstFifty, hasMore: true };
+    const service = createAndLogin();
+    await vi.waitFor(() => expect(service.hasLoaded()).toBe(true));
+    for (let step = 0; step < 10 && api.getInbox.mock.lastCall?.[0] !== NOTIFICATION_INBOX_MAX_LIMIT; step++) {
+      await service.loadMore();
+    }
+
+    api.getInbox.mockReturnValueOnce(
+      of({ unreadCount: 60, items: [item('p49'), item('p50'), item('p51')], hasMore: false }),
+    );
+    await service.loadMore();
+
+    expect(api.getInbox).toHaveBeenLastCalledWith(NOTIFICATION_INBOX_LIMIT, NOTIFICATION_INBOX_MAX_LIMIT);
+    expect(service.items()).toHaveLength(NOTIFICATION_INBOX_MAX_LIMIT + 2);
+    expect(service.hasMore()).toBe(false);
   });
 
   it('clears everything on logout', async () => {
