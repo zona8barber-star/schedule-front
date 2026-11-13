@@ -1,3 +1,4 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { DecimalPipe } from '@angular/common';
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -7,6 +8,7 @@ import { firstValueFrom } from 'rxjs';
 import { ExpenseEntryView } from '../../../../../core/models/expense.models';
 import { AdminExpensesApiService } from '../../../../../core/services/admin-expenses-api.service';
 import { ConfirmModalService } from '../../../../../core/services/confirm-modal.service';
+import { formatCop } from '../../../../../core/services/money-confirmation.service';
 import { getApiErrorMessage } from '../../../../../core/utils/api-error.utils';
 import { bogotaToday } from '../../../../../core/utils/bogota-date.utils';
 import { ApiFeedbackComponent } from '../../../../../shared/components/api-feedback/api-feedback.component';
@@ -36,6 +38,8 @@ export class AdminExpensesListPageComponent implements OnInit {
   readonly entries = signal<ExpenseEntryView[]>([]);
   readonly isLoading = signal(true);
   readonly errorMessage = signal<string | null>(null);
+  /** Increases with every load; an answer whose number is no longer the latest is ignored. */
+  private loadSequence = 0;
   readonly isModalOpen = signal(false);
   readonly editingEntry = signal<ExpenseEntryView | null>(null);
   readonly busyId = signal<string | null>(null);
@@ -77,7 +81,8 @@ export class AdminExpensesListPageComponent implements OnInit {
   async deleteEntry(entry: ExpenseEntryView): Promise<void> {
     const confirmed = await this.confirmModal.confirm({
       title: '¿Eliminar gasto?',
-      message: `Se eliminará "${entry.name}" ($ ${entry.amount}).`,
+      // SONDA BUG-083: pesos with thousands separator (C2 format).
+      message: `Se eliminará "${entry.name}" (${formatCop(entry.amount)}).`,
     });
     if (!confirmed) {
       return;
@@ -89,24 +94,37 @@ export class AdminExpensesListPageComponent implements OnInit {
       await firstValueFrom(this.api.remove(entry.id));
       this.entries.update((list) => list.filter((e) => e.id !== entry.id));
     } catch (error) {
-      this.errorMessage.set(getApiErrorMessage(error));
+      if (error instanceof HttpErrorResponse && error.status === 404) {
+        // Same as SONDA BUG-084: already deleted elsewhere; say so and refresh the list.
+        await this.load();
+        this.errorMessage.set('Este gasto ya no existe: se eliminó en otra pestaña o por otra persona. La lista se actualizó.');
+      } else {
+        this.errorMessage.set(getApiErrorMessage(error));
+      }
     } finally {
       this.busyId.set(null);
     }
   }
 
   private async load(): Promise<void> {
+    // Same pattern as SONDA BUG-082: only the answer for the latest month is shown.
+    const sequence = ++this.loadSequence;
     this.isLoading.set(true);
     this.errorMessage.set(null);
     const [yearText, monthText] = this.selectedMonth().split('-');
     const year = Number(yearText);
     const month = Number(monthText);
     try {
-      this.entries.set(await firstValueFrom(this.api.list(year, month)));
+      const entries = await firstValueFrom(this.api.list(year, month));
+      if (sequence !== this.loadSequence) return;
+      this.entries.set(entries);
     } catch (error) {
+      if (sequence !== this.loadSequence) return;
       this.errorMessage.set(getApiErrorMessage(error));
     } finally {
-      this.isLoading.set(false);
+      if (sequence === this.loadSequence) {
+        this.isLoading.set(false);
+      }
     }
   }
 }

@@ -172,18 +172,26 @@ export class AdminNotificationsPageComponent implements OnInit {
     return this.dateTimeFormatter.format(new Date(value));
   }
 
+  /** Increases with every search; results of an earlier term are dropped (same pattern as SONDA BUG-082). */
+  private searchSequence = 0;
+
   private async searchCustomers(term: string): Promise<void> {
+    const sequence = ++this.searchSequence;
     this.isSearchingCustomers.set(true);
 
     try {
       const results = await firstValueFrom(this.notificationsApiService.searchCustomers(term));
+      if (sequence !== this.searchSequence) return;
       const selectedIds = new Set(this.selectedCustomers().map((customer) => customer.id));
       this.searchResults.set(results.filter((customer) => !selectedIds.has(customer.id)));
     } catch (error) {
+      if (sequence !== this.searchSequence) return;
       this.errorMessage.set(getApiErrorMessage(error));
       this.searchResults.set([]);
     } finally {
-      this.isSearchingCustomers.set(false);
+      if (sequence === this.searchSequence) {
+        this.isSearchingCustomers.set(false);
+      }
     }
   }
 

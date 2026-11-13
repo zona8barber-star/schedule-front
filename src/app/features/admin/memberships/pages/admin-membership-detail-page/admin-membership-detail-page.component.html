@@ -84,7 +84,15 @@
             </dd>
           </dl>
           @if (income.hasDiscrepancy) {
-            <p class="membership-detail__warning">Los valores no coinciden; la justificación está en el historial.</p>
+            @if (discrepancyJustification(); as justification) {
+              <p class="membership-detail__warning" data-testid="discrepancy-notice">
+                Los valores no coinciden. Justificación registrada: «{{ justification }}».
+              </p>
+            } @else {
+              <p class="membership-detail__warning" data-testid="discrepancy-notice">
+                Los valores no coinciden y no hay una justificación registrada.
+              </p>
+            }
           }
           @if (income.isDeleted) {
             <p class="membership-detail__warning">El ingreso fue eliminado en Ingresos.</p>

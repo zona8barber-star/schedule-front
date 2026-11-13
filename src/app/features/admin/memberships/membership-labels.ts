@@ -28,6 +28,7 @@ export const MEMBERSHIP_EVENT_LABELS: Record<MembershipEventType, string> = {
   IncomeUnlinked: 'Ingreso desvinculado',
   MovedByMerge: 'Trasladada por fusión de clientes',
   Annulled: 'Anulada',
+  IncomeAmountChanged: 'Valor del ingreso cambiado',
 };
 
 /** Today in Bogotá as YYYY-MM-DD, the business date used for sales and validity. */

@@ -172,4 +172,30 @@ describe('AdminIncomeFormModalComponent', () => {
       expect(component.isSaving()).toBe(false);
     });
   });
+
+  /** SONDA BUG-104: a linked membership sale whose new amount no longer matches asks for a justification. */
+  it('asks for the justification the API requires and sends it on the next save', async () => {
+    await open(sale);
+    component.form.patchValue({ amount: 1 });
+
+    const first = component.submit();
+    await new Promise<void>((resolve) => setTimeout(resolve, 0));
+    httpMock.expectOne(`${api}/admin/income/i-2`).flush(
+      { errors: { discrepancyJustification: ['El valor del ingreso (1) no coincide con la suma de las membresías vinculadas (250.000). Explica la diferencia.'] } },
+      { status: 422, statusText: 'Unprocessable Entity' },
+    );
+    await first;
+    fixture.detectChanges();
+
+    expect(component.justificationRequest()).toContain('Explica la diferencia');
+    expect((fixture.nativeElement as HTMLElement).querySelector('[data-testid="discrepancy-justification"]')).not.toBeNull();
+
+    component.form.controls.discrepancyJustification.setValue('Cortesía acordada');
+    const second = component.submit();
+    await new Promise<void>((resolve) => setTimeout(resolve, 0));
+    const retry = httpMock.expectOne(`${api}/admin/income/i-2`);
+    expect(retry.request.body.discrepancyJustification).toBe('Cortesía acordada');
+    retry.flush({ ...sale, amount: 1 });
+    await second;
+  });
 });

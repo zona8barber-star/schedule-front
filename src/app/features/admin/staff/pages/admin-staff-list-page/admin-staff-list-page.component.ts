@@ -30,7 +30,7 @@ export class AdminStaffListPageComponent implements OnInit {
 
   readonly isModalOpen = signal(false);
   readonly editingStaffId = signal<string | null>(null);
-  readonly deletingStaffId = signal<string | null>(null);
+  readonly togglingStaffId = signal<string | null>(null);
 
   readonly isActivating = signal(false);
   readonly canActivateProfessional = computed(
@@ -70,25 +70,37 @@ export class AdminStaffListPageComponent implements OnInit {
     this.closeModal();
   }
 
-  async deleteStaff(member: StaffListItem): Promise<void> {
+  /**
+   * SONDA BUG-071: the API has no way to delete a professional (DELETE /admin/staff/{id} does not exist) and no design
+   * decision defines it, so the action deactivates or reactivates them through the existing status endpoint. A
+   * deactivated professional stops being bookable and keeps their history; nothing is deleted.
+   */
+  async toggleStaffStatus(member: StaffListItem): Promise<void> {
+    const deactivating = member.isActive;
     const confirmed = await this.confirmModal.confirm({
-      title: '¿Eliminar profesional?',
-      message: `Se eliminará a "${member.displayName}" y no se podrá deshacer.`,
+      title: deactivating ? '¿Desactivar profesional?' : '¿Activar profesional?',
+      message: deactivating
+        ? `"${member.displayName}" dejará de aparecer para reservar y no podrá iniciar sesión. Su historial se conserva y podrás activarlo de nuevo.`
+        : `"${member.displayName}" volverá a aparecer para reservar y podrá iniciar sesión.`,
+      confirmLabel: deactivating ? 'Sí, desactivar' : 'Sí, activar',
+      danger: deactivating,
     });
     if (!confirmed) return;
 
-    this.deletingStaffId.set(member.staffProfileId);
+    this.togglingStaffId.set(member.staffProfileId);
     this.errorMessage.set(null);
 
     try {
-      await firstValueFrom(this.adminStaffApiService.remove(member.staffProfileId));
+      const updated = await firstValueFrom(
+        this.adminStaffApiService.updateStatus(member.staffProfileId, { isActive: !deactivating }),
+      );
       this.staffMembers.update((list) =>
-        list.filter((m) => m.staffProfileId !== member.staffProfileId),
+        list.map((m) => (m.staffProfileId === updated.staffProfileId ? { ...m, ...updated } : m)),
       );
     } catch (error) {
       this.errorMessage.set(getApiErrorMessage(error));
     } finally {
-      this.deletingStaffId.set(null);
+      this.togglingStaffId.set(null);
     }
   }
 

@@ -63,6 +63,15 @@
           <small class="income-modal__error">Ingresa un valor válido (número entero, 0 o mayor).</small>
         }
 
+        @if (justificationRequest(); as reason) {
+          <!-- SONDA BUG-104: the new amount no longer matches the linked memberships. -->
+          <label class="income-modal__field" data-testid="discrepancy-justification">
+            <span>Justificación de la diferencia</span>
+            <small class="income-modal__error">{{ reason }}</small>
+            <textarea formControlName="discrepancyJustification" rows="3" maxlength="500"></textarea>
+          </label>
+        }
+
         @if (!isMembershipSale) {
           <label class="income-modal__checkbox">
             <input type="checkbox" formControlName="isPromo" />

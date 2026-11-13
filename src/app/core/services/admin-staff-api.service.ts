@@ -48,10 +48,6 @@ export class AdminStaffApiService {
     return this.httpClient.post<StaffResponse>(this.buildUrl('/admin/staff/me'), request);
   }
 
-  remove(staffId: string) {
-    return this.httpClient.delete<void>(this.buildUrl(`/admin/staff/${staffId}`));
-  }
-
   /** General services the professional offers, with their duration (ADR-0016 B2). */
   getOfferings(staffId: string) {
     return this.httpClient.get<StaffOfferingsView>(this.buildUrl(`/admin/staff/${staffId}/offerings`));

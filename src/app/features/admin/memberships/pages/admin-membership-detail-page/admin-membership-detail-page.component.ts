@@ -112,6 +112,25 @@ export class AdminMembershipDetailPageComponent implements OnInit {
     return !!membership && membership.endsOn < bogotaToday();
   });
 
+  /**
+   * SONDA BUG-104: the justification recorded for the current income, from the latest link or amount change of that
+   * income that carries one; null when none was recorded (the notice no longer claims one that does not exist).
+   */
+  readonly discrepancyJustification = computed(() => {
+    const membership = this.membership();
+    const incomeId = membership?.income?.incomeEntryId;
+    if (!membership || !incomeId) return null;
+    const latest = membership.events
+      .filter(
+        (event) =>
+          event.incomeEntryId === incomeId &&
+          (event.type === 'IncomeLinked' || event.type === 'IncomeAmountChanged') &&
+          !!event.reason?.trim(),
+      )
+      .sort((first, second) => second.performedAt.localeCompare(first.performedAt))[0];
+    return latest?.reason?.trim() ?? null;
+  });
+
   /** Unlinking needs a justification when the memberships left on the income stop adding up to it. */
   readonly unlinkNeedsJustification = computed(() => {
     const income = this.membership()?.income;

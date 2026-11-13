@@ -179,6 +179,31 @@ describe('AdminMembershipDetailPageComponent', () => {
     expect(page.openModal()).toBeNull();
   });
 
+  /** SONDA BUG-104: the notice shows the recorded justification, and never claims one that does not exist. */
+  it('shows the recorded justification of a discrepancy, or says there is none', async () => {
+    const own = { membershipId: 'm-1', customerName: 'Carlos Pérez', planName: 'Oro', price: 250000, status: 'Active' as const };
+    const income = { incomeEntryId: 'i-1', amount: 1, occurredOn: '2026-10-28', isDeleted: false, linkedMembershipsTotal: 250000, hasDiscrepancy: true, linkedMemberships: [own] };
+    const fixture = await openPage({ ...base, income, events: [] });
+    const notice = () => (fixture.nativeElement as HTMLElement).querySelector('[data-testid="discrepancy-notice"]')!.textContent!;
+
+    expect(notice()).toContain('no hay una justificación registrada');
+
+    const page = harness.routeDebugElement!.componentInstance as AdminMembershipDetailPageComponent;
+    page.membership.update((membership) => ({
+      ...membership!,
+      events: [
+        {
+          id: 'e-1', type: 'IncomeAmountChanged', performedAt: '2026-10-29T10:00:00Z', performedByName: 'Admin',
+          reason: 'Valor del ingreso cambiado de 250.000 a 1. Cortesía acordada', incomeEntryId: 'i-1',
+          relatedCustomerId: null, relatedCustomerName: null,
+        },
+      ],
+    }));
+    harness.detectChanges();
+
+    expect(notice()).toContain('Justificación registrada: «Valor del ingreso cambiado de 250.000 a 1. Cortesía acordada»');
+  });
+
   it('only demands a justification to unlink when the rest of the income would stop adding up', async () => {
     const peer = { membershipId: 'm-2', customerName: 'Carlos Pérez', planName: 'Oro', price: 250000, status: 'Active' as const };
     const own = { ...peer, membershipId: 'm-1' };

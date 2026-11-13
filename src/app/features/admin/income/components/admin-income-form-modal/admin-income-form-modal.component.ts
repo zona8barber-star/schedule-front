@@ -1,6 +1,7 @@
 import { DecimalPipe } from '@angular/common';
 import { Component, EventEmitter, Input, OnInit, Output, computed, inject, signal } from '@angular/core';
 import { AbstractControl, FormBuilder, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
+import { HttpErrorResponse } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 
 import { IncomeEntryView, IncomeKind } from '../../../../../core/models/income.models';
@@ -38,6 +39,8 @@ export class AdminIncomeFormModalComponent implements OnInit {
   readonly isSaving = signal(false);
   readonly isLoading = signal(true);
   readonly errorMessage = signal<string | null>(null);
+  /** The API's reason for asking a justification (SONDA BUG-104); null while it is not needed. */
+  readonly justificationRequest = signal<string | null>(null);
   readonly isBusy = computed(() => this.isSaving() || this.isLoading());
 
   readonly form = this.formBuilder.nonNullable.group({
@@ -47,6 +50,8 @@ export class AdminIncomeFormModalComponent implements OnInit {
     amount: [0, [Validators.required, Validators.min(0), integerValidator]],
     isPromo: [false],
     occurredOn: ['', [Validators.required]],
+    // SONDA BUG-104: only sent when the API asks for it (a linked membership sale whose amount no longer matches).
+    discrepancyJustification: [""],
   });
 
   get isEditing(): boolean {
@@ -157,13 +162,28 @@ export class AdminIncomeFormModalComponent implements OnInit {
       occurredOn: this.form.controls.occurredOn.value,
     };
 
+    const justification = this.form.controls.discrepancyJustification.value.trim();
+
     try {
       const result = this.entry
-        ? await firstValueFrom(this.incomeApi.update(this.entry.id, payload))
+        ? await firstValueFrom(
+            this.incomeApi.update(this.entry.id, {
+              ...payload,
+              ...(sale && justification ? { discrepancyJustification: justification } : {}),
+            }),
+          )
         : await firstValueFrom(this.incomeApi.create(payload));
       this.saved.emit(result);
     } catch (error) {
-      this.errorMessage.set(getApiErrorMessage(error));
+      // SONDA BUG-104: a linked membership sale whose new amount does not match asks for a justification; the field
+      // appears with the API's explanation and the next save sends it.
+      const asked = justificationAskedBy(error);
+      if (asked) {
+        this.justificationRequest.set(asked);
+        this.errorMessage.set(null);
+      } else {
+        this.errorMessage.set(getApiErrorMessage(error));
+      }
     } finally {
       this.isSaving.set(false);
     }
@@ -175,4 +195,11 @@ export class AdminIncomeFormModalComponent implements OnInit {
     }
     this.cancelled.emit();
   }
+}
+
+/** The message of a 422 that asks for a discrepancy justification, or null for any other error. */
+function justificationAskedBy(error: unknown): string | null {
+  if (!(error instanceof HttpErrorResponse) || error.status !== 422) return null;
+  const messages = (error.error as { errors?: Record<string, string[]> } | null)?.errors?.['discrepancyJustification'];
+  return messages?.[0] ?? null;
 }
