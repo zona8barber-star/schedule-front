@@ -58,6 +58,8 @@
 
       @if (isLoading()) {
         <app-page-state kind="loading" message="Cargando profesionales..." />
+      } @else if (loadError()) {
+        <app-load-error subject="los profesionales" [error]="loadError()" (retry)="retryStaff()" />
       } @else if (!staffMembers().length) {
         <div class="ps__empty">
           <h3 class="ps__disp">Sin coincidencias</h3>

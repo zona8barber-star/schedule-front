@@ -72,4 +72,22 @@ describe('PublicStaffListPageComponent search', () => {
     expect(event.defaultPrevented).toBe(true);
     httpMock.expectOne(`${api}/public/staff`).flush([]);
   });
+
+  // SONDA BUG-045: a list that could not be loaded is not «Sin coincidencias».
+  it('when the list cannot be loaded, offers «Reintentar» instead of «Sin coincidencias»', async () => {
+    void fixture.componentInstance.retryStaff();
+    httpMock.expectOne(`${api}/public/staff`).error(new ProgressEvent('error'));
+    await settle();
+    const element = fixture.nativeElement as HTMLElement;
+
+    expect(element.querySelector('[data-testid="load-error"]')).not.toBeNull();
+    expect(element.textContent).not.toContain('Sin coincidencias');
+
+    element.querySelector<HTMLButtonElement>('[data-testid="load-error-retry"]')!.click();
+    httpMock.expectOne(`${api}/public/staff`).flush([marco]);
+    await settle();
+
+    expect(element.querySelector('[data-testid="load-error"]')).toBeNull();
+    expect(fixture.componentInstance.staffMembers()).toEqual([marco]);
+  });
 });

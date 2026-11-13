@@ -20,9 +20,9 @@ import { PublicContentApiService } from '../../../../core/services/public-conten
 import { PublicStaffApiService } from '../../../../core/services/public-staff-api.service';
 import { ThemeService } from '../../../../core/services/theme.service';
 import { PublicBrandingStore } from '../../../../core/services/public-branding.store';
-import { getApiErrorMessage } from '../../../../core/utils/api-error.utils';
 import { ApiFeedbackComponent } from '../../../../shared/components/api-feedback/api-feedback.component';
 import { PageStateComponent } from '../../../../shared/components/page-state/page-state.component';
+import { LoadErrorComponent } from '../../../../shared/components/load-error/load-error.component';
 import { whatsAppUrl } from '../../../../core/utils/whatsapp-link.utils';
 import { safeGoogleMapsUrl, safeHttpUrl } from '../../../../core/utils/safe-url.utils';
 
@@ -32,7 +32,7 @@ function todayIso(): string {
 
 @Component({
   selector: 'app-landing-shell-page',
-  imports: [RouterLink, ApiFeedbackComponent, PageStateComponent],
+  imports: [RouterLink, ApiFeedbackComponent, PageStateComponent, LoadErrorComponent],
   templateUrl: './landing-shell-page.component.html',
   styleUrl: './landing-shell-page.component.scss',
 })
@@ -70,6 +70,8 @@ export class LandingShellPageComponent implements OnInit {
   readonly businessSchedule = signal<BusinessScheduleResponse | null>(null);
   readonly isLoading = signal(true);
   readonly errorMessage = signal<string | null>(null);
+  /** SONDA BUG-102: the whole landing failed; the page shows «Reintentar». */
+  readonly loadError = signal<unknown>(null);
   readonly infoMessage = signal<string | null>(null);
 
   readonly isOpenNow = computed<boolean>(() => {
@@ -123,6 +125,10 @@ export class LandingShellPageComponent implements OnInit {
 
   async ngOnInit(): Promise<void> {
     await this.loadLanding();
+  }
+
+  retryLanding(): Promise<void> {
+    return this.loadLanding();
   }
 
   visibleServices(staffMember: PublicStaffListItemResponse) {
@@ -301,7 +307,9 @@ export class LandingShellPageComponent implements OnInit {
                 ? staffResult.reason
                 : null;
 
-      this.errorMessage.set(getApiErrorMessage(firstFailure));
+      this.loadError.set(firstFailure ?? new Error('landing failed'));
+    } else {
+      this.loadError.set(null);
     }
 
     this.isLoading.set(false);

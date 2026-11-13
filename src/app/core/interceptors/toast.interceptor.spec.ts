@@ -6,6 +6,7 @@ import { firstValueFrom } from 'rxjs';
 
 import { RuntimeConfigService } from '../config/runtime-config.service';
 import { ToastService } from '../services/toast.service';
+import { CONNECTIVITY_ERROR_MESSAGE } from '../utils/api-error.utils';
 import { toastInterceptor } from './toast.interceptor';
 
 const api = 'http://api.test/api/v1';
@@ -30,7 +31,10 @@ describe('toastInterceptor', () => {
     backend = TestBed.inject(HttpTestingController);
   });
 
-  afterEach(() => backend.verify());
+  afterEach(() => {
+    backend.verify();
+    vi.restoreAllMocks();
+  });
 
   async function failGet(path: string, status = 404): Promise<void> {
     const request = firstValueFrom(http.get(`${api}${path}`)).catch(() => undefined);
@@ -57,5 +61,26 @@ describe('toastInterceptor', () => {
     await request;
 
     expect(toast.error).not.toHaveBeenCalled();
+  });
+
+  // SONDA BUG-066 / BUG-045: without network every call fails; they all share one text so a single toast remains.
+  it('collapses every request that failed for lack of network into one connection notice', async () => {
+    vi.spyOn(navigator, 'onLine', 'get').mockReturnValue(false);
+    await failGet('/public/content/landing', 504);
+    await failGet('/public/staff', 504);
+    await failGet('/public/staff/st-1/availability/slots?date=2026-11-13', 504);
+    const request = firstValueFrom(http.get(`${api}/public/staff/st-1/reviews`)).catch(() => undefined);
+    backend.expectOne(`${api}/public/staff/st-1/reviews`).error(new ProgressEvent('error'));
+    await request;
+
+    const messages = new Set(toast.error.mock.calls.map(([message]) => message));
+    expect([...messages]).toEqual([CONNECTIVITY_ERROR_MESSAGE]);
+  });
+
+  it('keeps the specific message when the server answered (with network)', async () => {
+    vi.spyOn(navigator, 'onLine', 'get').mockReturnValue(true);
+    await failGet('/public/staff', 504);
+
+    expect(toast.error).toHaveBeenCalledWith('No pudimos cargar los perfiles de profesionales por ahora.');
   });
 });

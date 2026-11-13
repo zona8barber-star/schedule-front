@@ -201,7 +201,8 @@
           <path stroke-linecap="round" stroke-linejoin="round" d="M3 3l18 18" />
         </svg>
       </span>
-      <span>Sin conexion. Mostrando la informacion guardada en tu dispositivo.</span>
+      <!-- SONDA BUG-045: no API data is kept on the device, so the banner no longer promises it. -->
+      <span>Sin conexión. Lo que necesite internet se cargará cuando vuelva la red.</span>
     </section>
   }
 
@@ -292,7 +293,16 @@
 
     <div class="app-shell__main">
       <main class="app-shell__content">
-        <router-outlet></router-outlet>
+        @if (navigationFailure.failure(); as failure) {
+          <app-load-error
+            subject="esta página"
+            [error]="failure.error"
+            [retrying]="navigationFailure.isRetrying()"
+            (retry)="navigationFailure.retry()"
+          />
+        } @else {
+          <router-outlet></router-outlet>
+        }
       </main>
 
       <app-site-footer />

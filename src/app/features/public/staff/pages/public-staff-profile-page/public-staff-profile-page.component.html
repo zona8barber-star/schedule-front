@@ -1,8 +1,15 @@
 <section class="psp">
   <app-api-feedback severity="error" [message]="errorMessage()" />
 
-  @if (isLoading()) {
+  @if (isLoading() && !loadError()) {
     <app-page-state kind="loading" message="Cargando perfil..." />
+  } @else if (loadError()) {
+    <app-load-error
+      subject="el perfil del profesional"
+      [error]="loadError()"
+      [retrying]="isLoading()"
+      (retry)="reload()"
+    />
   } @else if (!staffProfile()) {
     <app-page-state kind="empty" message="No encontramos este perfil profesional." />
   } @else {

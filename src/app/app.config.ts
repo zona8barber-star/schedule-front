@@ -5,9 +5,10 @@ import {
   APP_INITIALIZER,
   ApplicationConfig,
   LOCALE_ID,
+  inject,
   provideBrowserGlobalErrorListeners,
 } from '@angular/core';
-import { provideRouter, withViewTransitions } from '@angular/router';
+import { provideRouter, withNavigationErrorHandler, withViewTransitions } from '@angular/router';
 import { provideServiceWorker } from '@angular/service-worker';
 import { provideCharts, withDefaultRegisterables } from 'ng2-charts';
 
@@ -20,6 +21,7 @@ import { authInterceptor } from './core/interceptors/auth.interceptor';
 import { loadingInterceptor } from './core/interceptors/loading.interceptor';
 import { toastInterceptor } from './core/interceptors/toast.interceptor';
 import { AuthService } from './core/services/auth.service';
+import { NavigationFailureService } from './core/services/navigation-failure.service';
 import { routes } from './app.routes';
 
 export const appConfig: ApplicationConfig = {
@@ -28,7 +30,12 @@ export const appConfig: ApplicationConfig = {
     provideCharts(withDefaultRegisterables()),
     { provide: LOCALE_ID, useValue: 'es-CO' },
     provideHttpClient(withInterceptors([authInterceptor, loadingInterceptor, toastInterceptor])),
-    provideRouter(routes, withViewTransitions()),
+    provideRouter(
+      routes,
+      withViewTransitions(),
+      // SONDA BUG-065: a page that could not be opened shows «Sin conexión» with «Reintentar», never a blank screen.
+      withNavigationErrorHandler((error) => inject(NavigationFailureService).report(error)),
+    ),
     provideServiceWorker('ngsw-worker.js', {
       enabled: environment.enableServiceWorker,
       registrationStrategy: 'registerWhenStable:30000',

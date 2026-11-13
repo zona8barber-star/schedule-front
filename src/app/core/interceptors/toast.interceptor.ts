@@ -4,7 +4,7 @@ import { catchError, tap, throwError } from 'rxjs';
 
 import { RuntimeConfigService } from '../config/runtime-config.service';
 import { ToastService } from '../services/toast.service';
-import { getApiErrorMessage } from '../utils/api-error.utils';
+import { CONNECTIVITY_ERROR_MESSAGE, getApiErrorMessage, isConnectivityError } from '../utils/api-error.utils';
 
 export const toastInterceptor: HttpInterceptorFn = (request, next) => {
   const runtimeConfigService = inject(RuntimeConfigService);
@@ -122,6 +122,12 @@ function resolveErrorMessage(
 
   if (error.status === 401 || error.status === 403) {
     return null;
+  }
+
+  // SONDA BUG-066 / BUG-045: without network every request fails at once (content, profiles, reviews, each retry of
+  // the availability); they all share one text, so the toast service keeps a single notice.
+  if (isConnectivityError(error)) {
+    return CONNECTIVITY_ERROR_MESSAGE;
   }
 
   const method = requestMethod.toUpperCase();

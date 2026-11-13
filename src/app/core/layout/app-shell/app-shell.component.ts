@@ -18,6 +18,7 @@ import { SwUpdate, VersionReadyEvent } from '@angular/service-worker';
 import { filter, fromEvent, interval } from 'rxjs';
 
 import { ConfirmModalComponent } from '../../../shared/components/confirm-modal/confirm-modal.component';
+import { LoadErrorComponent } from '../../../shared/components/load-error/load-error.component';
 import { NotificationBellComponent } from '../notification-bell/notification-bell.component';
 import { NavMenuComponent } from '../nav-menu/nav-menu.component';
 import { SiteFooterComponent } from '../site-footer/site-footer.component';
@@ -33,6 +34,7 @@ import { NavigationService } from '../../navigation/navigation.service';
 import { AuthService } from '../../services/auth.service';
 import { ConnectivityService } from '../../services/connectivity.service';
 import { HttpActivityService } from '../../services/http-activity.service';
+import { NavigationFailureService } from '../../services/navigation-failure.service';
 import { InstallPromptService } from '../../services/install-prompt.service';
 import { PublicContentApiService } from '../../services/public-content-api.service';
 import { PublicBrandingStore } from '../../services/public-branding.store';
@@ -60,6 +62,7 @@ const WIDE_LAYOUT_MIN_WIDTH = 1024;
     NotificationBellComponent,
     NavMenuComponent,
     SiteFooterComponent,
+    LoadErrorComponent,
   ],
   templateUrl: './app-shell.component.html',
   styleUrl: './app-shell.component.scss',
@@ -72,6 +75,7 @@ export class AppShellComponent {
   readonly installPromptService = inject(InstallPromptService);
   readonly pushNotificationService = inject(PushNotificationService);
   readonly connectivityService = inject(ConnectivityService);
+  readonly navigationFailure = inject(NavigationFailureService);
 
   private readonly swUpdate = inject(SwUpdate);
   private readonly toastService = inject(ToastService);

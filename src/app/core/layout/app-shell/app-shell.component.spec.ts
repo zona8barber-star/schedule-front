@@ -2,7 +2,8 @@ import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { Component, computed, signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { Router, provideRouter } from '@angular/router';
+import { NavigationError, Router, provideRouter } from '@angular/router';
+import { NavigationFailureService } from '../../services/navigation-failure.service';
 import { provideServiceWorker } from '@angular/service-worker';
 
 import { AuthUserResponse, PERMISSION_CODES, ROLE_NAMES } from '../../models/auth.models';
@@ -247,6 +248,23 @@ describe('AppShellComponent navigation', () => {
       link.getAttribute('data-nav-item'),
     );
     expect(accountLinks).toEqual(['customer-profile', 'customer-customer-profile', 'account-notifications']);
+  });
+
+  // SONDA BUG-065: a page whose code could not be downloaded shows «Sin conexión» with «Reintentar», not a blank screen.
+  it('shows the common offline state when a page cannot be opened', async () => {
+    await renderAt('/');
+
+    TestBed.inject(NavigationFailureService).report(
+      new NavigationError(9, '/staff', new TypeError('Failed to fetch dynamically imported module: /chunk-X.js')),
+    );
+    await settle();
+
+    expect(element.querySelector('[data-testid="load-error"]')).not.toBeNull();
+    expect(element.querySelector('[data-testid="load-error-retry"]')!.textContent).toContain('Reintentar');
+
+    await router.navigateByUrl('/');
+    await settle();
+    expect(element.querySelector('[data-testid="load-error"]')).toBeNull();
   });
 
   it('shows a visitor the public links flat in the header and the sign-in link', async () => {

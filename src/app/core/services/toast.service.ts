@@ -2,6 +2,9 @@ import { Injectable, signal } from '@angular/core';
 
 export type ToastTone = 'success' | 'error' | 'info';
 
+/** At most this many notices at once (SONDA BUG-066). */
+export const MAX_VISIBLE_TOASTS = 3;
+
 export interface ToastMessage {
   id: number;
   tone: ToastTone;
@@ -38,7 +41,7 @@ export class ToastService {
   }
 
   private show(tone: ToastTone, message: string, durationMs: number): number {
-    const normalizedMessage = message.trim();
+    const normalizedMessage = message.replace(/\s+/g, ' ').trim();
     if (!normalizedMessage) {
       return -1;
     }
@@ -55,8 +58,12 @@ export class ToastService {
     const toastId = this.nextToastId;
     this.nextToastId += 1;
 
+    // SONDA BUG-066: never a pile of notices; past the limit the oldest one leaves.
+    const overflow = this.toastsState().slice(0, Math.max(0, this.toastsState().length - MAX_VISIBLE_TOASTS + 1));
+    overflow.forEach((oldToast) => this.clearTimer(oldToast.id));
+
     this.toastsState.update((currentToasts) => [
-      ...currentToasts,
+      ...currentToasts.slice(overflow.length),
       {
         id: toastId,
         tone,

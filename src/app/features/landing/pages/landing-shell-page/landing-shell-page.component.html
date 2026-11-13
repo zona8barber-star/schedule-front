@@ -87,7 +87,17 @@
     </div>
   }
 
-  <app-api-feedback severity="error" [message]="errorMessage()" />
+  @if (loadError()) {
+    <!-- SONDA BUG-102: nothing could be loaded; the common state offers «Reintentar». -->
+    <app-load-error
+      subject="el contenido de la barbería"
+      [error]="loadError()"
+      [retrying]="isLoading()"
+      (retry)="retryLanding()"
+    />
+  } @else {
+    <app-api-feedback severity="error" [message]="errorMessage()" />
+  }
   <app-api-feedback severity="info"  [message]="infoMessage()"  />
 
   <!-- SOBRE NOSOTROS + CONTACTO ──────────────────────────────── -->
