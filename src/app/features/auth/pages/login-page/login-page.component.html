@@ -34,7 +34,7 @@
         } @else {
           <app-api-feedback severity="error" [message]="forgotError()" />
 
-          <form [formGroup]="forgotForm" (ngSubmit)="submitForgot()" novalidate>
+          <form appFormA11y [formGroup]="forgotForm" (ngSubmit)="submitForgot()" novalidate>
             <div class="auth-field">
               <label for="forgotEmail">Correo electrónico</label>
               <input
@@ -45,10 +45,10 @@
                 placeholder="tu@correo.com"
               />
               @if (showForgotError('required')) {
-                <p class="auth-field__error">Ingresa tu correo electrónico.</p>
+                <p role="alert" class="auth-field__error">Ingresa tu correo electrónico.</p>
               }
               @if (showForgotError('email')) {
-                <p class="auth-field__error">Ingresa un correo válido.</p>
+                <p role="alert" class="auth-field__error">Ingresa un correo válido.</p>
               }
             </div>
 
@@ -102,15 +102,15 @@
         }
 
         @if (!isRegisterTab) {
-          <form [formGroup]="loginForm" (ngSubmit)="submitLogin()" novalidate>
+          <form appFormA11y [formGroup]="loginForm" (ngSubmit)="submitLogin()" novalidate>
             <div class="auth-field">
               <label for="loginEmail">Correo electrónico</label>
               <input id="loginEmail" type="email" formControlName="email" autocomplete="email" />
               @if (showLoginError('email', 'required')) {
-                <p class="auth-field__error">Ingresa tu correo electrónico.</p>
+                <p role="alert" class="auth-field__error">Ingresa tu correo electrónico.</p>
               }
               @if (showLoginError('email', 'email')) {
-                <p class="auth-field__error">Ingresa un correo válido.</p>
+                <p role="alert" class="auth-field__error">Ingresa un correo válido.</p>
               }
             </div>
 
@@ -135,7 +135,7 @@
                 </button>
               </div>
               @if (showLoginError('password', 'required')) {
-                <p class="auth-field__error">Ingresa tu contraseña.</p>
+                <p role="alert" class="auth-field__error">Ingresa tu contraseña.</p>
               }
             </div>
 
@@ -149,15 +149,16 @@
             </div>
           </form>
         } @else {
-          <form [formGroup]="registerForm" (ngSubmit)="submitRegister()" novalidate>
+          <form appFormA11y [formGroup]="registerForm" (ngSubmit)="submitRegister()" novalidate>
             <div class="auth-field">
               <label for="fullName">Nombre completo</label>
-              <input id="fullName" type="text" formControlName="fullName" autocomplete="name" />
+              <input maxlength="120" id="fullName" type="text" formControlName="fullName" autocomplete="name" />
+              <app-field-error controlName="fullName" />
               @if (showRegisterError('fullName', 'required')) {
-                <p class="auth-field__error">Ingresa tu nombre completo.</p>
+                <p role="alert" class="auth-field__error">Ingresa tu nombre completo.</p>
               }
               @if (showRegisterError('fullName', 'minlength')) {
-                <p class="auth-field__error">El nombre debe tener al menos 2 caracteres.</p>
+                <p role="alert" class="auth-field__error">El nombre debe tener al menos 2 caracteres.</p>
               }
             </div>
 
@@ -165,18 +166,18 @@
               <label for="registerEmail">Correo electrónico</label>
               <input id="registerEmail" type="email" formControlName="email" autocomplete="email" />
               @if (showRegisterError('email', 'required')) {
-                <p class="auth-field__error">Ingresa tu correo electrónico.</p>
+                <p role="alert" class="auth-field__error">Ingresa tu correo electrónico.</p>
               }
               @if (showRegisterError('email', 'email')) {
-                <p class="auth-field__error">Ingresa un correo válido.</p>
+                <p role="alert" class="auth-field__error">Ingresa un correo válido.</p>
               }
             </div>
 
             <div class="auth-field">
               <label for="phoneNumber">Teléfono (opcional)</label>
-              <input id="phoneNumber" type="tel" formControlName="phoneNumber" autocomplete="tel" />
+              <input maxlength="40" id="phoneNumber" type="tel" formControlName="phoneNumber" autocomplete="tel" />
               @if (showRegisterError('phoneNumber', 'maxlength')) {
-                <p class="auth-field__error">El teléfono debe tener 40 caracteres o menos.</p>
+                <p role="alert" class="auth-field__error">El teléfono debe tener 40 caracteres o menos.</p>
               }
             </div>
 
@@ -201,13 +202,13 @@
                 </button>
               </div>
               @if (showRegisterError('password', 'required')) {
-                <p class="auth-field__error">Ingresa una contraseña.</p>
+                <p role="alert" class="auth-field__error">Ingresa una contraseña.</p>
               }
               @if (showRegisterError('password', 'minlength')) {
-                <p class="auth-field__error">La contraseña debe tener al menos 8 caracteres.</p>
+                <p role="alert" class="auth-field__error">La contraseña debe tener al menos 8 caracteres.</p>
               }
               @if (showRegisterError('password', 'maxlength')) {
-                <p class="auth-field__error">La contraseña debe tener como máximo 128 caracteres.</p>
+                <p role="alert" class="auth-field__error">La contraseña debe tener como máximo 128 caracteres.</p>
               }
 
               <div class="auth-password-hints" aria-live="polite">
@@ -239,10 +240,10 @@
                 </button>
               </div>
               @if (showRegisterError('confirmPassword', 'required')) {
-                <p class="auth-field__error">Confirma tu contraseña.</p>
+                <p role="alert" class="auth-field__error">Confirma tu contraseña.</p>
               }
               @if (showRegisterPasswordMismatchError()) {
-                <p class="auth-field__error">Las contraseñas no coinciden.</p>
+                <p role="alert" class="auth-field__error">Las contraseñas no coinciden.</p>
               }
             </div>
 

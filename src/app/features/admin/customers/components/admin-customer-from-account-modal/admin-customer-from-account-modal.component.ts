@@ -17,9 +17,13 @@ const MIN_PHONE_DIGITS = 7;
  * Creates a profile from a registered account and links it in one step. If a profile without an
  * account already matches, it offers to link the account to that profile instead.
  */
+import { ModalDialogDirective } from '../../../../../shared/directives/modal-dialog.directive';
+
+import { SingleFlight } from '../../../../../core/utils/single-flight';
+
 @Component({
   selector: 'app-admin-customer-from-account-modal',
-  imports: [FormsModule, ApiFeedbackComponent],
+  imports: [ModalDialogDirective, FormsModule, ApiFeedbackComponent],
   templateUrl: './admin-customer-from-account-modal.component.html',
   styleUrl: '../customer-modal.scss',
 })
@@ -86,6 +90,7 @@ export class AdminCustomerFromAccountModalComponent implements OnInit {
     }
   }
 
+  @SingleFlight()
   async create(): Promise<void> {
     const selected = this.selected();
     if (!selected || !this.canCreate()) {
@@ -118,6 +123,7 @@ export class AdminCustomerFromAccountModalComponent implements OnInit {
     }
   }
 
+  @SingleFlight()
   async linkToExisting(profile: CustomerDuplicateCandidate): Promise<void> {
     const selected = this.selected();
     if (!selected || !this.identityVerified() || profile.isLinked) {

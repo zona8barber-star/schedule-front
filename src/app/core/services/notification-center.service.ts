@@ -8,6 +8,8 @@ import { AuthService } from './auth.service';
 import { NotificationsApiService } from './notifications-api.service';
 
 export const NOTIFICATION_INBOX_LIMIT = 5;
+/** Lo máximo que la API entrega en una sola página. */
+export const NOTIFICATION_INBOX_MAX_LIMIT = 50;
 const pollIntervalMs = 60_000;
 
 /**
@@ -28,6 +30,10 @@ export class NotificationCenterService {
   private readonly unreadCountState = signal(0);
   private readonly loadingState = signal(false);
   private readonly loadedState = signal(false);
+  private readonly hasMoreState = signal(false);
+  private readonly loadingMoreState = signal(false);
+  /** BUG-107: cuántas notificaciones muestra el panel; «Ver más» lo amplía y al abrirlo vuelve a la primera página. */
+  private windowSize = NOTIFICATION_INBOX_LIMIT;
   private readonly currentUserId = computed(() => this.authService.currentUser()?.id ?? null);
 
   private pollHandle: ReturnType<typeof setInterval> | null = null;
@@ -37,6 +43,8 @@ export class NotificationCenterService {
   readonly unreadCount = this.unreadCountState.asReadonly();
   readonly isLoading = this.loadingState.asReadonly();
   readonly hasLoaded = this.loadedState.asReadonly();
+  readonly hasMore = this.hasMoreState.asReadonly();
+  readonly isLoadingMore = this.loadingMoreState.asReadonly();
 
   constructor() {
     effect(() => {
@@ -74,23 +82,35 @@ export class NotificationCenterService {
     this.destroyRef.onDestroy(() => this.stopPolling());
   }
 
-  async refresh(): Promise<void> {
+  /**
+   * Recarga lo que muestra el panel. Las sin leer llegan primero (BUG-107), así el contador y la lista coinciden.
+   * Con `firstPage` vuelve a mostrar solo la primera página (al abrir el panel).
+   */
+  async refresh(options: { firstPage?: boolean } = {}): Promise<void> {
     if (!this.currentUserId()) {
       return;
+    }
+
+    if (options.firstPage) {
+      this.windowSize = NOTIFICATION_INBOX_LIMIT;
     }
 
     const sequence = ++this.requestSequence;
     this.loadingState.set(true);
 
     try {
-      const inbox = await firstValueFrom(this.api.getInbox(NOTIFICATION_INBOX_LIMIT));
+      const inbox = await firstValueFrom(this.api.getInbox(this.windowSize));
 
       // Ignorar respuestas viejas (otra petición más nueva o cambio de usuario en el medio).
       if (sequence !== this.requestSequence || !this.currentUserId()) {
         return;
       }
 
-      this.itemsState.set(inbox.items);
+      // Más allá del máximo de una página, se conservan las que ya se cargaron por desplazamiento.
+      const tail = options.firstPage ? [] : this.itemsState().slice(this.windowSize);
+      const fresh = new Set(inbox.items.map((item) => item.id));
+      this.itemsState.set([...inbox.items, ...tail.filter((item) => !fresh.has(item.id))]);
+      this.hasMoreState.set(inbox.hasMore === true);
       this.unreadCountState.set(inbox.unreadCount);
       this.loadedState.set(true);
       this.updateAppBadge(inbox.unreadCount);
@@ -100,6 +120,42 @@ export class NotificationCenterService {
       if (sequence === this.requestSequence) {
         this.loadingState.set(false);
       }
+    }
+  }
+
+  /**
+   * «Ver más»: pide de nuevo la lista desde el principio con una página más (hasta el máximo de la API), para que
+   * marcar como leídas no corra el orden y se salte notificaciones. Pasado ese máximo continúa por desplazamiento,
+   * sin repetir las que ya están.
+   */
+  async loadMore(): Promise<void> {
+    if (!this.currentUserId() || !this.hasMoreState() || this.loadingMoreState()) {
+      return;
+    }
+
+    this.loadingMoreState.set(true);
+    try {
+      if (this.windowSize < NOTIFICATION_INBOX_MAX_LIMIT) {
+        this.windowSize = Math.min(this.itemsState().length + NOTIFICATION_INBOX_LIMIT, NOTIFICATION_INBOX_MAX_LIMIT);
+        await this.refresh();
+        return;
+      }
+
+      const sequence = this.requestSequence;
+      const page = await firstValueFrom(this.api.getInbox(NOTIFICATION_INBOX_LIMIT, this.itemsState().length));
+      if (sequence !== this.requestSequence || !this.currentUserId()) {
+        return;
+      }
+
+      const known = new Set(this.itemsState().map((item) => item.id));
+      this.itemsState.update((items) => [...items, ...page.items.filter((item) => !known.has(item.id))]);
+      this.hasMoreState.set(page.hasMore === true);
+      this.unreadCountState.set(page.unreadCount);
+      this.updateAppBadge(page.unreadCount);
+    } catch {
+      // Se conserva lo que ya se ve; el botón sigue disponible.
+    } finally {
+      this.loadingMoreState.set(false);
     }
   }
 
@@ -145,6 +201,9 @@ export class NotificationCenterService {
     this.unreadCountState.set(0);
     this.loadedState.set(false);
     this.loadingState.set(false);
+    this.hasMoreState.set(false);
+    this.loadingMoreState.set(false);
+    this.windowSize = NOTIFICATION_INBOX_LIMIT;
   }
 
   private startPolling(): void {

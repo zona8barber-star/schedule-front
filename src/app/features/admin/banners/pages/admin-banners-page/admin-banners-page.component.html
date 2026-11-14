@@ -1,9 +1,9 @@
 <section class="admin-banners-page">
   <header class="admin-banners-page__hero">
     <div>
-      <p class="admin-banners-page__eyebrow">Gestion</p>
+      <p class="admin-banners-page__eyebrow">Gestión</p>
       <h1>Banners</h1>
-      <p>Gestiona banners publicos con activacion y ventanas de vigencia.</p>
+      <p>Gestiona banners públicos con activación y ventanas de vigencia.</p>
     </div>
   </header>
 
@@ -18,14 +18,15 @@
       </div>
     </div>
 
-    <form [formGroup]="bannerForm" (ngSubmit)="submit()" novalidate>
+    <form appFormA11y [formGroup]="bannerForm" (ngSubmit)="submit()" novalidate>
       <fieldset [disabled]="isBusy()">
         <div class="admin-banners-page__grid">
           <div class="admin-banners-page__field">
-            <label for="title">Titulo</label>
-            <input id="title" type="text" formControlName="title" />
+            <label for="title">Título</label>
+            <input maxlength="160" id="title" type="text" formControlName="title" />
+            <app-field-error controlName="title" [kinds]="['minlength', 'maxlength']" />
             @if (showError('title', 'required')) {
-              <p class="admin-banners-page__error">El titulo es obligatorio.</p>
+              <p role="alert" class="admin-banners-page__error">El título es obligatorio.</p>
             }
           </div>
 
@@ -33,33 +34,34 @@
             <label for="sortOrder">Orden</label>
             <input id="sortOrder" type="number" formControlName="sortOrder" />
             @if (showError('sortOrder', 'required')) {
-              <p class="admin-banners-page__error">El orden es obligatorio.</p>
+              <p role="alert" class="admin-banners-page__error">El orden es obligatorio.</p>
             }
           </div>
 
           <div class="admin-banners-page__field admin-banners-page__field--wide">
-            <label for="subtitle">Subtitulo</label>
-            <textarea id="subtitle" rows="3" formControlName="subtitle"></textarea>
+            <label for="subtitle">Subtítulo</label>
+            <textarea maxlength="300" id="subtitle" rows="3" formControlName="subtitle"></textarea>
+            <app-field-error controlName="subtitle" />
           </div>
 
           <div class="admin-banners-page__field">
             <label for="imageMediaAssetId">ID de imagen</label>
             <input id="imageMediaAssetId" type="text" formControlName="imageMediaAssetId" />
             @if (showError('imageMediaAssetId', 'uuid')) {
-              <p class="admin-banners-page__error">Ingresa un UUID valido o deja vacio.</p>
+              <p role="alert" class="admin-banners-page__error">Ingresa un UUID valido o deja vacio.</p>
             }
           </div>
 
           <div class="admin-banners-page__field">
             <label for="linkUrl">Enlace (URL)</label>
-            <input id="linkUrl" type="url" formControlName="linkUrl" />
+            <input maxlength="2048" id="linkUrl" type="url" formControlName="linkUrl" />
             @if (showError('linkUrl', 'url')) {
-              <p class="admin-banners-page__error">
+              <p role="alert" class="admin-banners-page__error">
                 Ingresa una dirección web completa que empiece por https:// (por ejemplo https://instagram.com/zona8).
               </p>
             }
             @if (showError('linkUrl', 'maxlength')) {
-              <p class="admin-banners-page__error">El enlace no puede superar 2048 caracteres.</p>
+              <p role="alert" class="admin-banners-page__error">El enlace no puede superar 2048 caracteres.</p>
             }
           </div>
 
@@ -80,7 +82,7 @@
         </div>
 
         @if (showFormError('dateRange')) {
-          <p class="admin-banners-page__error">
+          <p role="alert" class="admin-banners-page__error">
             La fecha fin debe ser posterior a la fecha inicio.
           </p>
         }
@@ -95,7 +97,7 @@
             [disabled]="isBusy()"
             (click)="resetForm()"
           >
-            Cancelar edicion
+            Cancelar edición
           </button>
         }
       </div>
@@ -128,7 +130,7 @@
               </span>
             </header>
 
-            <p>{{ banner.subtitle || 'Sin subtitulo' }}</p>
+            <p>{{ banner.subtitle || 'Sin subtítulo' }}</p>
 
             <dl>
               <div>

@@ -1,10 +1,22 @@
 <section class="psp">
   <app-api-feedback severity="error" [message]="errorMessage()" />
 
-  @if (isLoading()) {
+  @if (isLoading() && !loadError()) {
     <app-page-state kind="loading" message="Cargando perfil..." />
+  } @else if (loadError()) {
+    <app-load-error
+      subject="el perfil del profesional"
+      [error]="loadError()"
+      [retrying]="isLoading()"
+      (retry)="reload()"
+    />
   } @else if (!staffProfile()) {
-    <app-page-state kind="empty" message="No encontramos este perfil profesional." />
+    <app-not-found-state
+      title="No encontramos este perfil profesional"
+      message="Es posible que el enlace esté mal escrito o que el profesional ya no atienda."
+      backLink="/staff"
+      backLabel="Ver los profesionales"
+    />
   } @else {
     <!-- ── Header: foto pequeña + info ─────────────────────── -->
     <div class="psp__header">
@@ -28,10 +40,14 @@
         }
 
         <div class="psp__meta">
-          <span class="psp__star">★</span>
-          <span>{{ formatRating(displayAverageRating()) }}</span>
-          <span class="psp__sep">·</span>
-          <span>{{ displayReviewCount() }} reseñas</span>
+          @if (displayReviewCount() > 0) {
+            <span class="psp__star" aria-hidden="true">★</span>
+            <span>{{ formatRating(displayAverageRating()) }}</span>
+            <span class="psp__sep" aria-hidden="true">·</span>
+            <span>{{ displayReviewCount() }} {{ displayReviewCount() === 1 ? 'reseña' : 'reseñas' }}</span>
+          } @else {
+            <span data-testid="no-reviews">Sin reseñas</span>
+          }
         </div>
 
         @if (bookableServices().length) {
@@ -132,7 +148,7 @@
         <app-page-state kind="empty" message="Aún no hay reseñas para este profesional." />
       } @else {
         <div class="psp__reviews">
-          @for (review of reviews().slice(0, 5); track review.appointmentId + review.createdAtUtc) {
+          @for (review of reviews().slice(0, 5); track $index) {
             <article class="psp__review-card">
               <span class="psp__review-stars" [attr.aria-label]="review.stars + ' de 5 estrellas'">
                 <span [class.active]="review.stars >= 1">★</span>
@@ -156,14 +172,16 @@
       <article class="psp__panel psp__tips">
         <h2 class="psp__section-title">Propinas</h2>
         <p class="psp__tips-desc">
-          Si mi trabajo te gustó, podés dejarme una propina escaneando el código.
+          Si mi trabajo te gustó, puedes dejarme una propina escaneando el código.
         </p>
-        <img
-          class="psp__tips-qr"
-          [src]="staffProfile()!.tipsQrUrl!"
-          [alt]="'QR de propinas de ' + staffProfile()!.displayName"
-          [title]="'QR de propinas de ' + staffProfile()!.displayName"
-        />
+        <app-media-preview [url]="staffProfile()!.tipsQrUrl!" documentLabel="Abrir el QR de propinas (PDF)">
+          <img
+            class="psp__tips-qr"
+            [src]="staffProfile()!.tipsQrUrl!"
+            [alt]="'QR de propinas de ' + staffProfile()!.displayName"
+            [title]="'QR de propinas de ' + staffProfile()!.displayName"
+          />
+        </app-media-preview>
       </article>
     }
 
@@ -173,13 +191,12 @@
 
   <!-- ── Modal de citas ─────────────────────────────────────── -->
   @if (showBookingModal()) {
-    <div class="psp__overlay" (click)="closeBookingModal()" (keydown.escape)="closeBookingModal()">
-      <dialog
+    <div class="psp__overlay" (click)="closeBookingModal()">
+      <dialog appModalDialog (modalClose)="closeBookingModal()"
         class="psp__modal"
         open
         aria-label="Agendar cita"
         (click)="$event.stopPropagation()"
-        (keydown)="$event.stopPropagation()"
       >
         <div class="psp__modal-head">
           <h2>Agendar cita</h2>
@@ -208,6 +225,7 @@
                 type="button"
                 role="listitem"
                 [attr.data-day]="day.date"
+                [attr.aria-label]="day.topLabel + ', ' + day.bottomLabel"
                 (click)="selectDate(day.date)"
               >
                 <strong>{{ day.topLabel }}</strong>
@@ -231,6 +249,7 @@
                 class="psp__service-option"
                 type="button"
                 [attr.data-service-id]="service.generalServiceId"
+                [attr.aria-label]="service.name + ', ' + service.durationMinutes + ' min'"
                 (click)="selectService(service)"
               >
                 <strong>{{ service.name }}</strong>

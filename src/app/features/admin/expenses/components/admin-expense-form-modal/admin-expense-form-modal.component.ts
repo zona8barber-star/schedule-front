@@ -6,21 +6,32 @@ import { ExpenseEntryView } from '../../../../../core/models/expense.models';
 import { FixedExpenseView } from '../../../../../core/models/fixed-expense.models';
 import { AdminExpensesApiService } from '../../../../../core/services/admin-expenses-api.service';
 import { AdminFixedExpensesApiService } from '../../../../../core/services/admin-fixed-expenses-api.service';
+import { MoneyConfirmationService } from '../../../../../core/services/money-confirmation.service';
 import { getApiErrorMessage } from '../../../../../core/utils/api-error.utils';
 import { ApiFeedbackComponent } from '../../../../../shared/components/api-feedback/api-feedback.component';
+import { trimmedMinLength, trimmedRequired } from '../../../../../core/utils/form-validators';
 
 function integerValidator(control: AbstractControl): ValidationErrors | null {
   return Number.isInteger(control.value) ? null : { integer: true };
 }
 
+import { FieldErrorComponent } from '../../../../../shared/components/field-error/field-error.component';
+
+import { ModalDialogDirective } from '../../../../../shared/directives/modal-dialog.directive';
+
+import { FormA11yDirective } from '../../../../../shared/directives/form-a11y.directive';
+
+import { SingleFlight } from '../../../../../core/utils/single-flight';
+
 @Component({
   selector: 'app-admin-expense-form-modal',
-  imports: [ReactiveFormsModule, ApiFeedbackComponent],
+  imports: [FormA11yDirective, ModalDialogDirective, FieldErrorComponent, ReactiveFormsModule, ApiFeedbackComponent],
   templateUrl: './admin-expense-form-modal.component.html',
   styleUrl: './admin-expense-form-modal.component.scss',
 })
 export class AdminExpenseFormModalComponent implements OnInit {
   private readonly formBuilder = inject(FormBuilder);
+  private readonly moneyConfirmation = inject(MoneyConfirmationService);
   private readonly expensesApi = inject(AdminExpensesApiService);
   private readonly fixedExpensesApi = inject(AdminFixedExpensesApiService);
 
@@ -36,7 +47,7 @@ export class AdminExpenseFormModalComponent implements OnInit {
   readonly isBusy = computed(() => this.isSaving() || this.isLoading());
 
   readonly form = this.formBuilder.nonNullable.group({
-    name: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(120)]],
+    name: ['', [trimmedRequired, trimmedMinLength(2), Validators.maxLength(120)]],
     amount: [0, [Validators.required, Validators.min(0), integerValidator]],
     occurredOn: ['', [Validators.required]],
   });
@@ -77,11 +88,18 @@ export class AdminExpenseFormModalComponent implements OnInit {
     }
   }
 
+  @SingleFlight()
   async submit(): Promise<void> {
     if (this.form.invalid) {
       this.form.markAllAsTouched();
       return;
     }
+
+    const confirmed = await this.moneyConfirmation.confirm({
+      action: this.entry ? 'Guardar el gasto' : 'Registrar gasto',
+      amount: Math.trunc(this.form.controls.amount.value),
+    });
+    if (!confirmed) return;
 
     this.isSaving.set(true);
     this.errorMessage.set(null);

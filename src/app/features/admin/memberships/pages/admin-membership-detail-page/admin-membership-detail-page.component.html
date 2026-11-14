@@ -7,6 +7,8 @@
 
   @if (isLoading()) {
     <app-page-state kind="loading" message="Cargando membresía..." />
+  } @else if (notFound()) {
+    <app-not-found-state title="No encontramos esta membresía" backLink="/admin/memberships" backLabel="Volver a membresías" />
   } @else if (membership(); as m) {
     <header class="membership-detail__header">
       <div>
@@ -30,7 +32,7 @@
 
     @if (m.status === 'Annulled') {
       <div class="membership-detail__notice" role="status">
-        Anulada el {{ m.annulledAt | date: 'medium' }}
+        Anulada el {{ m.annulledAt | bogotaDate: 'medium' }}
         @if (m.annulledByName) {
           por {{ m.annulledByName }}
         }
@@ -63,7 +65,7 @@
           @if (m.activatedAt) {
             <dt>Activada</dt>
             <dd>
-              {{ m.activatedAt | date: 'medium' }}
+              {{ m.activatedAt | bogotaDate: 'medium' }}
               @if (m.activatedByName) {
                 por {{ m.activatedByName }}
               }
@@ -84,7 +86,15 @@
             </dd>
           </dl>
           @if (income.hasDiscrepancy) {
-            <p class="membership-detail__warning">Los valores no coinciden; la justificación está en el historial.</p>
+            @if (discrepancyJustification(); as justification) {
+              <p class="membership-detail__warning" data-testid="discrepancy-notice">
+                Los valores no coinciden. Justificación registrada: «{{ justification }}».
+              </p>
+            } @else {
+              <p class="membership-detail__warning" data-testid="discrepancy-notice">
+                Los valores no coinciden y no hay una justificación registrada.
+              </p>
+            }
           }
           @if (income.isDeleted) {
             <p class="membership-detail__warning">El ingreso fue eliminado en Ingresos.</p>
@@ -121,7 +131,7 @@
           }
           @if (loyalty.decision) {
             <p class="membership-detail__muted">
-              {{ loyaltyDecisionLabels[loyalty.decision] }} ({{ loyalty.decidedAt | date: 'medium' }}). La decisión es definitiva.
+              {{ loyaltyDecisionLabels[loyalty.decision] }} ({{ loyalty.decidedAt | bogotaDate: 'medium' }}). La decisión es definitiva.
             </p>
           } @else if (!loyalty.predatesWallet) {
             <p class="membership-detail__muted">Los puntos se acreditan una sola vez, al vincular el primer ingreso. Desvincular no los retira.</p>
@@ -182,11 +192,11 @@
                 }
               </span>
               <span class="membership-detail__muted">
-                Registrado el {{ consumption.registeredAt | date: 'medium' }} por {{ consumption.registeredByName }}
+                Registrado el {{ consumption.registeredAt | bogotaDate: 'medium' }} por {{ consumption.registeredByName }}
               </span>
               @if (consumption.reversal; as reversal) {
                 <span>
-                  Revertido el {{ reversal.performedAt | date: 'medium' }} por {{ reversal.performedByName }} — Motivo:
+                  Revertido el {{ reversal.performedAt | bogotaDate: 'medium' }} por {{ reversal.performedByName }} — Motivo:
                   {{ reversal.reason }}
                 </span>
               } @else if (canReverse(consumption)) {
@@ -243,11 +253,11 @@
               </span>
               <strong>{{ delivery.quantity }} × {{ delivery.giftDescription }}</strong>
               <span class="membership-detail__muted">
-                Registrado el {{ delivery.registeredAt | date: 'medium' }} por {{ delivery.registeredByName }}
+                Registrado el {{ delivery.registeredAt | bogotaDate: 'medium' }} por {{ delivery.registeredByName }}
               </span>
               @if (delivery.reversal; as reversal) {
                 <span>
-                  Revertido el {{ reversal.performedAt | date: 'medium' }} por {{ reversal.performedByName }} — Motivo:
+                  Revertido el {{ reversal.performedAt | bogotaDate: 'medium' }} por {{ reversal.performedByName }} — Motivo:
                   {{ reversal.reason }}
                 </span>
               }
@@ -273,7 +283,7 @@
           <li>
             <strong>{{ eventLabels[event.type] }}</strong>
             <span class="membership-detail__muted">
-              {{ event.performedAt | date: 'medium' }}
+              {{ event.performedAt | bogotaDate: 'medium' }}
               @if (event.performedByName) {
                 · {{ event.performedByName }}
               }

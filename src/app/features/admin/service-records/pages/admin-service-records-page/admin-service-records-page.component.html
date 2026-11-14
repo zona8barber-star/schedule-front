@@ -83,7 +83,7 @@
             }
           </span>
           <span class="records__meta records__meta--small">
-            Registrado por {{ record.registeredByName }} el {{ record.registeredAt | date: 'medium' }}
+            Registrado por {{ record.registeredByName }} el {{ record.registeredAt | bogotaDate: 'medium' }}
           </span>
           @if (record.notes) {
             <span class="records__meta">Notas: {{ record.notes }}</span>
@@ -110,14 +110,14 @@
               </span>
             }
             <span class="records__meta records__meta--small">
-              Confirmado por {{ approval.approvedByName }} el {{ approval.approvedAt | date: 'medium' }}
+              Confirmado por {{ approval.approvedByName }} el {{ approval.approvedAt | bogotaDate: 'medium' }}
             </span>
           }
 
           @if (record.status === 'Rejected') {
             <span class="records__meta">Motivo: {{ record.rejectionReason }}</span>
             <span class="records__meta records__meta--small">
-              Rechazado por {{ record.rejectedByName }} el {{ record.rejectedAt | date: 'medium' }}
+              Rechazado por {{ record.rejectedByName }} el {{ record.rejectedAt | bogotaDate: 'medium' }}
             </span>
           }
 

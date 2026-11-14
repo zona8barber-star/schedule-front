@@ -30,6 +30,8 @@ export class AdminReportsPageComponent implements OnInit {
   readonly summary = signal<ReportSummaryView | null>(null);
   readonly isLoading = signal(true);
   readonly errorMessage = signal<string | null>(null);
+  /** Increases with every load; an answer whose number is no longer the latest is ignored (SONDA BUG-082). */
+  private loadSequence = 0;
 
   readonly chartOptions: ChartOptions = {
     responsive: true,
@@ -103,6 +105,9 @@ export class AdminReportsPageComponent implements OnInit {
   }
 
   private async load(): Promise<void> {
+    // SONDA BUG-082: only the answer of the latest range is shown; a slower answer of an earlier range is dropped
+    // (same pattern as the income list).
+    const sequence = ++this.loadSequence;
     if (this.from() > this.to()) {
       this.errorMessage.set('La fecha "desde" debe ser anterior o igual a "hasta".');
       this.isLoading.set(false);
@@ -112,11 +117,16 @@ export class AdminReportsPageComponent implements OnInit {
     this.isLoading.set(true);
     this.errorMessage.set(null);
     try {
-      this.summary.set(await firstValueFrom(this.api.getSummary(this.from(), this.to())));
+      const summary = await firstValueFrom(this.api.getSummary(this.from(), this.to()));
+      if (sequence !== this.loadSequence) return;
+      this.summary.set(summary);
     } catch (error) {
+      if (sequence !== this.loadSequence) return;
       this.errorMessage.set(getApiErrorMessage(error));
     } finally {
-      this.isLoading.set(false);
+      if (sequence === this.loadSequence) {
+        this.isLoading.set(false);
+      }
     }
   }
 }

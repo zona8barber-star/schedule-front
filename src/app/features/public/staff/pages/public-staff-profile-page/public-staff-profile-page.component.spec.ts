@@ -28,7 +28,7 @@ describe('PublicStaffProfilePageComponent (booking by service)', () => {
   let socials: Partial<PublicStaffProfileResponse> = {};
 
   const profile = (services: PublicStaffServiceResponse[]): PublicStaffProfileResponse => ({
-    staffProfileId: 'st-1',
+    staffProfileId: '5a1f0000-0000-4000-8000-000000000001',
     displayName: 'Alex',
     bio: null,
     phoneNumber,
@@ -74,7 +74,7 @@ describe('PublicStaffProfilePageComponent (booking by service)', () => {
           provide: ActivatedRoute,
           useValue: {
             snapshot: {
-              paramMap: convertToParamMap({ staffProfileId: 'st-1' }),
+              paramMap: convertToParamMap({ staffProfileId: '5a1f0000-0000-4000-8000-000000000001' }),
               queryParamMap: convertToParamMap(queryParams),
             },
           },
@@ -156,13 +156,13 @@ describe('PublicStaffProfilePageComponent (booking by service)', () => {
     await render();
 
     expect(fixture.nativeElement.querySelector('[data-testid="chosen-service"]').textContent.trim()).toBe('Barba · 20 min');
-    expect(getSlots).toHaveBeenCalledWith('st-1', expect.any(String), expect.any(String), { generalServiceId: 'g-beard' });
+    expect(getSlots).toHaveBeenCalledWith('5a1f0000-0000-4000-8000-000000000001', expect.any(String), expect.any(String), { generalServiceId: 'g-beard' });
     expect(component.bookingDate()).toBe(date);
     expect(text()).not.toContain('$');
 
     (fixture.nativeElement.querySelector('.sp__slot') as HTMLButtonElement).click();
     expect(navigate).toHaveBeenCalledWith(['/booking/confirm'], {
-      queryParams: { staffProfileId: 'st-1', startsAt: slot.startAtUtc, generalServiceId: 'g-beard' },
+      queryParams: { staffProfileId: '5a1f0000-0000-4000-8000-000000000001', startsAt: slot.startAtUtc, generalServiceId: 'g-beard' },
     });
   });
 
@@ -174,7 +174,7 @@ describe('PublicStaffProfilePageComponent (booking by service)', () => {
 
     expect(component.selectedService()?.generalServiceId).toBe('g-cut');
     expect(fixture.nativeElement.querySelector('app-slot-picker')).not.toBeNull();
-    expect(getSlots).toHaveBeenCalledWith('st-1', expect.any(String), expect.any(String), { generalServiceId: 'g-cut' });
+    expect(getSlots).toHaveBeenCalledWith('5a1f0000-0000-4000-8000-000000000001', expect.any(String), expect.any(String), { generalServiceId: 'g-cut' });
   });
 
   it('reopens on the service of "Cambiar fecha u hora"', async () => {

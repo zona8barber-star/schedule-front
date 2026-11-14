@@ -230,3 +230,28 @@
     animation: none;
   }
 }
+
+// BUG-107: «Ver más» bajo la lista, para llegar a las notificaciones que no caben en la primera página.
+.bell__more {
+  flex-shrink: 0;
+  width: 100%;
+  border: 0;
+  border-top: 1px solid rgba(176, 138, 74, 0.15);
+  padding: 0.7rem 1rem;
+  background: none;
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--z-brass-dk);
+  cursor: pointer;
+
+  &:disabled {
+    cursor: progress;
+    opacity: 0.7;
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--z-brass-dk);
+    outline-offset: -2px;
+  }
+}

@@ -75,7 +75,7 @@
         <li class="records__card">
           <div class="records__card-head">
             <strong>{{ redemption.rewardName }} · {{ redemption.pointsCost }} pts</strong>
-            <span class="records__date">{{ redemption.requestedAt | date: 'mediumDate' }}</span>
+            <span class="records__date">{{ redemption.requestedAt | bogotaDate: 'mediumDate' }}</span>
           </div>
           <span class="records__meta">
             {{ redemption.customerName ?? 'Cliente' }} · {{ kindLabels[redemption.rewardKind] }}{{ redemption.serviceName ? ': ' + redemption.serviceName : '' }}
@@ -95,7 +95,7 @@
               · aprobado por {{ redemption.approvedByName }} · entregar hasta {{ redemption.deliverBy | date: 'mediumDate' }}
             }
             @if (redemption.status === 'Delivered') {
-              · entregado por {{ redemption.deliveredByName }} el {{ redemption.deliveredAt | date: 'medium' }}
+              · entregado por {{ redemption.deliveredByName }} el {{ redemption.deliveredAt | bogotaDate: 'medium' }}
             }
             @if (redemption.rejectionReason) {
               · rechazado: «{{ redemption.rejectionReason }}»

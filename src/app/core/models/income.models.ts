@@ -37,7 +37,10 @@ export interface IncomeEntryCreateRequest {
   occurredOn: string; // YYYY-MM-DD
 }
 
-export type IncomeEntryUpdateRequest = IncomeEntryCreateRequest;
+/** Editing a membership sale linked to memberships may need a justification (SONDA BUG-104). */
+export interface IncomeEntryUpdateRequest extends IncomeEntryCreateRequest {
+  discrepancyJustification?: string | null;
+}
 
 /** Filters of GET /admin/income (ADR-0016 B7). Without a range the API shows today. */
 export interface IncomeListQuery extends PageQuery {

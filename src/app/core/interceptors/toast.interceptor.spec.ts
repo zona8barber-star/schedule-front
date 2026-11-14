@@ -6,6 +6,7 @@ import { firstValueFrom } from 'rxjs';
 
 import { RuntimeConfigService } from '../config/runtime-config.service';
 import { ToastService } from '../services/toast.service';
+import { CONNECTIVITY_ERROR_MESSAGE } from '../utils/api-error.utils';
 import { toastInterceptor } from './toast.interceptor';
 
 const api = 'http://api.test/api/v1';
@@ -30,7 +31,10 @@ describe('toastInterceptor', () => {
     backend = TestBed.inject(HttpTestingController);
   });
 
-  afterEach(() => backend.verify());
+  afterEach(() => {
+    backend.verify();
+    vi.restoreAllMocks();
+  });
 
   async function failGet(path: string, status = 404): Promise<void> {
     const request = firstValueFrom(http.get(`${api}${path}`)).catch(() => undefined);
@@ -54,6 +58,84 @@ describe('toastInterceptor', () => {
   it('leaves a booking conflict to the booking page, which checks whether it is the customer own one (BUG-043)', async () => {
     const request = firstValueFrom(http.post(`${api}/customer/appointments`, {})).catch(() => undefined);
     backend.expectOne(`${api}/customer/appointments`).flush({}, { status: 409, statusText: 'Conflict' });
+    await request;
+
+    expect(toast.error).not.toHaveBeenCalled();
+  });
+
+  // SONDA BUG-066 / BUG-045: without network every call fails; they all share one text so a single toast remains.
+  it('collapses every request that failed for lack of network into one connection notice', async () => {
+    vi.spyOn(navigator, 'onLine', 'get').mockReturnValue(false);
+    await failGet('/public/content/landing', 504);
+    await failGet('/public/staff', 504);
+    await failGet('/public/staff/st-1/availability/slots?date=2026-11-13', 504);
+    const request = firstValueFrom(http.get(`${api}/public/staff/st-1/reviews`)).catch(() => undefined);
+    backend.expectOne(`${api}/public/staff/st-1/reviews`).error(new ProgressEvent('error'));
+    await request;
+
+    const messages = new Set(toast.error.mock.calls.map(([message]) => message));
+    expect([...messages]).toEqual([CONNECTIVITY_ERROR_MESSAGE]);
+  });
+
+  it('keeps the specific message when the server answered (with network)', async () => {
+    vi.spyOn(navigator, 'onLine', 'get').mockReturnValue(true);
+    await failGet('/public/staff', 504);
+
+    expect(toast.error).toHaveBeenCalledWith('No pudimos cargar los perfiles de profesionales por ahora.');
+  });
+});
+
+describe('toastInterceptor (success texts and missing records)', () => {
+  let http: HttpClient;
+  let backend: HttpTestingController;
+  let toast: { success: ReturnType<typeof vi.fn>; error: ReturnType<typeof vi.fn> };
+
+  beforeEach(() => {
+    toast = { success: vi.fn(), error: vi.fn() };
+    TestBed.configureTestingModule({
+      providers: [
+        provideHttpClient(withInterceptors([toastInterceptor])),
+        provideHttpClientTesting(),
+        { provide: ToastService, useValue: toast },
+        { provide: RuntimeConfigService, useValue: { config: signal({ apiBaseUrl: api }) } },
+      ],
+    });
+    http = TestBed.inject(HttpClient);
+    backend = TestBed.inject(HttpTestingController);
+  });
+
+  afterEach(() => backend.verify());
+
+  async function succeed(method: 'POST' | 'DELETE' | 'PUT', path: string): Promise<void> {
+    const request = firstValueFrom(http.request(method, `${api}${path}`, { body: {} })).catch(() => undefined);
+    backend.expectOne(`${api}${path}`).flush({});
+    await request;
+  }
+
+  // SONDA BUG-031: registering an absence from the admin said «Profesional creado correctamente.».
+  it('confirms an absence registered from the admin as an absence, not as a new professional', async () => {
+    await succeed('POST', '/admin/staff/st-1/availability/unavailable-periods');
+    await succeed('DELETE', '/admin/staff/st-1/availability/unavailable-periods/p-1');
+    await succeed('PUT', '/admin/staff/st-1/availability/rules');
+
+    expect(toast.success.mock.calls.map(([message]) => message)).toEqual([
+      'Ausentismo registrado correctamente.',
+      'Ausentismo eliminado correctamente.',
+      'Disponibilidad actualizada correctamente.',
+    ]);
+  });
+
+  it('still says «Profesional creado» only when a professional is created', async () => {
+    await succeed('POST', '/admin/staff');
+    await succeed('POST', '/admin/staff/st-1/photo');
+
+    expect(toast.success.mock.calls.map(([message]) => message)).toEqual(['Profesional creado correctamente.']);
+  });
+
+  // SONDA BUG-044: the page shows «No encontramos…» itself; no toast on top of it.
+  it('does not toast a record that was not found when loading it', async () => {
+    const request = firstValueFrom(http.get(`${api}/admin/staff/st-1`)).catch(() => undefined);
+    backend.expectOne(`${api}/admin/staff/st-1`).flush({ title: 'Not Found' }, { status: 404, statusText: 'Not Found' });
     await request;
 
     expect(toast.error).not.toHaveBeenCalled();

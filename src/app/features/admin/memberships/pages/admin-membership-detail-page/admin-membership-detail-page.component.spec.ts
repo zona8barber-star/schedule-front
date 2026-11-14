@@ -16,7 +16,7 @@ describe('AdminMembershipDetailPageComponent', () => {
   const api = environment.defaultApiBaseUrl;
 
   const base: CustomerMembershipDetailView = {
-    id: 'm-1',
+    id: 'a1b2c3d4-0000-4000-8000-000000000001',
     customerId: 'c-1',
     customerName: 'Carlos Pérez',
     originalCustomerId: 'c-1',
@@ -159,7 +159,7 @@ describe('AdminMembershipDetailPageComponent', () => {
 
     page.open('annul');
     const annulling = page.annul('Retracto legal');
-    const req = httpMock.expectOne(`${api}/admin/memberships/m-1/annul`);
+    const req = httpMock.expectOne(`${api}/admin/memberships/a1b2c3d4-0000-4000-8000-000000000001/annul`);
     expect(req.request.body).toEqual({ reason: 'Retracto legal' });
     req.flush({
       ...base,
@@ -179,9 +179,34 @@ describe('AdminMembershipDetailPageComponent', () => {
     expect(page.openModal()).toBeNull();
   });
 
+  /** SONDA BUG-104: the notice shows the recorded justification, and never claims one that does not exist. */
+  it('shows the recorded justification of a discrepancy, or says there is none', async () => {
+    const own = { membershipId: 'a1b2c3d4-0000-4000-8000-000000000001', customerName: 'Carlos Pérez', planName: 'Oro', price: 250000, status: 'Active' as const };
+    const income = { incomeEntryId: 'i-1', amount: 1, occurredOn: '2026-10-28', isDeleted: false, linkedMembershipsTotal: 250000, hasDiscrepancy: true, linkedMemberships: [own] };
+    const fixture = await openPage({ ...base, income, events: [] });
+    const notice = () => (fixture.nativeElement as HTMLElement).querySelector('[data-testid="discrepancy-notice"]')!.textContent!;
+
+    expect(notice()).toContain('no hay una justificación registrada');
+
+    const page = harness.routeDebugElement!.componentInstance as AdminMembershipDetailPageComponent;
+    page.membership.update((membership) => ({
+      ...membership!,
+      events: [
+        {
+          id: 'e-1', type: 'IncomeAmountChanged', performedAt: '2026-10-29T10:00:00Z', performedByName: 'Admin',
+          reason: 'Valor del ingreso cambiado de 250.000 a 1. Cortesía acordada', incomeEntryId: 'i-1',
+          relatedCustomerId: null, relatedCustomerName: null,
+        },
+      ],
+    }));
+    harness.detectChanges();
+
+    expect(notice()).toContain('Justificación registrada: «Valor del ingreso cambiado de 250.000 a 1. Cortesía acordada»');
+  });
+
   it('only demands a justification to unlink when the rest of the income would stop adding up', async () => {
     const peer = { membershipId: 'm-2', customerName: 'Carlos Pérez', planName: 'Oro', price: 250000, status: 'Active' as const };
-    const own = { ...peer, membershipId: 'm-1' };
+    const own = { ...peer, membershipId: 'a1b2c3d4-0000-4000-8000-000000000001' };
     await openPage({
       ...base,
       income: { incomeEntryId: 'i-1', amount: 500000, occurredOn: '2026-10-28', isDeleted: false, linkedMembershipsTotal: 500000, hasDiscrepancy: false, linkedMemberships: [own, peer] },
@@ -265,7 +290,7 @@ describe('AdminMembershipDetailPageComponent', () => {
     expect(fixture.nativeElement.textContent).toContain('La membresía sigue anulada');
 
     const reversing = page.reverse('Registrado por error');
-    const req = httpMock.expectOne(`${api}/admin/memberships/m-1/consumptions/c-1/reverse`);
+    const req = httpMock.expectOne(`${api}/admin/memberships/a1b2c3d4-0000-4000-8000-000000000001/consumptions/c-1/reverse`);
     expect(req.request.body).toEqual({ reason: 'Registrado por error' });
     req.flush({
       ...page.membership()!,
@@ -325,7 +350,7 @@ describe('AdminMembershipDetailPageComponent', () => {
     expect(fixture.nativeElement.textContent).toContain('volverá a quedar pendiente de entrega');
 
     const reversing = page.reverseDelivery('Se entregó al cliente equivocado');
-    const req = httpMock.expectOne(`${api}/admin/memberships/m-1/gifts/g-1/deliveries/d-1/reverse`);
+    const req = httpMock.expectOne(`${api}/admin/memberships/a1b2c3d4-0000-4000-8000-000000000001/gifts/g-1/deliveries/d-1/reverse`);
     expect(req.request.body).toEqual({ reason: 'Se entregó al cliente equivocado' });
     req.flush({
       ...page.membership()!,

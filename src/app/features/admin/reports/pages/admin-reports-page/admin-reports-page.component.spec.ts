@@ -1,5 +1,5 @@
 import { provideHttpClient } from '@angular/common/http';
-import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 
 import { ReportSummaryView } from '../../../../../core/models/report.models';
@@ -48,5 +48,29 @@ describe('AdminReportsPageComponent', () => {
     const component = createComponent();
 
     expect(component.promoChartData().datasets[0].data).toEqual([0, 0, 0]);
+  });
+
+  /** SONDA BUG-082: a slower answer of an earlier range never replaces the answer of the latest range. */
+  it('shows only the answer of the latest range, even when an earlier one arrives later', async () => {
+    const component = createComponent();
+    const httpMock = TestBed.inject(HttpTestingController);
+    // Run ngOnInit first and answer its load, so only the two range changes below are in flight.
+    TestBed.tick();
+    httpMock.expectOne((request) => request.url.endsWith('/admin/reports/summary')).flush(summary);
+    await new Promise<void>((resolve) => setTimeout(resolve, 0));
+
+    component.onFromChange('2013-05-01');
+    component.onFromChange('2013-06-01');
+    const [earlier, latest] = httpMock.match((request) => request.url.endsWith('/admin/reports/summary'));
+    expect(latest.request.params.get('from')).toBe('2013-06-01');
+
+    latest.flush({ ...summary, from: '2013-06-01', totalIncome: 150000 });
+    await new Promise<void>((resolve) => setTimeout(resolve, 0));
+    earlier.flush({ ...summary, from: '2013-05-01', totalIncome: 285000 });
+    await new Promise<void>((resolve) => setTimeout(resolve, 0));
+
+    expect(component.summary()?.totalIncome).toBe(150000);
+    expect(component.isLoading()).toBe(false);
+    httpMock.verify();
   });
 });

@@ -10,6 +10,8 @@ import { ApiFeedbackComponent } from '../../../../../shared/components/api-feedb
 import { PageStateComponent } from '../../../../../shared/components/page-state/page-state.component';
 import { AdminMembershipPlanFormModalComponent } from '../../components/admin-membership-plan-form-modal/admin-membership-plan-form-modal.component';
 
+import { SingleFlight } from '../../../../../core/utils/single-flight';
+
 @Component({
   selector: 'app-admin-membership-plans-list-page',
   imports: [DecimalPipe, ApiFeedbackComponent, PageStateComponent, AdminMembershipPlanFormModalComponent],
@@ -74,6 +76,7 @@ export class AdminMembershipPlansListPageComponent implements OnInit {
       .join(', ');
   }
 
+  @SingleFlight()
   async toggleActive(plan: MembershipPlanView): Promise<void> {
     this.busyId.set(plan.id);
     this.errorMessage.set(null);
@@ -89,6 +92,7 @@ export class AdminMembershipPlansListPageComponent implements OnInit {
     }
   }
 
+  @SingleFlight()
   async deletePlan(plan: MembershipPlanView): Promise<void> {
     const confirmed = await this.confirmModal.confirm({
       title: '¿Eliminar tipo de membresía?',

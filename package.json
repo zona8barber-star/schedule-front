@@ -11,7 +11,8 @@
     "build:vercel": "node scripts/vercel-build.mjs",
     "typecheck": "tsc --noEmit",
     "watch": "ng build --watch --configuration development",
-    "test": "ng test --watch=false"
+    "test": "node scripts/check-spanish-copy.mjs && ng test --watch=false",
+    "lint:copy": "node scripts/check-spanish-copy.mjs"
   },
   "private": true,
   "packageManager": "npm@10.9.2",

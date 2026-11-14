@@ -7,6 +7,8 @@
     <article class="my-memberships__panel">
       <app-page-state kind="loading" message="Cargando membresía..." />
     </article>
+  } @else if (notFound()) {
+    <app-not-found-state title="No encontramos esta membresía" message="Es posible que el enlace esté mal escrito o que la membresía no sea de tu cuenta." backLink="/customer/memberships" backLabel="Volver a mis membresías" />
   } @else if (membership(); as m) {
     <header class="my-memberships__hero">
       <p class="my-memberships__eyebrow">Membresía</p>
@@ -103,7 +105,7 @@
               <span class="my-memberships__muted">{{ partsLabel(consumption) }}</span>
               @if (consumption.isReversed) {
                 <span class="my-memberships__muted">
-                  La barbería anuló este registro el {{ consumption.reversedAt | date: 'mediumDate' }}; esas unidades
+                  La barbería anuló este registro el {{ consumption.reversedAt | bogotaDate: 'mediumDate' }}; esas unidades
                   volvieron a tu saldo.
                 </span>
               }

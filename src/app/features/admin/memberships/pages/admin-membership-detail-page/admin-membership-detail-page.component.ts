@@ -1,4 +1,5 @@
-import { DatePipe, DecimalPipe } from '@angular/common';
+import { BogotaDatePipe } from '../../../../../shared/pipes/bogota-date.pipe';
+import { DecimalPipe } from '@angular/common';
 import { Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
@@ -16,6 +17,8 @@ import { AuthService } from '../../../../../core/services/auth.service';
 import { ConfirmModalService } from '../../../../../core/services/confirm-modal.service';
 import { ToastService } from '../../../../../core/services/toast.service';
 import { getApiErrorMessage } from '../../../../../core/utils/api-error.utils';
+import { isGuid, isNotFoundError } from '../../../../../core/utils/route-id.utils';
+import { NotFoundStateComponent } from '../../../../../shared/components/not-found-state/not-found-state.component';
 import { ApiFeedbackComponent } from '../../../../../shared/components/api-feedback/api-feedback.component';
 import { PageStateComponent } from '../../../../../shared/components/page-state/page-state.component';
 import { GIFT_CONDITION_LABELS } from '../../../membership-plans/membership-plan-defaults';
@@ -40,10 +43,11 @@ type MembershipModal =
   | 'deliverGift'
   | 'reverseDelivery';
 
+import { SingleFlight } from '../../../../../core/utils/single-flight';
+
 @Component({
   selector: 'app-admin-membership-detail-page',
-  imports: [
-    DatePipe,
+  imports: [NotFoundStateComponent, BogotaDatePipe, 
     DecimalPipe,
     RouterLink,
     ApiFeedbackComponent,
@@ -81,6 +85,8 @@ export class AdminMembershipDetailPageComponent implements OnInit {
 
   readonly isLoading = signal(true);
   readonly errorMessage = signal<string | null>(null);
+  /** SONDA BUG-044: the membership of the link does not exist. */
+  readonly notFound = signal(false);
   readonly membership = signal<CustomerMembershipDetailView | null>(null);
   readonly openModal = signal<MembershipModal | null>(null);
   readonly isBusy = signal(false);
@@ -112,6 +118,25 @@ export class AdminMembershipDetailPageComponent implements OnInit {
     return !!membership && membership.endsOn < bogotaToday();
   });
 
+  /**
+   * SONDA BUG-104: the justification recorded for the current income, from the latest link or amount change of that
+   * income that carries one; null when none was recorded (the notice no longer claims one that does not exist).
+   */
+  readonly discrepancyJustification = computed(() => {
+    const membership = this.membership();
+    const incomeId = membership?.income?.incomeEntryId;
+    if (!membership || !incomeId) return null;
+    const latest = membership.events
+      .filter(
+        (event) =>
+          event.incomeEntryId === incomeId &&
+          (event.type === 'IncomeLinked' || event.type === 'IncomeAmountChanged') &&
+          !!event.reason?.trim(),
+      )
+      .sort((first, second) => second.performedAt.localeCompare(first.performedAt))[0];
+    return latest?.reason?.trim() ?? null;
+  });
+
   /** Unlinking needs a justification when the memberships left on the income stop adding up to it. */
   readonly unlinkNeedsJustification = computed(() => {
     const income = this.membership()?.income;
@@ -131,6 +156,7 @@ export class AdminMembershipDetailPageComponent implements OnInit {
     });
   }
 
+  @SingleFlight()
   async activate(): Promise<void> {
     const membership = this.membership();
     if (!membership) return;
@@ -144,12 +170,16 @@ export class AdminMembershipDetailPageComponent implements OnInit {
       title: '¿Activar membresía?',
       message: `Se activará "${membership.planName}" para ${membership.customerName}.`,
       confirmLabel: 'Activar',
+      // SONDA BUG-086: a constructive action, not the bin and the red button of a deletion.
+      danger: false,
+      icon: 'check',
     });
     if (!confirmed) return;
 
     await this.run(() => this.membershipsApi.activate(membership.id, { confirmExpiredActivation: false, reason: null }), 'Membresía activada.');
   }
 
+  @SingleFlight()
   async activateExpired(reason: string | null): Promise<void> {
     const membership = this.membership();
     if (!membership) return;
@@ -159,12 +189,14 @@ export class AdminMembershipDetailPageComponent implements OnInit {
     );
   }
 
+  @SingleFlight()
   async annul(reason: string | null): Promise<void> {
     const membership = this.membership();
     if (!membership || !reason) return;
     await this.run(() => this.membershipsApi.annul(membership.id, { reason }), 'Membresía anulada.');
   }
 
+  @SingleFlight()
   async unlink(justification: string | null): Promise<void> {
     const membership = this.membership();
     if (!membership) return;
@@ -185,6 +217,7 @@ export class AdminMembershipDetailPageComponent implements OnInit {
     this.open('reverse');
   }
 
+  @SingleFlight()
   async reverse(reason: string | null): Promise<void> {
     const membership = this.membership();
     const consumption = this.reversing();
@@ -237,6 +270,7 @@ export class AdminMembershipDetailPageComponent implements OnInit {
     this.open('reverseDelivery');
   }
 
+  @SingleFlight()
   async reverseDelivery(reason: string | null): Promise<void> {
     const membership = this.membership();
     const gift = this.selectedGift();
@@ -303,12 +337,24 @@ export class AdminMembershipDetailPageComponent implements OnInit {
   private async load(membershipId: string): Promise<void> {
     this.isLoading.set(true);
     this.errorMessage.set(null);
+    this.notFound.set(false);
+    // SONDA BUG-044: an id that is not a GUID cannot exist; no request is sent.
+    if (!isGuid(membershipId)) {
+      this.membership.set(null);
+      this.notFound.set(true);
+      this.isLoading.set(false);
+      return;
+    }
     this.openModal.set(null);
     try {
       this.membership.set(await firstValueFrom(this.membershipsApi.getById(membershipId)));
     } catch (error) {
       this.membership.set(null);
-      this.errorMessage.set(getApiErrorMessage(error));
+      if (isNotFoundError(error)) {
+        this.notFound.set(true);
+      } else {
+        this.errorMessage.set(getApiErrorMessage(error));
+      }
     } finally {
       this.isLoading.set(false);
     }

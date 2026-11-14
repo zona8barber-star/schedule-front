@@ -13,9 +13,13 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { AuthApiService } from '../../../../core/services/auth-api.service';
 import { ApiFeedbackComponent } from '../../../../shared/components/api-feedback/api-feedback.component';
 
+import { FormA11yDirective } from '../../../../shared/directives/form-a11y.directive';
+
+import { SingleFlight } from '../../../../core/utils/single-flight';
+
 @Component({
   selector: 'app-reset-password-page',
-  imports: [ReactiveFormsModule, RouterLink, ApiFeedbackComponent],
+  imports: [FormA11yDirective, ReactiveFormsModule, RouterLink, ApiFeedbackComponent],
   templateUrl: './reset-password-page.component.html',
   styleUrl: './reset-password-page.component.scss',
 })
@@ -54,6 +58,7 @@ export class ResetPasswordPageComponent implements OnInit {
     this.token.set(this.route.snapshot.queryParamMap.get('token'));
   }
 
+  @SingleFlight()
   async submit(): Promise<void> {
     this.submitted.set(true);
     this.error.set('');

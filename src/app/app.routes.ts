@@ -5,6 +5,7 @@ import { guestGuard } from './core/guards/guest.guard';
 import { permissionGuard } from './core/guards/permission.guard';
 import { roleGuard } from './core/guards/role.guard';
 import { PERMISSION_CODES, ROLE_NAMES } from './core/models/auth.models';
+import { brandTitleResolver } from './core/services/public-branding.store';
 import { customerClaimsQueryGuard } from './features/admin/customer-claims/customer-claims-query.guard';
 
 const loadScaffoldSection = () =>
@@ -284,13 +285,14 @@ export const routes: Routes = [
       import('./features/landing/pages/landing-shell-page/landing-shell-page.component').then(
         (module) => module.LandingShellPageComponent,
       ),
-    title: 'Zona 8',
+    // SONDA BUG-100: the tab shows the name configured in «Marca» (the static name only as fallback).
+    title: brandTitleResolver,
   },
   {
     path: 'public',
     loadComponent: loadScaffoldSection,
     data: {
-      title: 'Area publica',
+      title: 'Área pública',
       description: 'Explora la landing, los perfiles profesionales y su disponibilidad.',
     },
   },
@@ -309,7 +311,7 @@ export const routes: Routes = [
           import('./features/auth/pages/login-page/login-page.component').then(
             (module) => module.LoginPageComponent,
           ),
-        title: 'Iniciar sesion',
+        title: 'Iniciar sesión',
       },
       {
         path: 'register',
@@ -408,7 +410,7 @@ export const routes: Routes = [
     data: {
       roles: [ROLE_NAMES.customer],
     },
-    title: 'Mis resenas',
+    title: 'Mis reseñas',
   },
   {
     path: 'staff/profile',
@@ -498,7 +500,7 @@ export const routes: Routes = [
     data: {
       roles: [ROLE_NAMES.admin],
     },
-    title: 'Gestion de profesionales',
+    title: 'Gestión de profesionales',
   },
   {
     path: 'admin/appointments',

@@ -1,5 +1,5 @@
 import { Component, DestroyRef, ElementRef, OnInit, computed, inject, signal, viewChild } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { AbstractControl, FormBuilder, ReactiveFormsModule, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 
@@ -8,16 +8,24 @@ import { AuthService } from '../../../../../core/services/auth.service';
 import { ConfirmModalService } from '../../../../../core/services/confirm-modal.service';
 import { CustomerProfileApiService } from '../../../../../core/services/customer-profile-api.service';
 import { getApiErrorMessage } from '../../../../../core/utils/api-error.utils';
+import { bogotaToday } from '../../../../../core/utils/bogota-date.utils';
 import { ApiFeedbackComponent } from '../../../../../shared/components/api-feedback/api-feedback.component';
 import { PageStateComponent } from '../../../../../shared/components/page-state/page-state.component';
+import { trimmedMinLength, trimmedRequired } from '../../../../../core/utils/form-validators';
 
 const MAX_FILE_BYTES = 10_485_760; // 10 MB
 
 type ProfileTab = 'info' | 'password';
 
+import { FieldErrorComponent } from '../../../../../shared/components/field-error/field-error.component';
+
+import { FormA11yDirective } from '../../../../../shared/directives/form-a11y.directive';
+
+import { SingleFlight } from '../../../../../core/utils/single-flight';
+
 @Component({
   selector: 'app-customer-profile-page',
-  imports: [ReactiveFormsModule, ApiFeedbackComponent, PageStateComponent],
+  imports: [FormA11yDirective, FieldErrorComponent, ReactiveFormsModule, ApiFeedbackComponent, PageStateComponent],
   templateUrl: './customer-profile-page.component.html',
   styleUrl: './customer-profile-page.component.scss',
 })
@@ -52,10 +60,14 @@ export class CustomerProfilePageComponent implements OnInit {
 
   readonly isBusy = computed(() => this.isInfoSaving() || this.photoUploading() || this.isPwdSaving());
 
+  readonly minDateOfBirth = MIN_DATE_OF_BIRTH;
+  readonly todayIso = () => bogotaToday();
+
   readonly infoForm = this.fb.group({
-    fullName: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(120)]],
+    fullName: ['', [trimmedRequired, trimmedMinLength(2), Validators.maxLength(120)]],
     phoneNumber: ['', [Validators.maxLength(40)]],
-    dateOfBirth: [''],
+    // SONDA BUG-059: the API range, 1900-01-01 to today in Bogotá.
+    dateOfBirth: ['', [dateOfBirthValidator()]],
   });
 
   readonly pwdForm = this.fb.group({
@@ -76,6 +88,7 @@ export class CustomerProfilePageComponent implements OnInit {
     this.activeTab.set(tab);
   }
 
+  @SingleFlight()
   async saveInfo(): Promise<void> {
     this.infoSubmitted.set(true);
     this.infoError.set(null);
@@ -166,6 +179,7 @@ export class CustomerProfilePageComponent implements OnInit {
     }
   }
 
+  @SingleFlight()
   async removePhoto(): Promise<void> {
     const confirmed = await this.confirmModal.confirm({
       title: '¿Eliminar foto de perfil?',
@@ -262,4 +276,15 @@ export class CustomerProfilePageComponent implements OnInit {
       dateOfBirth: data.dateOfBirth ?? '',
     });
   }
+}
+
+const MIN_DATE_OF_BIRTH = '1900-01-01';
+
+/** Empty is valid; otherwise between 1900-01-01 and today in Bogotá (SONDA BUG-059). ISO dates compare as text. */
+export function dateOfBirthValidator(): ValidatorFn {
+  return (control: AbstractControl): ValidationErrors | null => {
+    const value = String(control.value ?? '').trim();
+    if (!value) return null;
+    return value < MIN_DATE_OF_BIRTH || value > bogotaToday() ? { dateRange: true } : null;
+  };
 }

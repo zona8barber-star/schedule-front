@@ -1,3 +1,4 @@
+import { BogotaDatePipe } from '../../../../../shared/pipes/bogota-date.pipe';
 import { DatePipe } from '@angular/common';
 import { Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -23,6 +24,7 @@ import { LoyaltyRedemptionApiService } from '../../../../../core/services/loyalt
 import { LoyaltyWalletApiService } from '../../../../../core/services/loyalty-wallet-api.service';
 import { ToastService } from '../../../../../core/services/toast.service';
 import { getApiErrorMessage } from '../../../../../core/utils/api-error.utils';
+import { ConfirmModalService } from '../../../../../core/services/confirm-modal.service';
 import { QueryValue, readDateParam, readPageParam, readTextParam } from '../../../../../core/utils/list-query.utils';
 import {
   HISTORY_RANGE_HINT,
@@ -41,9 +43,11 @@ import { PaginatorComponent } from '../../../../../shared/components/paginator/p
  * redemptions (cancellable until delivered) and history. The wallet only brings the latest movements; the full history
  * is paginated on the server with type and date filters kept in the URL (ADR-0016 B7).
  */
+import { SingleFlight } from '../../../../../core/utils/single-flight';
+
 @Component({
   selector: 'app-my-loyalty-page',
-  imports: [DatePipe, RouterLink, ApiFeedbackComponent, PageStateComponent, PaginatorComponent],
+  imports: [BogotaDatePipe, DatePipe, RouterLink, ApiFeedbackComponent, PageStateComponent, PaginatorComponent],
   templateUrl: './my-loyalty-page.component.html',
   styleUrl: '../../../memberships/my-memberships.scss',
 })
@@ -70,6 +74,7 @@ export class MyLoyaltyPageComponent implements OnInit {
   /** The reward waiting for the customer's confirmation, and the one being sent. */
   readonly confirming = signal<MyLoyaltyRewardView | null>(null);
   readonly busyId = signal<string | null>(null);
+  private readonly confirmModal = inject(ConfirmModalService);
 
   readonly showHistory = signal(false);
   readonly movementTypes = Object.keys(LOYALTY_MOVEMENT_LABELS);
@@ -217,6 +222,7 @@ export class MyLoyaltyPageComponent implements OnInit {
     this.confirming.set(null);
   }
 
+  @SingleFlight()
   async redeem(): Promise<void> {
     const reward = this.confirming();
     if (!reward || this.busyId()) {
@@ -240,6 +246,17 @@ export class MyLoyaltyPageComponent implements OnInit {
 
   async cancel(redemption: MyLoyaltyRedemptionView): Promise<void> {
     if (this.busyId()) {
+      return;
+    }
+
+    // SONDA BUG-088: cancelling is final (the request has to be made and approved again); ask first.
+    const confirmed = await this.confirmModal.confirm({
+      title: '¿Cancelar este canje?',
+      message: 'Tus puntos vuelven a estar disponibles. Si después quieres la recompensa, tendrás que pedirla de nuevo y esperar otra aprobación.',
+      confirmLabel: 'Sí, cancelar canje',
+      cancelLabel: 'No, volver',
+    });
+    if (!confirmed || this.busyId()) {
       return;
     }
 

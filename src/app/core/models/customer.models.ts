@@ -49,6 +49,8 @@ export interface CustomerDetailView {
   createdAt: string;
   updatedAt: string | null;
   events: CustomerEventView[];
+  /** Row version of the profile (SONDA BUG-061): sent back when editing, a stale one answers 409. */
+  version: number;
 }
 
 export interface CustomerCreateRequest {
@@ -57,7 +59,10 @@ export interface CustomerCreateRequest {
   email: string;
 }
 
-export type CustomerUpdateRequest = CustomerCreateRequest;
+/** The edit carries the version it was made on (SONDA BUG-061). */
+export interface CustomerUpdateRequest extends CustomerCreateRequest {
+  version: number;
+}
 
 export interface CustomerDuplicateCandidate {
   kind: 'customer' | 'account';

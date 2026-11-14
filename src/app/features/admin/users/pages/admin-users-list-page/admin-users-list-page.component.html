@@ -108,9 +108,9 @@
 
 <!-- ── Modal: VER ────────────────────────────────────────────────── -->
 @if (viewingUser()) {
-  <div class="ul-modal__overlay" (click)="closeView()" (keydown.escape)="closeView()">
-    <div class="ul-modal" role="dialog" aria-modal="true" aria-label="Detalle de usuario"
-         (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()">
+  <div class="ul-modal__overlay" (click)="closeView()">
+    <div appModalDialog (modalClose)="closeView()" class="ul-modal" role="dialog" aria-modal="true" aria-label="Detalle de usuario"
+         (click)="$event.stopPropagation()">
       <div class="ul-modal__head">
         <h2 class="ul-modal__title">Detalle de usuario</h2>
         <button class="ul-modal__close" type="button" aria-label="Cerrar" (click)="closeView()">✕</button>
@@ -138,9 +138,9 @@
 
 <!-- ── Modal: EDITAR ─────────────────────────────────────────────── -->
 @if (editingUser()) {
-  <div class="ul-modal__overlay" (click)="closeEdit()" (keydown.escape)="closeEdit()">
-    <div class="ul-modal" role="dialog" aria-modal="true" aria-label="Editar usuario"
-         (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()">
+  <div class="ul-modal__overlay" (click)="closeEdit()">
+    <div appModalDialog (modalClose)="closeEdit()" class="ul-modal" role="dialog" aria-modal="true" aria-label="Editar usuario"
+         (click)="$event.stopPropagation()">
       <div class="ul-modal__head">
         <h2 class="ul-modal__title">Editar usuario</h2>
         <button class="ul-modal__close" type="button" aria-label="Cerrar" (click)="closeEdit()">✕</button>
@@ -148,15 +148,16 @@
 
       <app-api-feedback severity="error" [message]="saveError()" />
 
-      <form [formGroup]="editForm" (ngSubmit)="saveEdit()" novalidate class="ul-modal__form">
+      <form appFormA11y [formGroup]="editForm" (ngSubmit)="saveEdit()" novalidate class="ul-modal__form">
         <div class="ul-modal__field">
           <label for="editFullName">Nombre completo</label>
-          <input id="editFullName" type="text" formControlName="fullName" autocomplete="off" />
+          <input maxlength="120" id="editFullName" type="text" formControlName="fullName" autocomplete="off" />
+          <app-field-error controlName="fullName" />
           @if (showFieldError('fullName', 'required')) {
-            <p class="ul-modal__error">El nombre es requerido.</p>
+            <p role="alert" class="ul-modal__error">El nombre es requerido.</p>
           }
           @if (showFieldError('fullName', 'minlength')) {
-            <p class="ul-modal__error">El nombre debe tener al menos 2 caracteres.</p>
+            <p role="alert" class="ul-modal__error">El nombre debe tener al menos 2 caracteres.</p>
           }
         </div>
 
@@ -169,9 +170,9 @@
 
         <div class="ul-modal__field">
           <label for="editPhone">Teléfono (opcional)</label>
-          <input id="editPhone" type="tel" formControlName="phoneNumber" autocomplete="off" />
+          <input maxlength="40" id="editPhone" type="tel" formControlName="phoneNumber" autocomplete="off" />
           @if (showFieldError('phoneNumber', 'maxlength')) {
-            <p class="ul-modal__error">El teléfono debe tener 40 caracteres o menos.</p>
+            <p role="alert" class="ul-modal__error">El teléfono debe tener 40 caracteres o menos.</p>
           }
         </div>
 

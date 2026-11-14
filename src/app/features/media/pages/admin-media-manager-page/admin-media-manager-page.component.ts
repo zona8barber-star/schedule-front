@@ -25,6 +25,8 @@ const allFilterValue = 'ALL' as const;
 type MediaPurposeFilter = MediaPurpose | typeof allFilterValue;
 type MediaStatusFilter = MediaStatus | typeof allFilterValue;
 
+import { SingleFlight } from '../../../../core/utils/single-flight';
+
 @Component({
   selector: 'app-admin-media-manager-page',
   imports: [RouterLink, ApiFeedbackComponent, FileUploadComponent, PageStateComponent],
@@ -47,7 +49,8 @@ export class AdminMediaManagerPageComponent implements OnInit {
     { value: MEDIA_STATUS.archived, label: 'Archivado' },
     { value: MEDIA_STATUS.failed, label: 'Fallido' },
   ] as const;
-  readonly maxUploadSizeBytes = 5 * 1024 * 1024;
+  /** Same limit as the API (FileStorage:MaxUploadBytes = 10 MB), decided by the user on 2026-11-13. */
+  readonly maxUploadSizeBytes = 10_485_760;
   readonly allowedFileAccept = 'image/jpeg,image/png,image/webp,image/gif,application/pdf';
 
   readonly assets = signal<MediaAssetView[]>([]);
@@ -72,6 +75,7 @@ export class AdminMediaManagerPageComponent implements OnInit {
     void this.loadAssets();
   }
 
+  @SingleFlight()
   async uploadAsset(request: FileUploadRequest): Promise<void> {
     this.isUploading.set(true);
     this.errorMessage.set(null);
@@ -80,7 +84,7 @@ export class AdminMediaManagerPageComponent implements OnInit {
     try {
       await firstValueFrom(this.adminMediaApiService.upload(request.file, request.purpose));
       await this.loadAssets();
-      this.successMessage.set('El archivo se subio correctamente y ya esta en la biblioteca.');
+      this.successMessage.set('El archivo se subió correctamente y ya está en la biblioteca.');
     } catch (error) {
       this.errorMessage.set(getMediaUploadErrorMessage(error));
     } finally {
@@ -196,17 +200,17 @@ export class AdminMediaManagerPageComponent implements OnInit {
 function getMediaUploadErrorMessage(error: unknown): string {
   if (error instanceof HttpErrorResponse) {
     if (error.status === 413) {
-      return 'El archivo supera el tamano maximo permitido de 5 MB.';
+      return 'El archivo supera el tamaño máximo permitido de 10 MB.';
     }
 
     if (error.status === 503) {
-      return 'El servicio de archivos no esta disponible temporalmente. Intenta nuevamente.';
+      return 'El servicio de archivos no está disponible temporalmente. Intenta nuevamente.';
     }
 
     if (error.status === 422) {
       return getApiErrorMessage(
         error,
-        'Archivo invalido. Usa JPG, PNG, WEBP, GIF o PDF y verifica el tamano maximo de 5 MB.',
+        'Archivo inválido. Usa JPG, PNG, WEBP, GIF o PDF y verifica el tamaño máximo de 10 MB.',
       );
     }
   }

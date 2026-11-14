@@ -5,12 +5,15 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { environment } from '../../../../../../environments/environment';
 import { IncomeEntryView } from '../../../../../core/models/income.models';
 import { AdminIncomeFormModalComponent } from './admin-income-form-modal.component';
+import { MoneyConfirmationService } from '../../../../../core/services/money-confirmation.service';
 
 describe('AdminIncomeFormModalComponent', () => {
   let fixture: ComponentFixture<AdminIncomeFormModalComponent>;
   let component: AdminIncomeFormModalComponent;
   let httpMock: HttpTestingController;
   const api = environment.defaultApiBaseUrl;
+  let confirmAnswer = true;
+  const moneyConfirmation = { confirm: vi.fn(() => Promise.resolve(confirmAnswer)) };
 
   const services = [
     { id: 's-1', name: 'Corte', basePrice: 25000, businessPercentage: 40, isActive: true, createdAt: '', updatedAt: null },
@@ -43,7 +46,10 @@ describe('AdminIncomeFormModalComponent', () => {
   async function open(entry: IncomeEntryView | null): Promise<void> {
     await TestBed.configureTestingModule({
       imports: [AdminIncomeFormModalComponent],
-      providers: [provideHttpClient(), provideHttpClientTesting()],
+      providers: [
+        // Saving money values asks for confirmation (BUG-080 decision); these specs cover the save itself.
+        { provide: MoneyConfirmationService, useValue: moneyConfirmation },
+        provideHttpClient(), provideHttpClientTesting()],
     }).compileComponents();
 
     fixture = TestBed.createComponent(AdminIncomeFormModalComponent);
@@ -60,6 +66,8 @@ describe('AdminIncomeFormModalComponent', () => {
   }
 
   afterEach(() => {
+    confirmAnswer = true;
+    moneyConfirmation.confirm.mockClear();
     httpMock.verify();
   });
 
@@ -68,6 +76,7 @@ describe('AdminIncomeFormModalComponent', () => {
     component.form.patchValue({ serviceId: 's-1', staffProfileId: 'st-1', amount: 25000 });
 
     const saving = component.submit();
+    await new Promise<void>((resolve) => setTimeout(resolve, 0)); // the amount confirmation resolves first
     const req = httpMock.expectOne(`${api}/admin/income`);
     expect(req.request.body).toEqual({
       kind: 'Service',
@@ -95,6 +104,7 @@ describe('AdminIncomeFormModalComponent', () => {
     expect(component.form.valid).toBe(true);
 
     const saving = component.submit();
+    await new Promise<void>((resolve) => setTimeout(resolve, 0)); // the amount confirmation resolves first
     const req = httpMock.expectOne(`${api}/admin/income`);
     expect(req.request.body).toEqual({
       kind: 'MembershipSale',
@@ -128,6 +138,7 @@ describe('AdminIncomeFormModalComponent', () => {
 
     component.form.patchValue({ amount: 300000 });
     const saving = component.submit();
+    await new Promise<void>((resolve) => setTimeout(resolve, 0)); // the amount confirmation resolves first
     const req = httpMock.expectOne(`${api}/admin/income/i-2`);
     expect(req.request.method).toBe('PUT');
     expect(req.request.body.kind).toBe('MembershipSale');
@@ -135,5 +146,56 @@ describe('AdminIncomeFormModalComponent', () => {
     expect(req.request.body.serviceId).toBeNull();
     req.flush(sale);
     await saving;
+  });
+
+  describe('amount confirmation (BUG-080 decision)', () => {
+    it('asks to confirm the amount before registering the income', async () => {
+      await open(null);
+      component.form.patchValue({ serviceId: 's-1', staffProfileId: 'st-1', amount: 3_500_000 });
+
+      const saving = component.submit();
+      await new Promise<void>((resolve) => setTimeout(resolve, 0));
+
+      expect(moneyConfirmation.confirm).toHaveBeenCalledWith({ action: 'Registrar ingreso', amount: 3_500_000 });
+      httpMock.expectOne(`${api}/admin/income`).flush({ ...sale, id: 'i-3', kind: 'Service', amount: 3_500_000 });
+      await saving;
+    });
+
+    it('does not save when the admin goes back to edit', async () => {
+      await open(null);
+      component.form.patchValue({ serviceId: 's-1', staffProfileId: 'st-1', amount: 35_000_000 });
+      confirmAnswer = false;
+
+      await component.submit();
+
+      httpMock.expectNone(`${api}/admin/income`);
+      expect(component.isSaving()).toBe(false);
+    });
+  });
+
+  /** SONDA BUG-104: a linked membership sale whose new amount no longer matches asks for a justification. */
+  it('asks for the justification the API requires and sends it on the next save', async () => {
+    await open(sale);
+    component.form.patchValue({ amount: 1 });
+
+    const first = component.submit();
+    await new Promise<void>((resolve) => setTimeout(resolve, 0));
+    httpMock.expectOne(`${api}/admin/income/i-2`).flush(
+      { errors: { discrepancyJustification: ['El valor del ingreso (1) no coincide con la suma de las membresías vinculadas (250.000). Explica la diferencia.'] } },
+      { status: 422, statusText: 'Unprocessable Entity' },
+    );
+    await first;
+    fixture.detectChanges();
+
+    expect(component.justificationRequest()).toContain('Explica la diferencia');
+    expect((fixture.nativeElement as HTMLElement).querySelector('[data-testid="discrepancy-justification"]')).not.toBeNull();
+
+    component.form.controls.discrepancyJustification.setValue('Cortesía acordada');
+    const second = component.submit();
+    await new Promise<void>((resolve) => setTimeout(resolve, 0));
+    const retry = httpMock.expectOne(`${api}/admin/income/i-2`);
+    expect(retry.request.body.discrepancyJustification).toBe('Cortesía acordada');
+    retry.flush({ ...sale, amount: 1 });
+    await second;
   });
 });

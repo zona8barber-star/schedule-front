@@ -6,6 +6,7 @@ import { Router, provideRouter } from '@angular/router';
 import { environment } from '../../../../../../environments/environment';
 import { IncomeEntriesPage, IncomeEntryView } from '../../../../../core/models/income.models';
 import { addDaysToDateKey } from '../../../../../core/utils/bogota-date.utils';
+import { ConfirmModalService } from '../../../../../core/services/confirm-modal.service';
 import { AdminIncomeListPageComponent } from './admin-income-list-page.component';
 
 describe('AdminIncomeListPageComponent', () => {
@@ -189,5 +190,37 @@ describe('AdminIncomeListPageComponent', () => {
     fixture.detectChanges();
     expect(fixture.componentInstance.rangeError()).toContain('30 días');
     expect((fixture.nativeElement as HTMLElement).textContent).toContain('hasta 30 días');
+  });
+
+  describe('deleting an income (SONDA BUG-083 and BUG-084)', () => {
+    it('names a membership sale as such and formats the amount in pesos', async () => {
+      expectIncome().flush(incomePage());
+      await flushMicrotasks();
+      const modal = TestBed.inject(ConfirmModalService);
+
+      void fixture.componentInstance.deleteEntry(entries[1]);
+
+      expect(modal.state()!.options.message).toBe('Se eliminará el ingreso de "Venta de membresía" ($ 250.000).');
+      modal._resolve(false);
+    });
+
+    it('refreshes the list and explains when the income was already deleted elsewhere', async () => {
+      expectIncome().flush(incomePage());
+      await flushMicrotasks();
+      const modal = TestBed.inject(ConfirmModalService);
+
+      const deleting = fixture.componentInstance.deleteEntry(entries[0]);
+      modal._resolve(true);
+      await flushMicrotasks();
+      httpMock
+        .expectOne(`${api}/admin/income/i-1`)
+        .flush({ detail: 'The income entry was not found.' }, { status: 404, statusText: 'Not Found' });
+      await flushMicrotasks();
+      expectIncome().flush(incomePage({ items: [entries[1]], totalCount: 1 }));
+      await deleting;
+
+      expect(fixture.componentInstance.entries().map((entry) => entry.id)).toEqual(['i-2']);
+      expect(fixture.componentInstance.errorMessage()).toContain('ya no existe');
+    });
   });
 });

@@ -3,11 +3,11 @@ import { Injectable, inject } from '@angular/core';
 
 import { RuntimeConfigService } from '../config/runtime-config.service';
 import {
-  BannerResponse,
-  BrandingSettingsResponse,
+  PublicBannerResponse,
+  PublicBrandingResponse,
   BusinessScheduleResponse,
-  LandingContentResponse,
-  TickerItemResponse,
+  PublicLandingContentResponse,
+  PublicTickerItemResponse,
 } from '../models/content.models';
 
 @Injectable({
@@ -18,19 +18,19 @@ export class PublicContentApiService {
   private readonly runtimeConfigService = inject(RuntimeConfigService);
 
   getLanding() {
-    return this.httpClient.get<LandingContentResponse>(this.buildUrl('/public/content/landing'));
+    return this.httpClient.get<PublicLandingContentResponse>(this.buildUrl('/public/content/landing'));
   }
 
   getBanners() {
-    return this.httpClient.get<BannerResponse[]>(this.buildUrl('/public/content/banners'));
+    return this.httpClient.get<PublicBannerResponse[]>(this.buildUrl('/public/content/banners'));
   }
 
   getTickerItems() {
-    return this.httpClient.get<TickerItemResponse[]>(this.buildUrl('/public/content/ticker-items'));
+    return this.httpClient.get<PublicTickerItemResponse[]>(this.buildUrl('/public/content/ticker-items'));
   }
 
   getBranding() {
-    return this.httpClient.get<BrandingSettingsResponse>(this.buildUrl('/public/content/branding'));
+    return this.httpClient.get<PublicBrandingResponse>(this.buildUrl('/public/content/branding'));
   }
 
   getBusinessSchedule() {

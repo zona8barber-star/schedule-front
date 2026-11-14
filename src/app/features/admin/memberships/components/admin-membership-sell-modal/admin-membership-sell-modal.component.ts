@@ -7,6 +7,7 @@ import { CustomerMembershipDetailView } from '../../../../../core/models/members
 import { MembershipPlanView, planRateLabel } from '../../../../../core/models/membership-plan.models';
 import { AdminMembershipPlansApiService } from '../../../../../core/services/admin-membership-plans-api.service';
 import { AdminMembershipsApiService } from '../../../../../core/services/admin-memberships-api.service';
+import { MoneyConfirmationService } from '../../../../../core/services/money-confirmation.service';
 import { getApiErrorMessage } from '../../../../../core/utils/api-error.utils';
 import { ApiFeedbackComponent } from '../../../../../shared/components/api-feedback/api-feedback.component';
 import { GIFT_CONDITION_LABELS } from '../../../membership-plans/membership-plan-defaults';
@@ -15,13 +16,18 @@ import { bogotaToday, defaultEndsOn } from '../../membership-labels';
 const REASON_MIN_LENGTH = 3;
 
 /** Sells a membership to one customer; first-purchase gifts are evaluated by the server when saving. */
+import { ModalDialogDirective } from '../../../../../shared/directives/modal-dialog.directive';
+
+import { SingleFlight } from '../../../../../core/utils/single-flight';
+
 @Component({
   selector: 'app-admin-membership-sell-modal',
-  imports: [FormsModule, DecimalPipe, ApiFeedbackComponent],
+  imports: [ModalDialogDirective, FormsModule, DecimalPipe, ApiFeedbackComponent],
   templateUrl: './admin-membership-sell-modal.component.html',
   styleUrl: '../membership-modal.scss',
 })
 export class AdminMembershipSellModalComponent implements OnInit {
+  private readonly moneyConfirmation = inject(MoneyConfirmationService);
   private readonly plansApi = inject(AdminMembershipPlansApiService);
   private readonly membershipsApi = inject(AdminMembershipsApiService);
 
@@ -98,12 +104,20 @@ export class AdminMembershipSellModalComponent implements OnInit {
     this.recomputeEndsOn();
   }
 
+  @SingleFlight()
   async submit(): Promise<void> {
     this.submitted.set(true);
     const plan = this.plan();
     if (!plan || this.problems().length > 0) {
       return;
     }
+
+    const confirmed = await this.moneyConfirmation.confirm({
+      action: 'Vender la membresía',
+      amount: plan.price,
+      detail: plan.name,
+    });
+    if (!confirmed) return;
 
     this.isSaving.set(true);
     this.errorMessage.set(null);

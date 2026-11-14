@@ -8,6 +8,7 @@ import { ProductCategoryView, ProductView } from '../../../../../core/models/pro
 import { AuthService } from '../../../../../core/services/auth.service';
 import { ConfirmModalService } from '../../../../../core/services/confirm-modal.service';
 import { AdminProductsPageComponent } from './admin-products-page.component';
+import { MoneyConfirmationService } from '../../../../../core/services/money-confirmation.service';
 
 describe('AdminProductsPageComponent', () => {
   let fixture: ComponentFixture<AdminProductsPageComponent>;
@@ -54,6 +55,8 @@ describe('AdminProductsPageComponent', () => {
     await TestBed.configureTestingModule({
       imports: [AdminProductsPageComponent],
       providers: [
+        // Saving money values asks for confirmation (BUG-080 decision); these specs cover the save itself.
+        { provide: MoneyConfirmationService, useValue: { confirm: () => Promise.resolve(true) } },
         provideRouter([]),
         provideHttpClient(),
         provideHttpClientTesting(),
@@ -109,6 +112,7 @@ describe('AdminProductsPageComponent', () => {
 
     component.form.patchValue({ name: ' Aceite de barba ', description: '  ', price: 42000, sortOrder: 2 });
     const saving = component.save();
+    await new Promise<void>((resolve) => setTimeout(resolve, 0)); // the amount confirmation resolves first
     const req = httpMock.expectOne(`${api}/admin/products`);
     expect(req.request.method).toBe('POST');
     expect(req.request.body).toEqual({ categoryId: 'c-oil', name: 'Aceite de barba', description: null, price: 42000, sortOrder: 2 });

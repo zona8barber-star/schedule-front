@@ -5,9 +5,16 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { ApiFeedbackComponent } from '../../../../shared/components/api-feedback/api-feedback.component';
 import { AuthService } from '../../../../core/services/auth.service';
 
+import { FieldErrorComponent } from '../../../../shared/components/field-error/field-error.component';
+import { trimmedMinLength, trimmedRequired } from '../../../../core/utils/form-validators';
+
+import { FormA11yDirective } from '../../../../shared/directives/form-a11y.directive';
+
+import { SingleFlight } from '../../../../core/utils/single-flight';
+
 @Component({
   selector: 'app-register-page',
-  imports: [ReactiveFormsModule, RouterLink, ApiFeedbackComponent],
+  imports: [FormA11yDirective, FieldErrorComponent, ReactiveFormsModule, RouterLink, ApiFeedbackComponent],
   templateUrl: './register-page.component.html',
   styleUrl: './register-page.component.scss',
 })
@@ -20,7 +27,7 @@ export class RegisterPageComponent {
   readonly submitted = signal(false);
 
   readonly registerForm = this.formBuilder.nonNullable.group({
-    fullName: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(120)]],
+    fullName: ['', [trimmedRequired, trimmedMinLength(2), Validators.maxLength(120)]],
     email: ['', [Validators.required, Validators.email]],
     phoneNumber: ['', [Validators.maxLength(40)]],
     password: ['', [Validators.required, Validators.minLength(8), Validators.maxLength(128)]],
@@ -30,6 +37,7 @@ export class RegisterPageComponent {
     this.authService.clearError();
   }
 
+  @SingleFlight()
   async submit(): Promise<void> {
     this.submitted.set(true);
     this.authService.clearError();
@@ -43,7 +51,7 @@ export class RegisterPageComponent {
 
     try {
       await this.authService.register({
-        fullName: formValue.fullName,
+        fullName: (formValue.fullName ?? '').trim(),
         email: formValue.email,
         password: formValue.password,
         phoneNumber: formValue.phoneNumber.trim() ? formValue.phoneNumber.trim() : null,

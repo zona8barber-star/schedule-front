@@ -1,9 +1,9 @@
 <section class="admin-notifications-page">
   <header class="admin-notifications-page__hero">
     <div>
-      <p class="admin-notifications-page__eyebrow">Gestion</p>
+      <p class="admin-notifications-page__eyebrow">Gestión</p>
       <h1>Notificaciones</h1>
-      <p>Envia avisos push a tus clientes, de forma general o a grupos especificos.</p>
+      <p>Envía avisos push a tus clientes, de forma general o a grupos específicos.</p>
     </div>
   </header>
 
@@ -14,7 +14,7 @@
     <div class="admin-notifications-page__section-heading">
       <div>
         <p class="admin-notifications-page__eyebrow">Formulario</p>
-        <h2>Componer notificacion</h2>
+        <h2>Componer notificación</h2>
       </div>
     </div>
 
@@ -22,13 +22,13 @@
       <fieldset [disabled]="isBusy()">
         <div class="admin-notifications-page__grid">
           <div class="admin-notifications-page__field">
-            <label for="title">Titulo</label>
+            <label for="title">Título</label>
             <input id="title" type="text" formControlName="title" maxlength="160" />
             @if (showError('title', 'required')) {
-              <p class="admin-notifications-page__error">El titulo es obligatorio.</p>
+              <p class="admin-notifications-page__error">El título es obligatorio.</p>
             }
             @if (showError('title', 'maxlength')) {
-              <p class="admin-notifications-page__error">El titulo no puede superar 160 caracteres.</p>
+              <p class="admin-notifications-page__error">El título no puede superar 160 caracteres.</p>
             }
           </div>
 
@@ -80,7 +80,7 @@
               <input
                 id="customerSearch"
                 type="text"
-                placeholder="Nombre, correo o telefono..."
+                placeholder="Nombre, correo o teléfono..."
                 [value]="searchTerm()"
                 (input)="onSearchInput($any($event.target).value)"
               />
@@ -129,7 +129,7 @@
                   </ul>
                 </div>
               } @else {
-                <p class="admin-notifications-page__hint">Aun no has seleccionado clientes.</p>
+                <p class="admin-notifications-page__hint">Aún no has seleccionado clientes.</p>
               }
             </div>
           }
@@ -154,7 +154,7 @@
 
       <div class="admin-notifications-page__actions">
         <button type="submit" [disabled]="isBusy()">
-          {{ isSubmitting() ? 'Enviando...' : 'Enviar notificacion' }}
+          {{ isSubmitting() ? 'Enviando...' : isPreviewing() ? 'Calculando destinatarios...' : 'Enviar notificación' }}
         </button>
       </div>
     </form>
@@ -164,14 +164,14 @@
     <div class="admin-notifications-page__section-heading">
       <div>
         <p class="admin-notifications-page__eyebrow">Historial</p>
-        <h2>Campanas enviadas</h2>
+        <h2>Campañas enviadas</h2>
       </div>
     </div>
 
     @if (isLoadingCampaigns()) {
-      <app-page-state kind="loading" message="Cargando campanas..." />
+      <app-page-state kind="loading" message="Cargando campañas..." />
     } @else if (!campaigns().length) {
-      <app-page-state kind="empty" message="Aun no se han enviado notificaciones." />
+      <app-page-state kind="empty" message="Aún no se han enviado notificaciones." />
     } @else {
       <div class="admin-notifications-page__list">
         @for (campaign of campaigns(); track campaign.id) {

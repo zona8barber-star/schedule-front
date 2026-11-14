@@ -30,6 +30,8 @@ export interface ServiceRecordCatalogGroup {
   services: ServiceRecordCatalogItem[];
 }
 
+import { SingleFlight } from '../../../../../core/utils/single-flight';
+
 @Component({
   selector: 'app-staff-service-records-page',
   imports: [DatePipe, LowerCasePipe, ReactiveFormsModule, ApiFeedbackComponent, PageStateComponent, PaginatorComponent],
@@ -188,6 +190,7 @@ export class StaffServiceRecordsPageComponent implements OnInit {
     return `${when} · ${appointment.customerName}`;
   }
 
+  @SingleFlight()
   async submit(): Promise<void> {
     this.submitted.set(true);
     this.successMessage.set(null);

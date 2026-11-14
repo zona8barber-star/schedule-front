@@ -101,7 +101,7 @@ export class FileUploadComponent implements OnChanges {
     }
 
     this.errorMessage.set(
-      `El archivo supera el tamano maximo permitido (${formatBytes(this.maxSizeBytes)}).`,
+      `El archivo supera el tamaño máximo permitido (${formatBytes(this.maxSizeBytes)}).`,
     );
     this.selectedFile.set(null);
     input.value = '';
@@ -121,7 +121,7 @@ export class FileUploadComponent implements OnChanges {
     }
 
     if (!purpose) {
-      this.errorMessage.set('Selecciona una categoria para el archivo.');
+      this.errorMessage.set('Selecciona una categoría para el archivo.');
       return;
     }
 

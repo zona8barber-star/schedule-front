@@ -36,9 +36,13 @@ import {
 import { ApiFeedbackComponent } from '../../../../../shared/components/api-feedback/api-feedback.component';
 import { PageStateComponent } from '../../../../../shared/components/page-state/page-state.component';
 
+import { ModalDialogDirective } from '../../../../../shared/directives/modal-dialog.directive';
+
+import { SingleFlight } from '../../../../../core/utils/single-flight';
+
 @Component({
   selector: 'app-staff-availability-page',
-  imports: [ReactiveFormsModule, ApiFeedbackComponent, PageStateComponent],
+  imports: [ModalDialogDirective, ReactiveFormsModule, ApiFeedbackComponent, PageStateComponent],
   templateUrl: './staff-availability-page.component.html',
   styleUrl: '../../../../../shared/styles/availability-page.scss',
 })
@@ -91,7 +95,7 @@ export class StaffAvailabilityPageComponent {
   readonly durationWarning = computed(() => {
     const d = this.summary()?.defaultAppointmentDurationMinutes ?? 0;
     return d <= 0
-      ? 'La duracion base de citas es 0. Actualizala en Mi Perfil para que los turnos se calculen correctamente.'
+      ? 'La duración base de citas es 0. Actualízala en Mi Perfil para que los turnos se calculen correctamente.'
       : null;
   });
 
@@ -116,7 +120,8 @@ export class StaffAvailabilityPageComponent {
 
   readonly durationControl = new FormControl<number>(30, {
     nonNullable: true,
-    validators: [Validators.required, Validators.min(5), Validators.max(480)],
+    // Same range as the server (10–240, SONDA BUG-036).
+    validators: [Validators.required, Validators.min(10), Validators.max(240)],
   });
 
   readonly absenceForm: AbsenceFormGroup = new FormGroup(
@@ -155,6 +160,7 @@ export class StaffAvailabilityPageComponent {
     this.durationErrorMessage.set(null);
   }
 
+  @SingleFlight()
   async saveDuration(): Promise<void> {
     this.durationControl.markAsTouched();
     if (this.durationControl.invalid) return;
@@ -239,6 +245,7 @@ export class StaffAvailabilityPageComponent {
     return false;
   }
 
+  @SingleFlight()
   async saveRules(): Promise<void> {
     this.rulesSubmitted.set(true);
     this.rulesErrorMessage.set(null);
@@ -326,6 +333,7 @@ export class StaffAvailabilityPageComponent {
     this.absenceForm.patchValue({ startValue: '', endValue: '' });
   }
 
+  @SingleFlight()
   async submitAbsence(): Promise<void> {
     this.absenceSubmitted.set(true);
     this.absenceErrorMessage.set(null);
@@ -374,6 +382,7 @@ export class StaffAvailabilityPageComponent {
     }
   }
 
+  @SingleFlight()
   async deleteAbsence(period: UnavailablePeriod): Promise<void> {
     if (this.isAbsencePast(period)) return;
 

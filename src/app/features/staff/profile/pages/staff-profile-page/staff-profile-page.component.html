@@ -3,7 +3,7 @@
     <p class="profile-page__eyebrow">Mi cuenta</p>
     <h1>Mi perfil</h1>
     <p class="profile-page__subtitle">
-      Actualiza tu informacion de presentacion y tus redes sociales.
+      Actualiza tu información de presentación y tus redes sociales.
     </p>
   </div>
 
@@ -36,7 +36,7 @@
       <div class="profile-page__media-card">
         <p class="profile-page__media-label">Foto de perfil</p>
         <p class="profile-page__media-hint">
-          Cualquier imagen. Max. 10 MB. Si subes una nueva reemplaza la actual.
+          Cualquier imagen. Máx. 10 MB. Si subes una nueva reemplaza la actual.
         </p>
 
         @if (photoPreviewUrl() || profile()?.photoUrl) {
@@ -103,16 +103,18 @@
       <div class="profile-page__media-card">
         <p class="profile-page__media-label">QR de propinas</p>
         <p class="profile-page__media-hint">
-          Imagen o PDF. Max. 10 MB. Si subes uno nuevo reemplaza el actual.
+          Imagen o PDF. Máx. 10 MB. Si subes uno nuevo reemplaza el actual.
         </p>
 
         @if (qrPreviewUrl() || profile()?.tipsQrUrl) {
           <div class="profile-page__thumbnail-wrap">
-            <img
-              [src]="qrPreviewUrl() ?? profile()!.tipsQrUrl"
-              alt="Tu QR de propinas"
-              class="profile-page__thumbnail"
-            />
+            <app-media-preview [url]="(qrPreviewUrl() ?? profile()!.tipsQrUrl)!" documentLabel="Abrir el QR en PDF">
+              <img
+                [src]="qrPreviewUrl() ?? profile()!.tipsQrUrl"
+                alt="Tu QR de propinas"
+                class="profile-page__thumbnail"
+              />
+            </app-media-preview>
           </div>
         } @else {
           <div class="profile-page__thumbnail-wrap profile-page__thumbnail-wrap--empty">
@@ -169,32 +171,33 @@
       </div>
     </div>
 
-    <form class="profile-page__form" [formGroup]="profileForm" (ngSubmit)="submit()" novalidate>
+    <form appFormA11y class="profile-page__form" [formGroup]="profileForm" (ngSubmit)="submit()" novalidate>
       <fieldset [disabled]="isBusy()">
-        <p class="profile-page__section-title">Informacion de presentacion</p>
+        <p class="profile-page__section-title">Información de presentación</p>
         <div class="profile-page__grid">
           <div class="profile-page__field profile-page__field--wide">
             <label for="displayName"
               >Nombre visible <span class="profile-page__required">*</span></label
             >
-            <input
+            <input maxlength="120"
               id="displayName"
               type="text"
               formControlName="displayName"
               placeholder="Como te veran tus clientes"
               autocomplete="nickname"
             />
+            <app-field-error controlName="displayName" />
             @if (showError('displayName', 'required')) {
-              <p class="profile-page__error">El nombre visible es obligatorio.</p>
+              <p role="alert" class="profile-page__error">El nombre visible es obligatorio.</p>
             }
             @if (showError('displayName', 'minlength')) {
-              <p class="profile-page__error">Debe tener al menos 2 caracteres.</p>
+              <p role="alert" class="profile-page__error">Debe tener al menos 2 caracteres.</p>
             }
           </div>
 
           <div class="profile-page__field">
-            <label for="phoneNumber">Telefono</label>
-            <input
+            <label for="phoneNumber">Teléfono</label>
+            <input maxlength="40"
               id="phoneNumber"
               type="tel"
               formControlName="phoneNumber"
@@ -202,20 +205,20 @@
               autocomplete="tel"
             />
             @if (showError('phoneNumber', 'maxlength')) {
-              <p class="profile-page__error">Max. 40 caracteres.</p>
+              <p role="alert" class="profile-page__error">Max. 40 caracteres.</p>
             }
           </div>
 
           <div class="profile-page__field profile-page__field--wide">
             <label for="bio">Bio</label>
-            <textarea
+            <textarea maxlength="2000"
               id="bio"
               rows="4"
               formControlName="bio"
               placeholder="Cuentales algo sobre ti (opcional)"
             ></textarea>
             @if (showError('bio', 'maxlength')) {
-              <p class="profile-page__error">La bio debe tener 2000 caracteres o menos.</p>
+              <p role="alert" class="profile-page__error">La bio debe tener 2000 caracteres o menos.</p>
             }
           </div>
         </div>
@@ -224,81 +227,81 @@
         <div class="profile-page__grid">
           <div class="profile-page__field">
             <label for="instagramUrl">Instagram</label>
-            <input
+            <input maxlength="2048"
               id="instagramUrl"
               type="url"
               formControlName="instagramUrl"
               placeholder="https://instagram.com/tu_usuario"
             />
             @if (showError('instagramUrl', 'maxlength')) {
-              <p class="profile-page__error">URL demasiado larga.</p>
+              <p role="alert" class="profile-page__error">URL demasiado larga.</p>
             }
             @if (showError('instagramUrl', 'url')) {
-              <p class="profile-page__error">Escribe la dirección completa, empezando por https://.</p>
+              <p role="alert" class="profile-page__error">Escribe la dirección completa, empezando por https://.</p>
             }
           </div>
 
           <div class="profile-page__field">
             <label for="facebookUrl">Facebook</label>
-            <input
+            <input maxlength="2048"
               id="facebookUrl"
               type="url"
               formControlName="facebookUrl"
               placeholder="https://facebook.com/tu_pagina"
             />
             @if (showError('facebookUrl', 'maxlength')) {
-              <p class="profile-page__error">URL demasiado larga.</p>
+              <p role="alert" class="profile-page__error">URL demasiado larga.</p>
             }
             @if (showError('facebookUrl', 'url')) {
-              <p class="profile-page__error">Escribe la dirección completa, empezando por https://.</p>
+              <p role="alert" class="profile-page__error">Escribe la dirección completa, empezando por https://.</p>
             }
           </div>
 
           <div class="profile-page__field">
             <label for="tikTokUrl">TikTok</label>
-            <input
+            <input maxlength="2048"
               id="tikTokUrl"
               type="url"
               formControlName="tikTokUrl"
               placeholder="https://tiktok.com/@tu_usuario"
             />
             @if (showError('tikTokUrl', 'maxlength')) {
-              <p class="profile-page__error">URL demasiado larga.</p>
+              <p role="alert" class="profile-page__error">URL demasiado larga.</p>
             }
             @if (showError('tikTokUrl', 'url')) {
-              <p class="profile-page__error">Escribe la dirección completa, empezando por https://.</p>
+              <p role="alert" class="profile-page__error">Escribe la dirección completa, empezando por https://.</p>
             }
           </div>
 
           <div class="profile-page__field">
             <label for="youtubeUrl">YouTube</label>
-            <input
+            <input maxlength="2048"
               id="youtubeUrl"
               type="url"
               formControlName="youtubeUrl"
               placeholder="https://youtube.com/@tu_canal"
             />
             @if (showError('youtubeUrl', 'maxlength')) {
-              <p class="profile-page__error">URL demasiado larga.</p>
+              <p role="alert" class="profile-page__error">URL demasiado larga.</p>
             }
             @if (showError('youtubeUrl', 'url')) {
-              <p class="profile-page__error">Escribe la dirección completa, empezando por https://.</p>
+              <p role="alert" class="profile-page__error">Escribe la dirección completa, empezando por https://.</p>
             }
           </div>
 
           <div class="profile-page__field">
             <label for="xUrl">X (Twitter)</label>
-            <input
+            <input maxlength="2048"
               id="xUrl"
               type="url"
               formControlName="xUrl"
               placeholder="https://x.com/tu_usuario"
             />
             @if (showError('xUrl', 'maxlength')) {
-              <p class="profile-page__error">URL demasiado larga.</p>
+              <p role="alert" class="profile-page__error">URL demasiado larga.</p>
             }
             @if (showError('xUrl', 'url')) {
-              <p class="profile-page__error">Escribe la dirección completa, empezando por https://.</p>
+              <p role="alert" class="profile-page__error">Escribe la dirección completa, empezando por https://.</p>
             }
           </div>
         </div>
@@ -322,7 +325,7 @@
         [disabled]="isSigningOut()"
         (click)="logout()"
       >
-        {{ isSigningOut() ? 'Cerrando sesion...' : 'Cerrar sesion' }}
+        {{ isSigningOut() ? 'Cerrando sesión...' : 'Cerrar sesión' }}
       </button>
     </div>
   }

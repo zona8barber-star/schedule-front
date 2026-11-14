@@ -23,6 +23,17 @@ const STATUS_COPY: Record<PushStatus, StatusCopy> = {
     description: 'Actívalas para enterarte al instante de los cambios en tus citas.',
     tone: 'off',
   },
+  checking: {
+    label: 'Comprobando...',
+    description: 'Estamos confirmando con el servidor que este dispositivo quedó registrado.',
+    tone: 'off',
+  },
+  unconfirmed: {
+    label: 'No activadas en este dispositivo',
+    description:
+      'El servidor no pudo registrar este dispositivo, así que no te llegarán notificaciones. Revisa tu conexión y vuelve a intentarlo.',
+    tone: 'warn',
+  },
   blocked: {
     label: 'Bloqueadas por el navegador',
     description:

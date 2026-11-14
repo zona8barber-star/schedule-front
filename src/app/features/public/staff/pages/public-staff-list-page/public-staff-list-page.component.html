@@ -57,7 +57,15 @@
       <app-api-feedback severity="error" [message]="errorMessage()" />
 
       @if (isLoading()) {
+        <!-- SONDA BUG-057: placeholders the size of the cards, so the list does not push the page when it arrives. -->
+        <div class="ps__pro-grid ps__pro-grid--skeleton" aria-hidden="true" data-testid="staff-skeleton">
+          @for (placeholder of skeletonCards; track placeholder) {
+            <div class="ps__pro ps__pro--skeleton"></div>
+          }
+        </div>
         <app-page-state kind="loading" message="Cargando profesionales..." />
+      } @else if (loadError()) {
+        <app-load-error subject="los profesionales" [error]="loadError()" (retry)="retryStaff()" />
       } @else if (!staffMembers().length) {
         <div class="ps__empty">
           <h3 class="ps__disp">Sin coincidencias</h3>
@@ -96,11 +104,15 @@
                 <span class="ps__pro-role">{{ staffRoleSummary(member) }}</span>
                 <div class="ps__pro-foot">
                   <span class="ps__kicker">
-                    <span class="ps__star" aria-hidden="true">★</span>
-                    {{ formatRating(member.averageRating) }}
-                    ({{ member.reviewCount }})
+                    @if (member.reviewCount > 0) {
+                      <span class="ps__star" aria-hidden="true">★</span>
+                      {{ formatRating(member.averageRating) }}
+                      ({{ member.reviewCount }})
+                    } @else {
+                      Sin reseñas
+                    }
                   </span>
-                  <a class="ps__pro-rsv" [routerLink]="['/staff', member.staffProfileId]">
+                  <a class="ps__pro-rsv" [routerLink]="['/staff', member.staffProfileId]" [attr.aria-label]="'Reservar con ' + member.displayName">
                     Reservar
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
                          stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -125,14 +137,12 @@
   <div
     class="psl-modal__overlay"
     (click)="closeAvailabilityModal()"
-    (keydown.escape)="closeAvailabilityModal()"
   >
-    <dialog
+    <dialog appModalDialog (modalClose)="closeAvailabilityModal()"
       class="psl-modal"
       open
       aria-label="Disponibilidad"
       (click)="$event.stopPropagation()"
-      (keydown)="$event.stopPropagation()"
     >
       <div class="psl-modal__head">
         <div class="psl-modal__staff">
@@ -159,7 +169,7 @@
         >✕</button>
       </div>
 
-      <p class="psl-modal__sub">Elegí el día y seleccioná el horario que más te convenga.</p>
+      <p class="psl-modal__sub">Elige el día y selecciona el horario que más te convenga.</p>
 
       @if (!activeStaff()!.services.length) {
         <p class="psl-modal__msg">Este profesional aún no tiene servicios disponibles para reservar.</p>
@@ -196,7 +206,7 @@
         } @else if (!slots().length) {
           <p class="psl-modal__msg">No hay horarios disponibles para este día.</p>
         } @else {
-          <p class="psl-modal__hint">Seleccioná un horario para continuar</p>
+          <p class="psl-modal__hint">Selecciona un horario para continuar</p>
           <div class="psl-modal__slots">
             @for (slot of slots(); track slot.startAtUtc) {
               <button class="psl-modal__slot" type="button" (click)="selectSlot(slot)">

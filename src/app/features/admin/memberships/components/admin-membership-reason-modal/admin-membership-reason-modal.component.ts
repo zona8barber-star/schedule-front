@@ -10,9 +10,11 @@ const REASON_MAX_LENGTH = 500;
  * Asks for a reason (and optionally an explicit confirmation) before an audited action: annulling,
  * activating an expired membership or unlinking an income that leaves a discrepancy.
  */
+import { ModalDialogDirective } from '../../../../../shared/directives/modal-dialog.directive';
+
 @Component({
   selector: 'app-admin-membership-reason-modal',
-  imports: [FormsModule, ApiFeedbackComponent],
+  imports: [ModalDialogDirective, FormsModule, ApiFeedbackComponent],
   templateUrl: './admin-membership-reason-modal.component.html',
   styleUrl: '../membership-modal.scss',
 })

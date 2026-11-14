@@ -50,3 +50,9 @@ export interface ServiceListQuery extends PageQuery {
   categoryId?: string | null;
   status?: CatalogStatusFilter | null;
 }
+
+/** What still uses a rate (SONDA BUG-103): active membership plans and loyalty rewards. */
+export interface ServiceUsageView {
+  activePlans: string[];
+  activeRewards: string[];
+}

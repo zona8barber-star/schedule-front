@@ -58,9 +58,10 @@ describe('AdminCustomersApiService', () => {
     expect(createReq.request.body).toEqual(body);
     createReq.flush({});
 
-    service.update('c-1', body).subscribe();
+    service.update('c-1', { ...body, version: 3 }).subscribe();
     const updateReq = httpMock.expectOne(`${base}/c-1`);
     expect(updateReq.request.method).toBe('PUT');
+    expect(updateReq.request.body).toEqual({ ...body, version: 3 });
     updateReq.flush({});
   });
 

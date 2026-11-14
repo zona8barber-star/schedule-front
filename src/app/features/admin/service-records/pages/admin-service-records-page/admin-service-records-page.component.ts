@@ -1,4 +1,5 @@
-import { DatePipe, DecimalPipe } from '@angular/common';
+import { BogotaDatePipe } from '../../../../../shared/pipes/bogota-date.pipe';
+import { DecimalPipe } from '@angular/common';
 import { Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, ParamMap, Router } from '@angular/router';
@@ -50,8 +51,7 @@ const STATUSES: readonly ServiceRecordStatus[] = TABS.map((tab) => tab.status);
  */
 @Component({
   selector: 'app-admin-service-records-page',
-  imports: [
-    DatePipe,
+  imports: [BogotaDatePipe, 
     DecimalPipe,
     ApiFeedbackComponent,
     PageStateComponent,

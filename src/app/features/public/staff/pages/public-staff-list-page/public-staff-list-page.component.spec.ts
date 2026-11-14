@@ -72,4 +72,43 @@ describe('PublicStaffListPageComponent search', () => {
     expect(event.defaultPrevented).toBe(true);
     httpMock.expectOne(`${api}/public/staff`).flush([]);
   });
+
+  // SONDA BUG-045: a list that could not be loaded is not «Sin coincidencias».
+  it('when the list cannot be loaded, offers «Reintentar» instead of «Sin coincidencias»', async () => {
+    void fixture.componentInstance.retryStaff();
+    httpMock.expectOne(`${api}/public/staff`).error(new ProgressEvent('error'));
+    await settle();
+    const element = fixture.nativeElement as HTMLElement;
+
+    expect(element.querySelector('[data-testid="load-error"]')).not.toBeNull();
+    expect(element.textContent).not.toContain('Sin coincidencias');
+
+    element.querySelector<HTMLButtonElement>('[data-testid="load-error-retry"]')!.click();
+    httpMock.expectOne(`${api}/public/staff`).flush([marco]);
+    await settle();
+
+    expect(element.querySelector('[data-testid="load-error"]')).toBeNull();
+    expect(fixture.componentInstance.staffMembers()).toEqual([marco]);
+  });
+  // SONDA BUG-057 / BUG-053 / BUG-037: space kept while loading, «Sin reseñas» for a new professional and a
+  // «Reservar» that says with whom.
+  it('keeps the space of the list while loading, says «Sin reseñas» and names each «Reservar»', async () => {
+    void fixture.componentInstance.retryStaff();
+    fixture.detectChanges();
+    const element = fixture.nativeElement as HTMLElement;
+    expect(element.querySelectorAll('[data-testid="staff-skeleton"] .ps__pro--skeleton').length).toBeGreaterThan(0);
+
+    httpMock.expectOne(`${api}/public/staff`).flush([marco, { ...marco, staffProfileId: 's-2', displayName: 'Nuevo', averageRating: 0, reviewCount: 0 }]);
+    await settle();
+
+    expect(element.querySelector('[data-testid="staff-skeleton"]')).toBeNull();
+    const cards = Array.from(element.querySelectorAll<HTMLElement>('.ps__pro'));
+    expect(cards[1].textContent).toContain('Sin reseñas');
+    expect(cards[1].textContent).not.toContain('0.0');
+    expect(cards[0].textContent).toContain('(2)');
+    expect(Array.from(element.querySelectorAll('.ps__pro-rsv')).map((link) => link.getAttribute('aria-label'))).toEqual([
+      'Reservar con Marco Fade',
+      'Reservar con Nuevo',
+    ]);
+  });
 });

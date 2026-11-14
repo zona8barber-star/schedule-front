@@ -14,7 +14,7 @@ describe('CustomerMembershipDetailPageComponent', () => {
   const api = environment.defaultApiBaseUrl;
 
   const base: MyMembershipView = {
-    id: 'm-1',
+    id: 'a1b2c3d4-0000-4000-8000-000000000001',
     planName: 'Membresía Oro',
     planDescription: 'Cortes y barba del mes',
     price: 250000,
@@ -125,7 +125,8 @@ describe('CustomerMembershipDetailPageComponent', () => {
     expect(text).toContain('Carlos P.');
   });
 
-  it('shows the API message when the membership is not the customer’s', async () => {
+  // SONDA BUG-044: someone else's or a missing membership is «No encontramos esta membresía» with a way back.
+  it('says the membership was not found, with a link back, when it is not the customer’s', async () => {
     TestBed.configureTestingModule({
       providers: [
         provideHttpClient(),
@@ -135,17 +136,37 @@ describe('CustomerMembershipDetailPageComponent', () => {
     });
     httpMock = TestBed.inject(HttpTestingController);
     harness = await RouterTestingHarness.create();
-    const navigation = harness.navigateByUrl('/customer/memberships/ajena');
+    const navigation = harness.navigateByUrl('/customer/memberships/b2c3d4e5-0000-4000-8000-000000000009');
     await new Promise<void>((resolve) => setTimeout(resolve, 0));
     httpMock
-      .expectOne(`${api}/customer/memberships/ajena`)
-      .flush({ title: 'No encontrado', detail: 'La membresía no existe.', status: 404 }, { status: 404, statusText: 'Not Found' });
+      .expectOne(`${api}/customer/memberships/b2c3d4e5-0000-4000-8000-000000000009`)
+      .flush({ title: 'Not Found', status: 404 }, { status: 404, statusText: 'Not Found' });
     await navigation;
     await new Promise<void>((resolve) => setTimeout(resolve, 0));
     harness.detectChanges();
 
-    const text = (harness.fixture.nativeElement as HTMLElement).textContent ?? '';
-    expect(text).toContain('La membresía no existe.');
-    expect(text).not.toContain('Saldos');
+    const element = harness.fixture.nativeElement as HTMLElement;
+    expect(element.querySelector('[data-testid="not-found-state"]')!.textContent).toContain('No encontramos esta membresía');
+    expect(element.querySelector('[data-testid="not-found-back"]')!.getAttribute('href')).toBe('/customer/memberships');
+    expect(element.textContent).not.toContain('Not Found');
+    expect(element.textContent).not.toContain('Saldos');
+  });
+
+  it('does not ask the API for an id that cannot exist', async () => {
+    TestBed.configureTestingModule({
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideRouter([{ path: 'customer/memberships/:membershipId', component: CustomerMembershipDetailPageComponent }]),
+      ],
+    });
+    httpMock = TestBed.inject(HttpTestingController);
+    harness = await RouterTestingHarness.create();
+    await harness.navigateByUrl('/customer/memberships/abc');
+    await new Promise<void>((resolve) => setTimeout(resolve, 0));
+    harness.detectChanges();
+
+    httpMock.expectNone(`${api}/customer/memberships/abc`);
+    expect((harness.fixture.nativeElement as HTMLElement).textContent).toContain('No encontramos esta membresía');
   });
 });

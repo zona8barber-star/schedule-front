@@ -1,5 +1,6 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { HttpErrorResponse } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 
 import { PublicAvailabilitySlotResponse } from '../../../../../core/models/availability.models';
@@ -16,6 +17,9 @@ import { PublicStaffReviewsApiService } from '../../../../../core/services/publi
 import { getApiErrorMessage } from '../../../../../core/utils/api-error.utils';
 import { ApiFeedbackComponent } from '../../../../../shared/components/api-feedback/api-feedback.component';
 import { PageStateComponent } from '../../../../../shared/components/page-state/page-state.component';
+import { LoadErrorComponent } from '../../../../../shared/components/load-error/load-error.component';
+import { NotFoundStateComponent } from '../../../../../shared/components/not-found-state/not-found-state.component';
+import { isGuid } from '../../../../../core/utils/route-id.utils';
 import { PhotoPlaceholderComponent } from '../../../../../shared/components/photo-placeholder/photo-placeholder.component';
 import { SlotPickerComponent } from '../../../../../shared/components/slot-picker/slot-picker.component';
 import {
@@ -49,12 +53,18 @@ function trimDot(value: string): string {
   return value.replace(/\.$/, '');
 }
 
+import { ModalDialogDirective } from '../../../../../shared/directives/modal-dialog.directive';
+
+import { MediaPreviewComponent } from '../../../../../shared/components/media-preview/media-preview.component';
+
 @Component({
   selector: 'app-public-staff-profile-page',
-  imports: [
+  imports: [MediaPreviewComponent, ModalDialogDirective, 
     RouterLink,
     ApiFeedbackComponent,
     PageStateComponent,
+    LoadErrorComponent,
+    NotFoundStateComponent,
     PhotoPlaceholderComponent,
     SlotPickerComponent,
   ],
@@ -83,6 +93,8 @@ export class PublicStaffProfilePageComponent implements OnInit {
   readonly isLoading = signal(true);
   readonly reviewsLoading = signal(false);
   readonly errorMessage = signal<string | null>(null);
+  /** SONDA BUG-045: why the profile could not be loaded when it was not a 404 (no network, server down). */
+  readonly loadError = signal<unknown>(null);
   readonly reviewsErrorMessage = signal<string | null>(null);
 
   // Booking modal. "?reservar=1&fecha=YYYY-MM-DD&servicio=<generalServiceId>" opens it on that day and
@@ -132,8 +144,14 @@ export class PublicStaffProfilePageComponent implements OnInit {
   readonly whatsappHref = computed(() => whatsAppUrl(this.staffProfile()?.phoneNumber));
 
   async ngOnInit(): Promise<void> {
+    await this.reload();
+  }
+
+  async reload(): Promise<void> {
     await this.loadProfile();
-    await this.loadReviews();
+    if (this.staffProfile()) {
+      await this.loadReviews();
+    }
   }
 
   formatRating(value: number): string {
@@ -218,16 +236,28 @@ export class PublicStaffProfilePageComponent implements OnInit {
       return;
     }
 
+    // SONDA BUG-044: an id that is not a GUID cannot exist; no request is sent and the page says so.
+    if (!isGuid(staffProfileId)) {
+      this.staffProfile.set(null);
+      this.loadError.set(null);
+      this.isLoading.set(false);
+      return;
+    }
+
     this.isLoading.set(true);
     this.errorMessage.set(null);
+    this.loadError.set(null);
 
     try {
       this.staffProfile.set(
         await firstValueFrom(this.publicStaffApiService.getById(staffProfileId)),
       );
     } catch (error) {
-      this.errorMessage.set(getApiErrorMessage(error));
       this.staffProfile.set(null);
+      // Only a 404 means the profile does not exist; anything else (no network, server down) offers «Reintentar».
+      if (!(error instanceof HttpErrorResponse && error.status === 404)) {
+        this.loadError.set(error ?? new Error('load failed'));
+      }
     } finally {
       this.isLoading.set(false);
     }

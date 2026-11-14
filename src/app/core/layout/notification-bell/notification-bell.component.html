@@ -60,6 +60,17 @@
           </li>
         }
       </ul>
+      @if (center.hasMore()) {
+        <button
+          class="bell__more"
+          type="button"
+          data-testid="notification-bell-more"
+          [disabled]="center.isLoadingMore()"
+          (click)="loadMore()"
+        >
+          {{ center.isLoadingMore() ? 'Cargando...' : 'Ver más' }}
+        </button>
+      }
     } @else if (center.isLoading() && !center.hasLoaded()) {
       <p class="bell__empty">Cargando...</p>
     } @else {

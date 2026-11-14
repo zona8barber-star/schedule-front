@@ -12,6 +12,7 @@ import {
   ServiceRecordView,
 } from '../../../../../core/models/service-record.models';
 import { AdminServiceRecordReviewModalComponent } from './admin-service-record-review-modal.component';
+import { MoneyConfirmationService } from '../../../../../core/services/money-confirmation.service';
 
 describe('AdminServiceRecordReviewModalComponent', () => {
   let fixture: ComponentFixture<AdminServiceRecordReviewModalComponent>;
@@ -83,6 +84,8 @@ describe('AdminServiceRecordReviewModalComponent', () => {
     await TestBed.configureTestingModule({
       imports: [AdminServiceRecordReviewModalComponent],
       providers: [
+        // Saving money values asks for confirmation (BUG-080 decision); these specs cover the save itself.
+        { provide: MoneyConfirmationService, useValue: { confirm: () => Promise.resolve(true) } },
         provideHttpClient(),
         provideHttpClientTesting(),
         { provide: AuthService, useValue: { hasPermission: (code: PermissionCode) => permissions.includes(code) } },
@@ -138,6 +141,7 @@ describe('AdminServiceRecordReviewModalComponent', () => {
 
     // 4. Confirming works without choosing the redemption again.
     const approving = component.approve();
+    await new Promise<void>((resolve) => setTimeout(resolve, 0)); // the amount confirmation resolves first
     const req = httpMock.expectOne(`${base}/r-1/approve`);
     expect(req.request.body).toEqual(expect.objectContaining({ operationType: 'LoyaltyReward', loyaltyRedemptionId: 'd-1' }));
     req.flush({ ...record, status: 'Approved' });
@@ -172,6 +176,7 @@ describe('AdminServiceRecordReviewModalComponent', () => {
     expect(component.problems()).toEqual([]);
 
     const approving = component.approve();
+    await new Promise<void>((resolve) => setTimeout(resolve, 0)); // the amount confirmation resolves first
     const req = httpMock.expectOne(`${base}/r-1/approve`);
     expect(req.request.body).toEqual(
       expect.objectContaining({ operationType: 'LoyaltyReward', customerId: 'c-1', chargedAmount: null, loyaltyRedemptionId: 'd-1', accruesLoyaltyPoints: false }),
@@ -188,6 +193,7 @@ describe('AdminServiceRecordReviewModalComponent', () => {
     component.reviewed.subscribe((value) => emitted.push(value));
 
     const approving = component.approve();
+    await new Promise<void>((resolve) => setTimeout(resolve, 0)); // the amount confirmation resolves first
     const req = httpMock.expectOne(`${base}/r-1/approve`);
     expect(req.request.body).toEqual({
       version: 41,
@@ -244,6 +250,7 @@ describe('AdminServiceRecordReviewModalComponent', () => {
 
     component.selectCustomer(carla); // single active membership: preselected
     const approving = component.approve();
+    await new Promise<void>((resolve) => setTimeout(resolve, 0)); // the amount confirmation resolves first
     const req = httpMock.expectOne(`${base}/r-1/approve`);
     expect(req.request.body.operationType).toBe('MembershipConsumption');
     expect(req.request.body.customerId).toBe('c-1');
@@ -276,6 +283,7 @@ describe('AdminServiceRecordReviewModalComponent', () => {
     component.staleDetected.subscribe(() => stale++);
 
     const approving = component.approve();
+    await new Promise<void>((resolve) => setTimeout(resolve, 0)); // the amount confirmation resolves first
     httpMock.expectOne(`${base}/r-1/approve`).flush(
       { detail: 'Este servicio ya fue revisado por otra persona. Recarga la bandeja.' },
       { status: 409, statusText: 'Conflict' },
@@ -308,6 +316,7 @@ describe('AdminServiceRecordReviewModalComponent', () => {
     expect(text).toContain('ahora figura como cancelada');
 
     const approving = component.approve();
+    await new Promise<void>((resolve) => setTimeout(resolve, 0)); // the amount confirmation resolves first
     httpMock.expectOne(`${base}/r-1/approve`).flush({ ...record, status: 'Approved' });
     await approving;
   });
@@ -392,10 +401,63 @@ describe('AdminServiceRecordReviewModalComponent', () => {
       expect(component.form.controls.chargedAmount.value).toBe(60000);
 
       const approving = component.approve();
+      await new Promise<void>((resolve) => setTimeout(resolve, 0)); // the amount confirmation resolves first
       const req = httpMock.expectOne(`${base}/r-1/approve`);
       expect(req.request.body).toEqual(expect.objectContaining({ generalServiceId: 'g-color', serviceId: 's-color' }));
       req.flush({ ...record, status: 'Approved' });
       await approving;
+    });
+  });
+
+  describe('customer of the record (SONDA lote G2)', () => {
+    /** BUG-105: the registered profile was merged; the live one is preselected with its memberships and a notice. */
+    it('preselects the live profile of a merged customer and says so', async () => {
+      await TestBed.configureTestingModule({
+        imports: [AdminServiceRecordReviewModalComponent],
+        providers: [
+          { provide: MoneyConfirmationService, useValue: { confirm: () => Promise.resolve(true) } },
+          provideHttpClient(),
+          provideHttpClientTesting(),
+          { provide: AuthService, useValue: { hasPermission: () => false } },
+        ],
+      }).compileComponents();
+      fixture = TestBed.createComponent(AdminServiceRecordReviewModalComponent);
+      component = fixture.componentInstance;
+      component.record = { ...record, customerId: 'c-old', customerName: 'Carla (fusionada)', suggestedCustomerId: 'c-1', suggestedCustomerName: 'Carla' };
+      component.options = options();
+      httpMock = TestBed.inject(HttpTestingController);
+      fixture.detectChanges();
+      httpMock.expectOne(`${base}/r-1/related`).flush(related);
+      await new Promise<void>((resolve) => setTimeout(resolve, 0));
+
+      const search = httpMock.expectOne((request) => request.url === `${base}/customer-options`);
+      expect(search.request.params.get('q')).toBe('Carla');
+      expect(search.request.params.get('serviceDate')).toBe('2026-11-02');
+      search.flush([carla]);
+      await fixture.whenStable();
+      fixture.detectChanges();
+
+      expect(component.customer()?.id).toBe('c-1');
+      expect(component.customer()?.memberships.map((membership) => membership.id)).toEqual(['m-1']);
+      expect((fixture.nativeElement as HTMLElement).querySelector('[data-testid="merged-customer-notice"]')?.textContent)
+        .toContain('se fusionó en «Carla»');
+    });
+
+    /** BUG-085: a new service date re-reads the memberships valid on that day and drops one no longer valid. */
+    it('refreshes the memberships for a new service date', async () => {
+      await open();
+      component.selectCustomer(carla);
+      expect(component.form.controls.customerMembershipId.value).toBe('m-1');
+
+      component.form.controls.performedOn.setValue('2027-01-15');
+      await new Promise<void>((resolve) => setTimeout(resolve, 0));
+      const search = httpMock.expectOne((request) => request.url === `${base}/customer-options`);
+      expect(search.request.params.get('serviceDate')).toBe('2027-01-15');
+      search.flush([{ ...carla, memberships: [] }]);
+      await new Promise<void>((resolve) => setTimeout(resolve, 0));
+
+      expect(component.customer()?.memberships).toEqual([]);
+      expect(component.form.controls.customerMembershipId.value).toBe('');
     });
   });
 });

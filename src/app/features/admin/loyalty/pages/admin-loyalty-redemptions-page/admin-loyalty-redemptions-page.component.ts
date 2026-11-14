@@ -1,3 +1,4 @@
+import { BogotaDatePipe } from '../../../../../shared/pipes/bogota-date.pipe';
 import { DatePipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
@@ -58,9 +59,11 @@ const REDEMPTION_STATUSES: readonly LoyaltyRedemptionStatus[] = [
 // ADR-0016 B7: every tab is paginated on the server and keeps its filters in the URL. "Por aprobar" and "Por entregar"
 // are work queues: no default dates, so an old pending redemption is never hidden. "Historial" is a history: the last
 // 30 days by default and at most 30 days per query (a pending status chosen there behaves like a queue).
+import { SingleFlight } from '../../../../../core/utils/single-flight';
+
 @Component({
   selector: 'app-admin-loyalty-redemptions-page',
-  imports: [DatePipe, FormsModule, ApiFeedbackComponent, PageStateComponent, PaginatorComponent],
+  imports: [BogotaDatePipe, DatePipe, FormsModule, ApiFeedbackComponent, PageStateComponent, PaginatorComponent],
   templateUrl: './admin-loyalty-redemptions-page.component.html',
   styleUrls: [
     '../../../service-records/pages/admin-service-records-page/admin-service-records-page.component.scss',
@@ -180,14 +183,17 @@ export class AdminLoyaltyRedemptionsPageComponent implements OnInit {
     this.acting.set({ id: redemption.id, action });
   }
 
+  @SingleFlight()
   async approve(redemption: LoyaltyRedemptionView): Promise<void> {
     await this.run(redemption, () => this.api.approve(redemption.id, redemption.version), 'Canje aprobado.');
   }
 
+  @SingleFlight()
   async deliver(redemption: LoyaltyRedemptionView): Promise<void> {
     await this.run(redemption, () => this.api.deliver(redemption.id, redemption.version), 'Canje entregado.');
   }
 
+  @SingleFlight()
   async confirmReason(redemption: LoyaltyRedemptionView): Promise<void> {
     const acting = this.acting();
     const reason = this.reason.trim();

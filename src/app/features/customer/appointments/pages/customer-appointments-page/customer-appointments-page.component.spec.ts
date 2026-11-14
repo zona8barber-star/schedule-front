@@ -1,11 +1,13 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
-import { of } from 'rxjs';
+import { HttpErrorResponse } from '@angular/common/http';
+import { of, throwError } from 'rxjs';
 
 import { AppointmentResponse, CustomerAppointmentsListFilters } from '../../../../../core/models/appointment.models';
 import { CustomerAppointmentsApiService } from '../../../../../core/services/customer-appointments-api.service';
 import { CustomerReviewsApiService } from '../../../../../core/services/customer-reviews-api.service';
 import { PublicAvailabilityApiService } from '../../../../../core/services/public-availability-api.service';
+import { ToastService } from '../../../../../core/services/toast.service';
 import { CustomerAppointmentsPageComponent } from './customer-appointments-page.component';
 
 describe('CustomerAppointmentsPageComponent (service and rescheduling)', () => {
@@ -13,6 +15,7 @@ describe('CustomerAppointmentsPageComponent (service and rescheduling)', () => {
   let component: CustomerAppointmentsPageComponent;
   let getSlots: ReturnType<typeof vi.fn>;
   let list: ReturnType<typeof vi.fn>;
+  let reschedule: ReturnType<typeof vi.fn>;
 
   const booked: AppointmentResponse = {
     id: 'a-1',
@@ -52,6 +55,8 @@ describe('CustomerAppointmentsPageComponent (service and rescheduling)', () => {
       of({ staffProfileId, from, to, slotDurationMinutes: 45, slots: [], generalServiceId: null, slotStepMinutes: 15 }),
     );
 
+    reschedule = vi.fn();
+
     // Upcoming holds both bookings; the past (review window and history) is empty.
     list = vi.fn((filters: CustomerAppointmentsListFilters) => {
       const items = filters.scope === 'Upcoming' ? [booked, legacy] : [];
@@ -62,7 +67,7 @@ describe('CustomerAppointmentsPageComponent (service and rescheduling)', () => {
       imports: [CustomerAppointmentsPageComponent],
       providers: [
         provideRouter([]),
-        { provide: CustomerAppointmentsApiService, useValue: { list } },
+        { provide: CustomerAppointmentsApiService, useValue: { list, reschedule } },
         { provide: CustomerReviewsApiService, useValue: { list: () => of([]) } },
         { provide: PublicAvailabilityApiService, useValue: { getSlots } },
       ],
@@ -150,5 +155,49 @@ describe('CustomerAppointmentsPageComponent (service and rescheduling)', () => {
     await render();
 
     expect(getSlots).toHaveBeenCalledWith('st-1', expect.any(String), expect.any(String), { durationMinutes: 30 });
+  });
+
+  // SONDA BUG-063: the staff cancelled or completed the appointment while the customer was choosing a new time.
+  it('closes the reschedule modal, explains it in Spanish and refreshes the list when the appointment changed', async () => {
+    const toastError = vi.spyOn(TestBed.inject(ToastService), 'error');
+    reschedule.mockReturnValue(
+      throwError(
+        () =>
+          new HttpErrorResponse({
+            status: 422,
+            error: { detail: 'Esta cita ya no se puede reprogramar: fue cancelada, completada o marcada como no asistida.' },
+          }),
+      ),
+    );
+    component.openReschedule(booked);
+    await render();
+    component.onRescheduleSlot({ startAtUtc: '2026-11-12T15:00:00Z', endAtUtc: '2026-11-12T15:45:00Z' });
+    const listCalls = list.mock.calls.length;
+
+    await component.confirmReschedule();
+
+    expect(component.rescheduleAppointment()).toBeNull();
+    expect(toastError).toHaveBeenCalledWith(
+      'Esta cita ya no se puede reprogramar: fue cancelada, completada o marcada como no asistida.',
+    );
+    expect(list.mock.calls.length).toBeGreaterThan(listCalls);
+  });
+
+  it('never shows an English server text when the appointment changed', async () => {
+    const toastError = vi.spyOn(TestBed.inject(ToastService), 'error');
+    reschedule.mockReturnValue(
+      throwError(
+        () => new HttpErrorResponse({ status: 422, error: { detail: 'Only pending or confirmed appointments can be rescheduled.' } }),
+      ),
+    );
+    component.openReschedule(booked);
+    await render();
+    component.onRescheduleSlot({ startAtUtc: '2026-11-12T15:00:00Z', endAtUtc: '2026-11-12T15:45:00Z' });
+
+    await component.confirmReschedule();
+
+    expect(toastError).toHaveBeenCalledWith(
+      'Esta cita ya no se puede reprogramar porque cambió de estado. Revisa tu lista de citas.',
+    );
   });
 });

@@ -5,6 +5,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { environment } from '../../../../../../environments/environment';
 import { MembershipPlanView } from '../../../../../core/models/membership-plan.models';
 import { AdminMembershipSellModalComponent } from './admin-membership-sell-modal.component';
+import { MoneyConfirmationService } from '../../../../../core/services/money-confirmation.service';
 
 describe('AdminMembershipSellModalComponent', () => {
   let fixture: ComponentFixture<AdminMembershipSellModalComponent>;
@@ -38,7 +39,10 @@ describe('AdminMembershipSellModalComponent', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [AdminMembershipSellModalComponent],
-      providers: [provideHttpClient(), provideHttpClientTesting()],
+      providers: [
+        // Saving money values asks for confirmation (BUG-080 decision); these specs cover the save itself.
+        { provide: MoneyConfirmationService, useValue: { confirm: () => Promise.resolve(true) } },
+        provideHttpClient(), provideHttpClientTesting()],
     }).compileComponents();
 
     fixture = TestBed.createComponent(AdminMembershipSellModalComponent);
@@ -91,6 +95,7 @@ describe('AdminMembershipSellModalComponent', () => {
     component.activateNow.set(true);
 
     const selling = component.submit();
+    await new Promise<void>((resolve) => setTimeout(resolve, 0)); // the amount confirmation resolves first
     const req = httpMock.expectOne(`${api}/admin/customers/c-1/memberships`);
     expect(req.request.body).toEqual({
       planId: 'p-1',
@@ -120,6 +125,7 @@ describe('AdminMembershipSellModalComponent', () => {
     component.confirmExpired.set(true);
     component.activationReason.set('Venta registrada tarde');
     const selling = component.submit();
+    await new Promise<void>((resolve) => setTimeout(resolve, 0)); // the amount confirmation resolves first
     const req = httpMock.expectOne(`${api}/admin/customers/c-1/memberships`);
     expect(req.request.body.confirmExpiredActivation).toBe(true);
     expect(req.request.body.activationReason).toBe('Venta registrada tarde');

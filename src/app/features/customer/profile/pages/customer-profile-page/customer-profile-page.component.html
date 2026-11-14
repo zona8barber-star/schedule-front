@@ -99,7 +99,7 @@
         />
 
         <!-- Datos básicos -->
-        <form [formGroup]="infoForm" (ngSubmit)="saveInfo()" novalidate>
+        <form appFormA11y [formGroup]="infoForm" (ngSubmit)="saveInfo()" novalidate>
           <div class="cp__form-grid">
 
             <!-- Nombre completo -->
@@ -107,7 +107,7 @@
               <label for="cp-name">
                 Nombre completo <span class="cp__required">*</span>
               </label>
-              <input
+              <input maxlength="120"
                 id="cp-name"
                 type="text"
                 formControlName="fullName"
@@ -140,7 +140,7 @@
             <!-- Teléfono -->
             <div class="cp__field">
               <label for="cp-phone">Teléfono</label>
-              <input
+              <input maxlength="40"
                 id="cp-phone"
                 type="tel"
                 formControlName="phoneNumber"
@@ -159,7 +159,12 @@
                 id="cp-dob"
                 type="date"
                 formControlName="dateOfBirth"
+                [min]="minDateOfBirth"
+                [max]="todayIso()"
               />
+              @if (showInfoError('dateOfBirth', 'dateRange')) {
+                <p class="cp__field-error">La fecha de nacimiento debe estar entre el 1 de enero de 1900 y hoy.</p>
+              }
             </div>
           </div>
 
@@ -183,7 +188,7 @@
         <app-api-feedback severity="error" [message]="pwdError()" />
         <app-api-feedback severity="info" [message]="pwdSuccess()" />
 
-        <form [formGroup]="pwdForm" (ngSubmit)="changePassword()" novalidate>
+        <form appFormA11y [formGroup]="pwdForm" (ngSubmit)="changePassword()" novalidate>
           <div class="cp__form-grid cp__form-grid--single">
 
             <!-- Contraseña actual -->
@@ -208,13 +213,14 @@
               <label for="cp-new-pwd">
                 Nueva contraseña <span class="cp__required">*</span>
               </label>
-              <input
+              <input maxlength="256"
                 id="cp-new-pwd"
                 type="password"
                 formControlName="newPassword"
                 placeholder="Mínimo 8 caracteres"
                 autocomplete="new-password"
               />
+              <app-field-error controlName="newPassword" />
               @if (showPwdError('newPassword', 'required')) {
                 <p class="cp__field-error">La nueva contraseña es requerida.</p>
               }

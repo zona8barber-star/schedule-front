@@ -10,15 +10,24 @@ import { AdminProductCatalogApiService } from '../../../../../core/services/admi
 import { ConfirmModalService } from '../../../../../core/services/confirm-modal.service';
 import { getApiErrorMessage } from '../../../../../core/utils/api-error.utils';
 import { ApiFeedbackComponent } from '../../../../../shared/components/api-feedback/api-feedback.component';
+import { trimmedMinLength, trimmedRequired } from '../../../../../core/utils/form-validators';
 
 function integerValidator(control: AbstractControl): ValidationErrors | null {
   return Number.isInteger(control.value) ? null : { integer: true };
 }
 
 /** Master of product categories (ADR-0016 B5), independent from the service categories. */
+import { FieldErrorComponent } from '../../../../../shared/components/field-error/field-error.component';
+
+import { ModalDialogDirective } from '../../../../../shared/directives/modal-dialog.directive';
+
+import { FormA11yDirective } from '../../../../../shared/directives/form-a11y.directive';
+
+import { SingleFlight } from '../../../../../core/utils/single-flight';
+
 @Component({
   selector: 'app-admin-product-categories-page',
-  imports: [ReactiveFormsModule, ApiFeedbackComponent],
+  imports: [FormA11yDirective, ModalDialogDirective, FieldErrorComponent, ReactiveFormsModule, ApiFeedbackComponent],
   templateUrl: './admin-product-categories-page.component.html',
   styleUrl: '../../../service-catalog/catalog-page.scss',
 })
@@ -51,7 +60,7 @@ export class AdminProductCategoriesPageComponent implements OnInit {
   readonly modalTitle = computed(() => (this.editing() ? 'Editar categoría' : 'Nueva categoría'));
 
   readonly form = this.formBuilder.nonNullable.group({
-    name: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(80)]],
+    name: ['', [trimmedRequired, trimmedMinLength(2), Validators.maxLength(80)]],
     sortOrder: [0, [Validators.required, Validators.min(0), Validators.max(CATALOG_MAX_SORT_ORDER), integerValidator]],
   });
 
@@ -82,6 +91,7 @@ export class AdminProductCategoriesPageComponent implements OnInit {
     this.editing.set(null);
   }
 
+  @SingleFlight()
   async save(): Promise<void> {
     if (this.form.invalid) {
       this.form.markAllAsTouched();
@@ -109,6 +119,7 @@ export class AdminProductCategoriesPageComponent implements OnInit {
     }
   }
 
+  @SingleFlight()
   async toggleActive(category: ProductCategoryView): Promise<void> {
     this.busyId.set(category.id);
     this.errorMessage.set(null);
@@ -122,6 +133,7 @@ export class AdminProductCategoriesPageComponent implements OnInit {
     }
   }
 
+  @SingleFlight()
   async remove(category: ProductCategoryView): Promise<void> {
     const confirmed = await this.confirmModal.confirm({
       title: '¿Eliminar categoría?',

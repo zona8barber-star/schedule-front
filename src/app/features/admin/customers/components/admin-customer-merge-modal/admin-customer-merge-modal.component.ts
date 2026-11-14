@@ -13,9 +13,13 @@ import { getApiErrorMessage } from '../../../../../core/utils/api-error.utils';
 import { ApiFeedbackComponent } from '../../../../../shared/components/api-feedback/api-feedback.component';
 
 /** Merges a duplicate profile (the source) into the customer being viewed (the target, which survives). */
+import { ModalDialogDirective } from '../../../../../shared/directives/modal-dialog.directive';
+
+import { SingleFlight } from '../../../../../core/utils/single-flight';
+
 @Component({
   selector: 'app-admin-customer-merge-modal',
-  imports: [FormsModule, DatePipe, ApiFeedbackComponent],
+  imports: [ModalDialogDirective, FormsModule, DatePipe, ApiFeedbackComponent],
   templateUrl: './admin-customer-merge-modal.component.html',
   styleUrl: '../customer-modal.scss',
 })
@@ -69,6 +73,7 @@ export class AdminCustomerMergeModalComponent {
     }
   }
 
+  @SingleFlight()
   async confirm(): Promise<void> {
     const preview = this.preview();
     if (!preview || !this.canConfirm()) {

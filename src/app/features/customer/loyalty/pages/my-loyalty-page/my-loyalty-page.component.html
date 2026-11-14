@@ -120,7 +120,7 @@
                 <strong>{{ redemption.rewardName }}</strong>
                 <span>{{ statusLabel(redemption.status) }} · {{ redemption.pointsCost }} pts</span>
                 <span class="my-memberships__muted">
-                  Pedido el {{ redemption.requestedAt | date: 'mediumDate' }}
+                  Pedido el {{ redemption.requestedAt | bogotaDate: 'mediumDate' }}
                   @if (redemption.status === 'Requested') {
                     · se aprueba hasta el {{ redemption.approveBy | date: 'mediumDate' }}
                   }
@@ -158,7 +158,7 @@
               <li>
                 <strong>{{ movementSign(movement.type) }}{{ movement.points }}</strong>
                 <span>{{ movementLabel(movement.type) }}</span>
-                <span class="my-memberships__muted">{{ movement.performedAt | date: 'mediumDate' }}</span>
+                <span class="my-memberships__muted">{{ movement.performedAt | bogotaDate: 'mediumDate' }}</span>
               </li>
             }
           </ul>
@@ -195,7 +195,7 @@
                 <li>
                   <strong>{{ movementSign(movement.type) }}{{ movement.points }}</strong>
                   <span>{{ movementLabel(movement.type) }}</span>
-                  <span class="my-memberships__muted">{{ movement.performedAt | date: 'mediumDate' }}</span>
+                  <span class="my-memberships__muted">{{ movement.performedAt | bogotaDate: 'mediumDate' }}</span>
                 </li>
               }
             </ul>

@@ -1,5 +1,5 @@
 <div class="membership-modal__overlay" (click)="cancel()">
-  <div class="membership-modal__card" (click)="$event.stopPropagation()">
+  <div appModalDialog (modalClose)="cancel()" class="membership-modal__card" (click)="$event.stopPropagation()">
     <h2>Vender membresía</h2>
     <p class="membership-modal__hint">Cliente: <strong>{{ customerName }}</strong></p>
 
