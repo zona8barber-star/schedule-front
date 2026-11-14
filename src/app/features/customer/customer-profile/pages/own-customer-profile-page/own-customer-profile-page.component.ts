@@ -1,4 +1,4 @@
-import { DatePipe } from '@angular/common';
+import { BogotaDatePipe } from '../../../../../shared/pipes/bogota-date.pipe';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
@@ -9,15 +9,22 @@ import { CustomerClaimsApiService } from '../../../../../core/services/customer-
 import { getApiErrorMessage } from '../../../../../core/utils/api-error.utils';
 import { ApiFeedbackComponent } from '../../../../../shared/components/api-feedback/api-feedback.component';
 import { PageStateComponent } from '../../../../../shared/components/page-state/page-state.component';
+import { trimmedMinLength, trimmedRequired } from '../../../../../core/utils/form-validators';
 
 const PHONE_PATTERN = /^(?=(?:\D*\d){7,})[\d\s()+-]+$/;
 
 type Choice = 'new' | 'existing' | null;
 
 /** The customer's own customer profile: shows it, or lets them create one or ask to be linked to their historical one. */
+import { FieldErrorComponent } from '../../../../../shared/components/field-error/field-error.component';
+
+import { FormA11yDirective } from '../../../../../shared/directives/form-a11y.directive';
+
+import { SingleFlight } from '../../../../../core/utils/single-flight';
+
 @Component({
   selector: 'app-own-customer-profile-page',
-  imports: [DatePipe, ReactiveFormsModule, RouterLink, ApiFeedbackComponent, PageStateComponent],
+  imports: [FormA11yDirective, FieldErrorComponent, BogotaDatePipe, ReactiveFormsModule, RouterLink, ApiFeedbackComponent, PageStateComponent],
   templateUrl: './own-customer-profile-page.component.html',
   styleUrl: './own-customer-profile-page.component.scss',
 })
@@ -38,7 +45,7 @@ export class OwnCustomerProfilePageComponent implements OnInit {
   private claimKey = crypto.randomUUID();
 
   readonly form = this.formBuilder.nonNullable.group({
-    fullName: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(120)]],
+    fullName: ['', [trimmedRequired, trimmedMinLength(2), Validators.maxLength(120)]],
     phone: ['', [Validators.required, Validators.maxLength(40), Validators.pattern(PHONE_PATTERN)]],
     email: ['', [Validators.required, Validators.email, Validators.maxLength(256)]],
     notes: ['', [Validators.maxLength(500)]],
@@ -60,6 +67,7 @@ export class OwnCustomerProfilePageComponent implements OnInit {
     });
   }
 
+  @SingleFlight()
   async submit(): Promise<void> {
     if (this.form.invalid) {
       this.form.markAllAsTouched();

@@ -1,3 +1,4 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { DecimalPipe } from '@angular/common';
 import { Component, DestroyRef, OnInit, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -13,6 +14,7 @@ import { AdminIncomeApiService } from '../../../../../core/services/admin-income
 import { AdminServiceCatalogApiService } from '../../../../../core/services/admin-service-catalog-api.service';
 import { AdminStaffApiService } from '../../../../../core/services/admin-staff-api.service';
 import { ConfirmModalService } from '../../../../../core/services/confirm-modal.service';
+import { formatCop } from '../../../../../core/services/money-confirmation.service';
 import { getApiErrorMessage } from '../../../../../core/utils/api-error.utils';
 import {
   QueryValue,
@@ -43,6 +45,8 @@ const INCOME_KINDS: readonly IncomeKind[] = ['Service', 'MembershipSale'];
  * professional, kind and
  * general service, paginated on the server. The filters live in the URL; the total covers every matching entry.
  */
+import { SingleFlight } from '../../../../../core/utils/single-flight';
+
 @Component({
   selector: 'app-admin-income-list-page',
   imports: [FormsModule, DecimalPipe, ApiFeedbackComponent, AdminIncomeFormModalComponent, PaginatorComponent],
@@ -149,10 +153,13 @@ export class AdminIncomeListPageComponent implements OnInit {
     void this.load();
   }
 
+  @SingleFlight()
   async deleteEntry(entry: IncomeEntryView): Promise<void> {
+    // SONDA BUG-083: a membership sale has no service name; amounts in pesos with thousands separator (C2 format).
+    const concept = entry.kind === 'MembershipSale' ? 'Venta de membresía' : (entry.serviceName ?? 'Ingreso');
     const confirmed = await this.confirmModal.confirm({
       title: '¿Eliminar ingreso?',
-      message: `Se eliminará el ingreso de "${entry.serviceName}" ($ ${entry.amount}).`,
+      message: `Se eliminará el ingreso de "${concept}" (${formatCop(entry.amount)}).`,
     });
     if (!confirmed) {
       return;
@@ -165,7 +172,13 @@ export class AdminIncomeListPageComponent implements OnInit {
       // Reload so the page, the count and the total stay consistent with the server.
       await this.load();
     } catch (error) {
-      this.errorMessage.set(getApiErrorMessage(error));
+      if (error instanceof HttpErrorResponse && error.status === 404) {
+        // SONDA BUG-084: already deleted elsewhere (another tab or person): say so and refresh the list.
+        await this.load();
+        this.errorMessage.set('Este ingreso ya no existe: se eliminó en otra pestaña o por otra persona. La lista se actualizó.');
+      } else {
+        this.errorMessage.set(getApiErrorMessage(error));
+      }
     } finally {
       this.busyId.set(null);
     }

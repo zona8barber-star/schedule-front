@@ -31,7 +31,7 @@
         <li class="records__card">
           <div class="records__card-head">
             <strong>{{ claim.fullName }}</strong>
-            <span class="records__date">{{ claim.submittedAt | date: 'mediumDate' }}</span>
+            <span class="records__date">{{ claim.submittedAt | bogotaDate: 'mediumDate' }}</span>
           </div>
           <span class="records__meta">{{ claim.phone }} · {{ claim.email }}</span>
           <span class="records__meta records__meta--small">
@@ -51,7 +51,7 @@
           }
           @if (claim.decidedAt) {
             <span class="records__meta records__meta--small">
-              Revisada por {{ claim.decidedByName }} el {{ claim.decidedAt | date: 'medium' }}
+              Revisada por {{ claim.decidedByName }} el {{ claim.decidedAt | bogotaDate: 'medium' }}
             </span>
           }
           @if (claim.status === 'Pending') {

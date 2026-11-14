@@ -20,7 +20,10 @@ const detachTimeoutMs = 3000;
  * - `needs-install`: iPhone/iPad fuera de la app instalada; Apple solo permite push en la PWA instalada.
  * - `not-configured`: el servidor tiene WebPush desactivado o sin llaves.
  * - `blocked`: el usuario bloqueó las notificaciones en el navegador/sistema.
- * - `enabled` / `disabled`: estado de este dispositivo para la cuenta actual.
+ * - `enabled` / `disabled`: estado de este dispositivo para la cuenta actual. `enabled` solo cuando el servidor
+ *   confirmó el registro (BUG-109), no con la sola suscripción del navegador.
+ * - `checking`: el navegador tiene suscripción y se está confirmando con el servidor.
+ * - `unconfirmed`: el servidor no aceptó el registro; no llegan notificaciones hasta reintentar.
  */
 export type PushStatus =
   | 'unsupported'
@@ -28,7 +31,9 @@ export type PushStatus =
   | 'not-configured'
   | 'blocked'
   | 'enabled'
-  | 'disabled';
+  | 'disabled'
+  | 'checking'
+  | 'unconfirmed';
 
 interface SubscriptionKeys {
   endpoint: string;
@@ -64,19 +69,31 @@ export class PushNotificationService {
   private readonly dismissedAt = signal<number | null>(null);
   private readonly optedOut = signal(false);
   private readonly enabling = signal(false);
+  /** BUG-109: `${userId}|${endpoint}` que el servidor confirmó por última vez en esta sesión. */
+  private readonly confirmedKey = signal<string | null>(null);
+  /** BUG-109: el último registro en el servidor falló; se espera a que el usuario reintente. */
+  private readonly registrationFailed = signal(false);
   // computed: solo cambia cuando cambia el id (no en cada refresh de token, que crea un objeto nuevo).
   private readonly currentUserId = computed(() => this.authService.currentUser()?.id ?? null);
 
   private serverKeyPromise: Promise<string | null> | null = null;
   private syncPromise: Promise<void> | null = null;
   private syncQueued = false;
-  /** `${userId}|${endpoint}` registrado por última vez en el backend en esta sesión. */
-  private syncedKey: string | null = null;
 
   readonly isSupported = this.hasBrowserContext && this.swPush.isEnabled && this.hasNotificationApi;
   readonly needsInstall = this.isIOS && !this.isStandaloneMode;
   readonly isEnabling = this.enabling.asReadonly();
-  readonly isSubscribed = computed(() => this.subscription() !== null && !this.optedOut());
+  readonly hasRegistrationFailed = this.registrationFailed.asReadonly();
+  readonly isSubscribed = computed(() => {
+    const subscription = this.subscription();
+    const userId = this.currentUserId();
+    return (
+      subscription !== null &&
+      !this.optedOut() &&
+      userId !== null &&
+      this.confirmedKey() === `${userId}|${subscription.endpoint}`
+    );
+  });
 
   readonly status = computed<PushStatus>(() => {
     if (this.needsInstall && !this.isSupported) {
@@ -95,7 +112,19 @@ export class PushNotificationService {
       return 'blocked';
     }
 
-    return this.isSubscribed() && this.permission() === 'granted' ? 'enabled' : 'disabled';
+    if (this.permission() !== 'granted' || this.optedOut()) {
+      return 'disabled';
+    }
+
+    if (this.isSubscribed()) {
+      return 'enabled';
+    }
+
+    if (this.registrationFailed()) {
+      return 'unconfirmed';
+    }
+
+    return this.subscription() ? 'checking' : 'disabled';
   });
 
   readonly shouldShowPrompt = computed(() => {
@@ -133,7 +162,7 @@ export class PushNotificationService {
     this.swPush.pushSubscriptionChanges
       .pipe(takeUntilDestroyed())
       .subscribe(({ oldSubscription, newSubscription }) => {
-        this.syncedKey = null;
+        this.confirmedKey.set(null);
         this.subscription.set(newSubscription);
 
         if (oldSubscription && this.authService.isAuthenticated()) {
@@ -159,7 +188,8 @@ export class PushNotificationService {
       const userId = this.currentUserId();
 
       untracked(() => {
-        this.syncedKey = null;
+        this.confirmedKey.set(null);
+        this.registrationFailed.set(false);
         this.dismissedAt.set(userId ? this.readDismissedAt(userId) : null);
         this.optedOut.set(userId ? this.readStorage(optOutStoragePrefix + userId) === '1' : false);
 
@@ -240,10 +270,17 @@ export class PushNotificationService {
         await this.registerWithServer(subscription);
       } catch (error) {
         console.error('[Push] Saving the subscription on the server failed', error);
-        return 'No se pudo registrar este dispositivo en el servidor. Intenta de nuevo.';
+        // BUG-109: sin el registro en el servidor no llega nada; la suscripción del navegador se retira para no
+        // aparentar que quedaron activadas, y la pantalla ofrece «Reintentar».
+        this.registrationFailed.set(true);
+        this.confirmedKey.set(null);
+        await subscription.unsubscribe().catch(() => false);
+        this.subscription.set(null);
+        return 'No se pudo registrar este dispositivo en el servidor, así que las notificaciones no quedaron activadas. Intenta de nuevo.';
       }
 
-      this.syncedKey = `${userId}|${subscription.endpoint}`;
+      this.registrationFailed.set(false);
+      this.confirmedKey.set(`${userId}|${subscription.endpoint}`);
       this.subscription.set(subscription);
       return null;
     } finally {
@@ -260,7 +297,8 @@ export class PushNotificationService {
     }
 
     const subscription = this.subscription();
-    this.syncedKey = null;
+    this.confirmedKey.set(null);
+    this.registrationFailed.set(false);
 
     if (!subscription) {
       return;
@@ -289,7 +327,7 @@ export class PushNotificationService {
    */
   private async detachFromCurrentUser(): Promise<void> {
     const subscription = this.subscription();
-    this.syncedKey = null;
+    this.confirmedKey.set(null);
 
     if (!subscription) {
       return;
@@ -333,6 +371,8 @@ export class PushNotificationService {
       !userId ||
       this.optedOut() ||
       this.enabling() ||
+      // Tras un registro fallido no se reintenta solo (se volvería a suscribir el navegador): espera «Reintentar».
+      this.registrationFailed() ||
       this.readPermission() !== 'granted'
     ) {
       return;
@@ -347,15 +387,24 @@ export class PushNotificationService {
       const subscription = await this.ensureBrowserSubscription(serverKey);
       const syncKey = `${userId}|${subscription.endpoint}`;
 
-      if (this.syncedKey === syncKey) {
+      if (this.confirmedKey() === syncKey) {
         return;
       }
 
-      await this.registerWithServer(subscription);
+      try {
+        await this.registerWithServer(subscription);
+      } catch (error) {
+        // BUG-109: el navegador sigue suscrito pero el servidor no lo tiene: se muestra como no activadas.
+        if (this.authService.currentUser()?.id === userId) {
+          this.registrationFailed.set(true);
+        }
+
+        throw error;
+      }
 
       // Solo si el usuario no cambió mientras tanto.
       if (this.authService.currentUser()?.id === userId) {
-        this.syncedKey = syncKey;
+        this.confirmedKey.set(syncKey);
         this.subscription.set(subscription);
       }
     } catch (error) {

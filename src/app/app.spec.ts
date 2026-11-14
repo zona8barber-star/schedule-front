@@ -1,5 +1,5 @@
 import { provideHttpClient } from '@angular/common/http';
-import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { provideServiceWorker } from '@angular/service-worker';
@@ -60,8 +60,34 @@ describe('App', () => {
     const fixture = TestBed.createComponent(App);
     await fixture.whenStable();
     const compiled = fixture.nativeElement as HTMLElement;
-    // The brand is the logo image (the text name was replaced by it).
+    // The brand is the logo image; without a configured branding, the static one.
     const brandLogo = compiled.querySelector<HTMLImageElement>('[data-testid="brand"] img');
-    expect(brandLogo?.alt).toBe('Logo de la barberia');
+    expect(brandLogo?.alt).toBe('Logo de Zona 8');
+    expect(brandLogo?.getAttribute('src')).toBe('assets/images/logo_black.jpeg');
+  });
+
+  /** SONDA BUG-100: the name and logo configured in «Marca» replace the static ones in the header. */
+  it('uses the configured branding name and logo in the header', async () => {
+    const fixture = TestBed.createComponent(App);
+    fixture.detectChanges();
+    const httpMock = TestBed.inject(HttpTestingController);
+
+    httpMock
+      .match((request) => request.url.endsWith('/public/content/branding'))
+      .forEach((request) =>
+        request.flush({
+          appName: 'Barbería Norte',
+          primaryColor: '#111111',
+          secondaryColor: '#222222',
+          logoUrl: 'https://assets.example.com/logo-norte.png',
+          appIconUrl: null,
+        }),
+      );
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    const brandLogo = (fixture.nativeElement as HTMLElement).querySelector<HTMLImageElement>('[data-testid="brand"] img');
+    expect(brandLogo?.alt).toBe('Logo de Barbería Norte');
+    expect(brandLogo?.getAttribute('src')).toBe('https://assets.example.com/logo-norte.png');
   });
 });

@@ -163,3 +163,29 @@ export interface UpdateTickerItemRequest {
   sortOrder: number;
   isActive: boolean;
 }
+
+// ── Public contracts (SONDA BUG-101): what /public/content returns. Only active items, already ordered by the API,
+// without file ids, flags or edit timestamps. The admin screens keep the full *Response models above. ──
+
+export type PublicLandingContentResponse = Omit<LandingContentResponse, 'updatedAtUtc'>;
+
+export interface PublicBrandingResponse {
+  appName: string;
+  primaryColor: string;
+  secondaryColor: string;
+  logoUrl: string | null;
+  appIconUrl: string | null;
+}
+
+export interface PublicBannerResponse {
+  id: string;
+  title: string;
+  subtitle: string | null;
+  imageUrl: string | null;
+  linkUrl: string | null;
+}
+
+export interface PublicTickerItemResponse {
+  id: string;
+  text: string;
+}

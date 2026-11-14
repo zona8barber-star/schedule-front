@@ -70,8 +70,11 @@ export class ServiceRecordsApiService {
     return this.httpClient.get<ServiceRecordOptionsView>(this.buildUrl('/admin/service-records/options'));
   }
 
-  customerOptions(query: string) {
-    const params = query.trim() ? new HttpParams().set('q', query.trim()) : undefined;
+  /** serviceDate (SONDA BUG-085): only memberships valid on that day are offered. */
+  customerOptions(query: string, serviceDate?: string | null) {
+    let params = new HttpParams();
+    if (query.trim()) params = params.set('q', query.trim());
+    if (serviceDate) params = params.set('serviceDate', serviceDate);
     return this.httpClient.get<ServiceRecordCustomerOption[]>(this.buildUrl('/admin/service-records/customer-options'), { params });
   }
 

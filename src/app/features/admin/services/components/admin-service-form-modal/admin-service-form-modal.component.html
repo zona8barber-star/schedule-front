@@ -1,5 +1,5 @@
 <div class="service-modal__overlay" (click)="cancel()">
-  <div class="service-modal__card" (click)="$event.stopPropagation()">
+  <div appModalDialog (modalClose)="cancel()" class="service-modal__card" (click)="$event.stopPropagation()">
     <h2>{{ isEditing ? 'Editar tarifa' : 'Nueva tarifa' }}</h2>
 
     <app-api-feedback severity="error" [message]="errorMessage()" />
@@ -7,7 +7,7 @@
     @if (isLoading()) {
       <p>Cargando...</p>
     } @else {
-      <form [formGroup]="form" (ngSubmit)="submit()">
+      <form appFormA11y [formGroup]="form" (ngSubmit)="submit()">
         <label class="service-modal__field">
           <span>Servicio general</span>
           <select formControlName="generalServiceId" data-testid="rate-general-service">
@@ -24,7 +24,7 @@
           </select>
         </label>
         @if (form.controls.generalServiceId.touched && form.controls.generalServiceId.invalid) {
-          <small class="service-modal__error">Elige el servicio general al que pertenece la tarifa.</small>
+          <small role="alert" class="service-modal__error">Elige el servicio general al que pertenece la tarifa.</small>
         }
         @if (!generalServiceGroups().length) {
           <small class="service-modal__hint">
@@ -35,9 +35,10 @@
         <label class="service-modal__field">
           <span>Nombre de la tarifa</span>
           <input type="text" formControlName="name" maxlength="120" autocomplete="off" />
+          <app-field-error controlName="name" [kinds]="['minlength']" />
         </label>
         @if (form.controls.name.touched && form.controls.name.invalid) {
-          <small class="service-modal__error">El nombre debe tener entre 2 y 120 caracteres.</small>
+          <small role="alert" class="service-modal__error">El nombre debe tener entre 2 y 120 caracteres.</small>
         }
 
         <label class="service-modal__field">
@@ -45,7 +46,7 @@
           <input type="number" formControlName="basePrice" min="0" step="1" inputmode="numeric" />
         </label>
         @if (form.controls.basePrice.touched && form.controls.basePrice.invalid) {
-          <small class="service-modal__error">
+          <small role="alert" class="service-modal__error">
             Ingresa un precio válido (número entero, 0 o mayor).
           </small>
         }
@@ -55,7 +56,7 @@
           <input type="number" formControlName="businessPercentage" min="0" max="100" step="1" inputmode="numeric" />
         </label>
         @if (form.controls.businessPercentage.touched && form.controls.businessPercentage.invalid) {
-          <small class="service-modal__error">
+          <small role="alert" class="service-modal__error">
             Ingresa un porcentaje válido (0 a 100). El resto queda para el profesional.
           </small>
         }
@@ -72,7 +73,7 @@
           />
         </label>
         @if (form.controls.loyaltyPoints.touched && form.controls.loyaltyPoints.invalid) {
-          <small class="service-modal__error">
+          <small role="alert" class="service-modal__error">
             Ingresa un número entero entre 0 y {{ maxLoyaltyPoints }}. Usa 0 si no otorga puntos.
           </small>
         }

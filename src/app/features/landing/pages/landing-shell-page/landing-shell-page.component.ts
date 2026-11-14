@@ -5,23 +5,24 @@ import { firstValueFrom } from 'rxjs';
 
 import { PublicAvailabilitySlotResponse } from '../../../../core/models/availability.models';
 import {
-  BannerResponse,
-  BrandingSettingsResponse,
+  PublicBannerResponse,
+  PublicBrandingResponse,
   BusinessScheduleDayResponse,
   BusinessScheduleResponse,
-  LandingContentResponse,
+  PublicLandingContentResponse,
   PublicStaffListItemResponse,
   PublicStaffServiceResponse,
-  TickerItemResponse,
+  PublicTickerItemResponse,
 } from '../../../../core/models/content.models';
 import { AuthService } from '../../../../core/services/auth.service';
 import { PublicAvailabilityApiService } from '../../../../core/services/public-availability-api.service';
 import { PublicContentApiService } from '../../../../core/services/public-content-api.service';
 import { PublicStaffApiService } from '../../../../core/services/public-staff-api.service';
 import { ThemeService } from '../../../../core/services/theme.service';
-import { getApiErrorMessage } from '../../../../core/utils/api-error.utils';
+import { PublicBrandingStore } from '../../../../core/services/public-branding.store';
 import { ApiFeedbackComponent } from '../../../../shared/components/api-feedback/api-feedback.component';
 import { PageStateComponent } from '../../../../shared/components/page-state/page-state.component';
+import { LoadErrorComponent } from '../../../../shared/components/load-error/load-error.component';
 import { whatsAppUrl } from '../../../../core/utils/whatsapp-link.utils';
 import { safeGoogleMapsUrl, safeHttpUrl } from '../../../../core/utils/safe-url.utils';
 
@@ -29,9 +30,11 @@ function todayIso(): string {
   return new Date().toISOString().slice(0, 10);
 }
 
+import { ModalDialogDirective } from '../../../../shared/directives/modal-dialog.directive';
+
 @Component({
   selector: 'app-landing-shell-page',
-  imports: [RouterLink, ApiFeedbackComponent, PageStateComponent],
+  imports: [ModalDialogDirective, RouterLink, ApiFeedbackComponent, PageStateComponent, LoadErrorComponent],
   templateUrl: './landing-shell-page.component.html',
   styleUrl: './landing-shell-page.component.scss',
 })
@@ -46,6 +49,7 @@ export class LandingShellPageComponent implements OnInit {
   private readonly publicStaffApiService = inject(PublicStaffApiService);
   private readonly publicAvailabilityApiService = inject(PublicAvailabilityApiService);
   private readonly themeService = inject(ThemeService);
+  private readonly brandingStore = inject(PublicBrandingStore);
   private readonly sanitizer = inject(DomSanitizer);
 
   private readonly timeFormatter = new Intl.DateTimeFormat('es-CO', {
@@ -56,18 +60,32 @@ export class LandingShellPageComponent implements OnInit {
 
   readonly isAuthenticated = computed(() => this.authService.isAuthenticated());
 
-  readonly landingContent = signal<LandingContentResponse | null>(null);
-  readonly branding = signal<BrandingSettingsResponse | null>(null);
-  readonly banners = signal<BannerResponse[]>([]);
-  readonly tickerItems = signal<TickerItemResponse[]>([]);
+  readonly landingContent = signal<PublicLandingContentResponse | null>(null);
+  readonly branding = signal<PublicBrandingResponse | null>(null);
+  readonly banners = signal<PublicBannerResponse[]>([]);
+  readonly tickerItems = signal<PublicTickerItemResponse[]>([]);
+  /** SONDA BUG-050: banners whose image could not load (deleted, archived, not an image); shown without it. */
+  readonly brokenBannerImages = signal<ReadonlySet<string>>(new Set());
+
+  markBannerImageBroken(bannerId: string): void {
+    this.brokenBannerImages.update((ids) => new Set([...ids, bannerId]));
+  }
+
+  /** SONDA BUG-051: the user asked the system for less motion; the ticker then stays still. */
+  readonly prefersReducedMotion = signal(
+    typeof globalThis.matchMedia === 'function' && globalThis.matchMedia('(prefers-reduced-motion: reduce)').matches,
+  );
   readonly tickerLoopItems = computed(() => {
     const items = this.tickerItems();
-    return items.length ? [...items, ...items] : [];
+    // The copy only exists to loop the animation seamlessly; without animation it would repeat the texts.
+    return items.length && !this.prefersReducedMotion() ? [...items, ...items] : items;
   });
   readonly staffMembers = signal<PublicStaffListItemResponse[]>([]);
   readonly businessSchedule = signal<BusinessScheduleResponse | null>(null);
   readonly isLoading = signal(true);
   readonly errorMessage = signal<string | null>(null);
+  /** SONDA BUG-102: the whole landing failed; the page shows «Reintentar». */
+  readonly loadError = signal<unknown>(null);
   readonly infoMessage = signal<string | null>(null);
 
   readonly isOpenNow = computed<boolean>(() => {
@@ -95,12 +113,8 @@ export class LandingShellPageComponent implements OnInit {
   /** General service the free times are computed for (ADR-0016 B3). */
   readonly selectedServiceId = signal<string | null>(null);
 
-  readonly activeBanners = computed(() =>
-    this.banners()
-      .filter((banner) => banner.isActive)
-      .slice()
-      .sort((first, second) => first.sortOrder - second.sortOrder),
-  );
+  /** The public API already returns only the active banners, in their order (SONDA BUG-101). */
+  readonly activeBanners = computed(() => this.banners());
 
   readonly mapEmbedUrl = computed<SafeResourceUrl | null>(() => {
     const content = this.landingContent();
@@ -125,6 +139,10 @@ export class LandingShellPageComponent implements OnInit {
 
   async ngOnInit(): Promise<void> {
     await this.loadLanding();
+  }
+
+  retryLanding(): Promise<void> {
+    return this.loadLanding();
   }
 
   visibleServices(staffMember: PublicStaffListItemResponse) {
@@ -231,7 +249,8 @@ export class LandingShellPageComponent implements OnInit {
     const [landingResult, brandingResult, bannersResult, staffResult, scheduleResult, tickerItemsResult] =
       await Promise.allSettled([
         firstValueFrom(this.publicContentApiService.getLanding()),
-        firstValueFrom(this.publicContentApiService.getBranding()),
+        // Shared with the shell header and the tab title (SONDA BUG-100): one request for all of them.
+        this.brandingStore.load(),
         firstValueFrom(this.publicContentApiService.getBanners()),
         firstValueFrom(this.publicStaffApiService.list()),
         firstValueFrom(this.publicContentApiService.getBusinessSchedule()),
@@ -286,7 +305,7 @@ export class LandingShellPageComponent implements OnInit {
 
     if (failedSections.length > 0 && hasAnyContent) {
       this.infoMessage.set(
-        `Se cargo el home con datos parciales. Falto: ${failedSections.join(', ')}.`,
+        `Se cargó el home con datos parciales. Faltó: ${failedSections.join(', ')}.`,
       );
     }
 
@@ -302,7 +321,9 @@ export class LandingShellPageComponent implements OnInit {
                 ? staffResult.reason
                 : null;
 
-      this.errorMessage.set(getApiErrorMessage(firstFailure));
+      this.loadError.set(firstFailure ?? new Error('landing failed'));
+    } else {
+      this.loadError.set(null);
     }
 
     this.isLoading.set(false);

@@ -1,9 +1,9 @@
 <section class="admin-content-page">
   <header class="admin-content-page__hero">
     <div>
-      <p class="admin-content-page__eyebrow">Gestion</p>
+      <p class="admin-content-page__eyebrow">Gestión</p>
       <h1>Landing</h1>
-      <p>Edita el contenido publico principal del inicio.</p>
+      <p>Edita el contenido público principal del inicio.</p>
     </div>
   </header>
 
@@ -14,75 +14,81 @@
     @if (isLoading()) {
       <app-page-state kind="loading" message="Cargando contenido de landing..." />
     } @else {
-      <form [formGroup]="landingForm" (ngSubmit)="submit()" novalidate>
+      <form appFormA11y [formGroup]="landingForm" (ngSubmit)="submit()" novalidate>
         <fieldset [disabled]="isBusy()">
           <div class="admin-content-page__grid">
             <div class="admin-content-page__field admin-content-page__field--wide">
               <label for="heroTitle"
-                >Titulo principal <span class="admin-content-page__required">*</span></label
+                >Título principal <span class="admin-content-page__required">*</span></label
               >
-              <input id="heroTitle" type="text" formControlName="heroTitle" />
+              <input maxlength="200" id="heroTitle" type="text" formControlName="heroTitle" />
+              <app-field-error controlName="heroTitle" [kinds]="['minlength', 'maxlength']" />
               @if (showError('heroTitle', 'required')) {
-                <p class="admin-content-page__error">El titulo principal es obligatorio.</p>
+                <p role="alert" class="admin-content-page__error">El título principal es obligatorio.</p>
               }
             </div>
 
             <div class="admin-content-page__field admin-content-page__field--wide">
-              <label for="heroSubtitle">Subtitulo principal</label>
-              <textarea id="heroSubtitle" rows="3" formControlName="heroSubtitle"></textarea>
+              <label for="heroSubtitle">Subtítulo principal</label>
+              <textarea maxlength="400" id="heroSubtitle" rows="3" formControlName="heroSubtitle"></textarea>
+              <app-field-error controlName="heroSubtitle" />
             </div>
 
             <div class="admin-content-page__field">
-              <label for="aboutTitle">Titulo sobre nosotros</label>
-              <input id="aboutTitle" type="text" formControlName="aboutTitle" />
+              <label for="aboutTitle">Título sobre nosotros</label>
+              <input maxlength="200" id="aboutTitle" type="text" formControlName="aboutTitle" />
+              <app-field-error controlName="aboutTitle" />
             </div>
 
             <div class="admin-content-page__field admin-content-page__field--wide">
               <label for="aboutText">Texto sobre nosotros</label>
-              <textarea id="aboutText" rows="4" formControlName="aboutText"></textarea>
+              <textarea maxlength="4000" id="aboutText" rows="4" formControlName="aboutText"></textarea>
+              <app-field-error controlName="aboutText" />
             </div>
 
             <div class="admin-content-page__field">
-              <label for="contactPhone">Telefono de contacto</label>
-              <input
+              <label for="contactPhone">Teléfono de contacto</label>
+              <input maxlength="40"
                 id="contactPhone"
                 type="text"
                 formControlName="contactPhone"
                 placeholder="+57 300 000 0000"
               />
+              <app-field-error controlName="contactPhone" />
             </div>
 
             <div class="admin-content-page__field">
-              <label for="mapsUrl">URL de ubicacion (Google Maps)</label>
-              <input
+              <label for="mapsUrl">URL de ubicación (Google Maps)</label>
+              <input maxlength="2000"
                 id="mapsUrl"
                 type="url"
                 formControlName="mapsUrl"
                 placeholder="https://maps.google.com/?q=..."
               />
               @if (showError('mapsUrl', 'mapsUrl')) {
-                <p class="admin-content-page__error">
+                <p role="alert" class="admin-content-page__error">
                   Usa un enlace de Google Maps que empiece por https:// (por ejemplo https://www.google.com/maps/…).
                 </p>
               }
               @if (showError('mapsUrl', 'maxlength')) {
-                <p class="admin-content-page__error">El enlace no puede superar 2000 caracteres.</p>
+                <p role="alert" class="admin-content-page__error">El enlace no puede superar 2000 caracteres.</p>
               }
               <p class="admin-content-page__hint">
                 Pega el enlace <strong>completo</strong> de Google Maps (no el link corto
                 <em>maps.app.goo.gl</em>). Si usas link corto, el mapa se mostrara usando la
-                direccion de texto.
+                dirección de texto.
               </p>
             </div>
 
             <div class="admin-content-page__field admin-content-page__field--wide">
-              <label for="address">Direccion (texto)</label>
-              <input
+              <label for="address">Dirección (texto)</label>
+              <input maxlength="300"
                 id="address"
                 type="text"
                 formControlName="address"
                 placeholder="Calle 123 #45-67, Ciudad"
               />
+              <app-field-error controlName="address" />
             </div>
           </div>
         </fieldset>

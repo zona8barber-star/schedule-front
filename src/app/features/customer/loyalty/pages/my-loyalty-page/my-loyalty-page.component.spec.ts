@@ -6,12 +6,14 @@ import { provideRouter } from '@angular/router';
 import { environment } from '../../../../../../environments/environment';
 import { MyLoyaltyCatalogView, MyLoyaltyRedemptionView } from '../../../../../core/models/loyalty-redemption.models';
 import { MyLoyaltyView } from '../../../../../core/models/loyalty-wallet.models';
+import { ConfirmModalService } from '../../../../../core/services/confirm-modal.service';
 import { MyLoyaltyPageComponent } from './my-loyalty-page.component';
 
 describe('MyLoyaltyPageComponent', () => {
   let fixture: ComponentFixture<MyLoyaltyPageComponent>;
   let component: MyLoyaltyPageComponent;
   let httpMock: HttpTestingController;
+  let confirm: ReturnType<typeof vi.fn>;
   const api = environment.defaultApiBaseUrl;
 
   const points: MyLoyaltyView = {
@@ -84,9 +86,15 @@ describe('MyLoyaltyPageComponent', () => {
   }
 
   beforeEach(async () => {
+    confirm = vi.fn(async () => true);
     await TestBed.configureTestingModule({
       imports: [MyLoyaltyPageComponent],
-      providers: [provideHttpClient(), provideHttpClientTesting(), provideRouter([])],
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideRouter([]),
+        { provide: ConfirmModalService, useValue: { confirm } },
+      ],
     }).compileComponents();
 
     fixture = TestBed.createComponent(MyLoyaltyPageComponent);
@@ -152,6 +160,8 @@ describe('MyLoyaltyPageComponent', () => {
     await settle();
 
     const cancelling = component.cancel(pending);
+    // The confirmation (BUG-088) answers first.
+    await settle();
     const request = httpMock.expectOne(`${api}/customer/loyalty/redemptions/d-1/cancel`);
     expect(request.request.body).toEqual({ reason: null });
     request.flush({ ...pending, status: 'Cancelled', canCancel: false });
@@ -160,6 +170,18 @@ describe('MyLoyaltyPageComponent', () => {
     await cancelling;
     await settle();
     expect(text()).toContain('Cancelado');
+  });
+
+  // SONDA BUG-088: cancelling a redemption asks first and «No, volver» keeps it.
+  it('asks before cancelling and keeps the redemption when the customer goes back', async () => {
+    flushAll(points, catalog, [pending]);
+    await settle();
+    confirm.mockResolvedValue(false);
+
+    await component.cancel(pending);
+
+    expect(confirm).toHaveBeenCalledWith(expect.objectContaining({ confirmLabel: 'Sí, cancelar canje', cancelLabel: 'No, volver' }));
+    httpMock.expectNone(`${api}/customer/loyalty/redemptions/d-1/cancel`);
   });
 
   it('points to the customer profile page when there is no profile yet', async () => {

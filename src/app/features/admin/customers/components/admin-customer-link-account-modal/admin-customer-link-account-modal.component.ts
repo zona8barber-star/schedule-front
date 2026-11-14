@@ -10,9 +10,13 @@ import { AdminCustomersApiService } from '../../../../../core/services/admin-cus
 import { getApiErrorMessage } from '../../../../../core/utils/api-error.utils';
 import { ApiFeedbackComponent } from '../../../../../shared/components/api-feedback/api-feedback.component';
 
+import { ModalDialogDirective } from '../../../../../shared/directives/modal-dialog.directive';
+
+import { SingleFlight } from '../../../../../core/utils/single-flight';
+
 @Component({
   selector: 'app-admin-customer-link-account-modal',
-  imports: [FormsModule, ApiFeedbackComponent],
+  imports: [ModalDialogDirective, FormsModule, ApiFeedbackComponent],
   templateUrl: './admin-customer-link-account-modal.component.html',
   styleUrl: '../customer-modal.scss',
 })
@@ -66,6 +70,7 @@ export class AdminCustomerLinkAccountModalComponent implements OnInit {
     this.identityVerified.set(false);
   }
 
+  @SingleFlight()
   async confirm(): Promise<void> {
     const selected = this.selected();
     if (!selected || !this.identityVerified()) {

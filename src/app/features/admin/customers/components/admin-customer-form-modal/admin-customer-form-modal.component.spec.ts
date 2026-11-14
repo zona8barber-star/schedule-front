@@ -13,6 +13,7 @@ describe('AdminCustomerFormModalComponent', () => {
   const base = `${environment.defaultApiBaseUrl}/admin/customers`;
 
   const created: CustomerDetailView = {
+    version: 1,
     id: 'c-1',
     fullName: 'Carlos Pérez',
     phone: '3001234567',
@@ -119,5 +120,42 @@ describe('AdminCustomerFormModalComponent', () => {
     await flushMicrotasks();
     httpMock.expectOne(base).flush(created);
     await secondSubmit;
+  });
+
+  describe('editing (SONDA BUG-061)', () => {
+    it('sends the version the form was opened on', async () => {
+      component.customer = { ...created, id: 'c-1', version: 7 };
+      fillForm();
+
+      const submitting = component.submit();
+      httpMock.expectOne((request) => request.url === `${base}/duplicates`).flush([]);
+      await flushMicrotasks();
+      const updateReq = httpMock.expectOne(`${base}/c-1`);
+      expect(updateReq.request.method).toBe('PUT');
+      expect(updateReq.request.body).toEqual({
+        fullName: 'Carlos Pérez',
+        phone: '3001234567',
+        email: 'carlos@example.com',
+        version: 7,
+      });
+      updateReq.flush({ ...created, id: 'c-1', version: 8 });
+      await submitting;
+    });
+
+    it('shows the conflict when another edit was saved first', async () => {
+      component.customer = { ...created, id: 'c-1', version: 7 };
+      fillForm();
+
+      const submitting = component.submit();
+      httpMock.expectOne((request) => request.url === `${base}/duplicates`).flush([]);
+      await flushMicrotasks();
+      httpMock.expectOne(`${base}/c-1`).flush(
+        { status: 409, detail: 'El cliente fue modificado por otra operación. Recarga e intenta de nuevo.' },
+        { status: 409, statusText: 'Conflict' },
+      );
+      await submitting;
+
+      expect(component.errorMessage()).toBe('El cliente fue modificado por otra operación. Recarga e intenta de nuevo.');
+    });
   });
 });

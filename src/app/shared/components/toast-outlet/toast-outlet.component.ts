@@ -21,7 +21,7 @@ export class ToastOutletComponent {
       case 'success':
         return 'Listo';
       case 'error':
-        return 'Atencion';
+        return 'Atención';
       default:
         return 'Info';
     }

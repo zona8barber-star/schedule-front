@@ -4,7 +4,7 @@ import { catchError, tap, throwError } from 'rxjs';
 
 import { RuntimeConfigService } from '../config/runtime-config.service';
 import { ToastService } from '../services/toast.service';
-import { getApiErrorMessage } from '../utils/api-error.utils';
+import { CONNECTIVITY_ERROR_MESSAGE, getApiErrorMessage, isConnectivityError } from '../utils/api-error.utils';
 
 export const toastInterceptor: HttpInterceptorFn = (request, next) => {
   const runtimeConfigService = inject(RuntimeConfigService);
@@ -60,18 +60,24 @@ function resolveSuccessMessage(requestMethod: string, requestPath: string): stri
   }
 
   if (requestPath.startsWith('/customer/appointments/') && requestPath.endsWith('/review')) {
-    return 'Resena publicada correctamente.';
+    return 'Reseña publicada correctamente.';
   }
 
   if (requestPath.includes('/appointments/') && requestPath.endsWith('/cancel')) {
     return 'La cita fue cancelada correctamente.';
   }
 
-  if (requestPath.startsWith('/staff/availability')) {
+  // SONDA BUG-031: an absence registered from the admin said «Profesional creado correctamente.».
+  if (requestPath.includes('/unavailable-periods')) {
+    return method === 'DELETE' ? 'Ausentismo eliminado correctamente.' : 'Ausentismo registrado correctamente.';
+  }
+
+  if (requestPath.startsWith('/staff/availability') || /^\/admin\/staff\/[^/]+\/availability/.test(requestPath)) {
     return 'Disponibilidad actualizada correctamente.';
   }
 
-  if (requestPath.startsWith('/admin/staff') && method === 'POST') {
+  // Only the creation itself (POST /admin/staff); other POSTs under a professional are not «creado».
+  if ((requestPath === '/admin/staff' || requestPath === '/admin/staff/me') && method === 'POST') {
     return 'Profesional creado correctamente.';
   }
 
@@ -124,9 +130,21 @@ function resolveErrorMessage(
     return null;
   }
 
+  // SONDA BUG-066 / BUG-045: without network every request fails at once (content, profiles, reviews, each retry of
+  // the availability); they all share one text, so the toast service keeps a single notice.
+  if (isConnectivityError(error)) {
+    return CONNECTIVITY_ERROR_MESSAGE;
+  }
+
   const method = requestMethod.toUpperCase();
 
   if (method === 'GET') {
+    // SONDA BUG-044: a record that does not exist is shown by its page («No encontramos…» with a way back); a toast
+    // on top said it a second time (in English, or as «No pudimos cargar el listado…»).
+    if (error.status === 404) {
+      return null;
+    }
+
     // The forms that ask for a professional's services show their own message next to the field; a toast about
     // "the appointments" there was false, they had loaded (SONDA BUG-032).
     if (requestPath.endsWith('/appointments/service-options')) {
@@ -142,7 +160,7 @@ function resolveErrorMessage(
     }
 
     if (requestPath.includes('/reviews')) {
-      return 'No pudimos cargar las resenas por ahora.';
+      return 'No pudimos cargar las reseñas por ahora.';
     }
 
     if (requestPath.startsWith('/public/staff')) {
@@ -159,7 +177,7 @@ function resolveErrorMessage(
     }
 
     if (requestPath.startsWith('/customer/reviews')) {
-      return 'No pudimos cargar tus resenas por ahora.';
+      return 'No pudimos cargar tus reseñas por ahora.';
     }
 
     if (requestPath.startsWith('/staff/availability')) {
@@ -172,6 +190,10 @@ function resolveErrorMessage(
 
     if (requestPath.startsWith('/admin/appointments')) {
       return 'No pudimos cargar las citas por ahora.';
+    }
+
+    if (/^\/admin\/staff\/[^/]+\/availability/.test(requestPath)) {
+      return 'No pudimos cargar la disponibilidad por ahora.';
     }
 
     if (requestPath.startsWith('/admin/staff')) {
@@ -193,14 +215,18 @@ function resolveErrorMessage(
   }
 
   if (error.status === 409 && requestPath.includes('/appointments')) {
-    return 'Ese horario ya no esta disponible. Intenta con otro turno.';
+    return 'Ese horario ya no está disponible. Intenta con otro turno.';
   }
 
   if (requestPath === '/media/upload') {
     return 'No pudimos subir el archivo. Intenta nuevamente.';
   }
 
-  if (requestPath.startsWith('/staff/availability')) {
+  if (requestPath.includes('/unavailable-periods')) {
+    return getApiErrorMessage(error, 'No pudimos guardar el ausentismo. Intenta nuevamente.');
+  }
+
+  if (requestPath.startsWith('/staff/availability') || /^\/admin\/staff\/[^/]+\/availability/.test(requestPath)) {
     return 'No pudimos guardar la disponibilidad. Intenta nuevamente.';
   }
 

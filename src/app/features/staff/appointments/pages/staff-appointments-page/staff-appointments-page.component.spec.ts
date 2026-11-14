@@ -1,7 +1,7 @@
 import { signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
-import { of } from 'rxjs';
+import { of, Subject } from 'rxjs';
 
 import { AppointmentResponse, AppointmentServiceOption } from '../../../../../core/models/appointment.models';
 import { ServiceRecordEligibilityService } from '../../../../../core/services/service-record-eligibility.service';
@@ -17,6 +17,7 @@ describe('StaffAppointmentsPageComponent (service and duration)', () => {
     serviceOptions: ReturnType<typeof vi.fn>;
     createManual: ReturnType<typeof vi.fn>;
     update: ReturnType<typeof vi.fn>;
+    markCompleted: ReturnType<typeof vi.fn>;
   };
 
   const options: AppointmentServiceOption[] = [
@@ -60,6 +61,7 @@ describe('StaffAppointmentsPageComponent (service and duration)', () => {
       serviceOptions: vi.fn(() => of(options)),
       createManual: vi.fn(() => of(appointment)),
       update: vi.fn(() => of(appointment)),
+      markCompleted: vi.fn(() => new Subject<AppointmentResponse>()),
     };
 
     await TestBed.configureTestingModule({
@@ -114,6 +116,37 @@ describe('StaffAppointmentsPageComponent (service and duration)', () => {
     expect(body.generalServiceId).toBe('g-beard');
     expect(body).not.toHaveProperty('endsAtUtc');
     expect(body).not.toHaveProperty('durationMinutes');
+  });
+
+  // SONDA BUG-027: «Nueva cita» accepted any length and only the server answered, with a technical 400.
+  it('limits «Nueva cita» to the server lengths and explains an over-long or blank name', async () => {
+    component.openCreateModal();
+    await render();
+    const element = fixture.nativeElement as HTMLElement;
+    const limit = (selector: string) => element.querySelector<HTMLInputElement>(selector)?.maxLength;
+
+    expect(limit('#createCustomerName')).toBe(120);
+    expect(limit('#createCustomerPhone')).toBe(40);
+    expect(element.querySelector<HTMLTextAreaElement>('#createNotes')?.maxLength).toBe(2000);
+
+    component.createForm.patchValue({ startsAt: '2026-11-07T10:00', generalServiceId: 'g-cut', customerName: 'a'.repeat(121) });
+    component.createForm.controls.customerName.markAsTouched();
+    fixture.detectChanges();
+    expect(element.textContent).toContain('Puede tener como máximo 120 caracteres (ahora tiene 121).');
+
+    component.createForm.patchValue({ customerName: '   ' });
+    await component.submitCreate();
+    expect(api.createManual).not.toHaveBeenCalled();
+  });
+
+  // SONDA BUG-025: a double click on «Completar» sent two PATCH requests.
+  it('sends a single request when «Completar» is clicked twice in a row', async () => {
+    await render();
+
+    void component.markCompleted(appointment);
+    void component.markCompleted(appointment);
+
+    expect(api.markCompleted).toHaveBeenCalledTimes(1);
   });
 
   it('requires a service to create', async () => {

@@ -9,6 +9,7 @@ import { ServiceView } from '../../../../../core/models/service.models';
 import { AuthService } from '../../../../../core/services/auth.service';
 import { DEFAULT_MEMBERSHIP_TERMS } from '../../membership-plan-defaults';
 import { AdminMembershipPlanFormModalComponent } from './admin-membership-plan-form-modal.component';
+import { MoneyConfirmationService } from '../../../../../core/services/money-confirmation.service';
 
 describe('AdminMembershipPlanFormModalComponent', () => {
   let fixture: ComponentFixture<AdminMembershipPlanFormModalComponent>;
@@ -62,6 +63,8 @@ describe('AdminMembershipPlanFormModalComponent', () => {
     await TestBed.configureTestingModule({
       imports: [AdminMembershipPlanFormModalComponent],
       providers: [
+        // Saving money values asks for confirmation (BUG-080 decision); these specs cover the save itself.
+        { provide: MoneyConfirmationService, useValue: { confirm: () => Promise.resolve(true) } },
         provideHttpClient(),
         provideHttpClientTesting(),
         { provide: AuthService, useValue: { hasPermission: (code: PermissionCode) => permissions.includes(code) } },
@@ -108,6 +111,7 @@ describe('AdminMembershipPlanFormModalComponent', () => {
     component.giftsArray.at(1).patchValue({ description: 'Cera para cabello' });
 
     const submitting = component.submit();
+    await new Promise<void>((resolve) => setTimeout(resolve, 0)); // the amount confirmation resolves first
     const req = httpMock.expectOne(`${api}/admin/membership-plans`);
     expect(req.request.method).toBe('POST');
     expect(req.request.body).toEqual({
@@ -222,6 +226,7 @@ describe('AdminMembershipPlanFormModalComponent', () => {
     expect(request.giftRules[0].id).toBe('g-1');
 
     const submitting = component.submit();
+    await new Promise<void>((resolve) => setTimeout(resolve, 0)); // the amount confirmation resolves first
     const req = httpMock.expectOne(`${api}/admin/membership-plans/p-1`);
     expect(req.request.method).toBe('PUT');
     req.flush(existingPlan);
@@ -241,6 +246,7 @@ describe('AdminMembershipPlanFormModalComponent', () => {
 
     component.form.patchValue({ loyaltyPoints: 120 });
     const submitting = component.submit();
+    await new Promise<void>((resolve) => setTimeout(resolve, 0)); // the amount confirmation resolves first
     const req = httpMock.expectOne(`${api}/admin/membership-plans/p-1`);
     expect(req.request.body.loyaltyPoints).toBe(120);
     req.flush({ ...existingPlan, loyaltyPoints: 120 });

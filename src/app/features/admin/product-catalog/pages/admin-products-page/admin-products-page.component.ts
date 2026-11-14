@@ -9,6 +9,7 @@ import { ProductCategoryView, ProductView, formatCop } from '../../../../../core
 import { CATALOG_MAX_SORT_ORDER } from '../../../../../core/models/service-catalog.models';
 import { AdminProductCatalogApiService } from '../../../../../core/services/admin-product-catalog-api.service';
 import { AuthService } from '../../../../../core/services/auth.service';
+import { MoneyConfirmationService } from '../../../../../core/services/money-confirmation.service';
 import { ConfirmModalService } from '../../../../../core/services/confirm-modal.service';
 import { getApiErrorMessage } from '../../../../../core/utils/api-error.utils';
 import {
@@ -21,6 +22,7 @@ import {
 } from '../../../../../core/utils/list-query.utils';
 import { ApiFeedbackComponent } from '../../../../../shared/components/api-feedback/api-feedback.component';
 import { PaginatorComponent } from '../../../../../shared/components/paginator/paginator.component';
+import { trimmedMinLength, trimmedRequired } from '../../../../../core/utils/form-validators';
 
 const MAX_IMAGE_BYTES = 10_485_760; // 10 MB, same limit as the API
 
@@ -32,9 +34,17 @@ function integerValidator(control: AbstractControl): ValidationErrors | null {
  * Master of the products of the public catalog, each in a product category (ADR-0016 B5). The list is paginated on the
  * server with text, category and status filters kept in the URL (B7).
  */
+import { FieldErrorComponent } from '../../../../../shared/components/field-error/field-error.component';
+
+import { ModalDialogDirective } from '../../../../../shared/directives/modal-dialog.directive';
+
+import { FormA11yDirective } from '../../../../../shared/directives/form-a11y.directive';
+
+import { SingleFlight } from '../../../../../core/utils/single-flight';
+
 @Component({
   selector: 'app-admin-products-page',
-  imports: [ReactiveFormsModule, RouterLink, ApiFeedbackComponent, PaginatorComponent],
+  imports: [FormA11yDirective, ModalDialogDirective, FieldErrorComponent, ReactiveFormsModule, RouterLink, ApiFeedbackComponent, PaginatorComponent],
   templateUrl: './admin-products-page.component.html',
   styleUrl: '../../../service-catalog/catalog-page.scss',
 })
@@ -42,6 +52,7 @@ export class AdminProductsPageComponent implements OnInit {
   private readonly api = inject(AdminProductCatalogApiService);
   private readonly authService = inject(AuthService);
   private readonly confirmModal = inject(ConfirmModalService);
+  private readonly moneyConfirmation = inject(MoneyConfirmationService);
   private readonly formBuilder = inject(FormBuilder);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
@@ -84,7 +95,7 @@ export class AdminProductsPageComponent implements OnInit {
 
   readonly form = this.formBuilder.nonNullable.group({
     categoryId: ['', [Validators.required]],
-    name: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(120)]],
+    name: ['', [trimmedRequired, trimmedMinLength(2), Validators.maxLength(120)]],
     description: ['', [Validators.maxLength(1000)]],
     price: [0, [Validators.required, Validators.min(0), integerValidator]],
     sortOrder: [0, [Validators.required, Validators.min(0), Validators.max(CATALOG_MAX_SORT_ORDER), integerValidator]],
@@ -145,11 +156,19 @@ export class AdminProductsPageComponent implements OnInit {
     this.resetImageState();
   }
 
+  @SingleFlight()
   async save(): Promise<void> {
     if (this.form.invalid) {
       this.form.markAllAsTouched();
       return;
     }
+
+    const confirmed = await this.moneyConfirmation.confirm({
+      action: this.editing() ? 'Guardar el precio del producto' : 'Crear el producto',
+      amount: Math.trunc(this.form.controls.price.value),
+      detail: this.form.controls.name.value.trim() || undefined,
+    });
+    if (!confirmed) return;
 
     this.isSaving.set(true);
     this.formError.set(null);
@@ -213,6 +232,7 @@ export class AdminProductsPageComponent implements OnInit {
     }
   }
 
+  @SingleFlight()
   async removeImage(): Promise<void> {
     const product = this.editing();
     if (!product) {
@@ -237,6 +257,7 @@ export class AdminProductsPageComponent implements OnInit {
     }
   }
 
+  @SingleFlight()
   async toggleActive(product: ProductView): Promise<void> {
     this.busyId.set(product.id);
     this.errorMessage.set(null);
@@ -250,6 +271,7 @@ export class AdminProductsPageComponent implements OnInit {
     }
   }
 
+  @SingleFlight()
   async remove(product: ProductView): Promise<void> {
     const confirmed = await this.confirmModal.confirm({
       title: '¿Eliminar producto?',

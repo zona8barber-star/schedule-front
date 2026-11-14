@@ -25,6 +25,7 @@ import { ServiceView } from '../../../../../core/models/service.models';
 import { AdminMembershipPlansApiService } from '../../../../../core/services/admin-membership-plans-api.service';
 import { AdminServicesApiService } from '../../../../../core/services/admin-services-api.service';
 import { AuthService } from '../../../../../core/services/auth.service';
+import { MoneyConfirmationService } from '../../../../../core/services/money-confirmation.service';
 import { getApiErrorMessage } from '../../../../../core/utils/api-error.utils';
 import { ApiFeedbackComponent } from '../../../../../shared/components/api-feedback/api-feedback.component';
 import {
@@ -33,6 +34,7 @@ import {
   MEMBERSHIP_MAX_DURATION_DAYS,
   MEMBERSHIP_MAX_QUANTITY,
 } from '../../membership-plan-defaults';
+import { trimmedMinLength, trimmedRequired } from '../../../../../core/utils/form-validators';
 
 function integerValidator(control: AbstractControl): ValidationErrors | null {
   return control.value === null || Number.isInteger(control.value) ? null : { integer: true };
@@ -46,13 +48,18 @@ interface ServiceOption {
   isActive: boolean;
 }
 
+import { ModalDialogDirective } from '../../../../../shared/directives/modal-dialog.directive';
+
+import { SingleFlight } from '../../../../../core/utils/single-flight';
+
 @Component({
   selector: 'app-admin-membership-plan-form-modal',
-  imports: [ReactiveFormsModule, ApiFeedbackComponent],
+  imports: [ModalDialogDirective, ReactiveFormsModule, ApiFeedbackComponent],
   templateUrl: './admin-membership-plan-form-modal.component.html',
   styleUrl: './admin-membership-plan-form-modal.component.scss',
 })
 export class AdminMembershipPlanFormModalComponent implements OnInit {
+  private readonly moneyConfirmation = inject(MoneyConfirmationService);
   private readonly formBuilder = inject(FormBuilder);
   private readonly membershipPlansApiService = inject(AdminMembershipPlansApiService);
   private readonly servicesApiService = inject(AdminServicesApiService);
@@ -79,7 +86,7 @@ export class AdminMembershipPlanFormModalComponent implements OnInit {
   readonly serviceOptions = signal<ServiceOption[]>([]);
 
   readonly form = this.formBuilder.group({
-    name: this.formBuilder.nonNullable.control('', [Validators.required, Validators.minLength(2), Validators.maxLength(120)]),
+    name: this.formBuilder.nonNullable.control('', [trimmedRequired, trimmedMinLength(2), Validators.maxLength(120)]),
     description: this.formBuilder.nonNullable.control('', [Validators.maxLength(1000)]),
     price: this.formBuilder.nonNullable.control(0, [Validators.required, Validators.min(0), integerValidator]),
     mode: this.formBuilder.nonNullable.control<MembershipPlanMode>('Pool'),
@@ -213,6 +220,7 @@ export class AdminMembershipPlanFormModalComponent implements OnInit {
     return this.serviceOptions().some((option) => option.id === serviceId && !option.isActive);
   }
 
+  @SingleFlight()
   async submit(): Promise<void> {
     this.submitted.set(true);
     if (this.form.invalid || this.planProblems().length > 0) {
@@ -220,10 +228,17 @@ export class AdminMembershipPlanFormModalComponent implements OnInit {
       return;
     }
 
+    const request = this.buildRequest();
+    const confirmed = await this.moneyConfirmation.confirm({
+      action: this.planId ? 'Guardar el plan' : 'Crear el plan',
+      amount: request.price,
+      detail: request.name,
+    });
+    if (!confirmed) return;
+
     this.isSaving.set(true);
     this.errorMessage.set(null);
     try {
-      const request = this.buildRequest();
       const result = this.planId
         ? await firstValueFrom(this.membershipPlansApiService.update(this.planId, request))
         : await firstValueFrom(this.membershipPlansApiService.create(request));
@@ -368,7 +383,7 @@ export class AdminMembershipPlanFormModalComponent implements OnInit {
       serviceId: this.formBuilder.nonNullable.control(gift.serviceId, isService ? [Validators.required] : []),
       description: this.formBuilder.nonNullable.control(
         gift.description,
-        isService ? [] : [Validators.required, Validators.minLength(2), Validators.maxLength(200)],
+        isService ? [] : [trimmedRequired, trimmedMinLength(2), Validators.maxLength(200)],
       ),
       quantity: this.formBuilder.nonNullable.control(gift.quantity, quantityValidators),
       condition: this.formBuilder.nonNullable.control<MembershipGiftCondition>(gift.condition),

@@ -69,8 +69,8 @@ export const STAFF_AVAILABILITY_DAYS: AvailabilityDayOption[] = [
   { dayOfWeek: 0, key: 'sunday', label: 'Domingo' },
   { dayOfWeek: 1, key: 'monday', label: 'Lunes' },
   { dayOfWeek: 2, key: 'tuesday', label: 'Martes' },
-  { dayOfWeek: 3, key: 'wednesday', label: 'Miercoles' },
+  { dayOfWeek: 3, key: 'wednesday', label: 'Miércoles' },
   { dayOfWeek: 4, key: 'thursday', label: 'Jueves' },
   { dayOfWeek: 5, key: 'friday', label: 'Viernes' },
-  { dayOfWeek: 6, key: 'saturday', label: 'Sabado' },
+  { dayOfWeek: 6, key: 'saturday', label: 'Sábado' },
 ] as const;

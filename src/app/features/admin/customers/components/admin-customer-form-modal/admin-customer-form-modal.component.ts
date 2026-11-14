@@ -11,6 +11,7 @@ import {
 import { AdminCustomersApiService } from '../../../../../core/services/admin-customers-api.service';
 import { getApiErrorMessage } from '../../../../../core/utils/api-error.utils';
 import { ApiFeedbackComponent } from '../../../../../shared/components/api-feedback/api-feedback.component';
+import { trimmedMinLength, trimmedRequired } from '../../../../../core/utils/form-validators';
 
 const PHONE_PATTERN = /^(?=(?:\D*\d){7,})[\d\s()+-]+$/;
 
@@ -30,9 +31,17 @@ export interface CustomerCreationSource {
   findDuplicates(email: string, phone: string): Observable<CustomerDuplicateCandidate[]>;
 }
 
+import { FieldErrorComponent } from '../../../../../shared/components/field-error/field-error.component';
+
+import { ModalDialogDirective } from '../../../../../shared/directives/modal-dialog.directive';
+
+import { FormA11yDirective } from '../../../../../shared/directives/form-a11y.directive';
+
+import { SingleFlight } from '../../../../../core/utils/single-flight';
+
 @Component({
   selector: 'app-admin-customer-form-modal',
-  imports: [ReactiveFormsModule, ApiFeedbackComponent],
+  imports: [FormA11yDirective, ModalDialogDirective, FieldErrorComponent, ReactiveFormsModule, ApiFeedbackComponent],
   templateUrl: './admin-customer-form-modal.component.html',
   styleUrl: '../customer-modal.scss',
 })
@@ -60,7 +69,7 @@ export class AdminCustomerFormModalComponent implements OnInit {
   private acknowledgedKey: string | null = null;
 
   readonly form = this.formBuilder.nonNullable.group({
-    fullName: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(120)]],
+    fullName: ['', [trimmedRequired, trimmedMinLength(2), Validators.maxLength(120)]],
     phone: ['', [Validators.required, Validators.maxLength(40), Validators.pattern(PHONE_PATTERN)]],
     email: ['', [Validators.required, Validators.email, Validators.maxLength(256)]],
   });
@@ -90,6 +99,7 @@ export class AdminCustomerFormModalComponent implements OnInit {
     });
   }
 
+  @SingleFlight()
   async submit(): Promise<void> {
     if (this.form.invalid) {
       this.form.markAllAsTouched();
@@ -127,7 +137,11 @@ export class AdminCustomerFormModalComponent implements OnInit {
       }
 
       const result = this.customer
-        ? await firstValueFrom(this.adminCustomersApiService.update(this.customer.id, payload))
+        ? // The version the form was opened on: another edit saved meanwhile answers 409 instead of being
+          // overwritten in silence (SONDA BUG-061); the API message asks to reload.
+          await firstValueFrom(
+            this.adminCustomersApiService.update(this.customer.id, { ...payload, version: this.customer.version }),
+          )
         : await firstValueFrom(this.adminCustomersApiService.create(payload));
       this.saved.emit(result);
     } catch (error) {

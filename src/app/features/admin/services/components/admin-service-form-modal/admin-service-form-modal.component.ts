@@ -24,8 +24,10 @@ import { ServiceView } from '../../../../../core/models/service.models';
 import { AdminServiceCatalogApiService } from '../../../../../core/services/admin-service-catalog-api.service';
 import { AdminServicesApiService } from '../../../../../core/services/admin-services-api.service';
 import { AuthService } from '../../../../../core/services/auth.service';
+import { MoneyConfirmationService } from '../../../../../core/services/money-confirmation.service';
 import { getApiErrorMessage } from '../../../../../core/utils/api-error.utils';
 import { ApiFeedbackComponent } from '../../../../../shared/components/api-feedback/api-feedback.component';
+import { trimmedMinLength, trimmedRequired } from '../../../../../core/utils/form-validators';
 
 export interface GeneralServiceOptionGroup {
   categoryName: string;
@@ -36,13 +38,22 @@ function integerValidator(control: AbstractControl): ValidationErrors | null {
   return Number.isInteger(control.value) ? null : { integer: true };
 }
 
+import { FieldErrorComponent } from '../../../../../shared/components/field-error/field-error.component';
+
+import { ModalDialogDirective } from '../../../../../shared/directives/modal-dialog.directive';
+
+import { FormA11yDirective } from '../../../../../shared/directives/form-a11y.directive';
+
+import { SingleFlight } from '../../../../../core/utils/single-flight';
+
 @Component({
   selector: 'app-admin-service-form-modal',
-  imports: [ReactiveFormsModule, ApiFeedbackComponent],
+  imports: [FormA11yDirective, ModalDialogDirective, FieldErrorComponent, ReactiveFormsModule, ApiFeedbackComponent],
   templateUrl: './admin-service-form-modal.component.html',
   styleUrl: './admin-service-form-modal.component.scss',
 })
 export class AdminServiceFormModalComponent implements OnInit {
+  private readonly moneyConfirmation = inject(MoneyConfirmationService);
   private readonly formBuilder = inject(FormBuilder);
   private readonly adminServicesApiService = inject(AdminServicesApiService);
   private readonly catalogApi = inject(AdminServiceCatalogApiService);
@@ -85,7 +96,7 @@ export class AdminServiceFormModalComponent implements OnInit {
 
   readonly form = this.formBuilder.nonNullable.group({
     generalServiceId: ['', [Validators.required]],
-    name: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(120)]],
+    name: ['', [trimmedRequired, trimmedMinLength(2), Validators.maxLength(120)]],
     basePrice: [0, [Validators.required, Validators.min(0), integerValidator]],
     businessPercentage: [0, [Validators.required, Validators.min(0), Validators.max(100), integerValidator]],
     loyaltyPoints: [
@@ -125,11 +136,19 @@ export class AdminServiceFormModalComponent implements OnInit {
     }
   }
 
+  @SingleFlight()
   async submit(): Promise<void> {
     if (this.form.invalid) {
       this.form.markAllAsTouched();
       return;
     }
+
+    const confirmed = await this.moneyConfirmation.confirm({
+      action: this.serviceId ? 'Guardar la tarifa' : 'Crear la tarifa',
+      amount: Math.trunc(this.form.controls.basePrice.value),
+      detail: this.form.controls.name.value.trim() || undefined,
+    });
+    if (!confirmed) return;
 
     this.isSaving.set(true);
     this.errorMessage.set(null);

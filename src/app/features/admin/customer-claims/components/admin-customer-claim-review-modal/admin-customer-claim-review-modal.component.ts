@@ -1,4 +1,4 @@
-import { DatePipe } from '@angular/common';
+import { BogotaDatePipe } from '../../../../../shared/pipes/bogota-date.pipe';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, EventEmitter, Input, OnInit, Output, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
@@ -13,9 +13,13 @@ import { ApiFeedbackComponent } from '../../../../../shared/components/api-feedb
  * Approves (linking the account to the chosen profile, after verifying the identity in person) or rejects one claim.
  * Candidates are suggestions from the data the customer sent; nothing is linked until the reviewer confirms.
  */
+import { ModalDialogDirective } from '../../../../../shared/directives/modal-dialog.directive';
+
+import { SingleFlight } from '../../../../../core/utils/single-flight';
+
 @Component({
   selector: 'app-admin-customer-claim-review-modal',
-  imports: [DatePipe, ReactiveFormsModule, ApiFeedbackComponent],
+  imports: [ModalDialogDirective, BogotaDatePipe, ReactiveFormsModule, ApiFeedbackComponent],
   templateUrl: './admin-customer-claim-review-modal.component.html',
   styleUrl: '../../../service-records/components/admin-service-record-review-modal/admin-service-record-review-modal.component.scss',
 })
@@ -68,6 +72,7 @@ export class AdminCustomerClaimReviewModalComponent implements OnInit {
     return candidate.matchedOn.map((field) => (field === 'email' ? 'correo' : 'teléfono')).join(' y ');
   }
 
+  @SingleFlight()
   async approve(): Promise<void> {
     const candidate = this.selected();
     if (!candidate) {
@@ -88,6 +93,7 @@ export class AdminCustomerClaimReviewModalComponent implements OnInit {
     );
   }
 
+  @SingleFlight()
   async reject(): Promise<void> {
     const reason = this.form.controls.reason.value.trim();
     if (reason.length < 3) {

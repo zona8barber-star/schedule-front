@@ -62,9 +62,17 @@ type ReviewFormGroup = FormGroup<{
   comment: FormControl<string>;
 }>;
 
+import { FieldErrorComponent } from '../../../../../shared/components/field-error/field-error.component';
+
+import { ModalDialogDirective } from '../../../../../shared/directives/modal-dialog.directive';
+
+import { FormA11yDirective } from '../../../../../shared/directives/form-a11y.directive';
+
+import { SingleFlight } from '../../../../../core/utils/single-flight';
+
 @Component({
   selector: 'app-customer-appointments-page',
-  imports: [
+  imports: [FormA11yDirective, ModalDialogDirective, FieldErrorComponent, 
     ReactiveFormsModule,
     ApiFeedbackComponent,
     PageStateComponent,
@@ -271,6 +279,7 @@ export class CustomerAppointmentsPageComponent implements OnInit {
     this.openReschedule(appointment);
   }
 
+  @SingleFlight()
   async cancelAppointment(appointment: AppointmentResponse): Promise<void> {
     if (!this.canCancel(appointment)) return;
 
@@ -326,6 +335,7 @@ export class CustomerAppointmentsPageComponent implements OnInit {
     this.rescheduleSlot.set(slot);
   }
 
+  @SingleFlight()
   async confirmReschedule(): Promise<void> {
     const appointment = this.rescheduleAppointment();
     const slot = this.rescheduleSlot();
@@ -357,6 +367,15 @@ export class CustomerAppointmentsPageComponent implements OnInit {
         this.rescheduleError.set('Esa hora se acaba de ocupar. Elige otra.');
         this.rescheduleSlot.set(null);
         await this.reschedulePicker()?.reload();
+      } else if (isHttpStatus(error, 422) || isHttpStatus(error, 404)) {
+        // SONDA BUG-063: the appointment changed meanwhile (cancelled, completed, removed). Keeping the modal open
+        // offered a reschedule that can no longer happen: it closes and the list shows the real state.
+        this.isRescheduling.set(false);
+        this.closeReschedule();
+        this.toastService.error(
+          getApiErrorMessage(error, 'Esta cita ya no se puede reprogramar porque cambió de estado. Revisa tu lista de citas.'),
+        );
+        await this.loadAppointments();
       } else {
         this.rescheduleError.set(getApiErrorMessage(error));
       }
@@ -428,6 +447,7 @@ export class CustomerAppointmentsPageComponent implements OnInit {
     return this.reviewForm.controls.comment.value.length;
   }
 
+  @SingleFlight()
   async submitReview(): Promise<void> {
     const appointment = this.reviewModalAppointment();
     if (!appointment || !this.canReview(appointment)) return;

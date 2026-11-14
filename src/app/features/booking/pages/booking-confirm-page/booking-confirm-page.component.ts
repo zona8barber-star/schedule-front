@@ -19,6 +19,8 @@ import { ApiFeedbackComponent } from '../../../../shared/components/api-feedback
 import { PageStateComponent } from '../../../../shared/components/page-state/page-state.component';
 import { whatsAppUrl } from '../../../../core/utils/whatsapp-link.utils';
 
+import { SingleFlight } from '../../../../core/utils/single-flight';
+
 @Component({
   selector: 'app-booking-confirm-page',
   imports: [RouterLink, ApiFeedbackComponent, PageStateComponent],
@@ -114,6 +116,7 @@ export class BookingConfirmPageComponent implements OnInit {
     }
   }
 
+  @SingleFlight()
   async confirmBooking(): Promise<void> {
     this.errorMessage.set(null);
     this.slotTaken.set(false);

@@ -18,6 +18,7 @@ import {
 } from '../../../../../core/models/service-record.models';
 import { AuthService } from '../../../../../core/services/auth.service';
 import { ServiceRecordsApiService } from '../../../../../core/services/service-records-api.service';
+import { MoneyConfirmationService } from '../../../../../core/services/money-confirmation.service';
 import { getApiErrorMessage } from '../../../../../core/utils/api-error.utils';
 import { bogotaToday } from '../../../../../core/utils/bogota-date.utils';
 import { ApiFeedbackComponent } from '../../../../../shared/components/api-feedback/api-feedback.component';
@@ -41,14 +42,19 @@ function singleActiveRate(services: ServiceRecordServiceOption[], generalService
 }
 
 /** Confirms (with corrections) or rejects one pending service record. */
+import { ModalDialogDirective } from '../../../../../shared/directives/modal-dialog.directive';
+
+import { SingleFlight } from '../../../../../core/utils/single-flight';
+
 @Component({
   selector: 'app-admin-service-record-review-modal',
-  imports: [DecimalPipe, ReactiveFormsModule, ApiFeedbackComponent, AdminCustomerFormModalComponent],
+  imports: [ModalDialogDirective, DecimalPipe, ReactiveFormsModule, ApiFeedbackComponent, AdminCustomerFormModalComponent],
   templateUrl: './admin-service-record-review-modal.component.html',
   styleUrl: './admin-service-record-review-modal.component.scss',
 })
 export class AdminServiceRecordReviewModalComponent implements OnInit {
   private readonly formBuilder = inject(FormBuilder);
+  private readonly moneyConfirmation = inject(MoneyConfirmationService);
   private readonly api = inject(ServiceRecordsApiService);
   private readonly authService = inject(AuthService);
 
@@ -76,6 +82,8 @@ export class AdminServiceRecordReviewModalComponent implements OnInit {
   readonly submitted = signal(false);
   readonly rejecting = signal(false);
   readonly customer = signal<ServiceRecordCustomerOption | null>(null);
+  /** Name of the live profile when the registered one was merged into it (SONDA BUG-105); null otherwise. */
+  readonly mergedInto = signal<string | null>(null);
   readonly customerResults = signal<ServiceRecordCustomerOption[]>([]);
   readonly isSearching = signal(false);
   readonly creatingCustomer = signal(false);
@@ -224,7 +232,20 @@ export class AdminServiceRecordReviewModalComponent implements OnInit {
     });
     void this.loadRelated();
 
-    if (this.record.customerId) {
+    // SONDA BUG-085: the memberships offered must be valid on the service date; a new date refreshes them.
+    this.form.controls.performedOn.valueChanges.subscribe(() => void this.refreshCustomerMemberships());
+
+    if (this.record.customerId && this.record.suggestedCustomerId) {
+      // SONDA BUG-105: the registered profile was merged; the live one (MergedIntoCustomerId) is preselected and said.
+      const results = await this.searchSilently(this.record.suggestedCustomerName ?? '');
+      this.mergedInto.set(this.record.suggestedCustomerName ?? 'otro perfil');
+      this.customer.set(results.find((option) => option.id === this.record.suggestedCustomerId) ?? {
+        id: this.record.suggestedCustomerId,
+        fullName: this.record.suggestedCustomerName ?? 'Cliente',
+        phoneHint: '',
+        memberships: [],
+      });
+    } else if (this.record.customerId) {
       // Preselect the customer the registration already identified (from the appointment).
       const results = await this.searchSilently(this.record.customerName ?? '');
       this.customer.set(results.find((option) => option.id === this.record.customerId) ?? {
@@ -245,6 +266,7 @@ export class AdminServiceRecordReviewModalComponent implements OnInit {
 
   selectCustomer(option: ServiceRecordCustomerOption): void {
     this.customer.set(option);
+    this.mergedInto.set(null);
     this.customerResults.set([]);
     this.form.controls.customerMembershipId.setValue(option.memberships.length === 1 ? option.memberships[0].id : '');
     this.applyPointsRule();
@@ -271,11 +293,13 @@ export class AdminServiceRecordReviewModalComponent implements OnInit {
 
   clearCustomer(): void {
     this.customer.set(null);
+    this.mergedInto.set(null);
     this.form.controls.customerMembershipId.setValue('');
     this.applyPointsRule();
     void this.refreshRedemptionOptions();
   }
 
+  @SingleFlight()
   async approve(): Promise<void> {
     this.submitted.set(true);
     if (this.form.invalid || this.problems().length > 0) {
@@ -285,6 +309,15 @@ export class AdminServiceRecordReviewModalComponent implements OnInit {
 
     const value = this.form.getRawValue();
     const operation = value.operationType;
+    // Only a paid service carries a charged value; the other operations have no amount to confirm.
+    if (operation === 'Paid' && typeof value.chargedAmount === 'number') {
+      const confirmed = await this.moneyConfirmation.confirm({
+        action: 'Aprobar el servicio con un valor cobrado',
+        amount: value.chargedAmount,
+      });
+      if (!confirmed) return;
+    }
+
     await this.run(() =>
       this.api.approve(this.record.id, {
         version: this.record.version,
@@ -303,6 +336,7 @@ export class AdminServiceRecordReviewModalComponent implements OnInit {
     );
   }
 
+  @SingleFlight()
   async reject(): Promise<void> {
     const reason = this.form.controls.rejectionReason.value.trim();
     if (reason.length < 3) {
@@ -411,10 +445,24 @@ export class AdminServiceRecordReviewModalComponent implements OnInit {
     }
   }
 
+  /** Re-reads the selected customer's memberships for the current service date (SONDA BUG-085). */
+  private async refreshCustomerMemberships(): Promise<void> {
+    const selected = this.customer();
+    if (!selected) return;
+    const results = await this.searchSilently(selected.fullName);
+    const fresh = results.find((option) => option.id === selected.id);
+    const memberships = fresh?.memberships ?? [];
+    this.customer.set({ ...selected, memberships });
+    const chosen = this.form.controls.customerMembershipId.value;
+    if (chosen && !memberships.some((membership) => membership.id === chosen)) {
+      this.form.controls.customerMembershipId.setValue(memberships.length === 1 ? memberships[0].id : '');
+    }
+  }
+
   private async searchSilently(query: string): Promise<ServiceRecordCustomerOption[]> {
     this.isSearching.set(true);
     try {
-      return await firstValueFrom(this.api.customerOptions(query));
+      return await firstValueFrom(this.api.customerOptions(query, this.form.controls.performedOn.value || null));
     } catch (error) {
       this.errorMessage.set(getApiErrorMessage(error));
       return [];

@@ -7,21 +7,26 @@ import { PublicAvailabilitySlotResponse } from '../../../../../core/models/avail
 import { PublicStaffListItemResponse, PublicStaffServiceResponse } from '../../../../../core/models/content.models';
 import { PublicAvailabilityApiService } from '../../../../../core/services/public-availability-api.service';
 import { PublicStaffApiService } from '../../../../../core/services/public-staff-api.service';
-import { getApiErrorMessage } from '../../../../../core/utils/api-error.utils';
 import { ApiFeedbackComponent } from '../../../../../shared/components/api-feedback/api-feedback.component';
 import { PageStateComponent } from '../../../../../shared/components/page-state/page-state.component';
+import { LoadErrorComponent } from '../../../../../shared/components/load-error/load-error.component';
 
 function todayIso(): string {
   return new Date().toISOString().slice(0, 10);
 }
 
+import { ModalDialogDirective } from '../../../../../shared/directives/modal-dialog.directive';
+
+import { SingleFlight } from '../../../../../core/utils/single-flight';
+
 @Component({
   selector: 'app-public-staff-list-page',
-  imports: [
+  imports: [ModalDialogDirective, 
     ReactiveFormsModule,
     RouterLink,
     ApiFeedbackComponent,
     PageStateComponent,
+    LoadErrorComponent,
   ],
   templateUrl: './public-staff-list-page.component.html',
   styleUrl: './public-staff-list-page.component.scss',
@@ -41,7 +46,11 @@ export class PublicStaffListPageComponent implements OnInit {
   /** [formGroup] binds FormGroupDirective, which emits ngSubmit and cancels the native submit (BUG-046). */
   readonly searchForm = new FormGroup({ search: this.searchControl });
   readonly isLoading = signal(true);
+  /** SONDA BUG-057: placeholders shown while the list loads. */
+  readonly skeletonCards = [1, 2, 3, 4];
   readonly errorMessage = signal<string | null>(null);
+  /** SONDA BUG-045: the list could not be loaded (it was shown as «Sin coincidencias»). */
+  readonly loadError = signal<unknown>(null);
   readonly staffMembers = signal<PublicStaffListItemResponse[]>([]);
 
   // Availability modal
@@ -60,6 +69,7 @@ export class PublicStaffListPageComponent implements OnInit {
     await this.loadStaff();
   }
 
+  @SingleFlight()
   async submitSearch(): Promise<void> {
     await this.loadStaff(this.searchControl.value);
   }
@@ -163,14 +173,19 @@ export class PublicStaffListPageComponent implements OnInit {
     }
   }
 
+  retryStaff(): Promise<void> {
+    return this.loadStaff(this.searchControl.value);
+  }
+
   private async loadStaff(search?: string): Promise<void> {
     this.isLoading.set(true);
     this.errorMessage.set(null);
+    this.loadError.set(null);
 
     try {
       this.staffMembers.set(await firstValueFrom(this.publicStaffApiService.list(search)));
     } catch (error) {
-      this.errorMessage.set(getApiErrorMessage(error));
+      this.loadError.set(error ?? new Error('load failed'));
       this.staffMembers.set([]);
     } finally {
       this.isLoading.set(false);

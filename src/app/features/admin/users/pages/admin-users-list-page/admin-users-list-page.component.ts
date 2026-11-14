@@ -12,9 +12,18 @@ import { BOGOTA_TIME_ZONE } from '../../../../../core/utils/bogota-date.utils';
 import { ApiFeedbackComponent } from '../../../../../shared/components/api-feedback/api-feedback.component';
 import { PageStateComponent } from '../../../../../shared/components/page-state/page-state.component';
 
+import { FieldErrorComponent } from '../../../../../shared/components/field-error/field-error.component';
+import { trimmedMinLength, trimmedRequired } from '../../../../../core/utils/form-validators';
+
+import { ModalDialogDirective } from '../../../../../shared/directives/modal-dialog.directive';
+
+import { FormA11yDirective } from '../../../../../shared/directives/form-a11y.directive';
+
+import { SingleFlight } from '../../../../../core/utils/single-flight';
+
 @Component({
   selector: 'app-admin-users-list-page',
-  imports: [ReactiveFormsModule, ApiFeedbackComponent, PageStateComponent],
+  imports: [FormA11yDirective, ModalDialogDirective, FieldErrorComponent, ReactiveFormsModule, ApiFeedbackComponent, PageStateComponent],
   templateUrl: './admin-users-list-page.component.html',
   styleUrl: './admin-users-list-page.component.scss',
 })
@@ -37,7 +46,7 @@ export class AdminUsersListPageComponent implements OnInit {
   readonly isSaving = signal(false);
 
   readonly editForm = this.fb.group({
-    fullName: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(120)]],
+    fullName: ['', [trimmedRequired, trimmedMinLength(2), Validators.maxLength(120)]],
     phoneNumber: ['', [Validators.maxLength(40)]],
   });
 
@@ -84,6 +93,7 @@ export class AdminUsersListPageComponent implements OnInit {
     });
   }
 
+  @SingleFlight()
   async saveEdit(): Promise<void> {
     if (this.editForm.invalid) {
       this.editForm.markAllAsTouched();

@@ -6,6 +6,7 @@ import { FixedExpenseView } from '../../../../../core/models/fixed-expense.model
 import { AdminFixedExpensesApiService } from '../../../../../core/services/admin-fixed-expenses-api.service';
 import { getApiErrorMessage } from '../../../../../core/utils/api-error.utils';
 import { ApiFeedbackComponent } from '../../../../../shared/components/api-feedback/api-feedback.component';
+import { trimmedMinLength, trimmedRequired } from '../../../../../core/utils/form-validators';
 
 function nonNegativeIntegerOrEmptyValidator(control: AbstractControl): ValidationErrors | null {
   const value = control.value;
@@ -15,9 +16,17 @@ function nonNegativeIntegerOrEmptyValidator(control: AbstractControl): Validatio
   return Number.isInteger(value) && value >= 0 ? null : { invalidAmount: true };
 }
 
+import { FieldErrorComponent } from '../../../../../shared/components/field-error/field-error.component';
+
+import { ModalDialogDirective } from '../../../../../shared/directives/modal-dialog.directive';
+
+import { FormA11yDirective } from '../../../../../shared/directives/form-a11y.directive';
+
+import { SingleFlight } from '../../../../../core/utils/single-flight';
+
 @Component({
   selector: 'app-admin-fixed-expense-form-modal',
-  imports: [ReactiveFormsModule, ApiFeedbackComponent],
+  imports: [FormA11yDirective, ModalDialogDirective, FieldErrorComponent, ReactiveFormsModule, ApiFeedbackComponent],
   templateUrl: './admin-fixed-expense-form-modal.component.html',
   styleUrl: './admin-fixed-expense-form-modal.component.scss',
 })
@@ -35,7 +44,7 @@ export class AdminFixedExpenseFormModalComponent implements OnInit {
   readonly isBusy = computed(() => this.isSaving() || this.isLoading());
 
   readonly form = this.formBuilder.group({
-    name: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(120)]],
+    name: ['', [trimmedRequired, trimmedMinLength(2), Validators.maxLength(120)]],
     defaultAmount: [null as number | null, [nonNegativeIntegerOrEmptyValidator]],
   });
 
@@ -59,6 +68,7 @@ export class AdminFixedExpenseFormModalComponent implements OnInit {
     }
   }
 
+  @SingleFlight()
   async submit(): Promise<void> {
     if (this.form.invalid) {
       this.form.markAllAsTouched();

@@ -1,16 +1,17 @@
 <div class="customer-modal__overlay" (click)="cancel()">
-  <div class="customer-modal__card" (click)="$event.stopPropagation()">
+  <div appModalDialog (modalClose)="cancel()" class="customer-modal__card" (click)="$event.stopPropagation()">
     <h2>{{ isEditing ? 'Editar cliente' : 'Nuevo cliente' }}</h2>
 
     <app-api-feedback severity="error" [message]="errorMessage()" />
 
-    <form [formGroup]="form" (ngSubmit)="submit()">
+    <form appFormA11y [formGroup]="form" (ngSubmit)="submit()">
       <label class="customer-modal__field">
         <span>Nombre completo</span>
         <input type="text" formControlName="fullName" maxlength="120" autocomplete="off" />
+        <app-field-error controlName="fullName" [kinds]="['minlength']" />
       </label>
       @if (form.controls.fullName.touched && form.controls.fullName.invalid) {
-        <small class="customer-modal__error">El nombre debe tener entre 2 y 120 caracteres.</small>
+        <small role="alert" class="customer-modal__error">El nombre debe tener entre 2 y 120 caracteres.</small>
       }
 
       <label class="customer-modal__field">
@@ -18,7 +19,7 @@
         <input type="tel" formControlName="phone" maxlength="40" autocomplete="off" inputmode="tel" />
       </label>
       @if (form.controls.phone.touched && form.controls.phone.invalid) {
-        <small class="customer-modal__error">Ingresa un teléfono con al menos 7 dígitos.</small>
+        <small role="alert" class="customer-modal__error">Ingresa un teléfono con al menos 7 dígitos.</small>
       }
 
       <label class="customer-modal__field">
@@ -26,7 +27,7 @@
         <input type="email" formControlName="email" maxlength="256" autocomplete="off" />
       </label>
       @if (form.controls.email.touched && form.controls.email.invalid) {
-        <small class="customer-modal__error">Ingresa un correo electrónico válido.</small>
+        <small role="alert" class="customer-modal__error">Ingresa un correo electrónico válido.</small>
       }
 
       @if (duplicates().length) {

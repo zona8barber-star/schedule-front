@@ -1,5 +1,5 @@
 <div class="review-modal__overlay" (click)="cancel()">
-  <div class="review-modal__card" (click)="$event.stopPropagation()" role="dialog" aria-label="Revisar servicio realizado">
+  <div appModalDialog (modalClose)="cancel()" class="review-modal__card" (click)="$event.stopPropagation()" role="dialog" aria-label="Revisar servicio realizado">
     <h2>Revisar servicio realizado</h2>
     <p class="review-modal__muted">
       Registrado por {{ record.registeredByName ?? 'un profesional' }}: <strong>{{ record.serviceName }}</strong> ·
@@ -135,6 +135,11 @@
               <span><strong>{{ selected.fullName }}</strong> {{ selected.phoneHint }}</span>
               <button type="button" class="review-modal__link" (click)="clearCustomer()">Quitar</button>
             </div>
+            @if (mergedInto(); as survivor) {
+              <small class="review-modal__muted" data-testid="merged-customer-notice">
+                El cliente registrado se fusionó en «{{ survivor }}»; se usa ese perfil. Puedes cambiarlo.
+              </small>
+            }
           } @else {
             <div class="review-modal__search">
               <input type="search" formControlName="customerQuery" placeholder="Nombre, teléfono o correo" (keydown.enter)="$event.preventDefault(); searchCustomers()" />
@@ -153,7 +158,11 @@
             }
             @if (record.suggestedCustomerId) {
               <button type="button" class="review-modal__link" (click)="useSuggestedCustomer()">
-                Usar el perfil de la cuenta que reservó la cita: {{ record.suggestedCustomerName }}
+                @if (record.customerId) {
+                  Usar el perfil en que se fusionó el cliente: {{ record.suggestedCustomerName }}
+                } @else {
+                  Usar el perfil de la cuenta que reservó la cita: {{ record.suggestedCustomerName }}
+                }
               </button>
             }
             <button type="button" class="review-modal__link" (click)="openCreateCustomer()">Crear cliente nuevo</button>
@@ -183,14 +192,14 @@
             <label class="review-modal__field">
               <span>Membresía</span>
               <select formControlName="customerMembershipId">
-                <option value="">Elige una membresía activa</option>
+                <option value="">Elige una membresía vigente en la fecha del servicio</option>
                 @for (membership of selected.memberships; track membership.id) {
                   <option [value]="membership.id">{{ membership.planName }} · vence {{ membership.endsOn }}</option>
                 }
               </select>
             </label>
             @if (!selected.memberships.length) {
-              <small class="review-modal__muted">El cliente no tiene membresías activas.</small>
+              <small class="review-modal__muted">El cliente no tiene membresías vigentes en la fecha del servicio.</small>
             }
           }
         </fieldset>

@@ -182,3 +182,54 @@ textarea::placeholder {
   }
 }
 
+
+/* ── SONDA BUG-049 / BUG-074: long texts without spaces never widen the page ─────────────────────────────────
+   `anywhere` also lowers the min-content size, so grid/flex items with a 120-character name can shrink. Form
+   controls never exceed their container (selects grew with their longest option) and wide tables scroll inside
+   themselves on small screens instead of moving the whole page. */
+html,
+body {
+  overflow-wrap: anywhere;
+}
+
+select,
+input,
+textarea {
+  max-width: 100%;
+}
+
+@media (max-width: 768px) {
+  table {
+    display: block;
+    max-width: 100%;
+    overflow-x: auto;
+  }
+}
+
+/* ── SONDA BUG-035: touch targets of at least 44 px on phones (WCAG 2.5.5) ─────────────────────────────────── */
+@media (max-width: 768px) {
+  button:not(.no-touch-min),
+  [role='button'],
+  [role='option'],
+  select,
+  a[class*='btn'],
+  a[class*='__back'],
+  a[class*='-rsv'],
+  a[class*='__link'],
+  a[class*='__action'] {
+    min-height: 44px;
+  }
+
+  // Icon-only buttons (close, remove): square 44 px.
+  [class*='__close'],
+  [aria-label='Cerrar'],
+  [aria-label='Quitar'] {
+    min-width: 44px;
+  }
+
+  input[type='checkbox'],
+  input[type='radio'] {
+    width: 22px;
+    height: 22px;
+  }
+}

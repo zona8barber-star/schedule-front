@@ -10,6 +10,8 @@ import { getApiErrorMessage } from '../../../../../core/utils/api-error.utils';
 import { ApiFeedbackComponent } from '../../../../../shared/components/api-feedback/api-feedback.component';
 import { AdminFixedExpenseFormModalComponent } from '../../components/admin-fixed-expense-form-modal/admin-fixed-expense-form-modal.component';
 
+import { SingleFlight } from '../../../../../core/utils/single-flight';
+
 @Component({
   selector: 'app-admin-fixed-expenses-list-page',
   imports: [DecimalPipe, RouterLink, ApiFeedbackComponent, AdminFixedExpenseFormModalComponent],
@@ -54,6 +56,7 @@ export class AdminFixedExpensesListPageComponent implements OnInit {
     this.closeModal();
   }
 
+  @SingleFlight()
   async toggleActive(item: FixedExpenseView): Promise<void> {
     this.busyId.set(item.id);
     this.errorMessage.set(null);
@@ -67,6 +70,7 @@ export class AdminFixedExpensesListPageComponent implements OnInit {
     }
   }
 
+  @SingleFlight()
   async deleteItem(item: FixedExpenseView): Promise<void> {
     const confirmed = await this.confirmModal.confirm({
       title: '¿Eliminar gasto fijo?',

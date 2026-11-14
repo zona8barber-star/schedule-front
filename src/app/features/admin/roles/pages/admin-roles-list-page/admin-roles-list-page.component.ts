@@ -8,6 +8,8 @@ import { getApiErrorMessage } from '../../../../../core/utils/api-error.utils';
 import { ApiFeedbackComponent } from '../../../../../shared/components/api-feedback/api-feedback.component';
 import { AdminRoleFormModalComponent } from '../../components/admin-role-form-modal/admin-role-form-modal.component';
 
+import { SingleFlight } from '../../../../../core/utils/single-flight';
+
 @Component({
   selector: 'app-admin-roles-list-page',
   imports: [ApiFeedbackComponent, AdminRoleFormModalComponent],
@@ -57,6 +59,7 @@ export class AdminRolesListPageComponent implements OnInit {
     return role.permissions.map((p) => p.description).join(', ') || '—';
   }
 
+  @SingleFlight()
   async deleteRole(role: RoleView): Promise<void> {
     const confirmed = await this.confirmModal.confirm({
       title: '¿Eliminar rol?',

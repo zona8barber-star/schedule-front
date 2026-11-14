@@ -1,6 +1,12 @@
 /** The shop works on Bogotá time, whatever the timezone of the device. */
 export const BOGOTA_TIME_ZONE = 'America/Bogota';
 
+/**
+ * Bogotá's fixed UTC offset (Colombia has no daylight saving time), in the form Angular's date formatting takes. Only
+ * for instants: a date-only value (YYYY-MM-DD) must never be shifted with it.
+ */
+export const BOGOTA_UTC_OFFSET = '-0500';
+
 const dateKeyFormatter = new Intl.DateTimeFormat('en-CA', {
   timeZone: BOGOTA_TIME_ZONE,
   year: 'numeric',

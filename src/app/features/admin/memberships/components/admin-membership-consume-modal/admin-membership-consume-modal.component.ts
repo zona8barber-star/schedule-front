@@ -22,9 +22,13 @@ interface ServiceBalance {
  * Registers that services of an active membership were given. The server re-checks every rule and the
  * balance; this modal only previews them. One key per opened modal makes a retried save count once.
  */
+import { ModalDialogDirective } from '../../../../../shared/directives/modal-dialog.directive';
+
+import { SingleFlight } from '../../../../../core/utils/single-flight';
+
 @Component({
   selector: 'app-admin-membership-consume-modal',
-  imports: [FormsModule, ApiFeedbackComponent],
+  imports: [ModalDialogDirective, FormsModule, ApiFeedbackComponent],
   templateUrl: './admin-membership-consume-modal.component.html',
   styleUrl: '../membership-modal.scss',
 })
@@ -116,6 +120,7 @@ export class AdminMembershipConsumeModalComponent implements OnInit {
     }
   }
 
+  @SingleFlight()
   async submit(): Promise<void> {
     this.submitted.set(true);
     if (this.problems().length > 0) {

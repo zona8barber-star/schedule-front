@@ -15,7 +15,8 @@ export type MembershipEventType =
   | 'IncomeLinked'
   | 'IncomeUnlinked'
   | 'MovedByMerge'
-  | 'Annulled';
+  | 'Annulled'
+  | 'IncomeAmountChanged';
 
 export interface CustomerMembershipSummaryView {
   id: string;

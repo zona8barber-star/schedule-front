@@ -512,3 +512,23 @@
 }
 
 // WhatsApp FAB: ahora vive en el app-shell global (estilos en styles.scss).
+
+// SONDA BUG-057: while loading, placeholders with the proportions of a card (photo 3:4 plus its text) keep the
+// space of the list, so the footer does not jump when the professionals arrive.
+.ps__pro--skeleton {
+  aspect-ratio: 3 / 5;
+  background: linear-gradient(180deg, var(--z-ink) 0 75%, var(--z-bone) 75% 100%);
+  opacity: 0.35;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .ps__pro--skeleton {
+    animation: ps-skeleton-pulse 1.4s ease-in-out infinite;
+  }
+}
+
+@keyframes ps-skeleton-pulse {
+  50% {
+    opacity: 0.2;
+  }
+}

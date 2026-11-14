@@ -12,15 +12,24 @@ import { AdminServiceCatalogApiService } from '../../../../../core/services/admi
 import { ConfirmModalService } from '../../../../../core/services/confirm-modal.service';
 import { getApiErrorMessage } from '../../../../../core/utils/api-error.utils';
 import { ApiFeedbackComponent } from '../../../../../shared/components/api-feedback/api-feedback.component';
+import { trimmedMinLength, trimmedRequired } from '../../../../../core/utils/form-validators';
 
 function integerValidator(control: AbstractControl): ValidationErrors | null {
   return Number.isInteger(control.value) ? null : { integer: true };
 }
 
 /** Master of the general services customers see, each in a service category (ADR-0016 B1). */
+import { FieldErrorComponent } from '../../../../../shared/components/field-error/field-error.component';
+
+import { ModalDialogDirective } from '../../../../../shared/directives/modal-dialog.directive';
+
+import { FormA11yDirective } from '../../../../../shared/directives/form-a11y.directive';
+
+import { SingleFlight } from '../../../../../core/utils/single-flight';
+
 @Component({
   selector: 'app-admin-general-services-page',
-  imports: [ReactiveFormsModule, RouterLink, ApiFeedbackComponent],
+  imports: [FormA11yDirective, ModalDialogDirective, FieldErrorComponent, ReactiveFormsModule, RouterLink, ApiFeedbackComponent],
   templateUrl: './admin-general-services-page.component.html',
   styleUrl: '../../catalog-page.scss',
 })
@@ -57,7 +66,7 @@ export class AdminGeneralServicesPageComponent implements OnInit {
 
   readonly form = this.formBuilder.nonNullable.group({
     categoryId: ['', [Validators.required]],
-    name: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(120)]],
+    name: ['', [trimmedRequired, trimmedMinLength(2), Validators.maxLength(120)]],
     description: ['', [Validators.maxLength(1000)]],
     sortOrder: [0, [Validators.required, Validators.min(0), Validators.max(CATALOG_MAX_SORT_ORDER), integerValidator]],
   });
@@ -98,6 +107,7 @@ export class AdminGeneralServicesPageComponent implements OnInit {
     this.editing.set(null);
   }
 
+  @SingleFlight()
   async save(): Promise<void> {
     if (this.form.invalid) {
       this.form.markAllAsTouched();
@@ -129,6 +139,7 @@ export class AdminGeneralServicesPageComponent implements OnInit {
     }
   }
 
+  @SingleFlight()
   async toggleActive(service: GeneralServiceView): Promise<void> {
     this.busyId.set(service.id);
     this.errorMessage.set(null);
@@ -142,6 +153,7 @@ export class AdminGeneralServicesPageComponent implements OnInit {
     }
   }
 
+  @SingleFlight()
   async remove(service: GeneralServiceView): Promise<void> {
     const confirmed = await this.confirmModal.confirm({
       title: '¿Eliminar servicio general?',

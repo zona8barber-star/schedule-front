@@ -6,7 +6,7 @@ import { firstValueFrom } from 'rxjs';
 
 import { DEFAULT_PAGE_SIZE } from '../../../../../core/models/paged-result.models';
 import { GeneralServiceView } from '../../../../../core/models/service-catalog.models';
-import { CatalogStatusFilter, ServiceView } from '../../../../../core/models/service.models';
+import { CatalogStatusFilter, ServiceUsageView, ServiceView } from '../../../../../core/models/service.models';
 import { AdminServiceCatalogApiService } from '../../../../../core/services/admin-service-catalog-api.service';
 import { AdminServicesApiService } from '../../../../../core/services/admin-services-api.service';
 import { ConfirmModalService } from '../../../../../core/services/confirm-modal.service';
@@ -26,6 +26,8 @@ import { AdminServiceFormModalComponent } from '../../components/admin-service-f
 const STATUS_OPTIONS: readonly CatalogStatusFilter[] = ['Active', 'Inactive'];
 
 /** Rates (ADR-0016 B7): text, general service and status filters in the URL, paginated on the server. */
+import { SingleFlight } from '../../../../../core/utils/single-flight';
+
 @Component({
   selector: 'app-admin-services-list-page',
   imports: [DecimalPipe, ApiFeedbackComponent, AdminServiceFormModalComponent, PaginatorComponent],
@@ -105,6 +107,7 @@ export class AdminServicesListPageComponent implements OnInit {
     void this.load();
   }
 
+  @SingleFlight()
   async toggleActive(service: ServiceView): Promise<void> {
     this.busyId.set(service.id);
     this.errorMessage.set(null);
@@ -118,10 +121,15 @@ export class AdminServicesListPageComponent implements OnInit {
     }
   }
 
+  @SingleFlight()
   async deleteService(service: ServiceView): Promise<void> {
+    // SONDA BUG-103: warn about the active plans and rewards that still use the rate. Without the answer, the
+    // confirmation goes on without the warning (the deletion itself is not blocked).
+    const usage = await firstValueFrom(this.adminServicesApiService.getUsage(service.id)).catch(() => null);
     const confirmed = await this.confirmModal.confirm({
       title: '¿Eliminar tarifa?',
       message: `Se eliminará "${service.name}". No aparecerá en las listas, pero se conserva para el histórico.`,
+      warning: usageWarning(usage),
     });
     if (!confirmed) {
       return;
@@ -184,4 +192,21 @@ export class AdminServicesListPageComponent implements OnInit {
       }
     }
   }
+}
+
+/**
+ * SONDA BUG-103: what changes for the plans and rewards that use a deleted rate. Memberships already sold and
+ * approved redemptions keep using it until they are used up; the plans cannot be sold and the rewards cannot be
+ * requested again until they are edited.
+ */
+function usageWarning(usage: ServiceUsageView | null): string | undefined {
+  if (!usage || (usage.activePlans.length === 0 && usage.activeRewards.length === 0)) return undefined;
+  const parts: string[] = [];
+  if (usage.activePlans.length > 0) {
+    parts.push(`los tipos de membresía ${usage.activePlans.map((name) => `«${name}»`).join(', ')} dejarán de poder venderse`);
+  }
+  if (usage.activeRewards.length > 0) {
+    parts.push(`las recompensas ${usage.activeRewards.map((name) => `«${name}»`).join(', ')} dejarán de poder canjearse`);
+  }
+  return `Esta tarifa está en uso: ${parts.join(' y ')} hasta que los edites. Las membresías ya vendidas y los canjes ya aprobados la siguen usando.`;
 }

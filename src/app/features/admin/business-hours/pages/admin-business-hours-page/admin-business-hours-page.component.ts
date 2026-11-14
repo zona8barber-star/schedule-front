@@ -10,6 +10,8 @@ import { PageStateComponent } from '../../../../../shared/components/page-state/
 
 const DAY_LABELS = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
 
+import { SingleFlight } from '../../../../../core/utils/single-flight';
+
 @Component({
   selector: 'app-admin-business-hours-page',
   imports: [ReactiveFormsModule, ApiFeedbackComponent, PageStateComponent],
@@ -52,6 +54,7 @@ export class AdminBusinessHoursPageComponent implements OnInit {
     return (this.daysArray.at(index).get('isOpen')?.value as boolean | null) ?? false;
   }
 
+  @SingleFlight()
   async submit(): Promise<void> {
     this.errorMessage.set(null);
     this.successMessage.set(null);

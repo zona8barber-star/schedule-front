@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { Router } from '@angular/router';
 import { SwPush } from '@angular/service-worker';
-import { BehaviorSubject, Subject, of } from 'rxjs';
+import { BehaviorSubject, Subject, of, throwError } from 'rxjs';
 import { signal } from '@angular/core';
 
 import { RuntimeConfigService } from '../config/runtime-config.service';
@@ -194,6 +194,59 @@ describe('PushNotificationService', () => {
 
     await vi.waitFor(() => expect(api.subscribe).toHaveBeenCalled());
     expect(api.subscribe.mock.calls[0][0].userAgent).toHaveLength(256);
+  });
+
+  // BUG-109: «Activadas» solo cuando el servidor confirma el registro del dispositivo.
+  it('shows «checking» until the server confirms, then «enabled»', async () => {
+    const pending = new Subject<void>();
+    api.subscribe.mockReturnValue(pending);
+    subscription$.next(fakeSubscription('https://push.example/device'));
+    const service = createService();
+    login('user-a');
+    await vi.waitFor(() => expect(api.subscribe).toHaveBeenCalled());
+
+    expect(service.status()).toBe('checking');
+    expect(service.isSubscribed()).toBe(false);
+
+    pending.next();
+    pending.complete();
+    await vi.waitFor(() => expect(service.status()).toBe('enabled'));
+  });
+
+  it('when the server rejects the background registration, shows it as not activated until retried', async () => {
+    api.subscribe.mockReturnValue(throwError(() => new Error('422')));
+    subscription$.next(fakeSubscription('https://push.example/device'));
+    const service = createService();
+    login('user-a');
+
+    await vi.waitFor(() => expect(service.status()).toBe('unconfirmed'));
+    expect(service.isSubscribed()).toBe(false);
+
+    api.subscribe.mockReturnValue(of(undefined));
+    expect(await service.enable()).toBeNull();
+    expect(service.status()).toBe('enabled');
+    expect(service.hasRegistrationFailed()).toBe(false);
+  });
+
+  it('when enabling fails on the server, withdraws the browser subscription and does not re-subscribe alone', async () => {
+    permission = 'default';
+    (Notification.requestPermission as ReturnType<typeof vi.fn>).mockImplementation(async () => {
+      permission = 'granted';
+      return permission;
+    });
+    api.subscribe.mockReturnValue(throwError(() => new Error('422')));
+    const service = createService();
+    login('user-a');
+
+    const message = await service.enable();
+    subscription$.next(null);
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    expect(message).toContain('no quedaron activadas');
+    const created = await swPush.requestSubscription.mock.results[0].value;
+    expect(created.unsubscribe).toHaveBeenCalled();
+    expect(swPush.requestSubscription).toHaveBeenCalledTimes(1);
+    expect(service.status()).toBe('unconfirmed');
   });
 
   it('only prompts users who have not been asked yet', async () => {

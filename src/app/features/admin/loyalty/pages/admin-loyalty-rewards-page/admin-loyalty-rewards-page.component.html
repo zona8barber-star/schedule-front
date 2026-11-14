@@ -15,11 +15,12 @@
     <app-api-feedback severity="error" [message]="errorMessage()" />
     <app-api-feedback severity="info" [message]="successMessage()" />
 
-    <form [formGroup]="form" (ngSubmit)="save()" novalidate>
+    <form appFormA11y [formGroup]="form" (ngSubmit)="save()" novalidate>
       <fieldset class="rewards__fields" [disabled]="isSaving()">
         <div class="admin-content-page__field">
           <label for="rewardName">Nombre</label>
           <input id="rewardName" type="text" formControlName="name" maxlength="120" />
+          <app-field-error controlName="name" [kinds]="['minlength']" />
         </div>
 
         <div class="admin-content-page__field">
@@ -97,7 +98,7 @@
               <ul class="rewards__history">
                 @for (change of history(); track change.id) {
                   <li>
-                    {{ change.changedAt | date: 'medium' }} · {{ change.changedByName ?? 'Usuario eliminado' }} ·
+                    {{ change.changedAt | bogotaDate: 'medium' }} · {{ change.changedByName ?? 'Usuario eliminado' }} ·
                     @if (change.changeType === 'Created') {
                       creada con {{ change.newPointsCost }} pts
                     } @else {

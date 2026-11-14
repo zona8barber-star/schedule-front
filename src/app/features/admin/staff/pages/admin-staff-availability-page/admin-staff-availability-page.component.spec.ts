@@ -101,15 +101,31 @@ describe('AdminStaffAvailabilityPageComponent', () => {
     expect(cells).toContain('—');
   });
 
-  it('shows a page error when the staff profile cannot be loaded', () => {
+  // SONDA BUG-044: a professional that does not exist is «No encontramos este profesional» with a way back.
+  it('says the professional does not exist when the profile answers 404', () => {
     fixture.detectChanges();
 
     httpMock.expectOne(staffUrl).flush('not found', { status: 404, statusText: 'Not Found' });
     httpMock.expectOne(availabilityBase).flush('not found', { status: 404, statusText: 'Not Found' });
     httpMock.expectOne(`${availabilityBase}/unavailable-periods`).flush([]);
+    fixture.detectChanges();
+
+    const element = fixture.nativeElement as HTMLElement;
+    expect(fixture.componentInstance.notFound()).toBe(true);
+    expect(fixture.componentInstance.pageErrorMessage()).toBeNull();
+    expect(element.querySelector('[data-testid="not-found-state"]')!.textContent).toContain('No encontramos este profesional');
+    expect(element.querySelector('[data-testid="not-found-back"]')!.getAttribute('href')).toBe('/admin/staff');
+  });
+
+  it('shows a page error when the staff profile cannot be loaded for another reason', () => {
+    fixture.detectChanges();
+
+    httpMock.expectOne(staffUrl).flush('boom', { status: 500, statusText: 'Error' });
+    httpMock.expectOne(availabilityBase).flush('boom', { status: 500, statusText: 'Error' });
+    httpMock.expectOne(`${availabilityBase}/unavailable-periods`).flush([]);
 
     expect(fixture.componentInstance.pageErrorMessage()).toBeTruthy();
-    expect(fixture.componentInstance.summary()).toBeNull();
+    expect(fixture.componentInstance.notFound()).toBe(false);
   });
 
   it('saveRules sends only active days as PUT /rules', async () => {

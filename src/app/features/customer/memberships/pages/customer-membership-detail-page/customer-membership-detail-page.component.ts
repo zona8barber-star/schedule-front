@@ -1,4 +1,5 @@
-import { DatePipe, DecimalPipe } from '@angular/common';
+import { BogotaDatePipe } from '../../../../../shared/pipes/bogota-date.pipe';
+import { DecimalPipe } from '@angular/common';
 import { Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
@@ -7,6 +8,8 @@ import { firstValueFrom } from 'rxjs';
 import { MyMembershipConsumptionView, MyMembershipView } from '../../../../../core/models/my-membership.models';
 import { CustomerMembershipsApiService } from '../../../../../core/services/customer-memberships-api.service';
 import { getApiErrorMessage } from '../../../../../core/utils/api-error.utils';
+import { isGuid, isNotFoundError } from '../../../../../core/utils/route-id.utils';
+import { NotFoundStateComponent } from '../../../../../shared/components/not-found-state/not-found-state.component';
 import { ApiFeedbackComponent } from '../../../../../shared/components/api-feedback/api-feedback.component';
 import { PageStateComponent } from '../../../../../shared/components/page-state/page-state.component';
 import { MY_GIFT_STATUS_LABELS, MY_MEMBERSHIP_STATUS_LABELS, balanceAvailability } from '../../my-membership-labels';
@@ -14,7 +17,7 @@ import { MY_GIFT_STATUS_LABELS, MY_MEMBERSHIP_STATUS_LABELS, balanceAvailability
 /** Read-only detail of one of the signed-in customer's memberships. */
 @Component({
   selector: 'app-customer-membership-detail-page',
-  imports: [DatePipe, DecimalPipe, RouterLink, ApiFeedbackComponent, PageStateComponent],
+  imports: [NotFoundStateComponent, BogotaDatePipe, DecimalPipe, RouterLink, ApiFeedbackComponent, PageStateComponent],
   templateUrl: './customer-membership-detail-page.component.html',
   styleUrl: '../../my-memberships.scss',
 })
@@ -29,6 +32,8 @@ export class CustomerMembershipDetailPageComponent implements OnInit {
   readonly membership = signal<MyMembershipView | null>(null);
   readonly isLoading = signal(true);
   readonly errorMessage = signal<string | null>(null);
+  /** SONDA BUG-044: the membership of the link does not exist. */
+  readonly notFound = signal(false);
 
   readonly availability = computed(() => {
     const membership = this.membership();
@@ -79,11 +84,23 @@ export class CustomerMembershipDetailPageComponent implements OnInit {
   private async load(membershipId: string): Promise<void> {
     this.isLoading.set(true);
     this.errorMessage.set(null);
+    this.notFound.set(false);
+    // SONDA BUG-044: an id that is not a GUID cannot exist; no request is sent.
+    if (!isGuid(membershipId)) {
+      this.membership.set(null);
+      this.notFound.set(true);
+      this.isLoading.set(false);
+      return;
+    }
     try {
       this.membership.set(await firstValueFrom(this.membershipsApi.getById(membershipId)));
     } catch (error) {
       this.membership.set(null);
-      this.errorMessage.set(getApiErrorMessage(error));
+      if (isNotFoundError(error)) {
+        this.notFound.set(true);
+      } else {
+        this.errorMessage.set(getApiErrorMessage(error));
+      }
     } finally {
       this.isLoading.set(false);
     }
