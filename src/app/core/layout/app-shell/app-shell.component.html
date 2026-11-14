@@ -208,7 +208,7 @@
 
   @if (installPromptService.shouldShowPrompt()) {
     <div class="install-sheet__backdrop" aria-hidden="true" (click)="dismissInstallPrompt()"></div>
-    <div class="install-sheet" role="dialog" aria-modal="true" aria-labelledby="install-sheet-title">
+    <div class="install-sheet" appModalDialog modalLabelledBy="install-sheet-title" (modalClose)="dismissInstallPrompt()">
       <div class="install-sheet__handle" aria-hidden="true"></div>
 
       @if (installPromptService.isIos()) {

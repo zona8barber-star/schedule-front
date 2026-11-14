@@ -64,9 +64,15 @@ type ReviewFormGroup = FormGroup<{
 
 import { FieldErrorComponent } from '../../../../../shared/components/field-error/field-error.component';
 
+import { ModalDialogDirective } from '../../../../../shared/directives/modal-dialog.directive';
+
+import { FormA11yDirective } from '../../../../../shared/directives/form-a11y.directive';
+
+import { SingleFlight } from '../../../../../core/utils/single-flight';
+
 @Component({
   selector: 'app-customer-appointments-page',
-  imports: [FieldErrorComponent, 
+  imports: [FormA11yDirective, ModalDialogDirective, FieldErrorComponent, 
     ReactiveFormsModule,
     ApiFeedbackComponent,
     PageStateComponent,
@@ -273,6 +279,7 @@ export class CustomerAppointmentsPageComponent implements OnInit {
     this.openReschedule(appointment);
   }
 
+  @SingleFlight()
   async cancelAppointment(appointment: AppointmentResponse): Promise<void> {
     if (!this.canCancel(appointment)) return;
 
@@ -328,6 +335,7 @@ export class CustomerAppointmentsPageComponent implements OnInit {
     this.rescheduleSlot.set(slot);
   }
 
+  @SingleFlight()
   async confirmReschedule(): Promise<void> {
     const appointment = this.rescheduleAppointment();
     const slot = this.rescheduleSlot();
@@ -439,6 +447,7 @@ export class CustomerAppointmentsPageComponent implements OnInit {
     return this.reviewForm.controls.comment.value.length;
   }
 
+  @SingleFlight()
   async submitReview(): Promise<void> {
     const appointment = this.reviewModalAppointment();
     if (!appointment || !this.canReview(appointment)) return;

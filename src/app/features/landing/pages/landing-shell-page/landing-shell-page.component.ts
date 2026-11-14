@@ -30,9 +30,11 @@ function todayIso(): string {
   return new Date().toISOString().slice(0, 10);
 }
 
+import { ModalDialogDirective } from '../../../../shared/directives/modal-dialog.directive';
+
 @Component({
   selector: 'app-landing-shell-page',
-  imports: [RouterLink, ApiFeedbackComponent, PageStateComponent, LoadErrorComponent],
+  imports: [ModalDialogDirective, RouterLink, ApiFeedbackComponent, PageStateComponent, LoadErrorComponent],
   templateUrl: './landing-shell-page.component.html',
   styleUrl: './landing-shell-page.component.scss',
 })
@@ -62,9 +64,21 @@ export class LandingShellPageComponent implements OnInit {
   readonly branding = signal<PublicBrandingResponse | null>(null);
   readonly banners = signal<PublicBannerResponse[]>([]);
   readonly tickerItems = signal<PublicTickerItemResponse[]>([]);
+  /** SONDA BUG-050: banners whose image could not load (deleted, archived, not an image); shown without it. */
+  readonly brokenBannerImages = signal<ReadonlySet<string>>(new Set());
+
+  markBannerImageBroken(bannerId: string): void {
+    this.brokenBannerImages.update((ids) => new Set([...ids, bannerId]));
+  }
+
+  /** SONDA BUG-051: the user asked the system for less motion; the ticker then stays still. */
+  readonly prefersReducedMotion = signal(
+    typeof globalThis.matchMedia === 'function' && globalThis.matchMedia('(prefers-reduced-motion: reduce)').matches,
+  );
   readonly tickerLoopItems = computed(() => {
     const items = this.tickerItems();
-    return items.length ? [...items, ...items] : [];
+    // The copy only exists to loop the animation seamlessly; without animation it would repeat the texts.
+    return items.length && !this.prefersReducedMotion() ? [...items, ...items] : items;
   });
   readonly staffMembers = signal<PublicStaffListItemResponse[]>([]);
   readonly businessSchedule = signal<BusinessScheduleResponse | null>(null);

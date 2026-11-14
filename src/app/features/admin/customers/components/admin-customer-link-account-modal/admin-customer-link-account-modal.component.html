@@ -1,5 +1,5 @@
 <div class="customer-modal__overlay" (click)="cancel()">
-  <div class="customer-modal__card" (click)="$event.stopPropagation()">
+  <div appModalDialog (modalClose)="cancel()" class="customer-modal__card" (click)="$event.stopPropagation()">
     <h2>Vincular cuenta de la app</h2>
 
     <p class="customer-modal__hint">

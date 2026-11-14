@@ -19,6 +19,8 @@ import { PageStateComponent } from '../../../../../shared/components/page-state/
 
 const searchDebounceMs = 350;
 
+import { SingleFlight } from '../../../../../core/utils/single-flight';
+
 @Component({
   selector: 'app-admin-notifications-page',
   imports: [ReactiveFormsModule, ApiFeedbackComponent, PageStateComponent],
@@ -111,6 +113,7 @@ export class AdminNotificationsPageComponent implements OnInit {
     this.selectedCustomers.update((customers) => customers.filter((selected) => selected.id !== customer.id));
   }
 
+  @SingleFlight()
   async submit(): Promise<void> {
     this.submitted.set(true);
     this.errorMessage.set(null);

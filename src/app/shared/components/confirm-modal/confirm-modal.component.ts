@@ -2,9 +2,11 @@ import { Component, HostListener, inject } from '@angular/core';
 
 import { ConfirmModalService } from '../../../core/services/confirm-modal.service';
 
+import { ModalDialogDirective } from '../../../shared/directives/modal-dialog.directive';
+
 @Component({
   selector: 'app-confirm-modal',
-  imports: [],
+  imports: [ModalDialogDirective, ],
   templateUrl: './confirm-modal.component.html',
   styleUrl: './confirm-modal.component.scss',
   host: { style: 'display:contents' },

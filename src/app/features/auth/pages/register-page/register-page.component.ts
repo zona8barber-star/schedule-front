@@ -8,9 +8,13 @@ import { AuthService } from '../../../../core/services/auth.service';
 import { FieldErrorComponent } from '../../../../shared/components/field-error/field-error.component';
 import { trimmedMinLength, trimmedRequired } from '../../../../core/utils/form-validators';
 
+import { FormA11yDirective } from '../../../../shared/directives/form-a11y.directive';
+
+import { SingleFlight } from '../../../../core/utils/single-flight';
+
 @Component({
   selector: 'app-register-page',
-  imports: [FieldErrorComponent, ReactiveFormsModule, RouterLink, ApiFeedbackComponent],
+  imports: [FormA11yDirective, FieldErrorComponent, ReactiveFormsModule, RouterLink, ApiFeedbackComponent],
   templateUrl: './register-page.component.html',
   styleUrl: './register-page.component.scss',
 })
@@ -33,6 +37,7 @@ export class RegisterPageComponent {
     this.authService.clearError();
   }
 
+  @SingleFlight()
   async submit(): Promise<void> {
     this.submitted.set(true);
     this.authService.clearError();

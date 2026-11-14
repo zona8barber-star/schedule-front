@@ -32,6 +32,8 @@ export interface OfferingGroup {
  * "Servicios que ofrece" (ADR-0016 B2): which general services the professional offers and how long each takes.
  * Saving replaces the whole list; offerings of inactive general services are kept as they are.
  */
+import { SingleFlight } from '../../../../../core/utils/single-flight';
+
 @Component({
   selector: 'app-admin-staff-offerings-section',
   imports: [ApiFeedbackComponent],
@@ -92,6 +94,7 @@ export class AdminStaffOfferingsSectionComponent implements OnInit {
     this.updateRow(generalServiceId, (row) => ({ ...row, durationMinutes: Number.isNaN(value) ? null : value }));
   }
 
+  @SingleFlight()
   async save(): Promise<void> {
     this.submitted.set(true);
     this.errorMessage.set(null);

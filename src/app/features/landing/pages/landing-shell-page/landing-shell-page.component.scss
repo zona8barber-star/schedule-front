@@ -849,3 +849,19 @@
     color: var(--z-ink);
   }
 }
+
+// SONDA BUG-051: with reduced motion the ticker stays still and shows its items once, wrapped.
+@media (prefers-reduced-motion: reduce) {
+  .lp__ticker {
+    white-space: normal;
+  }
+
+  .lp__ticker-track {
+    animation: none;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    row-gap: 6px;
+    padding: 0 16px;
+  }
+}

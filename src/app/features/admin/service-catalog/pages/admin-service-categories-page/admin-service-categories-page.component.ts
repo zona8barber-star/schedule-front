@@ -16,9 +16,15 @@ function integerValidator(control: AbstractControl): ValidationErrors | null {
 /** Master of service categories (ADR-0016 B1), independent from product categories. */
 import { FieldErrorComponent } from '../../../../../shared/components/field-error/field-error.component';
 
+import { ModalDialogDirective } from '../../../../../shared/directives/modal-dialog.directive';
+
+import { FormA11yDirective } from '../../../../../shared/directives/form-a11y.directive';
+
+import { SingleFlight } from '../../../../../core/utils/single-flight';
+
 @Component({
   selector: 'app-admin-service-categories-page',
-  imports: [FieldErrorComponent, ReactiveFormsModule, ApiFeedbackComponent],
+  imports: [FormA11yDirective, ModalDialogDirective, FieldErrorComponent, ReactiveFormsModule, ApiFeedbackComponent],
   templateUrl: './admin-service-categories-page.component.html',
   styleUrl: '../../catalog-page.scss',
 })
@@ -71,6 +77,7 @@ export class AdminServiceCategoriesPageComponent implements OnInit {
     this.editing.set(null);
   }
 
+  @SingleFlight()
   async save(): Promise<void> {
     if (this.form.invalid) {
       this.form.markAllAsTouched();
@@ -98,6 +105,7 @@ export class AdminServiceCategoriesPageComponent implements OnInit {
     }
   }
 
+  @SingleFlight()
   async toggleActive(category: ServiceCategoryView): Promise<void> {
     this.busyId.set(category.id);
     this.errorMessage.set(null);
@@ -111,6 +119,7 @@ export class AdminServiceCategoriesPageComponent implements OnInit {
     }
   }
 
+  @SingleFlight()
   async remove(category: ServiceCategoryView): Promise<void> {
     const confirmed = await this.confirmModal.confirm({
       title: '¿Eliminar categoría?',

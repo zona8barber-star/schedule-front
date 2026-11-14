@@ -17,9 +17,13 @@ import { ApiFeedbackComponent } from '../../../../shared/components/api-feedback
 import { FieldErrorComponent } from '../../../../shared/components/field-error/field-error.component';
 import { trimmedMinLength, trimmedRequired } from '../../../../core/utils/form-validators';
 
+import { FormA11yDirective } from '../../../../shared/directives/form-a11y.directive';
+
+import { SingleFlight } from '../../../../core/utils/single-flight';
+
 @Component({
   selector: 'app-login-page',
-  imports: [FieldErrorComponent, ReactiveFormsModule, RouterLink, ApiFeedbackComponent],
+  imports: [FormA11yDirective, FieldErrorComponent, ReactiveFormsModule, RouterLink, ApiFeedbackComponent],
   templateUrl: './login-page.component.html',
   styleUrl: './login-page.component.scss',
 })
@@ -117,6 +121,7 @@ export class LoginPageComponent {
     );
   }
 
+  @SingleFlight()
   async submitLogin(): Promise<void> {
     this.loginSubmitted.set(true);
     this.authService.clearError();
@@ -137,6 +142,7 @@ export class LoginPageComponent {
     }
   }
 
+  @SingleFlight()
   async submitRegister(): Promise<void> {
     this.registerSubmitted.set(true);
     this.authService.clearError();
@@ -177,6 +183,7 @@ export class LoginPageComponent {
     this.showForgotPanel.set(false);
   }
 
+  @SingleFlight()
   async submitForgot(): Promise<void> {
     this.forgotSubmitted.set(true);
     this.forgotError.set('');

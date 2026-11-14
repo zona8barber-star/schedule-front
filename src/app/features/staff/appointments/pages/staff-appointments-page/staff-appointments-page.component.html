@@ -227,7 +227,7 @@
               @if (editingAppointmentId() === appointment.id) {
                 <div class="appt-card__edit-form">
                   <p class="appt-card__edit-title">Editar cita</p>
-                  <form [formGroup]="editForm" (ngSubmit)="submitEdit()" novalidate>
+                  <form appFormA11y [formGroup]="editForm" (ngSubmit)="submitEdit()" novalidate>
                     <fieldset [disabled]="isSavingEdit()">
                       <div class="agenda-page__form-grid">
                         <div class="agenda-page__field">
@@ -240,7 +240,7 @@
                             formControlName="startsAt"
                           />
                           @if (showEditError('startsAt', 'required')) {
-                            <p class="agenda-page__error">Selecciona fecha y hora de inicio.</p>
+                            <p role="alert" class="agenda-page__error">Selecciona fecha y hora de inicio.</p>
                           }
                         </div>
                         <div class="agenda-page__field">
@@ -264,7 +264,7 @@
                           <input maxlength="120" id="editCustomerName" type="text" formControlName="customerName" />
                           <app-field-error controlName="customerName" />
                           @if (showEditError('customerName', 'required')) {
-                            <p class="agenda-page__error">Ingresa el nombre del cliente.</p>
+                            <p role="alert" class="agenda-page__error">Ingresa el nombre del cliente.</p>
                           }
                         </div>
                         <div class="agenda-page__field">
@@ -276,7 +276,7 @@
                           />
                           <app-field-error controlName="customerEmail" />
                           @if (showEditError('customerEmail', 'email')) {
-                            <p class="agenda-page__error">Ingresa un correo valido.</p>
+                            <p role="alert" class="agenda-page__error">Ingresa un correo valido.</p>
                           }
                         </div>
                         <div class="agenda-page__field">
@@ -336,12 +336,9 @@
 @if (showCreateModal()) {
   <div
     class="modal-overlay"
-    role="dialog"
-    aria-modal="true"
-    aria-label="Nueva cita"
     (click)="closeCreateModal()"
   >
-    <div class="agenda-modal" (click)="$event.stopPropagation()">
+    <div appModalDialog modalLabel="Nueva cita" (modalClose)="closeCreateModal()" class="agenda-modal" (click)="$event.stopPropagation()">
       <div class="agenda-modal__header">
         <div>
           <h2>Nueva cita manual</h2>
@@ -361,7 +358,7 @@
 
       <app-api-feedback severity="error" [message]="errorMessage()" />
 
-      <form
+      <form appFormA11y
         class="agenda-modal__form"
         [formGroup]="createForm"
         (ngSubmit)="submitCreate()"
@@ -375,7 +372,7 @@
               </label>
               <input id="createStartsAt" type="datetime-local" formControlName="startsAt" />
               @if (showCreateError('startsAt', 'required')) {
-                <p class="agenda-page__error">Selecciona fecha y hora de inicio.</p>
+                <p role="alert" class="agenda-page__error">Selecciona fecha y hora de inicio.</p>
               }
             </div>
             <div class="agenda-page__field">
@@ -389,10 +386,10 @@
                 }
               </select>
               @if (showCreateError('generalServiceId', 'required')) {
-                <p class="agenda-page__error">Selecciona el servicio.</p>
+                <p role="alert" class="agenda-page__error">Selecciona el servicio.</p>
               }
               @if (serviceOptionsError()) {
-                <p class="agenda-page__error">{{ serviceOptionsError() }}</p>
+                <p role="alert" class="agenda-page__error">{{ serviceOptionsError() }}</p>
               }
             </div>
             <div class="agenda-page__field">
@@ -417,10 +414,10 @@
               />
               <app-field-error controlName="customerName" />
               @if (showCreateError('customerName', 'required')) {
-                <p class="agenda-page__error">Ingresa el nombre del cliente.</p>
+                <p role="alert" class="agenda-page__error">Ingresa el nombre del cliente.</p>
               }
               @if (showCreateError('customerName', 'minlength')) {
-                <p class="agenda-page__error">El nombre debe tener al menos 2 caracteres.</p>
+                <p role="alert" class="agenda-page__error">El nombre debe tener al menos 2 caracteres.</p>
               }
             </div>
             <div class="agenda-page__field">
@@ -443,7 +440,7 @@
               />
               <app-field-error controlName="customerEmail" />
               @if (showCreateError('customerEmail', 'email')) {
-                <p class="agenda-page__error">Ingresa un correo valido.</p>
+                <p role="alert" class="agenda-page__error">Ingresa un correo valido.</p>
               }
             </div>
             <div class="agenda-page__field agenda-page__field--wide">

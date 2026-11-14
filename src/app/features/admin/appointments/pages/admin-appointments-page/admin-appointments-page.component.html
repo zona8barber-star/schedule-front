@@ -239,12 +239,9 @@
 @if (showCreateForm()) {
   <div
     class="ap-modal-backdrop"
-    role="dialog"
-    aria-modal="true"
-    aria-labelledby="createModalTitle"
     (click)="closeCreateForm()"
   >
-    <div class="ap-modal" (click)="$event.stopPropagation()">
+    <div appModalDialog modalLabelledBy="createModalTitle" (modalClose)="onEscapeKey()" class="ap-modal" (click)="$event.stopPropagation()">
 
       <div class="ap-modal__header">
         <div class="ap-modal__title-row">
@@ -265,7 +262,7 @@
       </div>
 
       <div class="ap-modal__body">
-        <form [formGroup]="createForm" (ngSubmit)="submitCreate()" novalidate>
+        <form appFormA11y [formGroup]="createForm" (ngSubmit)="submitCreate()" novalidate>
           <fieldset [disabled]="isCreating() || !bookableStaff().length">
             <div class="ap-form-grid">
 
@@ -376,13 +373,9 @@
 @if (editingAppointmentId()) {
   <div
     class="ap-modal-backdrop"
-    role="dialog"
-    aria-modal="true"
-    aria-labelledby="editModalTitle"
     (click)="cancelEdit()"
-    (keydown.escape)="cancelEdit()"
   >
-    <div class="ap-modal" (click)="$event.stopPropagation()">
+    <div appModalDialog modalLabelledBy="editModalTitle" (modalClose)="onEscapeKey()" class="ap-modal" (click)="$event.stopPropagation()">
 
       <!-- Modal header -->
       <div class="ap-modal__header">
@@ -412,7 +405,7 @@
 
       <!-- Edit form -->
       <div class="ap-modal__body">
-        <form [formGroup]="editForm" (ngSubmit)="submitEdit()" novalidate>
+        <form appFormA11y [formGroup]="editForm" (ngSubmit)="submitEdit()" novalidate>
           <fieldset [disabled]="isSavingEdit()">
             <div class="ap-form-grid">
 

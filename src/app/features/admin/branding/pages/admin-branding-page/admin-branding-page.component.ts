@@ -19,9 +19,13 @@ import { PageStateComponent } from '../../../../../shared/components/page-state/
 
 import { FieldErrorComponent } from '../../../../../shared/components/field-error/field-error.component';
 
+import { FormA11yDirective } from '../../../../../shared/directives/form-a11y.directive';
+
+import { SingleFlight } from '../../../../../core/utils/single-flight';
+
 @Component({
   selector: 'app-admin-branding-page',
-  imports: [FieldErrorComponent, ReactiveFormsModule, ApiFeedbackComponent, PageStateComponent],
+  imports: [FormA11yDirective, FieldErrorComponent, ReactiveFormsModule, ApiFeedbackComponent, PageStateComponent],
   templateUrl: './admin-branding-page.component.html',
   styleUrl: './admin-branding-page.component.scss',
 })
@@ -50,6 +54,7 @@ export class AdminBrandingPageComponent implements OnInit {
     void this.load();
   }
 
+  @SingleFlight()
   async submit(): Promise<void> {
     this.submitted.set(true);
     this.errorMessage.set(null);

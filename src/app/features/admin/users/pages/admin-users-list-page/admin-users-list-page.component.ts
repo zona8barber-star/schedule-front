@@ -15,9 +15,15 @@ import { PageStateComponent } from '../../../../../shared/components/page-state/
 import { FieldErrorComponent } from '../../../../../shared/components/field-error/field-error.component';
 import { trimmedMinLength, trimmedRequired } from '../../../../../core/utils/form-validators';
 
+import { ModalDialogDirective } from '../../../../../shared/directives/modal-dialog.directive';
+
+import { FormA11yDirective } from '../../../../../shared/directives/form-a11y.directive';
+
+import { SingleFlight } from '../../../../../core/utils/single-flight';
+
 @Component({
   selector: 'app-admin-users-list-page',
-  imports: [FieldErrorComponent, ReactiveFormsModule, ApiFeedbackComponent, PageStateComponent],
+  imports: [FormA11yDirective, ModalDialogDirective, FieldErrorComponent, ReactiveFormsModule, ApiFeedbackComponent, PageStateComponent],
   templateUrl: './admin-users-list-page.component.html',
   styleUrl: './admin-users-list-page.component.scss',
 })
@@ -87,6 +93,7 @@ export class AdminUsersListPageComponent implements OnInit {
     });
   }
 
+  @SingleFlight()
   async saveEdit(): Promise<void> {
     if (this.editForm.invalid) {
       this.editForm.markAllAsTouched();

@@ -48,9 +48,13 @@ interface ServiceOption {
   isActive: boolean;
 }
 
+import { ModalDialogDirective } from '../../../../../shared/directives/modal-dialog.directive';
+
+import { SingleFlight } from '../../../../../core/utils/single-flight';
+
 @Component({
   selector: 'app-admin-membership-plan-form-modal',
-  imports: [ReactiveFormsModule, ApiFeedbackComponent],
+  imports: [ModalDialogDirective, ReactiveFormsModule, ApiFeedbackComponent],
   templateUrl: './admin-membership-plan-form-modal.component.html',
   styleUrl: './admin-membership-plan-form-modal.component.scss',
 })
@@ -216,6 +220,7 @@ export class AdminMembershipPlanFormModalComponent implements OnInit {
     return this.serviceOptions().some((option) => option.id === serviceId && !option.isActive);
   }
 
+  @SingleFlight()
   async submit(): Promise<void> {
     this.submitted.set(true);
     if (this.form.invalid || this.planProblems().length > 0) {

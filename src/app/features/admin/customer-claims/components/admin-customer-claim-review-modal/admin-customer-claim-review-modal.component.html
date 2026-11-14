@@ -1,5 +1,5 @@
 <div class="review-modal__overlay" (click)="cancel()">
-  <div class="review-modal__card" (click)="$event.stopPropagation()" role="dialog" aria-label="Revisar reclamación de perfil">
+  <div appModalDialog (modalClose)="cancel()" class="review-modal__card" (click)="$event.stopPropagation()" role="dialog" aria-label="Revisar reclamación de perfil">
     <h2>Revisar reclamación de perfil</h2>
     <p class="review-modal__muted">
       Cuenta: <strong>{{ claim.accountFullName }}</strong> · {{ claim.accountEmail }}

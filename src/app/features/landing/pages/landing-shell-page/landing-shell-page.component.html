@@ -177,8 +177,14 @@
         <div class="lp__banner-grid">
           @for (banner of activeBanners(); track banner.id) {
             <article class="lp__banner">
-              @if (banner.imageUrl) {
-                <img class="lp__banner-img" [src]="banner.imageUrl!" [alt]="banner.title" [title]="banner.title" />
+              @if (banner.imageUrl && !brokenBannerImages().has(banner.id)) {
+                <img
+                  class="lp__banner-img"
+                  [src]="banner.imageUrl!"
+                  [alt]="banner.title"
+                  [title]="banner.title"
+                  (error)="markBannerImageBroken(banner.id)"
+                />
               }
               <div class="lp__banner-body">
                 <h3 class="lp__disp lp__banner-title">{{ banner.title }}</h3>
@@ -244,11 +250,15 @@
                 <span class="lp__pro-role">{{ staffRoleSummary(member) }}</span>
                 <div class="lp__pro-foot">
                   <span class="lp__kicker">
-                    <span class="lp__star" aria-hidden="true">★</span>
-                    {{ formatRating(member.averageRating) }}
-                    ({{ member.reviewCount }})
+                    @if (member.reviewCount > 0) {
+                      <span class="lp__star" aria-hidden="true">★</span>
+                      {{ formatRating(member.averageRating) }}
+                      ({{ member.reviewCount }})
+                    } @else {
+                      Sin reseñas
+                    }
                   </span>
-                  <button class="lp__pro-rsv" type="button" (click)="openAvailabilityModal(member)">
+                  <button class="lp__pro-rsv" type="button" [attr.aria-label]="'Reservar con ' + member.displayName" (click)="openAvailabilityModal(member)">
                     Reservar
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
                          stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" width="13" height="13">
@@ -272,14 +282,12 @@
   <div
     class="lp-modal__overlay"
     (click)="closeAvailabilityModal()"
-    (keydown.escape)="closeAvailabilityModal()"
   >
-    <dialog
+    <dialog appModalDialog (modalClose)="closeAvailabilityModal()"
       class="lp-modal"
       open
       aria-label="Disponibilidad"
       (click)="$event.stopPropagation()"
-      (keydown)="$event.stopPropagation()"
     >
       <div class="lp-modal__head">
         <div class="lp-modal__staff">

@@ -16,9 +16,13 @@ function integerValidator(control: AbstractControl): ValidationErrors | null {
   return Number.isInteger(control.value) ? null : { integer: true };
 }
 
+import { ModalDialogDirective } from '../../../../../shared/directives/modal-dialog.directive';
+
+import { SingleFlight } from '../../../../../core/utils/single-flight';
+
 @Component({
   selector: 'app-admin-income-form-modal',
-  imports: [ReactiveFormsModule, DecimalPipe, ApiFeedbackComponent],
+  imports: [ModalDialogDirective, ReactiveFormsModule, DecimalPipe, ApiFeedbackComponent],
   templateUrl: './admin-income-form-modal.component.html',
   styleUrl: './admin-income-form-modal.component.scss',
 })
@@ -136,6 +140,7 @@ export class AdminIncomeFormModalComponent implements OnInit {
     }
   }
 
+  @SingleFlight()
   async submit(): Promise<void> {
     if (this.form.invalid) {
       this.form.markAllAsTouched();

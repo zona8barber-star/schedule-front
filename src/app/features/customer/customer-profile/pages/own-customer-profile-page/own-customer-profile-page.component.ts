@@ -18,9 +18,13 @@ type Choice = 'new' | 'existing' | null;
 /** The customer's own customer profile: shows it, or lets them create one or ask to be linked to their historical one. */
 import { FieldErrorComponent } from '../../../../../shared/components/field-error/field-error.component';
 
+import { FormA11yDirective } from '../../../../../shared/directives/form-a11y.directive';
+
+import { SingleFlight } from '../../../../../core/utils/single-flight';
+
 @Component({
   selector: 'app-own-customer-profile-page',
-  imports: [FieldErrorComponent, BogotaDatePipe, ReactiveFormsModule, RouterLink, ApiFeedbackComponent, PageStateComponent],
+  imports: [FormA11yDirective, FieldErrorComponent, BogotaDatePipe, ReactiveFormsModule, RouterLink, ApiFeedbackComponent, PageStateComponent],
   templateUrl: './own-customer-profile-page.component.html',
   styleUrl: './own-customer-profile-page.component.scss',
 })
@@ -63,6 +67,7 @@ export class OwnCustomerProfilePageComponent implements OnInit {
     });
   }
 
+  @SingleFlight()
   async submit(): Promise<void> {
     if (this.form.invalid) {
       this.form.markAllAsTouched();

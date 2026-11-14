@@ -19,9 +19,13 @@ type ProfileTab = 'info' | 'password';
 
 import { FieldErrorComponent } from '../../../../../shared/components/field-error/field-error.component';
 
+import { FormA11yDirective } from '../../../../../shared/directives/form-a11y.directive';
+
+import { SingleFlight } from '../../../../../core/utils/single-flight';
+
 @Component({
   selector: 'app-customer-profile-page',
-  imports: [FieldErrorComponent, ReactiveFormsModule, ApiFeedbackComponent, PageStateComponent],
+  imports: [FormA11yDirective, FieldErrorComponent, ReactiveFormsModule, ApiFeedbackComponent, PageStateComponent],
   templateUrl: './customer-profile-page.component.html',
   styleUrl: './customer-profile-page.component.scss',
 })
@@ -84,6 +88,7 @@ export class CustomerProfilePageComponent implements OnInit {
     this.activeTab.set(tab);
   }
 
+  @SingleFlight()
   async saveInfo(): Promise<void> {
     this.infoSubmitted.set(true);
     this.infoError.set(null);
@@ -174,6 +179,7 @@ export class CustomerProfilePageComponent implements OnInit {
     }
   }
 
+  @SingleFlight()
   async removePhoto(): Promise<void> {
     const confirmed = await this.confirmModal.confirm({
       title: '¿Eliminar foto de perfil?',

@@ -25,9 +25,13 @@ import { PageStateComponent } from '../../../../../shared/components/page-state/
 
 import { FieldErrorComponent } from '../../../../../shared/components/field-error/field-error.component';
 
+import { FormA11yDirective } from '../../../../../shared/directives/form-a11y.directive';
+
+import { SingleFlight } from '../../../../../core/utils/single-flight';
+
 @Component({
   selector: 'app-admin-banners-page',
-  imports: [FieldErrorComponent, ReactiveFormsModule, ApiFeedbackComponent, PageStateComponent],
+  imports: [FormA11yDirective, FieldErrorComponent, ReactiveFormsModule, ApiFeedbackComponent, PageStateComponent],
   templateUrl: './admin-banners-page.component.html',
   styleUrl: './admin-banners-page.component.scss',
 })
@@ -76,6 +80,7 @@ export class AdminBannersPageComponent implements OnInit {
     await this.load();
   }
 
+  @SingleFlight()
   async submit(): Promise<void> {
     this.submitted.set(true);
     this.errorMessage.set(null);
@@ -152,6 +157,7 @@ export class AdminBannersPageComponent implements OnInit {
     );
   }
 
+  @SingleFlight()
   async deleteBanner(banner: BannerResponse): Promise<void> {
     const confirmed = await this.confirmModal.confirm({
       title: '¿Eliminar banner?',

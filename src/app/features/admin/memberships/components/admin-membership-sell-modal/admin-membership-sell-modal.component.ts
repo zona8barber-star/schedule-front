@@ -16,9 +16,13 @@ import { bogotaToday, defaultEndsOn } from '../../membership-labels';
 const REASON_MIN_LENGTH = 3;
 
 /** Sells a membership to one customer; first-purchase gifts are evaluated by the server when saving. */
+import { ModalDialogDirective } from '../../../../../shared/directives/modal-dialog.directive';
+
+import { SingleFlight } from '../../../../../core/utils/single-flight';
+
 @Component({
   selector: 'app-admin-membership-sell-modal',
-  imports: [FormsModule, DecimalPipe, ApiFeedbackComponent],
+  imports: [ModalDialogDirective, FormsModule, DecimalPipe, ApiFeedbackComponent],
   templateUrl: './admin-membership-sell-modal.component.html',
   styleUrl: '../membership-modal.scss',
 })
@@ -100,6 +104,7 @@ export class AdminMembershipSellModalComponent implements OnInit {
     this.recomputeEndsOn();
   }
 
+  @SingleFlight()
   async submit(): Promise<void> {
     this.submitted.set(true);
     const plan = this.plan();

@@ -25,9 +25,15 @@ const MAX_FILE_BYTES = 10_485_760; // 10 MB
 
 import { FieldErrorComponent } from '../../../../../shared/components/field-error/field-error.component';
 
+import { FormA11yDirective } from '../../../../../shared/directives/form-a11y.directive';
+
+import { MediaPreviewComponent } from '../../../../../shared/components/media-preview/media-preview.component';
+
+import { SingleFlight } from '../../../../../core/utils/single-flight';
+
 @Component({
   selector: 'app-admin-staff-form-page',
-  imports: [FieldErrorComponent, ReactiveFormsModule, RouterLink, ApiFeedbackComponent, AdminStaffOfferingsSectionComponent, NotFoundStateComponent],
+  imports: [MediaPreviewComponent, FormA11yDirective, FieldErrorComponent, ReactiveFormsModule, RouterLink, ApiFeedbackComponent, AdminStaffOfferingsSectionComponent, NotFoundStateComponent],
   templateUrl: './admin-staff-form-page.component.html',
   styleUrl: './admin-staff-form-page.component.scss',
 })
@@ -99,6 +105,7 @@ export class AdminStaffFormPageComponent {
     }
   }
 
+  @SingleFlight()
   async submit(): Promise<void> {
     this.submitted.set(true);
     this.errorMessage.set(null);
@@ -225,6 +232,7 @@ export class AdminStaffFormPageComponent {
     }
   }
 
+  @SingleFlight()
   async removePhoto(): Promise<void> {
     if (!this.staffId()) return;
     const confirmed = await this.confirmModal.confirm({
@@ -291,6 +299,7 @@ export class AdminStaffFormPageComponent {
     }
   }
 
+  @SingleFlight()
   async removeQr(): Promise<void> {
     if (!this.staffId()) return;
     const confirmed = await this.confirmModal.confirm({

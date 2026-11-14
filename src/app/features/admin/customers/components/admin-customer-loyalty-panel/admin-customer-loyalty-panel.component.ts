@@ -41,6 +41,8 @@ import { PaginatorComponent } from '../../../../../shared/components/paginator/p
  */
 // The movement history is paginated on the server (ADR-0016 B7); its filters live in the URL as movementType,
 // movementFrom, movementTo and movementPage, so they do not clash with the other lists of the customer page.
+import { SingleFlight } from '../../../../../core/utils/single-flight';
+
 @Component({
   selector: 'app-admin-customer-loyalty-panel',
   imports: [BogotaDatePipe, DatePipe, FormsModule, RouterLink, ApiFeedbackComponent, PaginatorComponent],
@@ -196,6 +198,7 @@ export class AdminCustomerLoyaltyPanelComponent implements OnInit {
     void this.router.navigate([], { relativeTo: this.route, queryParams: params, queryParamsHandling: 'merge' });
   }
 
+  @SingleFlight()
   async registerAtCounter(): Promise<void> {
     if (this.isRegistering()) {
       return;

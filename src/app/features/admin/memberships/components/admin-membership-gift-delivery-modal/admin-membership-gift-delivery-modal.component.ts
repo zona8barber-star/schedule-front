@@ -12,9 +12,13 @@ import { bogotaToday } from '../../membership-labels';
  * Registers that a physical gift was handed over, always complete (no partial deliveries). One key per opened
  * modal makes a retried save count once; the server re-checks every rule.
  */
+import { ModalDialogDirective } from '../../../../../shared/directives/modal-dialog.directive';
+
+import { SingleFlight } from '../../../../../core/utils/single-flight';
+
 @Component({
   selector: 'app-admin-membership-gift-delivery-modal',
-  imports: [FormsModule, ApiFeedbackComponent],
+  imports: [ModalDialogDirective, FormsModule, ApiFeedbackComponent],
   templateUrl: './admin-membership-gift-delivery-modal.component.html',
   styleUrl: '../membership-modal.scss',
 })
@@ -46,6 +50,7 @@ export class AdminMembershipGiftDeliveryModalComponent implements OnInit {
     this.deliveredOn.set(this.today);
   }
 
+  @SingleFlight()
   async submit(): Promise<void> {
     this.submitted.set(true);
     if (this.problems().length > 0) {

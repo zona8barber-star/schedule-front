@@ -12,6 +12,8 @@ import { getApiErrorMessage } from '../../../../../core/utils/api-error.utils';
 import { ApiFeedbackComponent } from '../../../../../shared/components/api-feedback/api-feedback.component';
 import { AdminStaffFormModalComponent } from '../../components/admin-staff-form-modal/admin-staff-form-modal.component';
 
+import { SingleFlight } from '../../../../../core/utils/single-flight';
+
 @Component({
   selector: 'app-admin-staff-list-page',
   imports: [ApiFeedbackComponent, AdminStaffFormModalComponent, RouterLink],
@@ -75,6 +77,7 @@ export class AdminStaffListPageComponent implements OnInit {
    * decision defines it, so the action deactivates or reactivates them through the existing status endpoint. A
    * deactivated professional stops being bookable and keeps their history; nothing is deleted.
    */
+  @SingleFlight()
   async toggleStaffStatus(member: StaffListItem): Promise<void> {
     const deactivating = member.isActive;
     const confirmed = await this.confirmModal.confirm({
@@ -84,6 +87,7 @@ export class AdminStaffListPageComponent implements OnInit {
         : `"${member.displayName}" volverá a aparecer para reservar y podrá iniciar sesión.`,
       confirmLabel: deactivating ? 'Sí, desactivar' : 'Sí, activar',
       danger: deactivating,
+      icon: deactivating ? 'trash' : 'check',
     });
     if (!confirmed) return;
 
@@ -104,6 +108,7 @@ export class AdminStaffListPageComponent implements OnInit {
     }
   }
 
+  @SingleFlight()
   async activateProfessional(): Promise<void> {
     const confirmed = await this.confirmModal.confirm({
       title: 'Activar mi perfil profesional',

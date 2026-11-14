@@ -10,9 +10,13 @@ import { ApiFeedbackComponent } from '../../../../../shared/components/api-feedb
 const REASON_MIN_LENGTH = 3;
 const REASON_MAX_LENGTH = 500;
 
+import { ModalDialogDirective } from '../../../../../shared/directives/modal-dialog.directive';
+
+import { SingleFlight } from '../../../../../core/utils/single-flight';
+
 @Component({
   selector: 'app-admin-customer-unlink-account-modal',
-  imports: [FormsModule, ApiFeedbackComponent],
+  imports: [ModalDialogDirective, FormsModule, ApiFeedbackComponent],
   templateUrl: './admin-customer-unlink-account-modal.component.html',
   styleUrl: '../customer-modal.scss',
 })
@@ -35,6 +39,7 @@ export class AdminCustomerUnlinkAccountModalComponent {
   });
   readonly canConfirm = computed(() => this.reasonIsValid() && this.confirmed() && !this.isSaving());
 
+  @SingleFlight()
   async confirm(): Promise<void> {
     if (!this.canConfirm()) {
       return;

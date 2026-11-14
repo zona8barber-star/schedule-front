@@ -25,6 +25,8 @@ const allFilterValue = 'ALL' as const;
 type MediaPurposeFilter = MediaPurpose | typeof allFilterValue;
 type MediaStatusFilter = MediaStatus | typeof allFilterValue;
 
+import { SingleFlight } from '../../../../core/utils/single-flight';
+
 @Component({
   selector: 'app-admin-media-manager-page',
   imports: [RouterLink, ApiFeedbackComponent, FileUploadComponent, PageStateComponent],
@@ -73,6 +75,7 @@ export class AdminMediaManagerPageComponent implements OnInit {
     void this.loadAssets();
   }
 
+  @SingleFlight()
   async uploadAsset(request: FileUploadRequest): Promise<void> {
     this.isUploading.set(true);
     this.errorMessage.set(null);

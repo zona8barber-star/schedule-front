@@ -26,6 +26,8 @@ import { AdminServiceFormModalComponent } from '../../components/admin-service-f
 const STATUS_OPTIONS: readonly CatalogStatusFilter[] = ['Active', 'Inactive'];
 
 /** Rates (ADR-0016 B7): text, general service and status filters in the URL, paginated on the server. */
+import { SingleFlight } from '../../../../../core/utils/single-flight';
+
 @Component({
   selector: 'app-admin-services-list-page',
   imports: [DecimalPipe, ApiFeedbackComponent, AdminServiceFormModalComponent, PaginatorComponent],
@@ -105,6 +107,7 @@ export class AdminServicesListPageComponent implements OnInit {
     void this.load();
   }
 
+  @SingleFlight()
   async toggleActive(service: ServiceView): Promise<void> {
     this.busyId.set(service.id);
     this.errorMessage.set(null);
@@ -118,6 +121,7 @@ export class AdminServicesListPageComponent implements OnInit {
     }
   }
 
+  @SingleFlight()
   async deleteService(service: ServiceView): Promise<void> {
     // SONDA BUG-103: warn about the active plans and rewards that still use the rate. Without the answer, the
     // confirmation goes on without the warning (the deletion itself is not blocked).

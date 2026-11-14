@@ -1,7 +1,7 @@
 import { signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
-import { of } from 'rxjs';
+import { of, Subject } from 'rxjs';
 
 import { AppointmentResponse, AppointmentServiceOption } from '../../../../../core/models/appointment.models';
 import { ServiceRecordEligibilityService } from '../../../../../core/services/service-record-eligibility.service';
@@ -17,6 +17,7 @@ describe('StaffAppointmentsPageComponent (service and duration)', () => {
     serviceOptions: ReturnType<typeof vi.fn>;
     createManual: ReturnType<typeof vi.fn>;
     update: ReturnType<typeof vi.fn>;
+    markCompleted: ReturnType<typeof vi.fn>;
   };
 
   const options: AppointmentServiceOption[] = [
@@ -60,6 +61,7 @@ describe('StaffAppointmentsPageComponent (service and duration)', () => {
       serviceOptions: vi.fn(() => of(options)),
       createManual: vi.fn(() => of(appointment)),
       update: vi.fn(() => of(appointment)),
+      markCompleted: vi.fn(() => new Subject<AppointmentResponse>()),
     };
 
     await TestBed.configureTestingModule({
@@ -135,6 +137,16 @@ describe('StaffAppointmentsPageComponent (service and duration)', () => {
     component.createForm.patchValue({ customerName: '   ' });
     await component.submitCreate();
     expect(api.createManual).not.toHaveBeenCalled();
+  });
+
+  // SONDA BUG-025: a double click on «Completar» sent two PATCH requests.
+  it('sends a single request when «Completar» is clicked twice in a row', async () => {
+    await render();
+
+    void component.markCompleted(appointment);
+    void component.markCompleted(appointment);
+
+    expect(api.markCompleted).toHaveBeenCalledTimes(1);
   });
 
   it('requires a service to create', async () => {

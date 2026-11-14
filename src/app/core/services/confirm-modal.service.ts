@@ -9,7 +9,7 @@ export interface ConfirmOptions {
   /** Highlighted notice shown above the actions (for example an unusually high amount). */
   warning?: string;
   /** Header icon: a bin (default, for deletions), money (amount confirmations) or a bell (notifications). */
-  icon?: 'trash' | 'money' | 'bell';
+  icon?: 'trash' | 'money' | 'bell' | 'check';
   /** BUG-110: how a notification will look, shown before sending it. */
   preview?: { title: string; body: string };
 }

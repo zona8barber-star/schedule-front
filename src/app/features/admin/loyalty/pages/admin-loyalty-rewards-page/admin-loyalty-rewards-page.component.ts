@@ -27,9 +27,13 @@ import { trimmedMinLength, trimmedRequired } from '../../../../../core/utils/for
  */
 import { FieldErrorComponent } from '../../../../../shared/components/field-error/field-error.component';
 
+import { FormA11yDirective } from '../../../../../shared/directives/form-a11y.directive';
+
+import { SingleFlight } from '../../../../../core/utils/single-flight';
+
 @Component({
   selector: 'app-admin-loyalty-rewards-page',
-  imports: [FieldErrorComponent, BogotaDatePipe, ReactiveFormsModule, ApiFeedbackComponent, PageStateComponent, PaginatorComponent],
+  imports: [FormA11yDirective, FieldErrorComponent, BogotaDatePipe, ReactiveFormsModule, ApiFeedbackComponent, PageStateComponent, PaginatorComponent],
   templateUrl: './admin-loyalty-rewards-page.component.html',
   styleUrls: [
     '../admin-loyalty-settings-page/admin-loyalty-settings-page.component.scss',
@@ -127,6 +131,7 @@ export class AdminLoyaltyRewardsPageComponent implements OnInit {
     }
   }
 
+  @SingleFlight()
   async save(): Promise<void> {
     const value = this.form.getRawValue();
     if (this.form.invalid || !Number.isInteger(value.pointsCost) || (value.kind === 'Service' && !value.serviceId)) {

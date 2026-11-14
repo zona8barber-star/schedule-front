@@ -1,5 +1,5 @@
 <div class="membership-modal__overlay" (click)="cancel()">
-  <div class="membership-modal__card" (click)="$event.stopPropagation()">
+  <div appModalDialog (modalClose)="cancel()" class="membership-modal__card" (click)="$event.stopPropagation()">
     <h2>Registrar consumo</h2>
     <p class="membership-modal__hint">
       {{ membership.planName }} · {{ membership.customerName }} · vigencia {{ membership.startsOn }} al {{ membership.endsOn }}

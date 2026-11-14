@@ -336,8 +336,8 @@
 </section>
 
 @if (showAbsenceModal()) {
-  <div class="modal-overlay" (click)="closeAbsenceModal()" role="dialog" aria-modal="true">
-    <div class="modal" (click)="$event.stopPropagation()">
+  <div class="modal-overlay" (click)="closeAbsenceModal()">
+    <div appModalDialog (modalClose)="closeAbsenceModal()" class="modal" (click)="$event.stopPropagation()">
       <div class="modal__header">
         <h2>{{ editingAbsenceId() ? 'Editar ausentismo' : 'Nuevo ausentismo' }}</h2>
         <button

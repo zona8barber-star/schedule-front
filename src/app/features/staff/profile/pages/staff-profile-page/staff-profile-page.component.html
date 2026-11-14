@@ -108,11 +108,13 @@
 
         @if (qrPreviewUrl() || profile()?.tipsQrUrl) {
           <div class="profile-page__thumbnail-wrap">
-            <img
-              [src]="qrPreviewUrl() ?? profile()!.tipsQrUrl"
-              alt="Tu QR de propinas"
-              class="profile-page__thumbnail"
-            />
+            <app-media-preview [url]="(qrPreviewUrl() ?? profile()!.tipsQrUrl)!" documentLabel="Abrir el QR en PDF">
+              <img
+                [src]="qrPreviewUrl() ?? profile()!.tipsQrUrl"
+                alt="Tu QR de propinas"
+                class="profile-page__thumbnail"
+              />
+            </app-media-preview>
           </div>
         } @else {
           <div class="profile-page__thumbnail-wrap profile-page__thumbnail-wrap--empty">
@@ -169,7 +171,7 @@
       </div>
     </div>
 
-    <form class="profile-page__form" [formGroup]="profileForm" (ngSubmit)="submit()" novalidate>
+    <form appFormA11y class="profile-page__form" [formGroup]="profileForm" (ngSubmit)="submit()" novalidate>
       <fieldset [disabled]="isBusy()">
         <p class="profile-page__section-title">Información de presentación</p>
         <div class="profile-page__grid">
@@ -186,10 +188,10 @@
             />
             <app-field-error controlName="displayName" />
             @if (showError('displayName', 'required')) {
-              <p class="profile-page__error">El nombre visible es obligatorio.</p>
+              <p role="alert" class="profile-page__error">El nombre visible es obligatorio.</p>
             }
             @if (showError('displayName', 'minlength')) {
-              <p class="profile-page__error">Debe tener al menos 2 caracteres.</p>
+              <p role="alert" class="profile-page__error">Debe tener al menos 2 caracteres.</p>
             }
           </div>
 
@@ -203,7 +205,7 @@
               autocomplete="tel"
             />
             @if (showError('phoneNumber', 'maxlength')) {
-              <p class="profile-page__error">Max. 40 caracteres.</p>
+              <p role="alert" class="profile-page__error">Max. 40 caracteres.</p>
             }
           </div>
 
@@ -216,7 +218,7 @@
               placeholder="Cuentales algo sobre ti (opcional)"
             ></textarea>
             @if (showError('bio', 'maxlength')) {
-              <p class="profile-page__error">La bio debe tener 2000 caracteres o menos.</p>
+              <p role="alert" class="profile-page__error">La bio debe tener 2000 caracteres o menos.</p>
             }
           </div>
         </div>
@@ -232,10 +234,10 @@
               placeholder="https://instagram.com/tu_usuario"
             />
             @if (showError('instagramUrl', 'maxlength')) {
-              <p class="profile-page__error">URL demasiado larga.</p>
+              <p role="alert" class="profile-page__error">URL demasiado larga.</p>
             }
             @if (showError('instagramUrl', 'url')) {
-              <p class="profile-page__error">Escribe la dirección completa, empezando por https://.</p>
+              <p role="alert" class="profile-page__error">Escribe la dirección completa, empezando por https://.</p>
             }
           </div>
 
@@ -248,10 +250,10 @@
               placeholder="https://facebook.com/tu_pagina"
             />
             @if (showError('facebookUrl', 'maxlength')) {
-              <p class="profile-page__error">URL demasiado larga.</p>
+              <p role="alert" class="profile-page__error">URL demasiado larga.</p>
             }
             @if (showError('facebookUrl', 'url')) {
-              <p class="profile-page__error">Escribe la dirección completa, empezando por https://.</p>
+              <p role="alert" class="profile-page__error">Escribe la dirección completa, empezando por https://.</p>
             }
           </div>
 
@@ -264,10 +266,10 @@
               placeholder="https://tiktok.com/@tu_usuario"
             />
             @if (showError('tikTokUrl', 'maxlength')) {
-              <p class="profile-page__error">URL demasiado larga.</p>
+              <p role="alert" class="profile-page__error">URL demasiado larga.</p>
             }
             @if (showError('tikTokUrl', 'url')) {
-              <p class="profile-page__error">Escribe la dirección completa, empezando por https://.</p>
+              <p role="alert" class="profile-page__error">Escribe la dirección completa, empezando por https://.</p>
             }
           </div>
 
@@ -280,10 +282,10 @@
               placeholder="https://youtube.com/@tu_canal"
             />
             @if (showError('youtubeUrl', 'maxlength')) {
-              <p class="profile-page__error">URL demasiado larga.</p>
+              <p role="alert" class="profile-page__error">URL demasiado larga.</p>
             }
             @if (showError('youtubeUrl', 'url')) {
-              <p class="profile-page__error">Escribe la dirección completa, empezando por https://.</p>
+              <p role="alert" class="profile-page__error">Escribe la dirección completa, empezando por https://.</p>
             }
           </div>
 
@@ -296,10 +298,10 @@
               placeholder="https://x.com/tu_usuario"
             />
             @if (showError('xUrl', 'maxlength')) {
-              <p class="profile-page__error">URL demasiado larga.</p>
+              <p role="alert" class="profile-page__error">URL demasiado larga.</p>
             }
             @if (showError('xUrl', 'url')) {
-              <p class="profile-page__error">Escribe la dirección completa, empezando por https://.</p>
+              <p role="alert" class="profile-page__error">Escribe la dirección completa, empezando por https://.</p>
             }
           </div>
         </div>

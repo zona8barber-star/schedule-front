@@ -92,12 +92,12 @@
 
 @if (isModalOpen()) {
   <div class="catalog-modal__overlay" (click)="closeModal()">
-    <div class="catalog-modal__card" role="dialog" aria-modal="true" aria-labelledby="general-modal-title" (click)="$event.stopPropagation()">
+    <div appModalDialog (modalClose)="closeModal()" class="catalog-modal__card" role="dialog" aria-modal="true" aria-labelledby="general-modal-title" (click)="$event.stopPropagation()">
       <h2 id="general-modal-title">{{ modalTitle() }}</h2>
 
       <app-api-feedback severity="error" [message]="formError()" />
 
-      <form [formGroup]="form" (ngSubmit)="save()">
+      <form appFormA11y [formGroup]="form" (ngSubmit)="save()">
         <label class="catalog-modal__field">
           <span>Categoría</span>
           <select formControlName="categoryId">
@@ -108,7 +108,7 @@
           </select>
         </label>
         @if (form.controls.categoryId.touched && form.controls.categoryId.invalid) {
-          <small class="catalog-modal__error">Elige una categoría.</small>
+          <small role="alert" class="catalog-modal__error">Elige una categoría.</small>
         }
 
         <label class="catalog-modal__field">
@@ -117,7 +117,7 @@
           <app-field-error controlName="name" [kinds]="['minlength']" />
         </label>
         @if (form.controls.name.touched && form.controls.name.invalid) {
-          <small class="catalog-modal__error">El nombre debe tener entre 2 y 120 caracteres.</small>
+          <small role="alert" class="catalog-modal__error">El nombre debe tener entre 2 y 120 caracteres.</small>
         }
         <small class="catalog-modal__hint">
           No puede repetirse dentro de la misma categoría (sin distinguir mayúsculas); sí en categorías distintas.
@@ -133,7 +133,7 @@
           <input type="number" formControlName="sortOrder" min="0" [max]="maxSortOrder" step="1" inputmode="numeric" />
         </label>
         @if (form.controls.sortOrder.touched && form.controls.sortOrder.invalid) {
-          <small class="catalog-modal__error">Usa un número entero entre 0 y {{ maxSortOrder }}.</small>
+          <small role="alert" class="catalog-modal__error">Usa un número entero entre 0 y {{ maxSortOrder }}.</small>
         }
 
         @if (editing(); as current) {

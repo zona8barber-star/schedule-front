@@ -23,6 +23,8 @@ function todayIso(): string {
   return bogotaToday();
 }
 
+import { SingleFlight } from '../../../../../core/utils/single-flight';
+
 @Component({
   selector: 'app-admin-expenses-list-page',
   imports: [FormsModule, DecimalPipe, RouterLink, ApiFeedbackComponent, AdminExpenseFormModalComponent],
@@ -78,6 +80,7 @@ export class AdminExpensesListPageComponent implements OnInit {
     void this.load();
   }
 
+  @SingleFlight()
   async deleteEntry(entry: ExpenseEntryView): Promise<void> {
     const confirmed = await this.confirmModal.confirm({
       title: '¿Eliminar gasto?',

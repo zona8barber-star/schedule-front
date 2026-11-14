@@ -28,9 +28,15 @@ import { ApiFeedbackComponent } from '../../../../../shared/components/api-feedb
 import { FieldErrorComponent } from '../../../../../shared/components/field-error/field-error.component';
 import { trimmedMinLength, trimmedRequired } from '../../../../../core/utils/form-validators';
 
+import { ModalDialogDirective } from '../../../../../shared/directives/modal-dialog.directive';
+
+import { FormA11yDirective } from '../../../../../shared/directives/form-a11y.directive';
+
+import { SingleFlight } from '../../../../../core/utils/single-flight';
+
 @Component({
   selector: 'app-admin-staff-form-modal',
-  imports: [FieldErrorComponent, ReactiveFormsModule, ApiFeedbackComponent],
+  imports: [FormA11yDirective, ModalDialogDirective, FieldErrorComponent, ReactiveFormsModule, ApiFeedbackComponent],
   templateUrl: './admin-staff-form-modal.component.html',
   styleUrl: './admin-staff-form-modal.component.scss',
 })
@@ -96,6 +102,7 @@ export class AdminStaffFormModalComponent implements OnInit, OnDestroy {
     this.cancel();
   }
 
+  @SingleFlight()
   async submit(): Promise<void> {
     this.submitted.set(true);
     this.errorMessage.set(null);

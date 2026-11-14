@@ -64,9 +64,15 @@ const STATUSES: readonly AppointmentStatus[] = Object.values(APPOINTMENT_STATUS)
 
 import { FieldErrorComponent } from '../../../../../shared/components/field-error/field-error.component';
 
+import { ModalDialogDirective } from '../../../../../shared/directives/modal-dialog.directive';
+
+import { FormA11yDirective } from '../../../../../shared/directives/form-a11y.directive';
+
+import { SingleFlight } from '../../../../../core/utils/single-flight';
+
 @Component({
   selector: 'app-admin-appointments-page',
-  imports: [FieldErrorComponent, ReactiveFormsModule, ApiFeedbackComponent, PageStateComponent, PaginatorComponent],
+  imports: [FormA11yDirective, ModalDialogDirective, FieldErrorComponent, ReactiveFormsModule, ApiFeedbackComponent, PageStateComponent, PaginatorComponent],
   templateUrl: './admin-appointments-page.component.html',
   styleUrl: './admin-appointments-page.component.scss',
 })
@@ -266,6 +272,7 @@ export class AdminAppointmentsPageComponent implements OnInit {
     this.navigate({ staffProfileId: this.filterForm.controls.staffProfileId.value, page: 1 });
   }
 
+  @SingleFlight()
   async submitCreate(): Promise<void> {
     this.createSubmitted.set(true);
     this.errorMessage.set(null);
@@ -342,6 +349,7 @@ export class AdminAppointmentsPageComponent implements OnInit {
     );
   }
 
+  @SingleFlight()
   async submitEdit(): Promise<void> {
     this.editSubmitted.set(true);
     this.errorMessage.set(null);
@@ -387,6 +395,7 @@ export class AdminAppointmentsPageComponent implements OnInit {
     }
   }
 
+  @SingleFlight()
   async markCompleted(appointment: AppointmentResponse): Promise<void> {
     await this.executeStatusAction(
       appointment,
@@ -396,6 +405,7 @@ export class AdminAppointmentsPageComponent implements OnInit {
     );
   }
 
+  @SingleFlight()
   async cancelAppointment(appointment: AppointmentResponse): Promise<void> {
     await this.executeStatusAction(
       appointment,
@@ -405,6 +415,7 @@ export class AdminAppointmentsPageComponent implements OnInit {
     );
   }
 
+  @SingleFlight()
   async markNoShow(appointment: AppointmentResponse): Promise<void> {
     await this.executeStatusAction(
       appointment,

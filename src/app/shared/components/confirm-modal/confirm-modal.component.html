@@ -1,12 +1,9 @@
 @if (state) {
   <div
     class="confirm-overlay"
-    role="dialog"
-    aria-modal="true"
-    [attr.aria-label]="state.options.title"
     (click)="cancel()"
   >
-    <div class="confirm-modal" (click)="$event.stopPropagation()">
+    <div appModalDialog [modalLabel]="state.options.title" (modalClose)="cancel()" class="confirm-modal" (click)="$event.stopPropagation()">
 
       <!-- Icon -->
       <div class="confirm-modal__icon" [class.confirm-modal__icon--danger]="state.options.danger !== false">
@@ -15,6 +12,11 @@
             <rect x="2" y="6" width="20" height="12" rx="2" />
             <circle cx="12" cy="12" r="2.5" />
             <path d="M6 12h.01M18 12h.01" />
+          </svg>
+        } @else if (state.options.icon === 'check') {
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="9" />
+            <path d="m8 12.5 2.5 2.5L16 9.5" />
           </svg>
         } @else if (state.options.icon === 'bell') {
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">

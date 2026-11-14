@@ -71,19 +71,19 @@
 
 @if (isModalOpen()) {
   <div class="catalog-modal__overlay" (click)="closeModal()">
-    <div class="catalog-modal__card" role="dialog" aria-modal="true" aria-labelledby="product-category-modal-title" (click)="$event.stopPropagation()">
+    <div appModalDialog (modalClose)="closeModal()" class="catalog-modal__card" role="dialog" aria-modal="true" aria-labelledby="product-category-modal-title" (click)="$event.stopPropagation()">
       <h2 id="product-category-modal-title">{{ modalTitle() }}</h2>
 
       <app-api-feedback severity="error" [message]="formError()" />
 
-      <form [formGroup]="form" (ngSubmit)="save()">
+      <form appFormA11y [formGroup]="form" (ngSubmit)="save()">
         <label class="catalog-modal__field">
           <span>Nombre</span>
           <input type="text" formControlName="name" maxlength="80" autocomplete="off" />
           <app-field-error controlName="name" [kinds]="['minlength']" />
         </label>
         @if (form.controls.name.touched && form.controls.name.invalid) {
-          <small class="catalog-modal__error">El nombre debe tener entre 2 y 80 caracteres.</small>
+          <small role="alert" class="catalog-modal__error">El nombre debe tener entre 2 y 80 caracteres.</small>
         }
 
         <label class="catalog-modal__field">
@@ -91,7 +91,7 @@
           <input type="number" formControlName="sortOrder" min="0" [max]="maxSortOrder" step="1" inputmode="numeric" />
         </label>
         @if (form.controls.sortOrder.touched && form.controls.sortOrder.invalid) {
-          <small class="catalog-modal__error">Usa un número entero entre 0 y {{ maxSortOrder }}.</small>
+          <small role="alert" class="catalog-modal__error">Usa un número entero entre 0 y {{ maxSortOrder }}.</small>
         }
         <small class="catalog-modal__hint">Las categorías se muestran de menor a mayor orden.</small>
 

@@ -14,7 +14,7 @@
     @if (isLoading()) {
       <app-page-state kind="loading" message="Cargando contenido de landing..." />
     } @else {
-      <form [formGroup]="landingForm" (ngSubmit)="submit()" novalidate>
+      <form appFormA11y [formGroup]="landingForm" (ngSubmit)="submit()" novalidate>
         <fieldset [disabled]="isBusy()">
           <div class="admin-content-page__grid">
             <div class="admin-content-page__field admin-content-page__field--wide">
@@ -24,7 +24,7 @@
               <input maxlength="200" id="heroTitle" type="text" formControlName="heroTitle" />
               <app-field-error controlName="heroTitle" [kinds]="['minlength', 'maxlength']" />
               @if (showError('heroTitle', 'required')) {
-                <p class="admin-content-page__error">El título principal es obligatorio.</p>
+                <p role="alert" class="admin-content-page__error">El título principal es obligatorio.</p>
               }
             </div>
 
@@ -66,12 +66,12 @@
                 placeholder="https://maps.google.com/?q=..."
               />
               @if (showError('mapsUrl', 'mapsUrl')) {
-                <p class="admin-content-page__error">
+                <p role="alert" class="admin-content-page__error">
                   Usa un enlace de Google Maps que empiece por https:// (por ejemplo https://www.google.com/maps/…).
                 </p>
               }
               @if (showError('mapsUrl', 'maxlength')) {
-                <p class="admin-content-page__error">El enlace no puede superar 2000 caracteres.</p>
+                <p role="alert" class="admin-content-page__error">El enlace no puede superar 2000 caracteres.</p>
               }
               <p class="admin-content-page__hint">
                 Pega el enlace <strong>completo</strong> de Google Maps (no el link corto

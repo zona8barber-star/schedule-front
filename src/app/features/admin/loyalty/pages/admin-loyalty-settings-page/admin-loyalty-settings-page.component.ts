@@ -26,6 +26,8 @@ function integerValidator(control: AbstractControl): ValidationErrors | null {
   return Number.isInteger(control.value) ? null : { integer: true };
 }
 
+import { SingleFlight } from '../../../../../core/utils/single-flight';
+
 @Component({
   selector: 'app-admin-loyalty-settings-page',
   imports: [BogotaDatePipe, ReactiveFormsModule, ApiFeedbackComponent, PageStateComponent, PaginatorComponent, LoadErrorComponent],
@@ -90,6 +92,7 @@ export class AdminLoyaltySettingsPageComponent implements OnInit {
     await this.load();
   }
 
+  @SingleFlight()
   async submit(): Promise<void> {
     const current = this.settings();
     if (!current) {

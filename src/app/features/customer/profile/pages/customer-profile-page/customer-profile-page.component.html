@@ -99,7 +99,7 @@
         />
 
         <!-- Datos básicos -->
-        <form [formGroup]="infoForm" (ngSubmit)="saveInfo()" novalidate>
+        <form appFormA11y [formGroup]="infoForm" (ngSubmit)="saveInfo()" novalidate>
           <div class="cp__form-grid">
 
             <!-- Nombre completo -->
@@ -188,7 +188,7 @@
         <app-api-feedback severity="error" [message]="pwdError()" />
         <app-api-feedback severity="info" [message]="pwdSuccess()" />
 
-        <form [formGroup]="pwdForm" (ngSubmit)="changePassword()" novalidate>
+        <form appFormA11y [formGroup]="pwdForm" (ngSubmit)="changePassword()" novalidate>
           <div class="cp__form-grid cp__form-grid--single">
 
             <!-- Contraseña actual -->

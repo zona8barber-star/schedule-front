@@ -13,6 +13,8 @@ import { getApiErrorMessage } from '../../../../../core/utils/api-error.utils';
 import { ApiFeedbackComponent } from '../../../../../shared/components/api-feedback/api-feedback.component';
 import { PageStateComponent } from '../../../../../shared/components/page-state/page-state.component';
 
+import { SingleFlight } from '../../../../../core/utils/single-flight';
+
 @Component({
   selector: 'app-admin-ticker-items-page',
   imports: [ReactiveFormsModule, ApiFeedbackComponent, PageStateComponent],
@@ -52,6 +54,7 @@ export class AdminTickerItemsPageComponent implements OnInit {
     await this.load();
   }
 
+  @SingleFlight()
   async submit(): Promise<void> {
     this.submitted.set(true);
     this.errorMessage.set(null);
@@ -118,6 +121,7 @@ export class AdminTickerItemsPageComponent implements OnInit {
     );
   }
 
+  @SingleFlight()
   async deleteTickerItem(item: TickerItemResponse): Promise<void> {
     const confirmed = await this.confirmModal.confirm({
       title: '¿Eliminar frase del ticker?',

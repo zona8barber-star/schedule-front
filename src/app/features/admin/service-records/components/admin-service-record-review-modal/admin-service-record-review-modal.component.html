@@ -1,5 +1,5 @@
 <div class="review-modal__overlay" (click)="cancel()">
-  <div class="review-modal__card" (click)="$event.stopPropagation()" role="dialog" aria-label="Revisar servicio realizado">
+  <div appModalDialog (modalClose)="cancel()" class="review-modal__card" (click)="$event.stopPropagation()" role="dialog" aria-label="Revisar servicio realizado">
     <h2>Revisar servicio realizado</h2>
     <p class="review-modal__muted">
       Registrado por {{ record.registeredByName ?? 'un profesional' }}: <strong>{{ record.serviceName }}</strong> ·

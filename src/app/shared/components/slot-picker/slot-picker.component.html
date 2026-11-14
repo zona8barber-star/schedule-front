@@ -10,7 +10,7 @@
         [class.sp__day--selected]="day.date === selectedDate()"
         [class.sp__day--empty]="day.slotCount === 0"
         [disabled]="day.slotCount === 0"
-        [attr.aria-label]="day.topLabel + ' ' + day.bottomLabel + (day.slotCount === 0 ? ', sin horarios' : '')"
+        [attr.aria-label]="day.topLabel + ', ' + day.bottomLabel + (day.slotCount === 0 ? ', sin horarios' : '')"
         (click)="selectDay(day.date)"
       >
         <span class="sp__day-top">{{ day.topLabel }}</span>

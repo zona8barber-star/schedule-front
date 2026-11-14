@@ -281,15 +281,13 @@
   <div
     class="my-appts__overlay"
     (click)="closeReviewModal()"
-    (keydown.escape)="closeReviewModal()"
     tabindex="-1"
   >
-    <dialog
+    <dialog appModalDialog (modalClose)="closeReviewModal()"
       class="my-appts__modal"
       open
       aria-labelledby="review-modal-title"
       (click)="$event.stopPropagation()"
-      (keydown)="$event.stopPropagation()"
     >
 
       <!-- Botón cerrar -->
@@ -328,7 +326,7 @@
       </div>
 
       <!-- Formulario -->
-      <form [formGroup]="reviewForm" (ngSubmit)="submitReview()" novalidate>
+      <form appFormA11y [formGroup]="reviewForm" (ngSubmit)="submitReview()" novalidate>
 
         <!-- Estrellas -->
         <fieldset class="my-appts__stars">
@@ -385,12 +383,11 @@
 <!-- ── Diálogo: cancelar (con opción de reprogramar) ─────────────────────── -->
 @if (cancelDialogAppointment(); as appt) {
   <div class="my-appts__overlay" (click)="closeCancelDialog()" tabindex="-1">
-    <dialog
+    <dialog appModalDialog (modalClose)="closeCancelDialog()"
       class="my-appts__modal my-appts__modal--compact"
       open
       aria-labelledby="cancel-modal-title"
       (click)="$event.stopPropagation()"
-      (keydown.escape)="closeCancelDialog()"
     >
       <div class="my-appts__modal-header">
         <h2 id="cancel-modal-title">¿Cancelar tu cita?</h2>
@@ -439,12 +436,11 @@
 <!-- ── Diálogo: reprogramar ───────────────────────────────────────────────── -->
 @if (rescheduleAppointment(); as appt) {
   <div class="my-appts__overlay" (click)="closeReschedule()" tabindex="-1">
-    <dialog
+    <dialog appModalDialog (modalClose)="closeReschedule()"
       class="my-appts__modal"
       open
       aria-labelledby="reschedule-modal-title"
       (click)="$event.stopPropagation()"
-      (keydown.escape)="closeReschedule()"
     >
       <button
         class="my-appts__modal-close"

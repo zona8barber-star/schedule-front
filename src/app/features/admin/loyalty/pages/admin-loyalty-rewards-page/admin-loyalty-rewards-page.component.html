@@ -15,7 +15,7 @@
     <app-api-feedback severity="error" [message]="errorMessage()" />
     <app-api-feedback severity="info" [message]="successMessage()" />
 
-    <form [formGroup]="form" (ngSubmit)="save()" novalidate>
+    <form appFormA11y [formGroup]="form" (ngSubmit)="save()" novalidate>
       <fieldset class="rewards__fields" [disabled]="isSaving()">
         <div class="admin-content-page__field">
           <label for="rewardName">Nombre</label>

@@ -19,9 +19,13 @@ const REASON_MIN_LENGTH = 3;
  * Links a membership-sale income to this membership and, optionally, to other unlinked memberships of the
  * same customer paid with it. A justification is required when the income does not match their total.
  */
+import { ModalDialogDirective } from '../../../../../shared/directives/modal-dialog.directive';
+
+import { SingleFlight } from '../../../../../core/utils/single-flight';
+
 @Component({
   selector: 'app-admin-membership-income-link-modal',
-  imports: [FormsModule, DecimalPipe, ApiFeedbackComponent],
+  imports: [ModalDialogDirective, FormsModule, DecimalPipe, ApiFeedbackComponent],
   templateUrl: './admin-membership-income-link-modal.component.html',
   styleUrl: '../membership-modal.scss',
 })
@@ -81,6 +85,7 @@ export class AdminMembershipIncomeLinkModalComponent implements OnInit {
     this.includedSiblingIds.update((ids) => (included ? [...ids, id] : ids.filter((candidate) => candidate !== id)));
   }
 
+  @SingleFlight()
   async confirm(): Promise<void> {
     const selected = this.selected();
     if (!selected || !this.canConfirm()) {

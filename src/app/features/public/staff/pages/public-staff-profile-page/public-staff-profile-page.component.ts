@@ -53,9 +53,13 @@ function trimDot(value: string): string {
   return value.replace(/\.$/, '');
 }
 
+import { ModalDialogDirective } from '../../../../../shared/directives/modal-dialog.directive';
+
+import { MediaPreviewComponent } from '../../../../../shared/components/media-preview/media-preview.component';
+
 @Component({
   selector: 'app-public-staff-profile-page',
-  imports: [
+  imports: [MediaPreviewComponent, ModalDialogDirective, 
     RouterLink,
     ApiFeedbackComponent,
     PageStateComponent,

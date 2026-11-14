@@ -1,5 +1,5 @@
 <div class="income-modal__overlay" (click)="cancel()">
-  <div class="income-modal__card" (click)="$event.stopPropagation()">
+  <div appModalDialog (modalClose)="cancel()" class="income-modal__card" (click)="$event.stopPropagation()">
     <h2>{{ isEditing ? 'Editar ingreso' : 'Registrar ingreso' }}</h2>
 
     <app-api-feedback severity="error" [message]="errorMessage()" />

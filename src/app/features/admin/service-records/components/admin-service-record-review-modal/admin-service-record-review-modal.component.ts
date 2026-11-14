@@ -42,9 +42,13 @@ function singleActiveRate(services: ServiceRecordServiceOption[], generalService
 }
 
 /** Confirms (with corrections) or rejects one pending service record. */
+import { ModalDialogDirective } from '../../../../../shared/directives/modal-dialog.directive';
+
+import { SingleFlight } from '../../../../../core/utils/single-flight';
+
 @Component({
   selector: 'app-admin-service-record-review-modal',
-  imports: [DecimalPipe, ReactiveFormsModule, ApiFeedbackComponent, AdminCustomerFormModalComponent],
+  imports: [ModalDialogDirective, DecimalPipe, ReactiveFormsModule, ApiFeedbackComponent, AdminCustomerFormModalComponent],
   templateUrl: './admin-service-record-review-modal.component.html',
   styleUrl: './admin-service-record-review-modal.component.scss',
 })
@@ -295,6 +299,7 @@ export class AdminServiceRecordReviewModalComponent implements OnInit {
     void this.refreshRedemptionOptions();
   }
 
+  @SingleFlight()
   async approve(): Promise<void> {
     this.submitted.set(true);
     if (this.form.invalid || this.problems().length > 0) {
@@ -331,6 +336,7 @@ export class AdminServiceRecordReviewModalComponent implements OnInit {
     );
   }
 
+  @SingleFlight()
   async reject(): Promise<void> {
     const reason = this.form.controls.rejectionReason.value.trim();
     if (reason.length < 3) {

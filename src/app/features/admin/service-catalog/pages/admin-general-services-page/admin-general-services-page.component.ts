@@ -21,9 +21,15 @@ function integerValidator(control: AbstractControl): ValidationErrors | null {
 /** Master of the general services customers see, each in a service category (ADR-0016 B1). */
 import { FieldErrorComponent } from '../../../../../shared/components/field-error/field-error.component';
 
+import { ModalDialogDirective } from '../../../../../shared/directives/modal-dialog.directive';
+
+import { FormA11yDirective } from '../../../../../shared/directives/form-a11y.directive';
+
+import { SingleFlight } from '../../../../../core/utils/single-flight';
+
 @Component({
   selector: 'app-admin-general-services-page',
-  imports: [FieldErrorComponent, ReactiveFormsModule, RouterLink, ApiFeedbackComponent],
+  imports: [FormA11yDirective, ModalDialogDirective, FieldErrorComponent, ReactiveFormsModule, RouterLink, ApiFeedbackComponent],
   templateUrl: './admin-general-services-page.component.html',
   styleUrl: '../../catalog-page.scss',
 })
@@ -101,6 +107,7 @@ export class AdminGeneralServicesPageComponent implements OnInit {
     this.editing.set(null);
   }
 
+  @SingleFlight()
   async save(): Promise<void> {
     if (this.form.invalid) {
       this.form.markAllAsTouched();
@@ -132,6 +139,7 @@ export class AdminGeneralServicesPageComponent implements OnInit {
     }
   }
 
+  @SingleFlight()
   async toggleActive(service: GeneralServiceView): Promise<void> {
     this.busyId.set(service.id);
     this.errorMessage.set(null);
@@ -145,6 +153,7 @@ export class AdminGeneralServicesPageComponent implements OnInit {
     }
   }
 
+  @SingleFlight()
   async remove(service: GeneralServiceView): Promise<void> {
     const confirmed = await this.confirmModal.confirm({
       title: '¿Eliminar servicio general?',

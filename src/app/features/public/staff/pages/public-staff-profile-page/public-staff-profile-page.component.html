@@ -40,10 +40,14 @@
         }
 
         <div class="psp__meta">
-          <span class="psp__star">★</span>
-          <span>{{ formatRating(displayAverageRating()) }}</span>
-          <span class="psp__sep">·</span>
-          <span>{{ displayReviewCount() }} reseñas</span>
+          @if (displayReviewCount() > 0) {
+            <span class="psp__star" aria-hidden="true">★</span>
+            <span>{{ formatRating(displayAverageRating()) }}</span>
+            <span class="psp__sep" aria-hidden="true">·</span>
+            <span>{{ displayReviewCount() }} {{ displayReviewCount() === 1 ? 'reseña' : 'reseñas' }}</span>
+          } @else {
+            <span data-testid="no-reviews">Sin reseñas</span>
+          }
         </div>
 
         @if (bookableServices().length) {
@@ -170,12 +174,14 @@
         <p class="psp__tips-desc">
           Si mi trabajo te gustó, puedes dejarme una propina escaneando el código.
         </p>
-        <img
-          class="psp__tips-qr"
-          [src]="staffProfile()!.tipsQrUrl!"
-          [alt]="'QR de propinas de ' + staffProfile()!.displayName"
-          [title]="'QR de propinas de ' + staffProfile()!.displayName"
-        />
+        <app-media-preview [url]="staffProfile()!.tipsQrUrl!" documentLabel="Abrir el QR de propinas (PDF)">
+          <img
+            class="psp__tips-qr"
+            [src]="staffProfile()!.tipsQrUrl!"
+            [alt]="'QR de propinas de ' + staffProfile()!.displayName"
+            [title]="'QR de propinas de ' + staffProfile()!.displayName"
+          />
+        </app-media-preview>
       </article>
     }
 
@@ -185,13 +191,12 @@
 
   <!-- ── Modal de citas ─────────────────────────────────────── -->
   @if (showBookingModal()) {
-    <div class="psp__overlay" (click)="closeBookingModal()" (keydown.escape)="closeBookingModal()">
-      <dialog
+    <div class="psp__overlay" (click)="closeBookingModal()">
+      <dialog appModalDialog (modalClose)="closeBookingModal()"
         class="psp__modal"
         open
         aria-label="Agendar cita"
         (click)="$event.stopPropagation()"
-        (keydown)="$event.stopPropagation()"
       >
         <div class="psp__modal-head">
           <h2>Agendar cita</h2>
@@ -220,6 +225,7 @@
                 type="button"
                 role="listitem"
                 [attr.data-day]="day.date"
+                [attr.aria-label]="day.topLabel + ', ' + day.bottomLabel"
                 (click)="selectDate(day.date)"
               >
                 <strong>{{ day.topLabel }}</strong>
@@ -243,6 +249,7 @@
                 class="psp__service-option"
                 type="button"
                 [attr.data-service-id]="service.generalServiceId"
+                [attr.aria-label]="service.name + ', ' + service.durationMinutes + ' min'"
                 (click)="selectService(service)"
               >
                 <strong>{{ service.name }}</strong>

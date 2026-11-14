@@ -53,7 +53,7 @@
         @if (choice() === 'existing') {
           <p>Escribe los datos con los que te conocen en la barbería. No verás ningún perfil hasta que la barbería apruebe la solicitud.</p>
         }
-        <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+        <form appFormA11y [formGroup]="form" (ngSubmit)="submit()" novalidate>
           <fieldset [disabled]="isSaving()">
             <label class="own-profile__field">
               <span>Nombre completo</span>
@@ -61,21 +61,21 @@
               <app-field-error controlName="fullName" [kinds]="['minlength']" />
             </label>
             @if (form.controls.fullName.touched && form.controls.fullName.invalid) {
-              <small class="own-profile__error">El nombre debe tener entre 2 y 120 caracteres.</small>
+              <small role="alert" class="own-profile__error">El nombre debe tener entre 2 y 120 caracteres.</small>
             }
             <label class="own-profile__field">
               <span>Teléfono</span>
               <input type="tel" formControlName="phone" maxlength="40" autocomplete="tel" />
             </label>
             @if (form.controls.phone.touched && form.controls.phone.invalid) {
-              <small class="own-profile__error">Ingresa un teléfono con al menos 7 dígitos.</small>
+              <small role="alert" class="own-profile__error">Ingresa un teléfono con al menos 7 dígitos.</small>
             }
             <label class="own-profile__field">
               <span>Correo electrónico</span>
               <input type="email" formControlName="email" maxlength="256" autocomplete="email" />
             </label>
             @if (form.controls.email.touched && form.controls.email.invalid) {
-              <small class="own-profile__error">Ingresa un correo electrónico válido.</small>
+              <small role="alert" class="own-profile__error">Ingresa un correo electrónico válido.</small>
             }
             @if (choice() === 'existing') {
               <label class="own-profile__field">

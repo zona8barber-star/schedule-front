@@ -15,9 +15,13 @@ function todayIso(): string {
   return new Date().toISOString().slice(0, 10);
 }
 
+import { ModalDialogDirective } from '../../../../../shared/directives/modal-dialog.directive';
+
+import { SingleFlight } from '../../../../../core/utils/single-flight';
+
 @Component({
   selector: 'app-public-staff-list-page',
-  imports: [
+  imports: [ModalDialogDirective, 
     ReactiveFormsModule,
     RouterLink,
     ApiFeedbackComponent,
@@ -42,6 +46,8 @@ export class PublicStaffListPageComponent implements OnInit {
   /** [formGroup] binds FormGroupDirective, which emits ngSubmit and cancels the native submit (BUG-046). */
   readonly searchForm = new FormGroup({ search: this.searchControl });
   readonly isLoading = signal(true);
+  /** SONDA BUG-057: placeholders shown while the list loads. */
+  readonly skeletonCards = [1, 2, 3, 4];
   readonly errorMessage = signal<string | null>(null);
   /** SONDA BUG-045: the list could not be loaded (it was shown as «Sin coincidencias»). */
   readonly loadError = signal<unknown>(null);
@@ -63,6 +69,7 @@ export class PublicStaffListPageComponent implements OnInit {
     await this.loadStaff();
   }
 
+  @SingleFlight()
   async submitSearch(): Promise<void> {
     await this.loadStaff(this.searchControl.value);
   }

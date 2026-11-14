@@ -18,7 +18,7 @@
       </div>
     </div>
 
-    <form [formGroup]="bannerForm" (ngSubmit)="submit()" novalidate>
+    <form appFormA11y [formGroup]="bannerForm" (ngSubmit)="submit()" novalidate>
       <fieldset [disabled]="isBusy()">
         <div class="admin-banners-page__grid">
           <div class="admin-banners-page__field">
@@ -26,7 +26,7 @@
             <input maxlength="160" id="title" type="text" formControlName="title" />
             <app-field-error controlName="title" [kinds]="['minlength', 'maxlength']" />
             @if (showError('title', 'required')) {
-              <p class="admin-banners-page__error">El título es obligatorio.</p>
+              <p role="alert" class="admin-banners-page__error">El título es obligatorio.</p>
             }
           </div>
 
@@ -34,7 +34,7 @@
             <label for="sortOrder">Orden</label>
             <input id="sortOrder" type="number" formControlName="sortOrder" />
             @if (showError('sortOrder', 'required')) {
-              <p class="admin-banners-page__error">El orden es obligatorio.</p>
+              <p role="alert" class="admin-banners-page__error">El orden es obligatorio.</p>
             }
           </div>
 
@@ -48,7 +48,7 @@
             <label for="imageMediaAssetId">ID de imagen</label>
             <input id="imageMediaAssetId" type="text" formControlName="imageMediaAssetId" />
             @if (showError('imageMediaAssetId', 'uuid')) {
-              <p class="admin-banners-page__error">Ingresa un UUID valido o deja vacio.</p>
+              <p role="alert" class="admin-banners-page__error">Ingresa un UUID valido o deja vacio.</p>
             }
           </div>
 
@@ -56,12 +56,12 @@
             <label for="linkUrl">Enlace (URL)</label>
             <input maxlength="2048" id="linkUrl" type="url" formControlName="linkUrl" />
             @if (showError('linkUrl', 'url')) {
-              <p class="admin-banners-page__error">
+              <p role="alert" class="admin-banners-page__error">
                 Ingresa una dirección web completa que empiece por https:// (por ejemplo https://instagram.com/zona8).
               </p>
             }
             @if (showError('linkUrl', 'maxlength')) {
-              <p class="admin-banners-page__error">El enlace no puede superar 2048 caracteres.</p>
+              <p role="alert" class="admin-banners-page__error">El enlace no puede superar 2048 caracteres.</p>
             }
           </div>
 
@@ -82,7 +82,7 @@
         </div>
 
         @if (showFormError('dateRange')) {
-          <p class="admin-banners-page__error">
+          <p role="alert" class="admin-banners-page__error">
             La fecha fin debe ser posterior a la fecha inicio.
           </p>
         }

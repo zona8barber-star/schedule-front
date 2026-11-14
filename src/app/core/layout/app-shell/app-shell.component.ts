@@ -52,9 +52,11 @@ interface FooterSocialLink {
 /** Width from which the side menu (or the header links) replace the drop-down panel. Mirrors the SCSS breakpoint. */
 const WIDE_LAYOUT_MIN_WIDTH = 1024;
 
+import { ModalDialogDirective } from '../../../shared/directives/modal-dialog.directive';
+
 @Component({
   selector: 'app-shell',
-  imports: [
+  imports: [ModalDialogDirective, 
     RouterLink,
     RouterOutlet,
     ToastOutletComponent,

@@ -1,6 +1,6 @@
 <div class="staff-modal__backdrop" (click)="cancel()" aria-hidden="true"></div>
 
-<div class="staff-modal__panel" role="dialog" aria-modal="true" [attr.aria-label]="pageTitle()">
+<div class="staff-modal__panel" appModalDialog (modalClose)="cancel()" [attr.aria-label]="pageTitle()">
   <div class="staff-modal__header">
     <div>
       <p class="staff-modal__eyebrow">Gestión</p>
@@ -38,7 +38,7 @@
     } @else if (isEditMode() && !hasRecord()) {
       <p class="staff-modal__state">No se pudo cargar el perfil solicitado.</p>
     } @else {
-      <form [formGroup]="staffForm" (ngSubmit)="submit()" novalidate>
+      <form appFormA11y [formGroup]="staffForm" (ngSubmit)="submit()" novalidate>
         <fieldset [disabled]="isBusy()">
           <div class="staff-modal__grid">
             <div class="staff-modal__field staff-modal__field--wide">
@@ -51,10 +51,10 @@
               />
               <app-field-error controlName="fullName" />
               @if (showError('fullName', 'required')) {
-                <p class="staff-modal__error">Ingresa el nombre completo.</p>
+                <p role="alert" class="staff-modal__error">Ingresa el nombre completo.</p>
               }
               @if (showError('fullName', 'minlength')) {
-                <p class="staff-modal__error">El nombre debe tener al menos 2 caracteres.</p>
+                <p role="alert" class="staff-modal__error">El nombre debe tener al menos 2 caracteres.</p>
               }
             </div>
 
@@ -62,10 +62,10 @@
               <label for="modal-email">Correo electrónico</label>
               <input id="modal-email" type="email" formControlName="email" autocomplete="email" />
               @if (showError('email', 'required')) {
-                <p class="staff-modal__error">Ingresa el correo electrónico.</p>
+                <p role="alert" class="staff-modal__error">Ingresa el correo electrónico.</p>
               }
               @if (showError('email', 'email')) {
-                <p class="staff-modal__error">Ingresa un correo valido.</p>
+                <p role="alert" class="staff-modal__error">Ingresa un correo valido.</p>
               }
             </div>
 
@@ -80,10 +80,10 @@
                 />
                 <app-field-error controlName="initialPassword" />
                 @if (showError('initialPassword', 'required')) {
-                  <p class="staff-modal__error">Ingresa una contraseña inicial.</p>
+                  <p role="alert" class="staff-modal__error">Ingresa una contraseña inicial.</p>
                 }
                 @if (showError('initialPassword', 'minlength')) {
-                  <p class="staff-modal__error">La contraseña debe tener al menos 8 caracteres.</p>
+                  <p role="alert" class="staff-modal__error">La contraseña debe tener al menos 8 caracteres.</p>
                 }
               </div>
             }
@@ -93,10 +93,10 @@
               <input maxlength="120" id="modal-displayName" type="text" formControlName="displayName" />
               <app-field-error controlName="displayName" />
               @if (showError('displayName', 'required')) {
-                <p class="staff-modal__error">Ingresa el nombre visible.</p>
+                <p role="alert" class="staff-modal__error">Ingresa el nombre visible.</p>
               }
               @if (showError('displayName', 'minlength')) {
-                <p class="staff-modal__error">
+                <p role="alert" class="staff-modal__error">
                   El nombre visible debe tener al menos 2 caracteres.
                 </p>
               }
@@ -111,7 +111,7 @@
                 autocomplete="tel"
               />
               @if (showError('phoneNumber', 'maxlength')) {
-                <p class="staff-modal__error">El teléfono debe tener 40 caracteres o menos.</p>
+                <p role="alert" class="staff-modal__error">El teléfono debe tener 40 caracteres o menos.</p>
               }
             </div>
 

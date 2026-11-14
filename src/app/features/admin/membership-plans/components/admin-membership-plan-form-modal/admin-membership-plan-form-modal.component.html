@@ -1,5 +1,5 @@
 <div class="plan-modal__overlay" (click)="cancel()">
-  <div class="plan-modal__card" (click)="$event.stopPropagation()">
+  <div appModalDialog (modalClose)="cancel()" class="plan-modal__card" (click)="$event.stopPropagation()">
     <h2>{{ isEditing ? 'Editar tipo de membresía' : 'Nuevo tipo de membresía' }}</h2>
 
     <app-api-feedback severity="error" [message]="errorMessage()" />

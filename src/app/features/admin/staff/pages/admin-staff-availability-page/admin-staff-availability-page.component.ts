@@ -39,9 +39,13 @@ import { NotFoundStateComponent } from '../../../../../shared/components/not-fou
 import { isGuid, isNotFoundError } from '../../../../../core/utils/route-id.utils';
 import { PageStateComponent } from '../../../../../shared/components/page-state/page-state.component';
 
+import { ModalDialogDirective } from '../../../../../shared/directives/modal-dialog.directive';
+
+import { SingleFlight } from '../../../../../core/utils/single-flight';
+
 @Component({
   selector: 'app-admin-staff-availability-page',
-  imports: [ReactiveFormsModule, RouterLink, ApiFeedbackComponent, PageStateComponent, NotFoundStateComponent],
+  imports: [ModalDialogDirective, ReactiveFormsModule, RouterLink, ApiFeedbackComponent, PageStateComponent, NotFoundStateComponent],
   templateUrl: './admin-staff-availability-page.component.html',
   styleUrl: '../../../../../shared/styles/availability-page.scss',
 })
@@ -177,6 +181,7 @@ export class AdminStaffAvailabilityPageComponent {
     return false;
   }
 
+  @SingleFlight()
   async saveRules(): Promise<void> {
     this.rulesSubmitted.set(true);
     this.rulesErrorMessage.set(null);
@@ -262,6 +267,7 @@ export class AdminStaffAvailabilityPageComponent {
     this.absenceForm.patchValue({ startValue: '', endValue: '' });
   }
 
+  @SingleFlight()
   async submitAbsence(): Promise<void> {
     this.absenceSubmitted.set(true);
     this.absenceErrorMessage.set(null);
@@ -316,6 +322,7 @@ export class AdminStaffAvailabilityPageComponent {
     }
   }
 
+  @SingleFlight()
   async deleteAbsence(period: UnavailablePeriod): Promise<void> {
     if (this.isAbsencePast(period)) return;
 

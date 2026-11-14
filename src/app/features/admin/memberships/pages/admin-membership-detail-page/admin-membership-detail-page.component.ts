@@ -43,6 +43,8 @@ type MembershipModal =
   | 'deliverGift'
   | 'reverseDelivery';
 
+import { SingleFlight } from '../../../../../core/utils/single-flight';
+
 @Component({
   selector: 'app-admin-membership-detail-page',
   imports: [NotFoundStateComponent, BogotaDatePipe, 
@@ -154,6 +156,7 @@ export class AdminMembershipDetailPageComponent implements OnInit {
     });
   }
 
+  @SingleFlight()
   async activate(): Promise<void> {
     const membership = this.membership();
     if (!membership) return;
@@ -167,12 +170,16 @@ export class AdminMembershipDetailPageComponent implements OnInit {
       title: '¿Activar membresía?',
       message: `Se activará "${membership.planName}" para ${membership.customerName}.`,
       confirmLabel: 'Activar',
+      // SONDA BUG-086: a constructive action, not the bin and the red button of a deletion.
+      danger: false,
+      icon: 'check',
     });
     if (!confirmed) return;
 
     await this.run(() => this.membershipsApi.activate(membership.id, { confirmExpiredActivation: false, reason: null }), 'Membresía activada.');
   }
 
+  @SingleFlight()
   async activateExpired(reason: string | null): Promise<void> {
     const membership = this.membership();
     if (!membership) return;
@@ -182,12 +189,14 @@ export class AdminMembershipDetailPageComponent implements OnInit {
     );
   }
 
+  @SingleFlight()
   async annul(reason: string | null): Promise<void> {
     const membership = this.membership();
     if (!membership || !reason) return;
     await this.run(() => this.membershipsApi.annul(membership.id, { reason }), 'Membresía anulada.');
   }
 
+  @SingleFlight()
   async unlink(justification: string | null): Promise<void> {
     const membership = this.membership();
     if (!membership) return;
@@ -208,6 +217,7 @@ export class AdminMembershipDetailPageComponent implements OnInit {
     this.open('reverse');
   }
 
+  @SingleFlight()
   async reverse(reason: string | null): Promise<void> {
     const membership = this.membership();
     const consumption = this.reversing();
@@ -260,6 +270,7 @@ export class AdminMembershipDetailPageComponent implements OnInit {
     this.open('reverseDelivery');
   }
 
+  @SingleFlight()
   async reverseDelivery(reason: string | null): Promise<void> {
     const membership = this.membership();
     const gift = this.selectedGift();

@@ -45,6 +45,8 @@ const INCOME_KINDS: readonly IncomeKind[] = ['Service', 'MembershipSale'];
  * professional, kind and
  * general service, paginated on the server. The filters live in the URL; the total covers every matching entry.
  */
+import { SingleFlight } from '../../../../../core/utils/single-flight';
+
 @Component({
   selector: 'app-admin-income-list-page',
   imports: [FormsModule, DecimalPipe, ApiFeedbackComponent, AdminIncomeFormModalComponent, PaginatorComponent],
@@ -151,6 +153,7 @@ export class AdminIncomeListPageComponent implements OnInit {
     void this.load();
   }
 
+  @SingleFlight()
   async deleteEntry(entry: IncomeEntryView): Promise<void> {
     // SONDA BUG-083: a membership sale has no service name; amounts in pesos with thousands separator (C2 format).
     const concept = entry.kind === 'MembershipSale' ? 'Venta de membresía' : (entry.serviceName ?? 'Ingreso');

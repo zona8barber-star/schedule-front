@@ -78,4 +78,25 @@ describe('LandingShellPageComponent (API down)', () => {
     expect(staffList).toHaveBeenCalledTimes(2);
     expect(element.querySelector('[data-testid="load-error"]')).toBeNull();
   });
+
+  // SONDA BUG-050: a banner whose image cannot load keeps its text, without a broken image or a gap.
+  it('hides the image of a banner that fails to load and keeps its text', async () => {
+    const element = await create();
+    content.getLanding.mockReturnValue(of({ heroTitle: 'Zona 8' }));
+    content.getBanners.mockReturnValue(
+      of([{ id: 'b-1', title: 'Promo de noviembre', subtitle: 'Corte y barba', imageUrl: 'https://cdn.test/gone.jpg', linkUrl: null }]),
+    );
+    content.getBusinessSchedule.mockReturnValue(of({ days: [] }));
+    content.getTickerItems.mockReturnValue(of([]));
+    staffList.mockReturnValue(of([]));
+    element.querySelector<HTMLButtonElement>('[data-testid="load-error-retry"]')!.click();
+    await settle();
+
+    const image = element.querySelector<HTMLImageElement>('.lp__banner-img')!;
+    image.dispatchEvent(new Event('error'));
+    await settle();
+
+    expect(element.querySelector('.lp__banner-img')).toBeNull();
+    expect(element.querySelector('.lp__banner')!.textContent).toContain('Promo de noviembre');
+  });
 });

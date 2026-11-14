@@ -36,9 +36,15 @@ function integerValidator(control: AbstractControl): ValidationErrors | null {
  */
 import { FieldErrorComponent } from '../../../../../shared/components/field-error/field-error.component';
 
+import { ModalDialogDirective } from '../../../../../shared/directives/modal-dialog.directive';
+
+import { FormA11yDirective } from '../../../../../shared/directives/form-a11y.directive';
+
+import { SingleFlight } from '../../../../../core/utils/single-flight';
+
 @Component({
   selector: 'app-admin-products-page',
-  imports: [FieldErrorComponent, ReactiveFormsModule, RouterLink, ApiFeedbackComponent, PaginatorComponent],
+  imports: [FormA11yDirective, ModalDialogDirective, FieldErrorComponent, ReactiveFormsModule, RouterLink, ApiFeedbackComponent, PaginatorComponent],
   templateUrl: './admin-products-page.component.html',
   styleUrl: '../../../service-catalog/catalog-page.scss',
 })
@@ -150,6 +156,7 @@ export class AdminProductsPageComponent implements OnInit {
     this.resetImageState();
   }
 
+  @SingleFlight()
   async save(): Promise<void> {
     if (this.form.invalid) {
       this.form.markAllAsTouched();
@@ -225,6 +232,7 @@ export class AdminProductsPageComponent implements OnInit {
     }
   }
 
+  @SingleFlight()
   async removeImage(): Promise<void> {
     const product = this.editing();
     if (!product) {
@@ -249,6 +257,7 @@ export class AdminProductsPageComponent implements OnInit {
     }
   }
 
+  @SingleFlight()
   async toggleActive(product: ProductView): Promise<void> {
     this.busyId.set(product.id);
     this.errorMessage.set(null);
@@ -262,6 +271,7 @@ export class AdminProductsPageComponent implements OnInit {
     }
   }
 
+  @SingleFlight()
   async remove(product: ProductView): Promise<void> {
     const confirmed = await this.confirmModal.confirm({
       title: '¿Eliminar producto?',

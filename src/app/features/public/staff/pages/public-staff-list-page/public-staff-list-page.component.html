@@ -57,6 +57,12 @@
       <app-api-feedback severity="error" [message]="errorMessage()" />
 
       @if (isLoading()) {
+        <!-- SONDA BUG-057: placeholders the size of the cards, so the list does not push the page when it arrives. -->
+        <div class="ps__pro-grid ps__pro-grid--skeleton" aria-hidden="true" data-testid="staff-skeleton">
+          @for (placeholder of skeletonCards; track placeholder) {
+            <div class="ps__pro ps__pro--skeleton"></div>
+          }
+        </div>
         <app-page-state kind="loading" message="Cargando profesionales..." />
       } @else if (loadError()) {
         <app-load-error subject="los profesionales" [error]="loadError()" (retry)="retryStaff()" />
@@ -98,11 +104,15 @@
                 <span class="ps__pro-role">{{ staffRoleSummary(member) }}</span>
                 <div class="ps__pro-foot">
                   <span class="ps__kicker">
-                    <span class="ps__star" aria-hidden="true">★</span>
-                    {{ formatRating(member.averageRating) }}
-                    ({{ member.reviewCount }})
+                    @if (member.reviewCount > 0) {
+                      <span class="ps__star" aria-hidden="true">★</span>
+                      {{ formatRating(member.averageRating) }}
+                      ({{ member.reviewCount }})
+                    } @else {
+                      Sin reseñas
+                    }
                   </span>
-                  <a class="ps__pro-rsv" [routerLink]="['/staff', member.staffProfileId]">
+                  <a class="ps__pro-rsv" [routerLink]="['/staff', member.staffProfileId]" [attr.aria-label]="'Reservar con ' + member.displayName">
                     Reservar
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
                          stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -127,14 +137,12 @@
   <div
     class="psl-modal__overlay"
     (click)="closeAvailabilityModal()"
-    (keydown.escape)="closeAvailabilityModal()"
   >
-    <dialog
+    <dialog appModalDialog (modalClose)="closeAvailabilityModal()"
       class="psl-modal"
       open
       aria-label="Disponibilidad"
       (click)="$event.stopPropagation()"
-      (keydown)="$event.stopPropagation()"
     >
       <div class="psl-modal__head">
         <div class="psl-modal__staff">
