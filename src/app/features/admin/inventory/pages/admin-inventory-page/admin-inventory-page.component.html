@@ -97,6 +97,11 @@
                 @if (item.isLowStock) {
                   <small class="catalog__tag inventory__tag--low">Stock bajo</small>
                 }
+                @if (item.committed) {
+                  <small class="catalog__muted" data-testid="committed">
+                    {{ item.committed }} en cuentas por aprobar · disponibles: {{ item.available }}
+                  </small>
+                }
               </td>
               <td>{{ item.minStock ?? '—' }}</td>
               <td class="catalog__price">{{ formatCost(item.averageUnitCost) }}</td>
@@ -136,6 +141,67 @@
     [disabled]="isLoading()"
     (pageChange)="onPageChange($event)"
   />
+
+  <section class="inventory__sales" data-testid="inventory-sales">
+    <h2>Ventas y ganancia por producto</h2>
+    <p class="catalog__lead">
+      De las cuentas aprobadas: unidades vendidas, lo cobrado (después de descuentos), el costo promedio de cada venta y la
+      ganancia. Hasta 30 días por consulta.
+    </p>
+    <form class="catalog__filters" (submit)="$event.preventDefault(); loadSales(salesFrom.value, salesTo.value)">
+      <label class="catalog__filter">
+        <span>Desde</span>
+        <input #salesFrom type="date" [value]="sales()?.from ?? ''" />
+      </label>
+      <label class="catalog__filter">
+        <span>Hasta</span>
+        <input #salesTo type="date" [value]="sales()?.to ?? ''" />
+      </label>
+      <button class="catalog__action-btn" type="submit" [disabled]="isLoadingSales()">
+        {{ isLoadingSales() ? 'Cargando...' : sales() ? 'Actualizar' : 'Ver ventas' }}
+      </button>
+    </form>
+    <app-api-feedback severity="error" [message]="salesError()" />
+    @if (sales(); as report) {
+      @if (!report.items.length) {
+        <p class="catalog__state">No hubo ventas de productos aprobadas entre {{ report.from }} y {{ report.to }}.</p>
+      } @else {
+        <div class="catalog__table-wrap">
+          <table class="catalog__table">
+            <thead>
+              <tr>
+                <th>Producto</th>
+                <th>Unidades</th>
+                <th>Cobrado</th>
+                <th>Costo</th>
+                <th>Ganancia</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (row of report.items; track row.productId) {
+                <tr [attr.data-sales-product]="row.productId">
+                  <td>{{ row.name }}</td>
+                  <td>{{ row.units }}</td>
+                  <td class="catalog__price">{{ formatCop(row.revenue) }}</td>
+                  <td class="catalog__price">{{ formatCop(row.cost) }}</td>
+                  <td class="catalog__price">
+                    <span [class.inventory__negative]="row.profit < 0">{{ formatCop(row.profit) }}</span>
+                    <small class="catalog__muted">{{ formatMargin(row.marginPercent) }}</small>
+                    @if (row.unitsWithoutCost) {
+                      <small class="catalog__muted">{{ row.unitsWithoutCost }} sin costo registrado</small>
+                    }
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+        <p class="catalog__muted">
+          Total: {{ report.units }} unidades · cobrado {{ formatCop(report.revenue) }} · ganancia {{ formatCop(report.profit) }}
+        </p>
+      }
+    }
+  </section>
 </section>
 
 @if (modal(); as kind) {

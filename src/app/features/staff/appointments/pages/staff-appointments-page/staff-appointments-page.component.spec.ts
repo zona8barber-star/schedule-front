@@ -1,10 +1,8 @@
-import { signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
 import { of, Subject } from 'rxjs';
 
 import { AppointmentResponse, AppointmentServiceOption } from '../../../../../core/models/appointment.models';
-import { ServiceRecordEligibilityService } from '../../../../../core/services/service-record-eligibility.service';
 import { StaffAppointmentsApiService } from '../../../../../core/services/staff-appointments-api.service';
 import { setDeviceTimeZone } from '../../../../../testing/device-time-zone';
 import { StaffAppointmentsPageComponent } from './staff-appointments-page.component';
@@ -69,7 +67,6 @@ describe('StaffAppointmentsPageComponent (service and duration)', () => {
       providers: [
         provideRouter([]),
         { provide: StaffAppointmentsApiService, useValue: api },
-        { provide: ServiceRecordEligibilityService, useValue: { canRegister: signal(false) } },
       ],
     }).compileComponents();
 
@@ -293,7 +290,6 @@ describe('StaffAppointmentsPageComponent in Bogotá time, with a confirm action'
       providers: [
         provideRouter([]),
         { provide: StaffAppointmentsApiService, useValue: api },
-        { provide: ServiceRecordEligibilityService, useValue: { canRegister: signal(false) } },
       ],
     }).compileComponents();
 

@@ -5,6 +5,8 @@ export interface ReportProfessionalIncomeView {
   incomeCount: number;
   businessTotal: number;
   professionalTotal: number;
+  /** ADR-0020: tips charged with their bills, apart from the commissions. */
+  tipTotal?: number;
 }
 
 export interface ReportExpenseConceptView {
@@ -43,6 +45,12 @@ export interface ReportSummaryView {
   /** ADR-0018 D1: income of service records an Admin approved for themselves (already inside the totals). */
   selfApprovedIncomeTotal?: number;
   selfApprovedIncomeCount?: number;
+  /** ADR-0020: products sold and tips charged with approved bills; discounts the business bore (P7). */
+  productSalesIncome?: number;
+  productUnitsSold?: number;
+  tipsIncome?: number;
+  tipsCount?: number;
+  discountsTotal?: number;
 }
 
 export interface ReportRewardCommissionView {

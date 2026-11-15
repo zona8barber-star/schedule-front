@@ -35,7 +35,13 @@ const customer: NavContext = {
 const staff: NavContext = {
   isAuthenticated: true,
   roles: [ROLE_NAMES.staff],
-  permissions: [PERMISSION_CODES.serviceRecordsRegister],
+  // Staff's defaults since ADR-0020 (Q16).
+  permissions: [
+    PERMISSION_CODES.serviceRecordsRegister,
+    PERMISSION_CODES.billsOpen,
+    PERMISSION_CODES.billsClose,
+    PERMISSION_CODES.billsCharge,
+  ],
   canRegisterServiceRecords: true,
 };
 
@@ -104,27 +110,25 @@ describe('buildNavigation', () => {
     const menu = buildNavigation(staff);
 
     expect(itemIdsByGroup(menu)).toEqual({
-      'my-work': ['staff-appointments', 'staff-availability', 'staff-service-records'],
+      'my-work': ['staff-appointments', 'staff-availability', 'bills', 'staff-service-records'],
     });
     expect(menu.accountItems.map((item) => item.id)).toEqual(['staff-profile', 'account-notifications']);
     expect(menu.layout).toBe('sidebar');
-    expect(menu.shortcuts.map((shortcut) => shortcut.id)).toEqual([
-      'home',
-      'staff-appointments',
-      'staff-service-records',
-    ]);
+    // ADR-0020: «Cuentas» takes the shortcut the registration of services had.
+    expect(menu.shortcuts.map((shortcut) => shortcut.id)).toEqual(['home', 'staff-appointments', 'bills']);
   });
 
   it('hides "Servicios realizados" from a professional without an active professional profile', () => {
     const menu = buildNavigation({ ...staff, canRegisterServiceRecords: false });
 
-    expect(itemIdsByGroup(menu)['my-work']).toEqual(['staff-appointments', 'staff-availability']);
+    expect(itemIdsByGroup(menu)['my-work']).toEqual(['staff-appointments', 'staff-availability', 'bills']);
   });
 
   it('gives an administrator with every permission all the back-office groups, in order', () => {
     const menu = buildNavigation(fullAdmin);
 
     expect(menu.groups.map((group) => group.label)).toEqual([
+      'Mi trabajo',
       'Operación',
       'Clientes',
       'Catálogos',
@@ -134,6 +138,7 @@ describe('buildNavigation', () => {
       'Administración',
     ]);
     expect(itemIdsByGroup(menu)).toEqual({
+      'my-work': ['bills'],
       operation: ['admin-appointments', 'admin-service-records', 'admin-staff'],
       customers: ['admin-customers', 'admin-customer-claims'],
       catalogs: [
@@ -146,7 +151,7 @@ describe('buildNavigation', () => {
         'admin-membership-plans',
       ],
       loyalty: ['admin-loyalty-settings', 'admin-loyalty-rewards', 'admin-loyalty-redemptions'],
-      finance: ['admin-income', 'admin-expenses', 'admin-reports'],
+      finance: ['admin-income', 'admin-payment-methods', 'admin-expenses', 'admin-reports'],
       content: ['admin-landing', 'admin-banners', 'admin-ticker', 'admin-business-hours', 'admin-notifications'],
       administration: ['admin-users', 'admin-roles'],
     });
@@ -154,9 +159,9 @@ describe('buildNavigation', () => {
     expect(menu.layout).toBe('sidebar');
     expect(menu.shortcuts.map((shortcut) => shortcut.id)).toEqual([
       'home',
+      'bills',
       'admin-appointments',
       'admin-service-records',
-      'admin-customers',
     ]);
   });
 
@@ -176,13 +181,14 @@ describe('buildNavigation', () => {
     expect(itemIdsByGroup(menu)['my-work']).toEqual([
       'staff-appointments',
       'staff-availability',
+      'bills',
       'staff-service-records',
     ]);
     expect(menu.accountItems.map((item) => item.id)).toEqual(['staff-profile', 'account-notifications']);
     expect(menu.shortcuts.map((shortcut) => shortcut.id)).toEqual([
       'home',
       'staff-appointments',
-      'staff-service-records',
+      'bills',
       'admin-appointments',
     ]);
   });
@@ -190,7 +196,7 @@ describe('buildNavigation', () => {
   it('shows "Servicios realizados" to an administrator with a professional profile but without the Staff role', () => {
     const menu = buildNavigation({ ...fullAdmin, canRegisterServiceRecords: true });
 
-    expect(itemIdsByGroup(menu)['my-work']).toEqual(['staff-service-records']);
+    expect(itemIdsByGroup(menu)['my-work']).toEqual(['bills', 'staff-service-records']);
   });
 
   it('gives a custom role only the items of its permissions and hides the empty groups', () => {
@@ -238,6 +244,9 @@ describe('resolveActiveItemId', () => {
     ['/admin/inventory?lowStock=true', 'admin-inventory'],
     ['/admin/inventory/6f9619ff-8b86-4d11-b42d-00c04fc964ff', 'admin-inventory'],
     ['/admin/product-categories', 'admin-product-categories'],
+    ['/bills', 'bills'],
+    ['/bills/6f9619ff-8b86-4d11-b42d-00c04fc964ff', 'bills'],
+    ['/admin/payment-methods', 'admin-payment-methods'],
     ['/staff/profile', 'staff-profile'],
     ['/staff/appointments/', 'staff-appointments'],
     ['/account/notifications#top', 'account-notifications'],

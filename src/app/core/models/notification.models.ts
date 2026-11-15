@@ -41,7 +41,8 @@ export interface NotificationHistoryResponse {
 }
 
 /** ADR-0019 N4: tipos de aviso que se pueden apagar (solo el push). */
-export type NotificationCategory = 'appointments' | 'memberships' | 'loyalty' | 'campaigns';
+// ADR-0020 Q19: «Compras» (purchases) carries the receipts of the bills.
+export type NotificationCategory = 'appointments' | 'memberships' | 'loyalty' | 'purchases' | 'campaigns';
 
 export interface NotificationPreference {
   category: NotificationCategory;

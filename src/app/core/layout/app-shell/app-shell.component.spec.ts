@@ -149,7 +149,9 @@ describe('AppShellComponent navigation', () => {
 
     const side = sidebar()!;
     const headings = Array.from(side.querySelectorAll('.nav-menu__toggle')).map((button) => button.textContent!.trim());
+    // ADR-0020: «Cuentas» (Mi trabajo) opens with any bills permission, and Admin holds all of them.
     expect(headings).toEqual([
+      'Mi trabajo',
       'Operación',
       'Clientes',
       'Catálogos',

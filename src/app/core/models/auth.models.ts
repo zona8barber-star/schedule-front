@@ -8,7 +8,6 @@ export type RoleName = (typeof ROLE_NAMES)[keyof typeof ROLE_NAMES];
 
 // Mirrors the backend catalog (Barbershop.Domain.Users.PermissionCodes).
 export const PERMISSION_CODES = {
-  salesRegister: 'sales.register',
   serviceRecordsRegister: 'service-records.register',
   serviceRecordsApprove: 'service-records.approve',
   loyaltySettingsManage: 'loyalty.settings.manage',
@@ -21,7 +20,25 @@ export const PERMISSION_CODES = {
   inventoryView: 'inventory.view',
   inventoryReceive: 'inventory.receive',
   inventoryAdjust: 'inventory.adjust',
+  // ADR-0020: bills. Staff opens, closes and charges by default; discounts need bills.discount (Q2).
+  billsOpen: 'bills.open',
+  billsClose: 'bills.close',
+  billsCharge: 'bills.charge',
+  billsDiscount: 'bills.discount',
+  billsManage: 'bills.manage',
+  billsApprove: 'bills.approve',
+  billsUnapprove: 'bills.unapprove',
+  billsVoid: 'bills.void',
 } as const;
+
+/** Any permission that works with bills opens «Cuentas»; the API checks each action again. */
+export const BILLS_ACCESS_PERMISSIONS = [
+  PERMISSION_CODES.billsOpen,
+  PERMISSION_CODES.billsClose,
+  PERMISSION_CODES.billsManage,
+  PERMISSION_CODES.billsApprove,
+  PERMISSION_CODES.billsVoid,
+] as const;
 
 export type PermissionCode = (typeof PERMISSION_CODES)[keyof typeof PERMISSION_CODES];
 

@@ -26,6 +26,10 @@ export const NOTIFICATION_CATEGORY_COPY: Record<NotificationCategory, { label: s
     label: 'Puntos',
     description: 'Puntos ganados o retirados, canjes aprobados o rechazados y puntos por vencer.',
   },
+  purchases: {
+    label: 'Compras',
+    description: 'El comprobante de cada cuenta que pagas en la barbería.',
+  },
   campaigns: {
     label: 'Campañas',
     description: 'Novedades y promociones de la barbería.',
@@ -41,7 +45,7 @@ interface StatusCopy {
 const STATUS_COPY: Record<PushStatus, StatusCopy> = {
   enabled: {
     label: 'Activadas en este dispositivo',
-    description: 'Te avisaremos de tus citas, membresías, puntos y campañas, según los tipos que elijas abajo.',
+    description: 'Te avisaremos de tus citas, membresías, puntos, compras y campañas, según los tipos que elijas abajo.',
     tone: 'ok',
   },
   disabled: {

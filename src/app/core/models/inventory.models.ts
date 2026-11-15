@@ -20,6 +20,34 @@ export interface InventoryItemView {
   marginPercent: number | null;
   stockValue: number | null;
   updatedAt: string | null;
+  /** ADR-0020: units of closed bills waiting for approval (they left the shop, not the stock yet). */
+  committed?: number;
+  /** On hand minus committed; the low stock alert compares it with the minimum. */
+  available?: number;
+}
+
+/** Real sales of one product in the range (ADR-0020 stage 3), from the incomes of approved bills. */
+export interface InventorySalesItemView {
+  productId: string;
+  name: string;
+  units: number;
+  revenue: number;
+  cost: number;
+  profit: number;
+  marginPercent: number | null;
+  /** Units sold while the product had no registered cost: their profit is unknown. */
+  unitsWithoutCost: number;
+}
+
+export interface InventorySalesView {
+  from: string;
+  to: string;
+  items: InventorySalesItemView[];
+  units: number;
+  revenue: number;
+  cost: number;
+  profit: number;
+  unitsWithoutCost: number;
 }
 
 export interface InventorySummaryView {

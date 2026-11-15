@@ -44,6 +44,18 @@
         <span class="reports__kpi-label">Ventas de membresías ({{ s.membershipSalesCount }})</span>
         <span class="reports__kpi-value">$ {{ s.membershipSalesIncome | number: '1.0-0' }}</span>
       </div>
+      <div class="reports__kpi" data-testid="kpi-product-sales">
+        <span class="reports__kpi-label">Ventas de productos ({{ s.productUnitsSold ?? 0 }} u.)</span>
+        <span class="reports__kpi-value">$ {{ s.productSalesIncome ?? 0 | number: '1.0-0' }}</span>
+      </div>
+      <div class="reports__kpi" data-testid="kpi-tips">
+        <span class="reports__kpi-label">Propinas cobradas ({{ s.tipsCount ?? 0 }})</span>
+        <span class="reports__kpi-value">$ {{ s.tipsIncome ?? 0 | number: '1.0-0' }}</span>
+      </div>
+      <div class="reports__kpi" data-testid="kpi-discounts">
+        <span class="reports__kpi-label">Descuentos de las cuentas</span>
+        <span class="reports__kpi-value">$ {{ s.discountsTotal ?? 0 | number: '1.0-0' }}</span>
+      </div>
       <div class="reports__kpi">
         <span class="reports__kpi-label">Para el negocio</span>
         <span class="reports__kpi-value">$ {{ s.businessIncome | number: '1.0-0' }}</span>
@@ -69,7 +81,7 @@
         </div>
         <table class="reports__table">
           <thead>
-            <tr><th>Profesional</th><th>Ingresos</th><th># Cortes</th><th>Negocio</th><th>Profesional</th></tr>
+            <tr><th>Profesional</th><th>Ingresos</th><th># Cortes</th><th>Negocio</th><th>Profesional</th><th>Propinas</th></tr>
           </thead>
           <tbody>
             @for (row of s.byProfessional; track row.staffProfileId) {
@@ -79,9 +91,10 @@
                 <td>{{ row.incomeCount }}</td>
                 <td>$ {{ row.businessTotal | number: '1.0-0' }}</td>
                 <td>$ {{ row.professionalTotal | number: '1.0-0' }}</td>
+                <td>$ {{ row.tipTotal ?? 0 | number: '1.0-0' }}</td>
               </tr>
             } @empty {
-              <tr><td colspan="5">Sin ingresos en el periodo.</td></tr>
+              <tr><td colspan="6">Sin ingresos en el periodo.</td></tr>
             }
           </tbody>
         </table>
@@ -118,8 +131,8 @@
           <h2>Ingresos autoaprobados</h2>
           <p class="reports__note">
             {{ s.selfApprovedIncomeCount }} {{ s.selfApprovedIncomeCount === 1 ? 'ingreso' : 'ingresos' }} por
-            $ {{ s.selfApprovedIncomeTotal ?? 0 | number: '1.0-0' }}: servicios que confirmó un administrador que era el
-            cliente o el profesional. Ya están incluidos en los totales.
+            $ {{ s.selfApprovedIncomeTotal ?? 0 | number: '1.0-0' }}: servicios o cuentas que aprobó un administrador que
+            era el cliente o el profesional. Ya están incluidos en los totales.
           </p>
         </div>
       }

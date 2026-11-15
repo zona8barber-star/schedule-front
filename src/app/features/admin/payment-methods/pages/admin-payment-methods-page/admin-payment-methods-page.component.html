@@ -1,0 +1,86 @@
+<section class="catalog">
+  <header class="catalog__header">
+    <div>
+      <h1>Métodos de pago</h1>
+      <p class="catalog__lead">
+        Los métodos que se ofrecen al cerrar y cobrar una cuenta. Un método no se borra: desactívalo para que deje de
+        ofrecerse; las cuentas que lo usaron conservan su nombre.
+      </p>
+    </div>
+    <button class="catalog__create-btn" type="button" (click)="openNew()">Nuevo método</button>
+  </header>
+
+  <app-api-feedback severity="error" [message]="errorMessage()" />
+  <app-api-feedback severity="info" [message]="successMessage()" />
+
+  @if (isLoading()) {
+    <p class="catalog__state">Cargando métodos de pago...</p>
+  } @else if (!methods().length) {
+    <p class="catalog__state">Todavía no hay métodos de pago.</p>
+  } @else {
+    <div class="catalog__table-wrap">
+      <table class="catalog__table">
+        <thead>
+          <tr>
+            <th>Método</th>
+            <th>Orden</th>
+            <th>Estado</th>
+            <th aria-label="Acciones"></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (method of methods(); track method.id) {
+            <tr [class.catalog__row--inactive]="!method.isActive" [attr.data-payment-method]="method.id">
+              <td>{{ method.name }}</td>
+              <td>{{ method.sortOrder }}</td>
+              <td>{{ method.isActive ? 'Activo' : 'Inactivo' }}</td>
+              <td class="catalog__actions">
+                <button class="catalog__action-btn" type="button" (click)="openEdit(method)">Editar</button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</section>
+
+@if (editing(); as target) {
+  <div class="catalog-modal__overlay" (click)="closeModal()">
+    <div
+      appModalDialog
+      (modalClose)="closeModal()"
+      class="catalog-modal__card"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="payment-method-title"
+      (click)="$event.stopPropagation()"
+    >
+      <h2 id="payment-method-title">{{ target === 'new' ? 'Nuevo método de pago' : 'Editar método de pago' }}</h2>
+      <app-api-feedback severity="error" [message]="formError()" />
+      <form appFormA11y [formGroup]="form" (ngSubmit)="save()">
+        <label class="catalog-modal__field">
+          <span>Nombre</span>
+          <input type="text" formControlName="name" maxlength="60" autocomplete="off" />
+        </label>
+        @if (form.controls.name.touched && form.controls.name.invalid) {
+          <small role="alert" class="catalog-modal__error">Escribe el nombre, entre 2 y 60 caracteres.</small>
+        }
+        <label class="catalog-modal__field">
+          <span>Orden (opcional)</span>
+          <input type="number" formControlName="sortOrder" min="0" max="9999" step="1" inputmode="numeric" />
+        </label>
+        <label class="catalog-modal__field">
+          <span>
+            <input type="checkbox" formControlName="isActive" data-testid="payment-method-active" />
+            Activo
+          </span>
+        </label>
+        <div class="catalog-modal__actions">
+          <button type="button" [disabled]="isSaving()" (click)="closeModal()">Cancelar</button>
+          <button type="submit" [disabled]="isSaving()">{{ isSaving() ? 'Guardando...' : 'Guardar' }}</button>
+        </div>
+      </form>
+    </div>
+  </div>
+}

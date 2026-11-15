@@ -10,6 +10,7 @@ import {
   InventoryMovementResultView,
   InventoryMovementView,
   InventoryReceiptRequest,
+  InventorySalesView,
   InventorySummaryView,
 } from '../models/inventory.models';
 import { PagedResult } from '../models/paged-result.models';
@@ -39,6 +40,11 @@ export class AdminInventoryApiService {
 
   summary() {
     return this.httpClient.get<InventorySummaryView>(this.buildUrl('/admin/inventory/summary'));
+  }
+
+  /** ADR-0020 stage 3: units sold, revenue, cost and profit by product from approved bills (at most 30 days). */
+  sales(from: string | null, to: string | null) {
+    return this.httpClient.get<InventorySalesView>(this.buildUrl('/admin/inventory/sales'), { params: toHttpParams({ from, to }) });
   }
 
   get(productId: string) {

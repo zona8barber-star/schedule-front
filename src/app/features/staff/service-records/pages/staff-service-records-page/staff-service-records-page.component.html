@@ -4,137 +4,23 @@
       <p class="admin-content-page__eyebrow">Mi trabajo</p>
       <h1>Servicios realizados</h1>
       <p>
-        Registra los servicios que hiciste, desde una de tus citas o sin cita. Un administrador los valida y registra el
-        cobro; completar una cita no equivale a confirmar el pago.
+        El registro de servicios realizados se reemplazó por las cuentas. Abre la cuenta de cada atención en
+        <a routerLink="/bills">Cuentas</a>: ahí agregas los servicios, productos y propinas, y la cierras y cobras.
       </p>
     </div>
   </header>
 
   <article class="admin-content-page__panel">
     <app-api-feedback severity="error" [message]="errorMessage()" />
-    <app-api-feedback severity="info" [message]="successMessage()" />
-
-    @if (isLoading()) {
-      <app-page-state kind="loading" message="Cargando..." />
-    } @else if (!hasStaffProfile()) {
-      <app-page-state message="Tu usuario no tiene un perfil de profesional activo. Pide a un administrador que lo active para registrar servicios." />
-    } @else {
-      <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
-        <fieldset [disabled]="isSubmitting()">
-          <div class="records__modes" role="radiogroup" aria-label="Origen del servicio">
-            <button type="button" [class.records__mode--active]="mode() === 'walkIn'" (click)="setMode('walkIn')">Sin cita</button>
-            <button
-              type="button"
-              [class.records__mode--active]="mode() === 'appointment'"
-              (click)="setMode('appointment')"
-              [disabled]="!appointments().length"
-            >
-              Desde una cita
-            </button>
-          </div>
-
-          @if (mode() === 'appointment') {
-            <div class="admin-content-page__field">
-              <label for="appointmentId">Cita</label>
-              <select id="appointmentId" formControlName="appointmentId">
-                <option value="">Elige una de tus citas</option>
-                @for (appointment of appointments(); track appointment.id) {
-                  <option [value]="appointment.id">{{ appointmentLabel(appointment) }}</option>
-                }
-              </select>
-              @if (form.controls.appointmentId.touched && form.controls.appointmentId.invalid) {
-                <p class="admin-content-page__error">Elige la cita en la que hiciste los servicios.</p>
-              }
-              <span class="admin-content-page__hint">La fecha y el cliente se toman de la cita.</span>
-            </div>
-          } @else {
-            <div class="records__row">
-              <div class="admin-content-page__field">
-                <label for="performedOn">Fecha del servicio</label>
-                <input id="performedOn" type="date" formControlName="performedOn" [max]="today" />
-              </div>
-              <div class="admin-content-page__field">
-                <label for="customerName">Cliente (opcional)</label>
-                <input id="customerName" type="text" formControlName="customerName" maxlength="120" autocomplete="off" />
-              </div>
-            </div>
-          }
-
-          <div class="records__services">
-            <span class="records__label">Servicios realizados</span>
-            @for (group of catalogGroups(); track group.categoryId) {
-              <div class="records__group">
-                <span class="records__group-name">{{ group.categoryName }}</span>
-                <div class="records__chips">
-                  @for (service of group.services; track service.id) {
-                    <label
-                      class="records__chip"
-                      [class.records__chip--selected]="isSelected(service.id)"
-                      [class.records__chip--done]="isAlreadyRegistered(service.id)"
-                    >
-                      <input
-                        type="checkbox"
-                        [attr.data-service-id]="service.id"
-                        [checked]="isSelected(service.id) || isAlreadyRegistered(service.id)"
-                        [disabled]="isAlreadyRegistered(service.id)"
-                        (change)="toggleService(service.id)"
-                      />
-                      {{ service.name }}
-                      @if (isAlreadyRegistered(service.id)) {
-                        <small>(ya registrado)</small>
-                      }
-                    </label>
-                  }
-                </div>
-              </div>
-            }
-            @if (submitted() && selectionProblem()) {
-              <p class="admin-content-page__error">{{ selectionProblem() }}</p>
-            }
-          </div>
-
-          <div class="admin-content-page__field">
-            <label for="notes">Notas (opcional)</label>
-            <textarea id="notes" formControlName="notes" maxlength="500" rows="2"></textarea>
-          </div>
-        </fieldset>
-
-        <div class="admin-content-page__actions">
-          <button type="submit" [disabled]="isSubmitting()">{{ isSubmitting() ? 'Registrando...' : 'Registrar' }}</button>
-        </div>
-      </form>
-    }
+    <p class="records__meta" data-testid="records-retired">
+      Aquí siguen los servicios que registraste antes, en solo lectura. Los pendientes los revisa administración.
+    </p>
+    <a class="records__secondary" routerLink="/bills">Ir a Cuentas</a>
   </article>
-
-  @if (!isLoading() && hasStaffProfile() && appointments().length) {
-    <article class="admin-content-page__panel">
-      <h2>Citas recientes</h2>
-      <p>Tus citas de los últimos 30 días que ya empezaron, incluidas las completadas. Registrar servicios no cambia su estado.</p>
-      <ul class="records__list">
-        @for (appointment of appointments(); track appointment.id) {
-          <li class="records__item records__item--row">
-            <div>
-              <strong>{{ appointmentLabel(appointment) }}</strong>
-              <span class="records__meta">
-                {{ statusLabel(appointment.status) }}
-                @if (appointment.generalServiceName) {
-                  · {{ appointment.generalServiceName }}
-                }
-                @if (appointment.registeredGeneralServiceIds.length) {
-                  · {{ appointment.registeredGeneralServiceIds.length }} servicio(s) registrado(s)
-                }
-              </span>
-            </div>
-            <button type="button" class="records__secondary" (click)="registerFrom(appointment.id)">Registrar servicios</button>
-          </li>
-        }
-      </ul>
-    </article>
-  }
 
   <article class="admin-content-page__panel">
     <h2>Mis registros</h2>
-    @if (!isLoading() && !recordsTotal()) {
+    @if (!recordsLoading() && !recordsTotal()) {
       <p>Aún no has registrado servicios.</p>
     }
     @if (recordsTotal()) {

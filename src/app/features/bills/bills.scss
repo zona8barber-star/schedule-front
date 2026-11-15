@@ -1,0 +1,150 @@
+// Bills (ADR-0020): tabs, cards of the pending view, lines and totals. Shares catalog-page.scss.
+
+.bills__tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+
+  button {
+    min-height: 44px;
+    padding: 0.55rem 1.1rem;
+    border: 1px solid var(--border-soft, #ccc);
+    border-radius: 999px;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  .bills__tab--active {
+    background: var(--btn-primary-bg, #1a1a1a);
+    color: var(--btn-primary-text, #fff);
+    border-color: transparent;
+  }
+}
+
+.bills__subtitle {
+  margin: 1.25rem 0 0.5rem;
+  font-size: 1.05rem;
+}
+
+.bills__list {
+  display: grid;
+  gap: 0.75rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.bills__card {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem 1rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--color-border, #ccc);
+  border-radius: 0.75rem;
+
+  small {
+    display: block;
+  }
+}
+
+.bills__tag--overdue {
+  background: var(--color-warning-bg, #fff6e0);
+  color: var(--color-warning-text, #6b4a00);
+}
+
+.bills__options {
+  display: grid;
+  gap: 0.25rem;
+  margin: 0.5rem 0;
+  padding: 0;
+  list-style: none;
+}
+
+.bills__radio {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 44px;
+}
+
+.bills__meta {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+  gap: 0.5rem 1rem;
+  margin: 0 0 1rem;
+
+  dt {
+    font-size: 0.8rem;
+    color: var(--color-text-secondary, #555);
+  }
+
+  dd {
+    margin: 0.15rem 0 0;
+    font-weight: 600;
+  }
+}
+
+.bills__warnings {
+  display: grid;
+  gap: 0.25rem;
+  margin: 0 0 1rem;
+  padding: 0.75rem 1rem 0.75rem 2rem;
+  border: 1px solid var(--color-warning-border, #e0b252);
+  border-radius: 0.75rem;
+  background: var(--color-warning-bg, #fff6e0);
+  color: var(--color-warning-text, #6b4a00);
+}
+
+.bills__totals {
+  display: grid;
+  gap: 0.25rem;
+  justify-content: end;
+  margin: 1rem 0;
+  font-variant-numeric: tabular-nums;
+
+  div {
+    display: flex;
+    justify-content: space-between;
+    gap: 2rem;
+  }
+
+  .bills__total {
+    font-size: 1.2rem;
+    font-weight: 700;
+  }
+}
+
+.bills__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 1rem 0;
+}
+
+.bills__add {
+  display: grid;
+  gap: 0.5rem;
+  padding: 1rem;
+  border: 1px dashed var(--color-border, #ccc);
+  border-radius: 0.75rem;
+  margin: 1rem 0;
+}
+
+.bills__negative {
+  color: var(--color-danger, #b00020);
+}
+
+.bills__events {
+  display: grid;
+  gap: 0.35rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.9rem;
+}

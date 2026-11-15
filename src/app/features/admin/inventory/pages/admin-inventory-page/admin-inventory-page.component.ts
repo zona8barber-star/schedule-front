@@ -7,6 +7,7 @@ import { firstValueFrom } from 'rxjs';
 import { PERMISSION_CODES } from '../../../../../core/models/auth.models';
 import {
   InventoryItemView,
+  InventorySalesView,
   InventorySummaryView,
   formatCost,
   formatMargin,
@@ -111,6 +112,11 @@ export class AdminInventoryPageComponent implements OnInit {
     minStock: [null as number | null, [Validators.min(0), Validators.max(INVENTORY_MAX_QUANTITY), integerValidator]],
   });
 
+  /** ADR-0020 stage 3: profit by product from the real sales of approved bills, loaded on demand. */
+  readonly sales = signal<InventorySalesView | null>(null);
+  readonly salesError = signal<string | null>(null);
+  readonly isLoadingSales = signal(false);
+
   /** Total of the receipt being typed, for the form and the money confirmation. */
   readonly receiptTotal = signal(0);
 
@@ -144,6 +150,18 @@ export class AdminInventoryPageComponent implements OnInit {
 
   onPageChange(page: number): void {
     this.navigate({ page });
+  }
+
+  async loadSales(from: string | null = null, to: string | null = null): Promise<void> {
+    this.isLoadingSales.set(true);
+    this.salesError.set(null);
+    try {
+      this.sales.set(await firstValueFrom(this.api.sales(from || null, to || null)));
+    } catch (error) {
+      this.salesError.set(getApiErrorMessage(error));
+    } finally {
+      this.isLoadingSales.set(false);
+    }
   }
 
   openReceipt(item: InventoryItemView): void {

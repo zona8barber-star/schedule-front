@@ -23,6 +23,7 @@ describe('NotificationSettingsPageComponent', () => {
       { category: 'appointments', pushEnabled: true },
       { category: 'memberships', pushEnabled: true },
       { category: 'loyalty', pushEnabled: true },
+      { category: 'purchases', pushEnabled: true },
       { category: 'campaigns', pushEnabled: true },
     ],
   };
@@ -85,10 +86,10 @@ describe('NotificationSettingsPageComponent', () => {
   });
 
   // ADR-0019 N4 (SONDA BUG-116): push preferences per type of notice.
-  it('shows the four types switched on by default and links to the history', async () => {
+  it('shows the five types switched on by default and links to the history', async () => {
     const element = await create('enabled');
 
-    for (const category of ['appointments', 'memberships', 'loyalty', 'campaigns']) {
+    for (const category of ['appointments', 'memberships', 'loyalty', 'purchases', 'campaigns']) {
       const toggle = element.querySelector<HTMLInputElement>(`[data-testid="pref-${category}"]`);
       expect(toggle?.checked).toBe(true);
       expect(toggle?.getAttribute('role')).toBe('switch');

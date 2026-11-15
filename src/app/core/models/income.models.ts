@@ -4,7 +4,8 @@ import { PageQuery, PagedResult } from './paged-result.models';
  * Service income is a service a professional performed and is split with them; a membership sale has no
  * service or professional and belongs entirely to the business. The kind never changes after creation.
  */
-export type IncomeKind = 'Service' | 'MembershipSale';
+// ADR-0020: products sold and tips charged come only from approved bills.
+export type IncomeKind = 'Service' | 'MembershipSale' | 'ProductSale' | 'Tip';
 
 export interface IncomeEntryView {
   id: string;
@@ -28,6 +29,13 @@ export interface IncomeEntryView {
   serviceRecordId?: string | null;
   /** ADR-0018 D1: the service record that created this income was self-approved by an Admin. */
   isSelfApproved?: boolean;
+  /** ADR-0020: the approved bill that posted this income; it is then not editable from Ingresos. */
+  billId?: string | null;
+  billNumber?: string | null;
+  productName?: string | null;
+  quantity?: number | null;
+  /** P7: the price before discounts the commission was computed on. */
+  commissionBase?: number | null;
 }
 
 export interface IncomeEntryCreateRequest {

@@ -9,6 +9,8 @@ export interface RoleView {
   name: string;
   isSystemRole: boolean;
   permissions: PermissionView[];
+  /** ADR-0020 (BUG-091): custom roles and Staff; Admin and Customer are locked. Older APIs omit it. */
+  canEditPermissions?: boolean;
 }
 
 export interface RoleCreateRequest {

@@ -4,9 +4,20 @@ import { authGuard } from './core/guards/auth.guard';
 import { guestGuard } from './core/guards/guest.guard';
 import { permissionGuard } from './core/guards/permission.guard';
 import { roleGuard } from './core/guards/role.guard';
-import { PERMISSION_CODES, ROLE_NAMES } from './core/models/auth.models';
+import { BILLS_ACCESS_PERMISSIONS, PERMISSION_CODES, ROLE_NAMES } from './core/models/auth.models';
 import { brandTitleResolver } from './core/services/public-branding.store';
 import { customerClaimsQueryGuard } from './features/admin/customer-claims/customer-claims-query.guard';
+
+const loadBillsPage = () =>
+  import('./features/bills/pages/bills-page/bills-page.component').then((module) => module.BillsPageComponent);
+
+const loadBillDetailPage = () =>
+  import('./features/bills/pages/bill-detail-page/bill-detail-page.component').then((module) => module.BillDetailPageComponent);
+
+const loadAdminPaymentMethodsPage = () =>
+  import('./features/admin/payment-methods/pages/admin-payment-methods-page/admin-payment-methods-page.component').then(
+    (module) => module.AdminPaymentMethodsPageComponent,
+  );
 
 const loadAdminStaffListPage = () =>
   import('./features/admin/staff/pages/admin-staff-list-page/admin-staff-list-page.component').then(
@@ -449,6 +460,26 @@ export const routes: Routes = [
     title: 'Servicios realizados',
   },
   {
+    // ADR-0020: by permission, not by role. The API checks each action (open, close, charge, discount, manage) again;
+    // approving and voiding are critical and checked against the database.
+    path: 'bills',
+    canActivate: [authGuard, permissionGuard],
+    loadComponent: loadBillsPage,
+    data: {
+      permissions: [...BILLS_ACCESS_PERMISSIONS],
+    },
+    title: 'Cuentas',
+  },
+  {
+    path: 'bills/:billId',
+    canActivate: [authGuard, permissionGuard],
+    loadComponent: loadBillDetailPage,
+    data: {
+      permissions: [...BILLS_ACCESS_PERMISSIONS],
+    },
+    title: 'Cuenta',
+  },
+  {
     path: 'staff/appointments',
     canActivate: [authGuard, roleGuard],
     loadComponent: loadStaffAppointmentsPage,
@@ -563,6 +594,15 @@ export const routes: Routes = [
       roles: [ROLE_NAMES.admin],
     },
     title: 'Productos',
+  },
+  {
+    path: 'admin/payment-methods',
+    canActivate: [authGuard, roleGuard],
+    loadComponent: loadAdminPaymentMethodsPage,
+    data: {
+      roles: [ROLE_NAMES.admin],
+    },
+    title: 'Métodos de pago',
   },
   {
     path: 'admin/inventory',

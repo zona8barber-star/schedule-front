@@ -1,13 +1,16 @@
 <div class="role-modal__overlay" (click)="cancel()">
   <div appModalDialog (modalClose)="cancel()" class="role-modal__card" (click)="$event.stopPropagation()">
-    <h2>{{ isEditing ? 'Editar rol' : 'Nuevo rol' }}</h2>
+    <h2>{{ isSystemRole ? 'Permisos del rol ' + role?.name : isEditing ? 'Editar rol' : 'Nuevo rol' }}</h2>
 
     <app-api-feedback severity="error" [message]="errorMessage()" />
 
     <form appFormA11y [formGroup]="form" (ngSubmit)="submit()">
+      @if (isSystemRole) {
+        <p class="role-modal__empty">Es un rol del sistema: su nombre no cambia y no se puede eliminar.</p>
+      }
       <label class="role-modal__field">
         <span>Nombre</span>
-        <input type="text" formControlName="name" maxlength="50" autocomplete="off" />
+        <input type="text" formControlName="name" maxlength="50" autocomplete="off" [readOnly]="isSystemRole" />
         <app-field-error controlName="name" [kinds]="['minlength']" />
       </label>
       @if (form.controls.name.touched && form.controls.name.invalid) {

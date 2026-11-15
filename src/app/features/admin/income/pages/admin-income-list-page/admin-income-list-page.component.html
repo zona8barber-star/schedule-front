@@ -1,8 +1,11 @@
 <section class="income">
   <header class="income__header">
     <h1>Ingresos</h1>
-    <button class="income__create-btn" type="button" (click)="openCreate()">+ Registrar ingreso</button>
+    <button class="income__create-btn" type="button" (click)="openCreate()">+ Registrar venta de membresía</button>
   </header>
+  <p class="income__hint" data-testid="income-bills-hint">
+    Los servicios, productos y propinas se registran con las cuentas: al aprobar una cuenta, sus ingresos aparecen aquí.
+  </p>
 
   <div class="income__filters">
     <label>
@@ -28,6 +31,8 @@
         <option value="">Todos</option>
         <option value="Service">Servicio</option>
         <option value="MembershipSale">Venta de membresía</option>
+        <option value="ProductSale">Venta de producto</option>
+        <option value="Tip">Propina</option>
       </select>
     </label>
     <label>
@@ -70,6 +75,15 @@
               @if (entry.kind === 'MembershipSale') {
                 <td><span class="income__badge">Venta de membresía</span></td>
                 <td>—</td>
+              } @else if (entry.kind === 'ProductSale') {
+                <td>
+                  <span class="income__badge">Venta de producto</span>
+                  {{ entry.quantity }} × {{ entry.productName }}
+                </td>
+                <td>—</td>
+              } @else if (entry.kind === 'Tip') {
+                <td><span class="income__badge">Propina</span></td>
+                <td>{{ entry.staffDisplayName }}</td>
               } @else {
                 <td>{{ entry.serviceName }}</td>
                 <td>{{ entry.staffDisplayName }}</td>
@@ -78,7 +92,14 @@
               <td>{{ entry.isPromo ? 'Sí' : '—' }}</td>
               <td>{{ entry.occurredOn }}</td>
               <td class="income__actions">
-                @if (entry.serviceRecordId) {
+                @if (entry.billId) {
+                  <a class="income__badge" [routerLink]="['/bills', entry.billId]" title="Se gestiona desde la cuenta">
+                    Cuenta {{ entry.billNumber }}
+                  </a>
+                  @if (entry.isSelfApproved) {
+                    <span class="income__badge income__badge--self" data-testid="self-approved">Autoaprobado</span>
+                  }
+                } @else if (entry.serviceRecordId) {
                   <span class="income__badge" title="Se gestiona desde Servicios por aprobar">Servicio confirmado</span>
                   @if (entry.isSelfApproved) {
                     <span class="income__badge income__badge--self" data-testid="self-approved">Autoaprobado</span>

@@ -1,4 +1,4 @@
-import { PERMISSION_CODES, PermissionCode, ROLE_NAMES } from '../models/auth.models';
+import { BILLS_ACCESS_PERMISSIONS, PERMISSION_CODES, PermissionCode, ROLE_NAMES } from '../models/auth.models';
 import {
   NavAccess,
   NavContext,
@@ -91,8 +91,15 @@ export const NAVIGATION_GROUPS: readonly NavGroupDefinition[] = [
       },
       { id: 'staff-availability', label: 'Mi disponibilidad', route: '/staff/availability', access: STAFF },
       {
-        // By permission and an active professional profile, not by role: an administrator who also works as a
-        // professional registers their services too.
+        // ADR-0020: the bills replaced the registration of services performed. Any bills permission opens it.
+        id: 'bills',
+        label: 'Cuentas',
+        route: '/bills',
+        access: permissions(...BILLS_ACCESS_PERMISSIONS),
+        shortcut: { order: 40, icon: 'records', label: 'Cuentas' },
+      },
+      {
+        // Read only since ADR-0020 (Q6): what the professional registered before the bills.
         id: 'staff-service-records',
         label: 'Servicios realizados',
         route: '/staff/service-records',
@@ -101,7 +108,6 @@ export const NAVIGATION_GROUPS: readonly NavGroupDefinition[] = [
           permissions: [PERMISSION_CODES.serviceRecordsRegister],
           requiresServiceRecordEligibility: true,
         },
-        shortcut: { order: 40, icon: 'records', label: 'Registrar' },
       },
     ],
   },
@@ -205,6 +211,7 @@ export const NAVIGATION_GROUPS: readonly NavGroupDefinition[] = [
     kind: 'back-office',
     items: [
       { id: 'admin-income', label: 'Ingresos', route: '/admin/income', access: ADMIN },
+      { id: 'admin-payment-methods', label: 'Métodos de pago', route: '/admin/payment-methods', access: ADMIN },
       { id: 'admin-expenses', label: 'Gastos', route: '/admin/expenses', access: ADMIN },
       { id: 'admin-reports', label: 'Reportes', route: '/admin/reports', access: ADMIN },
     ],

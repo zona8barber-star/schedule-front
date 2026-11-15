@@ -52,6 +52,11 @@ export class AdminRoleFormModalComponent implements OnChanges {
     return this.role !== null;
   }
 
+  /** ADR-0020 (BUG-091): Staff keeps its name; only its permissions are edited. */
+  get isSystemRole(): boolean {
+    return this.role?.isSystemRole ?? false;
+  }
+
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['role']) {
       this.form.reset({ name: this.role?.name ?? '' });

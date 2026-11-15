@@ -1,0 +1,469 @@
+<section class="catalog">
+  <p><a routerLink="/bills">← Volver a Cuentas</a></p>
+
+  @if (isLoading()) {
+    <p class="catalog__state">Cargando cuenta...</p>
+  } @else if (notFound()) {
+    <p class="catalog__state">No encontramos esta cuenta o no tienes acceso a ella.</p>
+  } @else if (bill(); as current) {
+    <header class="catalog__header">
+      <div>
+        <h1>{{ current.number ? 'Cuenta ' + current.number : 'Cuenta abierta' }}</h1>
+        <p class="catalog__lead">
+          <span class="catalog__tag" data-testid="bill-status">{{ statusLabels[current.status] }}</span>
+          @if (current.isSelfApproved) {
+            <span class="catalog__tag">Autoaprobada</span>
+          }
+          @if (current.isOverdue) {
+            <span class="catalog__tag bills__tag--overdue">Vencida</span>
+          }
+        </p>
+      </div>
+    </header>
+
+    <app-api-feedback severity="error" [message]="errorMessage()" />
+    <app-api-feedback severity="info" [message]="successMessage()" />
+
+    <dl class="bills__meta">
+      <div>
+        <dt>Cliente</dt>
+        <dd>{{ current.customerName }}{{ current.isWalkIn ? ' (ocasional)' : '' }}</dd>
+      </div>
+      <div>
+        <dt>Fecha del servicio</dt>
+        <dd>{{ current.serviceDate }}</dd>
+      </div>
+      <div>
+        <dt>Profesional de la cuenta</dt>
+        <dd>{{ current.staffName ?? 'Mostrador' }}</dd>
+      </div>
+      @if (current.appointmentStartsAt) {
+        <div>
+          <dt>Cita</dt>
+          <dd>{{ formatDateTime(current.appointmentStartsAt) }}</dd>
+        </div>
+      }
+      <div>
+        <dt>Abierta</dt>
+        <dd>{{ formatDateTime(current.openedAt) }} · {{ current.openedByName }}</dd>
+      </div>
+      @if (current.closedAt) {
+        <div>
+          <dt>Cerrada</dt>
+          <dd>{{ formatDateTime(current.closedAt) }} · {{ current.closedByName }}</dd>
+        </div>
+      }
+      @if (current.approvedAt) {
+        <div>
+          <dt>Aprobada</dt>
+          <dd>{{ formatDateTime(current.approvedAt) }} · {{ current.approvedByName }}</dd>
+        </div>
+      }
+      @if (current.voidedAt) {
+        <div>
+          <dt>Anulada</dt>
+          <dd>{{ formatDateTime(current.voidedAt) }} · {{ current.voidedByName }} · {{ current.voidReason }}</dd>
+        </div>
+      }
+    </dl>
+
+    @if (current.warnings.length) {
+      <ul class="bills__warnings" role="status" data-testid="bill-warnings">
+        @for (warning of current.warnings; track warning) {
+          <li>{{ warning }}</li>
+        }
+      </ul>
+    }
+
+    <app-api-feedback severity="error" [message]="lineError()" />
+
+    @if (!current.lines.length) {
+      <p class="catalog__state">La cuenta todavía no tiene líneas.</p>
+    } @else {
+      <div class="catalog__table-wrap">
+        <table class="catalog__table">
+          <thead>
+            <tr>
+              <th>Línea</th>
+              <th>Profesional</th>
+              <th>Cantidad</th>
+              <th>Valor</th>
+              <th aria-label="Acciones"></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (line of current.lines; track line.id) {
+              <tr [attr.data-line]="line.id">
+                <td>
+                  <small class="catalog__muted">{{ lineTypeLabels[line.type] }}</small>
+                  {{ line.name }}
+                  @if (line.isCourtesy) {
+                    <small class="catalog__tag">Cortesía</small>
+                  }
+                  @if (line.membershipName) {
+                    <small class="catalog__muted">Membresía {{ line.membershipName }}</small>
+                  }
+                  @if (line.tipPaymentMode) {
+                    <small class="catalog__muted">{{ tipModeLabels[line.tipPaymentMode] }}</small>
+                  }
+                  @if (line.reason) {
+                    <small class="catalog__muted">Motivo: {{ line.reason }}</small>
+                  }
+                  @if (line.type === 'Service' && !line.serviceId) {
+                    @if (editable()) {
+                      <label class="catalog__filter">
+                        <span>Tarifa</span>
+                        <select data-testid="line-rate" (change)="chooseRate(line, $any($event.target).value)">
+                          <option value="">Elige la tarifa</option>
+                          @for (rate of rateOptions(line.generalServiceId); track rate.id) {
+                            <option [value]="rate.id">{{ rate.name }} · {{ formatCop(rate.price) }}</option>
+                          }
+                        </select>
+                      </label>
+                    } @else {
+                      <small class="catalog__muted">Sin tarifa</small>
+                    }
+                  }
+                  @if (line.catalogPriceNow !== null && line.catalogPriceNow !== line.unitPrice && line.amount > 0) {
+                    <small class="catalog__muted">Precio actual del catálogo: {{ formatCop(line.catalogPriceNow) }}</small>
+                  }
+                </td>
+                <td>
+                  {{ line.staffName ?? '—' }}
+                  @if (!line.staffIsActive) {
+                    <small class="catalog__muted">Inactivo</small>
+                  }
+                </td>
+                <td>
+                  {{ line.quantity }}
+                  @if (line.availableStock !== null) {
+                    <small class="catalog__muted" [class.bills__negative]="line.availableStock < line.quantity">
+                      Disponibles: {{ line.availableStock }}
+                    </small>
+                  }
+                </td>
+                <td class="catalog__price" [class.bills__negative]="line.amount < 0">{{ lineValue(line) }}</td>
+                <td class="catalog__actions">
+                  @if (editable()) {
+                    <button class="catalog__action-btn catalog__action-btn--delete" type="button" [disabled]="isSaving()" (click)="removeLine(line)">
+                      Quitar
+                    </button>
+                  }
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+
+    <div class="bills__totals" data-testid="bill-totals">
+      <div><span>Subtotal</span><span>{{ formatCop(current.subtotal) }}</span></div>
+      @if (current.discountTotal) {
+        <div><span>Descuentos</span><span>-{{ formatCop(current.discountTotal) }}</span></div>
+      }
+      @if (current.tipTotal) {
+        <div><span>Propinas cobradas</span><span>{{ formatCop(current.tipTotal) }}</span></div>
+      }
+      <div class="bills__total"><span>Total a cobrar</span><span>{{ formatCop(current.total) }}</span></div>
+      @if (current.directTipTotal) {
+        <div><span>Propinas pagadas directo</span><span>{{ formatCop(current.directTipTotal) }}</span></div>
+      }
+      @if (current.paymentMethodName) {
+        <div><span>Método de pago</span><span>{{ current.paymentMethodName }}</span></div>
+      }
+    </div>
+
+    @if (editable()) {
+      <form class="bills__add" appFormA11y [formGroup]="lineForm" (ngSubmit)="addLine()" data-testid="add-line">
+        <h2>Agregar a la cuenta</h2>
+        <label class="catalog-modal__field">
+          <span>Tipo</span>
+          <select formControlName="type" data-testid="line-type" (change)="onTypeChange()">
+            @for (type of lineTypes; track type) {
+              @if ((type !== 'Discount' || current.actions.canDiscount) && (!current.isWalkIn || (type !== 'MembershipConsumption' && type !== 'Redemption'))) {
+                <option [value]="type">{{ lineTypeLabels[type] }}</option>
+              }
+            }
+          </select>
+        </label>
+
+        @switch (lineForm.controls.type.value) {
+          @case ('Service') {
+            <label class="catalog-modal__field">
+              <span>Servicio</span>
+              <select formControlName="generalServiceId">
+                <option value="">Elige el servicio</option>
+                @for (service of options()?.services ?? []; track service.id) {
+                  <option [value]="service.id">{{ service.categoryName }} · {{ service.name }}</option>
+                }
+              </select>
+            </label>
+            <label class="catalog-modal__field">
+              <span>Tarifa</span>
+              <select formControlName="serviceId">
+                <option value="">Elige la tarifa</option>
+                @for (rate of rateOptions(lineForm.controls.generalServiceId.value); track rate.id) {
+                  <option [value]="rate.id">{{ rate.name }} · {{ formatCop(rate.price) }}</option>
+                }
+              </select>
+            </label>
+            @if (current.actions.canDiscount) {
+              <label class="bills__radio">
+                <input type="checkbox" formControlName="isCourtesy" data-testid="line-courtesy" />
+                <span>Cortesía (sin ingreso ni comisión)</span>
+              </label>
+            }
+          }
+          @case ('Product') {
+            <label class="catalog-modal__field">
+              <span>Producto</span>
+              <select formControlName="productId">
+                <option value="">Elige el producto</option>
+                @for (product of options()?.products ?? []; track product.id) {
+                  <option [value]="product.id">{{ product.name }} · {{ formatCop(product.price) }} · disponibles: {{ product.availableStock ?? 0 }}</option>
+                }
+              </select>
+            </label>
+            <label class="catalog-modal__field">
+              <span>Cantidad</span>
+              <input type="number" formControlName="quantity" min="1" max="1000" step="1" inputmode="numeric" />
+            </label>
+            <small class="catalog-modal__hint">Si no alcanza el stock, se avisa y se puede cerrar igual.</small>
+          }
+          @case ('MembershipConsumption') {
+            <label class="catalog-modal__field">
+              <span>Membresía y servicio</span>
+              <select formControlName="membership">
+                <option value="">Elige la membresía</option>
+                @for (membership of memberships(); track membership.id) {
+                  @for (service of membership.services; track service.serviceId) {
+                    <option [value]="membership.id + '|' + service.serviceId">
+                      {{ membership.planName }} · {{ service.name }} · quedan {{ service.available }}
+                    </option>
+                  }
+                }
+              </select>
+            </label>
+            @if (!memberships().length) {
+              <small class="catalog-modal__hint">El cliente no tiene membresías vigentes con saldo para la fecha de la cuenta.</small>
+            }
+          }
+          @case ('Redemption') {
+            <label class="catalog-modal__field">
+              <span>Canje aprobado</span>
+              <select formControlName="loyaltyRedemptionId">
+                <option value="">Elige el canje</option>
+                @for (redemption of redemptions(); track redemption.id) {
+                  <option [value]="redemption.id">{{ redemption.rewardName }}{{ redemption.serviceName ? ' · ' + redemption.serviceName : '' }}</option>
+                }
+              </select>
+            </label>
+            @if (!redemptions().length) {
+              <small class="catalog-modal__hint">El cliente no tiene canjes aprobados por entregar.</small>
+            }
+          }
+          @case ('Discount') {
+            <label class="catalog-modal__field">
+              <span>Se aplica a</span>
+              <select formControlName="appliesToLineId">
+                <option value="">Toda la cuenta</option>
+                @for (line of chargeableLines(); track line.id) {
+                  <option [value]="line.id">{{ line.name }} · {{ formatCop(line.amount) }}</option>
+                }
+              </select>
+            </label>
+            <label class="catalog-modal__field">
+              <span>Valor del descuento (COP)</span>
+              <input type="number" formControlName="amount" min="1" step="1" inputmode="numeric" />
+            </label>
+          }
+          @case ('Tip') {
+            <label class="catalog-modal__field">
+              <span>Valor de la propina (COP)</span>
+              <input type="number" formControlName="amount" min="1" step="1" inputmode="numeric" />
+            </label>
+            <label class="catalog-modal__field">
+              <span>Cómo se pagó</span>
+              <select formControlName="tipPaymentMode" data-testid="tip-mode">
+                <option value="WithBill">{{ tipModeLabels.WithBill }}</option>
+                <option value="Direct">{{ tipModeLabels.Direct }}</option>
+              </select>
+            </label>
+          }
+        }
+
+        @if (lineForm.controls.type.value !== 'Discount') {
+          <label class="catalog-modal__field">
+            <span>Profesional{{ lineForm.controls.type.value === 'Product' ? ' (opcional)' : '' }}</span>
+            <select formControlName="staffProfileId">
+              <option value="">Sin profesional</option>
+              @for (staff of activeStaff(); track staff.id) {
+                <option [value]="staff.id">{{ staff.displayName }}</option>
+              }
+            </select>
+          </label>
+        }
+
+        @if (lineForm.controls.type.value === 'Discount' || lineForm.controls.isCourtesy.value) {
+          <label class="catalog-modal__field">
+            <span>Motivo</span>
+            <textarea formControlName="reason" maxlength="500" data-testid="line-reason"></textarea>
+          </label>
+        }
+
+        <div class="catalog-modal__actions">
+          <button type="submit" [disabled]="isSaving()">{{ isSaving() ? 'Guardando...' : 'Agregar' }}</button>
+        </div>
+      </form>
+    }
+
+    <div class="bills__actions">
+      @if (current.actions.canClose) {
+        @if (current.total > 0) {
+          <label class="catalog__filter">
+            <span>Método de pago</span>
+            <select data-testid="payment-method" [value]="paymentMethodId()" (change)="paymentMethodId.set($any($event.target).value)">
+              <option value="">Elige el método</option>
+              @for (method of options()?.paymentMethods ?? []; track method.id) {
+                <option [value]="method.id">{{ method.name }}</option>
+              }
+            </select>
+          </label>
+        }
+        <button class="catalog__create-btn" type="button" data-testid="close-bill" [disabled]="isSaving() || !current.lines.length" (click)="closeBill()">
+          Cerrar y cobrar
+        </button>
+      }
+      @if (current.actions.canChangePaymentMethod) {
+        <label class="catalog__filter">
+          <span>Método de pago</span>
+          <select [value]="paymentMethodId()" (change)="paymentMethodId.set($any($event.target).value)">
+            @for (method of options()?.paymentMethods ?? []; track method.id) {
+              <option [value]="method.id">{{ method.name }}</option>
+            }
+          </select>
+        </label>
+        <button class="catalog__action-btn" type="button" [disabled]="isSaving() || paymentMethodId() === current.paymentMethodId" (click)="changePaymentMethod()">
+          Cambiar método de pago
+        </button>
+      }
+      @if (current.actions.canApprove) {
+        <button class="catalog__create-btn" type="button" data-testid="approve-bill" [disabled]="isSaving()" (click)="openModal('approve')">Aprobar</button>
+      }
+      @if (current.actions.canDetachAppointment) {
+        <button class="catalog__action-btn" type="button" (click)="openModal('detach')">Desvincular de la cita</button>
+      }
+      @if (current.actions.canVoid) {
+        <button class="catalog__action-btn catalog__action-btn--delete" type="button" data-testid="void-bill" (click)="openModal('void')">Anular</button>
+      }
+      <button class="catalog__action-btn" type="button" (click)="toggleEvents()">{{ events() ? 'Ocultar historial' : 'Ver historial' }}</button>
+    </div>
+
+    @if (events(); as history) {
+      <h2 class="bills__subtitle">Historial</h2>
+      <ul class="bills__events" data-testid="bill-events">
+        @for (event of history; track event.id) {
+          <li>
+            <strong>{{ formatDateTime(event.createdAt) }}</strong> · {{ event.userName }} · {{ eventLabel(event.type) }}
+            @if (event.statusAtEvent !== 'Open') {
+              <small class="catalog__muted">(cuenta {{ statusLabels[event.statusAtEvent].toLowerCase() }})</small>
+            }
+            @if (event.reason) {
+              <small class="catalog__muted">Motivo: {{ event.reason }}</small>
+            }
+          </li>
+        }
+      </ul>
+    }
+  }
+</section>
+
+@if (modal(); as kind) {
+  <div class="catalog-modal__overlay" (click)="closeModal()">
+    <div
+      appModalDialog
+      (modalClose)="closeModal()"
+      class="catalog-modal__card"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="bill-modal-title"
+      (click)="$event.stopPropagation()"
+    >
+      @if (kind === 'approve') {
+        <h2 id="bill-modal-title">Aprobar la cuenta</h2>
+        <app-api-feedback severity="error" [message]="modalError()" />
+        @if (preview(); as review) {
+          @if (review.warnings.length) {
+            <ul class="bills__warnings" role="status">
+              @for (warning of review.warnings; track warning) {
+                <li>{{ warning }}</li>
+              }
+            </ul>
+          }
+          @if (review.wouldBeSelfApproved) {
+            <p class="catalog-modal__hint">Eres el cliente o un profesional de esta cuenta: quedará marcada como autoaprobada.</p>
+          }
+          <ul class="bills__list" data-testid="approval-lines">
+            @for (line of review.lines; track line.lineId) {
+              <li class="bills__card">
+                <div>
+                  <strong>{{ line.name }}</strong>
+                  <small class="catalog__muted">{{ effectLabels[line.effect] ?? line.effect }}{{ line.staffName ? ' · ' + line.staffName : '' }}</small>
+                  @if (line.net || line.discountShare) {
+                    <small class="catalog__muted">
+                      Neto {{ formatCop(line.net) }}{{ line.discountShare ? ' (descuento ' + formatCop(line.discountShare) + ')' : '' }} ·
+                      profesional {{ formatCop(line.professionalAmount) }} · local {{ formatCop(line.businessAmount) }}
+                    </small>
+                  }
+                  @if (line.priceChanged) {
+                    <small class="catalog__muted">El catálogo ahora dice {{ formatCop(line.catalogPriceNow ?? 0) }}; se aprueba lo cobrado.</small>
+                  }
+                </div>
+                @if (line.eligiblePoints) {
+                  <label class="bills__radio">
+                    <input type="checkbox" [checked]="!noPoints().has(line.lineId)" (change)="togglePoints(line.lineId, $any($event.target).checked)" />
+                    <span>Acumula {{ line.eligiblePoints }} puntos</span>
+                  </label>
+                }
+              </li>
+            }
+          </ul>
+          <label class="catalog-modal__field">
+            <span>Notas (opcional)</span>
+            <textarea [formControl]="approveNotes" maxlength="500"></textarea>
+          </label>
+          <div class="catalog-modal__actions">
+            <button type="button" [disabled]="isSaving()" (click)="closeModal()">Cancelar</button>
+            <button type="button" [disabled]="isSaving()" (click)="approve()">{{ isSaving() ? 'Aprobando...' : 'Aprobar' }}</button>
+          </div>
+        } @else if (!modalError()) {
+          <p class="catalog__state">Preparando la revisión...</p>
+        }
+      } @else {
+        <h2 id="bill-modal-title">{{ kind === 'void' ? 'Anular la cuenta' : 'Desvincular de la cita' }}</h2>
+        <p class="catalog-modal__hint">
+          @if (kind === 'void') {
+            Anular no tiene vuelta. Si la cuenta tenía número, lo conserva.
+          } @else {
+            Úsalo si la cita se canceló pero el servicio sí se prestó: la cuenta sigue sin cita.
+          }
+        </p>
+        <app-api-feedback severity="error" [message]="modalError()" />
+        <form appFormA11y [formGroup]="reasonForm" (ngSubmit)="submitReason()">
+          <label class="catalog-modal__field">
+            <span>Motivo</span>
+            <textarea formControlName="reason" maxlength="500" data-testid="modal-reason"></textarea>
+          </label>
+          @if (reasonForm.controls.reason.touched && reasonForm.controls.reason.invalid) {
+            <small role="alert" class="catalog-modal__error">Escribe el motivo, entre 3 y 500 caracteres.</small>
+          }
+          <div class="catalog-modal__actions">
+            <button type="button" [disabled]="isSaving()" (click)="closeModal()">Cancelar</button>
+            <button type="submit" [disabled]="isSaving()">{{ kind === 'void' ? 'Anular' : 'Desvincular' }}</button>
+          </div>
+        </form>
+      }
+    </div>
+  </div>
+}
