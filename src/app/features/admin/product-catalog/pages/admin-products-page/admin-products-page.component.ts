@@ -8,6 +8,7 @@ import { DEFAULT_PAGE_SIZE } from '../../../../../core/models/paged-result.model
 import { ProductCategoryView, ProductView, formatCop } from '../../../../../core/models/product-catalog.models';
 import { CATALOG_MAX_SORT_ORDER } from '../../../../../core/models/service-catalog.models';
 import { AdminProductCatalogApiService } from '../../../../../core/services/admin-product-catalog-api.service';
+import { AdminInventoryApiService } from '../../../../../core/services/admin-inventory-api.service';
 import { AuthService } from '../../../../../core/services/auth.service';
 import { MoneyConfirmationService } from '../../../../../core/services/money-confirmation.service';
 import { ConfirmModalService } from '../../../../../core/services/confirm-modal.service';
@@ -50,6 +51,7 @@ import { SingleFlight } from '../../../../../core/utils/single-flight';
 })
 export class AdminProductsPageComponent implements OnInit {
   private readonly api = inject(AdminProductCatalogApiService);
+  private readonly inventoryApi = inject(AdminInventoryApiService);
   private readonly authService = inject(AuthService);
   private readonly confirmModal = inject(ConfirmModalService);
   private readonly moneyConfirmation = inject(MoneyConfirmationService);
@@ -73,6 +75,8 @@ export class AdminProductsPageComponent implements OnInit {
   readonly page = signal(1);
   readonly pageSize = signal(DEFAULT_PAGE_SIZE);
   readonly totalCount = signal(0);
+  /** ADR-0020 Q21: products at or below their minimum stock, shown as an alert with a link to the inventory. */
+  readonly lowStockCount = signal(0);
 
   /** The current page (already filtered by the server). */
   readonly visibleProducts = computed(() => this.products());
@@ -102,6 +106,7 @@ export class AdminProductsPageComponent implements OnInit {
   });
 
   ngOnInit(): void {
+    void this.loadLowStock();
     this.route.queryParamMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
       this.applyQuery(params);
       void this.load();
@@ -326,6 +331,15 @@ export class AdminProductsPageComponent implements OnInit {
       queryParams: toQueryParams(patch),
       queryParamsHandling: 'merge',
     });
+  }
+
+  /** The alert is a convenience: if the summary fails, the product list still works and no alert is shown. */
+  private async loadLowStock(): Promise<void> {
+    try {
+      this.lowStockCount.set((await firstValueFrom(this.inventoryApi.summary())).lowStockCount);
+    } catch {
+      this.lowStockCount.set(0);
+    }
   }
 
   private async load(showSpinner = true): Promise<void> {

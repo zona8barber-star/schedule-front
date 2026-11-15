@@ -1,0 +1,265 @@
+<section class="catalog">
+  <header class="catalog__header">
+    <div>
+      <h1>Inventario</h1>
+      <p class="catalog__lead">
+        Existencias, costo promedio y ganancia por unidad de cada producto. Registra las entradas de mercancía con su
+        costo y corrige las existencias con un ajuste y su motivo. Cada movimiento queda en el historial del producto y no
+        se puede editar ni borrar.
+      </p>
+    </div>
+  </header>
+
+  <app-api-feedback severity="error" [message]="errorMessage()" />
+  <app-api-feedback severity="info" [message]="successMessage()" />
+
+  @if (summary(); as totals) {
+    <div class="inventory__summary" data-testid="inventory-summary">
+      @if (totals.lowStockCount > 0) {
+        <div class="inventory__alert" role="status" data-testid="low-stock-alert">
+          <strong>
+            {{ totals.lowStockCount }} {{ totals.lowStockCount === 1 ? 'producto tiene' : 'productos tienen' }} stock bajo.
+          </strong>
+          @if (!lowStockOnly()) {
+            <button class="catalog__action-btn" type="button" (click)="showLowStock()">Ver cuáles</button>
+          }
+        </div>
+      }
+      <dl class="inventory__totals">
+        <div>
+          <dt>Valor del inventario</dt>
+          <dd>{{ formatCop(totals.stockValue) }}</dd>
+        </div>
+        <div>
+          <dt>Con existencia negativa</dt>
+          <dd>{{ totals.negativeStockCount }}</dd>
+        </div>
+        <div>
+          <dt>Sin costo registrado</dt>
+          <dd>{{ totals.productsWithoutCost }}</dd>
+        </div>
+      </dl>
+    </div>
+  }
+
+  <form class="catalog__filters" role="search" (submit)="$event.preventDefault(); onSearch(searchInput.value)">
+    <label class="catalog__filter">
+      <span>Buscar</span>
+      <input #searchInput type="search" placeholder="Nombre del producto" [value]="query()" (change)="onSearch(searchInput.value)" />
+    </label>
+    <label class="catalog__filter">
+      <span>Estado</span>
+      <select data-testid="inventory-status" [value]="statusFilter()" (change)="onStatusChange($event)">
+        <option value="">Todos</option>
+        <option value="Active" [selected]="statusFilter() === 'Active'">Activos</option>
+        <option value="Inactive" [selected]="statusFilter() === 'Inactive'">Inactivos</option>
+      </select>
+    </label>
+    <label class="inventory__check">
+      <input type="checkbox" data-testid="low-stock-filter" [checked]="lowStockOnly()" (change)="onLowStockChange($event)" />
+      <span>Solo stock bajo</span>
+    </label>
+  </form>
+
+  @if (isLoading()) {
+    <p class="catalog__state">Cargando inventario...</p>
+  } @else if (!items().length) {
+    <p class="catalog__state">
+      @if (hasFilters()) {
+        No hay productos con estos filtros.
+      } @else {
+        Todavía no hay productos. Créalos en <a routerLink="/admin/products">Productos</a>.
+      }
+    </p>
+  } @else {
+    <div class="catalog__table-wrap">
+      <table class="catalog__table">
+        <thead>
+          <tr>
+            <th>Producto</th>
+            <th>Existencias</th>
+            <th>Stock mínimo</th>
+            <th>Costo promedio</th>
+            <th>Precio</th>
+            <th>Ganancia por unidad</th>
+            <th aria-label="Acciones"></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (item of items(); track item.productId) {
+            <tr [class.catalog__row--inactive]="!item.isActive" [attr.data-product]="item.productId">
+              <td>
+                {{ item.name }}
+                <small class="catalog__muted">{{ item.categoryName }}{{ item.isActive ? '' : ' · Inactivo' }}</small>
+              </td>
+              <td>
+                <span [class.inventory__negative]="item.onHand < 0">{{ item.onHand }}</span>
+                @if (item.isLowStock) {
+                  <small class="catalog__tag inventory__tag--low">Stock bajo</small>
+                }
+              </td>
+              <td>{{ item.minStock ?? '—' }}</td>
+              <td class="catalog__price">{{ formatCost(item.averageUnitCost) }}</td>
+              <td class="catalog__price">{{ formatCop(item.price) }}</td>
+              <td class="catalog__price">
+                @if (item.unitProfit === null) {
+                  <span class="catalog__muted">Sin costo</span>
+                } @else {
+                  <span [class.inventory__negative]="item.unitProfit < 0">{{ formatCost(item.unitProfit) }}</span>
+                  <small class="catalog__muted">{{ formatMargin(item.marginPercent) }}</small>
+                }
+              </td>
+              <td class="catalog__actions">
+                @if (canReceive()) {
+                  <button class="catalog__action-btn" type="button" (click)="openReceipt(item)">Entrada</button>
+                }
+                @if (canAdjust()) {
+                  <button class="catalog__action-btn" type="button" (click)="openAdjust(item)">Ajuste</button>
+                }
+                @if (canReceive()) {
+                  <button class="catalog__action-btn" type="button" (click)="openMinStock(item)">Stock mínimo</button>
+                }
+                <a class="catalog__action-btn" [routerLink]="['/admin/inventory', item.productId]">Movimientos</a>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+
+  <app-paginator
+    label="Paginación del inventario"
+    [page]="page()"
+    [pageSize]="pageSize()"
+    [totalCount]="totalCount()"
+    [disabled]="isLoading()"
+    (pageChange)="onPageChange($event)"
+  />
+</section>
+
+@if (modal(); as kind) {
+  <div class="catalog-modal__overlay" (click)="closeModal()">
+    <div
+      appModalDialog
+      (modalClose)="closeModal()"
+      class="catalog-modal__card"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="inventory-modal-title"
+      (click)="$event.stopPropagation()"
+    >
+      @if (kind === 'receipt') {
+        <h2 id="inventory-modal-title">Entrada de mercancía</h2>
+        <p class="catalog-modal__hint">{{ selected()?.name }} · existencias actuales: {{ selected()?.onHand }}</p>
+        <app-api-feedback severity="error" [message]="formError()" />
+        <form appFormA11y [formGroup]="receiptForm" (ngSubmit)="saveReceipt()">
+          <label class="catalog-modal__field">
+            <span>Cantidad recibida</span>
+            <input type="number" formControlName="quantity" min="1" [max]="maxQuantity" step="1" inputmode="numeric" />
+          </label>
+          @if (receiptForm.controls.quantity.touched && receiptForm.controls.quantity.invalid) {
+            <small role="alert" class="catalog-modal__error">Usa un número entero entre 1 y 100.000.</small>
+          }
+
+          <label class="catalog-modal__field">
+            <span>Costo por unidad (COP)</span>
+            <input type="number" formControlName="unitCost" min="0" [max]="maxUnitCost" step="1" inputmode="numeric" />
+          </label>
+          @if (receiptForm.controls.unitCost.touched && receiptForm.controls.unitCost.invalid) {
+            <small role="alert" class="catalog-modal__error">Usa un número entero de pesos, entre 0 y 100.000.000.</small>
+          }
+          <small class="catalog-modal__hint">Total de la compra: {{ formatCop(receiptTotal()) }}</small>
+
+          <label class="catalog-modal__field">
+            <span>Fecha de la entrada</span>
+            <input type="date" formControlName="occurredOn" [max]="today()" />
+          </label>
+          @if (receiptForm.controls.occurredOn.touched && (receiptForm.controls.occurredOn.invalid || (receiptForm.controls.occurredOn.value ?? '') > today())) {
+            <small role="alert" class="catalog-modal__error">Elige una fecha de hoy o anterior.</small>
+          }
+
+          <label class="catalog-modal__field">
+            <span>Proveedor (opcional)</span>
+            <input type="text" formControlName="supplier" maxlength="120" autocomplete="off" />
+          </label>
+
+          <label class="catalog-modal__field">
+            <span>Referencia o factura del proveedor (opcional)</span>
+            <input type="text" formControlName="reference" maxlength="120" autocomplete="off" />
+          </label>
+
+          <label class="inventory__check">
+            <input type="checkbox" formControlName="createExpense" data-testid="create-expense" />
+            <span>Crear también el gasto de compra en Finanzas</span>
+          </label>
+          <small class="catalog-modal__hint">
+            El gasto queda como «Compra de mercancía» por el total de la entrada y con su misma fecha.
+          </small>
+
+          <div class="catalog-modal__actions">
+            <button type="button" [disabled]="isSaving()" (click)="closeModal()">Cancelar</button>
+            <button type="submit" [disabled]="isSaving()">{{ isSaving() ? 'Guardando...' : 'Registrar entrada' }}</button>
+          </div>
+        </form>
+      } @else if (kind === 'adjust') {
+        <h2 id="inventory-modal-title">Ajuste de existencias</h2>
+        <p class="catalog-modal__hint">{{ selected()?.name }} · existencias actuales: {{ selected()?.onHand }}</p>
+        <app-api-feedback severity="error" [message]="formError()" />
+        <form appFormA11y [formGroup]="adjustForm" (ngSubmit)="saveAdjust()">
+          <label class="catalog-modal__field">
+            <span>Tipo de ajuste</span>
+            <select formControlName="direction" data-testid="adjust-direction">
+              <option value="Out">Restar unidades (daño, pérdida, uso interno, conteo)</option>
+              <option value="In">Sumar unidades (conteo, devolución)</option>
+            </select>
+          </label>
+
+          <label class="catalog-modal__field">
+            <span>Cantidad</span>
+            <input type="number" formControlName="quantity" min="1" [max]="maxQuantity" step="1" inputmode="numeric" />
+          </label>
+          @if (adjustForm.controls.quantity.touched && adjustForm.controls.quantity.invalid) {
+            <small role="alert" class="catalog-modal__error">Usa un número entero entre 1 y 100.000.</small>
+          }
+
+          <label class="catalog-modal__field">
+            <span>Motivo</span>
+            <textarea formControlName="reason" maxlength="500"></textarea>
+          </label>
+          @if (adjustForm.controls.reason.touched && adjustForm.controls.reason.invalid) {
+            <small role="alert" class="catalog-modal__error">Escribe el motivo, entre 3 y 500 caracteres.</small>
+          }
+          <small class="catalog-modal__hint">El ajuste no cambia el costo promedio y no puede dejar la existencia por debajo de cero.</small>
+
+          <div class="catalog-modal__actions">
+            <button type="button" [disabled]="isSaving()" (click)="closeModal()">Cancelar</button>
+            <button type="submit" [disabled]="isSaving()">{{ isSaving() ? 'Guardando...' : 'Registrar ajuste' }}</button>
+          </div>
+        </form>
+      } @else {
+        <h2 id="inventory-modal-title">Stock mínimo</h2>
+        <p class="catalog-modal__hint">{{ selected()?.name }} · existencias actuales: {{ selected()?.onHand }}</p>
+        <app-api-feedback severity="error" [message]="formError()" />
+        <form appFormA11y [formGroup]="minStockForm" (ngSubmit)="saveMinStock()">
+          <label class="catalog-modal__field">
+            <span>Stock mínimo (opcional)</span>
+            <input type="number" formControlName="minStock" min="0" [max]="maxQuantity" step="1" inputmode="numeric" />
+          </label>
+          @if (minStockForm.controls.minStock.touched && minStockForm.controls.minStock.invalid) {
+            <small role="alert" class="catalog-modal__error">Usa un número entero entre 0 y 100.000, o déjalo vacío.</small>
+          }
+          <small class="catalog-modal__hint">
+            Cuando las existencias lleguen a este número o menos, el producto aparece con «Stock bajo». Déjalo vacío para no
+            usar alerta.
+          </small>
+
+          <div class="catalog-modal__actions">
+            <button type="button" [disabled]="isSaving()" (click)="closeModal()">Cancelar</button>
+            <button type="submit" [disabled]="isSaving()">{{ isSaving() ? 'Guardando...' : 'Guardar' }}</button>
+          </div>
+        </form>
+      }
+    </div>
+  </div>
+}

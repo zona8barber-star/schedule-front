@@ -88,6 +88,16 @@ const loadAdminProductsPage = () =>
     (module) => module.AdminProductsPageComponent,
   );
 
+const loadAdminInventoryPage = () =>
+  import('./features/admin/inventory/pages/admin-inventory-page/admin-inventory-page.component').then(
+    (module) => module.AdminInventoryPageComponent,
+  );
+
+const loadAdminInventoryProductPage = () =>
+  import('./features/admin/inventory/pages/admin-inventory-product-page/admin-inventory-product-page.component').then(
+    (module) => module.AdminInventoryProductPageComponent,
+  );
+
 const loadPublicProductCategoriesPage = () =>
   import(
     './features/public/products/pages/public-product-categories-page/public-product-categories-page.component'
@@ -553,6 +563,25 @@ export const routes: Routes = [
       roles: [ROLE_NAMES.admin],
     },
     title: 'Productos',
+  },
+  {
+    path: 'admin/inventory',
+    canActivate: [authGuard, permissionGuard],
+    loadComponent: loadAdminInventoryPage,
+    data: {
+      // ADR-0020: any inventory permission opens it; the API checks them against the database. Admin holds all three.
+      permissions: [PERMISSION_CODES.inventoryView, PERMISSION_CODES.inventoryReceive, PERMISSION_CODES.inventoryAdjust],
+    },
+    title: 'Inventario',
+  },
+  {
+    path: 'admin/inventory/:productId',
+    canActivate: [authGuard, permissionGuard],
+    loadComponent: loadAdminInventoryProductPage,
+    data: {
+      permissions: [PERMISSION_CODES.inventoryView, PERMISSION_CODES.inventoryReceive, PERMISSION_CODES.inventoryAdjust],
+    },
+    title: 'Movimientos de inventario',
   },
   {
     path: 'admin/customers',

@@ -1,0 +1,89 @@
+<section class="catalog">
+  @if (isLoading() && !item()) {
+    <p class="catalog__state">Cargando movimientos...</p>
+  } @else if (notFound()) {
+    <app-not-found-state title="No encontramos este producto" backLink="/admin/inventory" backLabel="Volver al inventario" />
+  } @else {
+    <header class="catalog__header">
+      <div>
+        <p class="catalog__lead"><a routerLink="/admin/inventory">← Inventario</a></p>
+        <h1>Movimientos de {{ item()?.name }}</h1>
+        @if (item(); as current) {
+          <dl class="inventory__header-facts">
+            <div><dt>Existencias</dt><dd [class.inventory__negative]="current.onHand < 0">{{ current.onHand }}</dd></div>
+            <div><dt>Costo promedio</dt><dd>{{ formatCost(current.averageUnitCost) }}</dd></div>
+            <div><dt>Precio</dt><dd>{{ formatCop(current.price) }}</dd></div>
+            <div>
+              <dt>Ganancia por unidad</dt>
+              <dd>{{ current.unitProfit === null ? 'Sin costo' : formatCost(current.unitProfit) + ' (' + formatMargin(current.marginPercent) + ')' }}</dd>
+            </div>
+            <div><dt>Stock mínimo</dt><dd>{{ current.minStock ?? '—' }}</dd></div>
+          </dl>
+        }
+      </div>
+    </header>
+
+    <app-api-feedback severity="error" [message]="errorMessage()" />
+
+    <div class="catalog__filters">
+      <label class="catalog__filter">
+        <span>Tipo de movimiento</span>
+        <select data-testid="movement-type" [value]="typeFilter()" (change)="onTypeChange($event)">
+          <option value="">Todos</option>
+          @for (type of movementTypes; track type) {
+            <option [value]="type" [selected]="type === typeFilter()">{{ labels[type] }}</option>
+          }
+        </select>
+      </label>
+    </div>
+
+    @if (!movements().length) {
+      <p class="catalog__state">
+        {{ typeFilter() ? 'No hay movimientos de este tipo.' : 'Este producto todavía no tiene movimientos.' }}
+      </p>
+    } @else {
+      <div class="catalog__table-wrap">
+        <table class="catalog__table">
+          <thead>
+            <tr>
+              <th>Fecha</th>
+              <th>Movimiento</th>
+              <th>Cantidad</th>
+              <th>Costo por unidad</th>
+              <th>Existencia</th>
+              <th>Costo promedio</th>
+              <th>Detalle</th>
+              <th>Registró</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (movement of movements(); track movement.id) {
+              <tr [attr.data-movement]="movement.id">
+                <td>
+                  {{ movement.occurredOn | date: 'mediumDate' }}
+                  <small class="catalog__muted">{{ movement.createdAt | bogotaDate: 'short' }}</small>
+                </td>
+                <td>{{ labels[movement.type] }}</td>
+                <td [class.inventory__negative]="movement.quantity < 0">{{ movement.quantity > 0 ? '+' : '' }}{{ movement.quantity }}</td>
+                <td class="catalog__price">{{ formatCost(movement.unitCost) }}</td>
+                <td>{{ movement.onHandAfter }}</td>
+                <td class="catalog__price">{{ formatCost(movement.averageUnitCostAfter) }}</td>
+                <td>{{ detail(movement) }}</td>
+                <td>{{ movement.performedByName }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+
+    <app-paginator
+      label="Paginación de movimientos"
+      [page]="page()"
+      [pageSize]="pageSize()"
+      [totalCount]="totalCount()"
+      [disabled]="isLoading()"
+      (pageChange)="onPageChange($event)"
+    />
+  }
+</section>

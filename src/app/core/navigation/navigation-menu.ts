@@ -160,6 +160,17 @@ export const NAVIGATION_GROUPS: readonly NavGroupDefinition[] = [
       { id: 'admin-services', label: 'Tarifas de liquidación', route: '/admin/services', access: ADMIN },
       { id: 'admin-product-categories', label: 'Categorías de productos', route: '/admin/product-categories', access: ADMIN },
       { id: 'admin-products', label: 'Productos', route: '/admin/products', access: ADMIN },
+      {
+        id: 'admin-inventory',
+        label: 'Inventario',
+        route: '/admin/inventory',
+        // ADR-0020: any inventory permission opens it; Admin holds every permission.
+        access: permissions(
+          PERMISSION_CODES.inventoryView,
+          PERMISSION_CODES.inventoryReceive,
+          PERMISSION_CODES.inventoryAdjust,
+        ),
+      },
       { id: 'admin-membership-plans', label: 'Planes de membresía', route: '/admin/membership-plans', access: ADMIN },
     ],
   },

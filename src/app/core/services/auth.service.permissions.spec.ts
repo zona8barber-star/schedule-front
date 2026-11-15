@@ -49,6 +49,9 @@ describe('AuthService permissions', () => {
     expect(Object.values(PERMISSION_CODES).sort()).toEqual(
       [
         'customers.claims.approve',
+        'inventory.adjust',
+        'inventory.receive',
+        'inventory.view',
         'loyalty.points.adjust',
         'loyalty.redemptions.approve',
         'loyalty.redemptions.deliver',

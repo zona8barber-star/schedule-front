@@ -18,6 +18,9 @@ export const PERMISSION_CODES = {
   loyaltyPointsAdjust: 'loyalty.points.adjust',
   membershipPaymentsConfirm: 'memberships.payments.confirm',
   customerClaimsApprove: 'customers.claims.approve',
+  inventoryView: 'inventory.view',
+  inventoryReceive: 'inventory.receive',
+  inventoryAdjust: 'inventory.adjust',
 } as const;
 
 export type PermissionCode = (typeof PERMISSION_CODES)[keyof typeof PERMISSION_CODES];
