@@ -36,6 +36,8 @@ export interface IncomeEntryView {
   quantity?: number | null;
   /** P7: the price before discounts the commission was computed on. */
   commissionBase?: number | null;
+  /** ADR-0020 Q8: this income is the counter-entry of that one (its bill was unapproved). */
+  reversesIncomeEntryId?: string | null;
 }
 
 export interface IncomeEntryCreateRequest {

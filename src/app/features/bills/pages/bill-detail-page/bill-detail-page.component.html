@@ -67,6 +67,13 @@
       }
     </dl>
 
+    @if (current.status === 'Unapproved' && current.lastUnapprovalReason) {
+      <p class="bills__warnings" role="status" data-testid="unapproval-reason">
+        Desaprobada {{ formatDateTime(current.lastUnapprovedAt ?? null) }} por {{ current.lastUnapprovedByName }}: {{ current.lastUnapprovalReason }}.
+        Corrígela y apruébala de nuevo, o anúlala.
+      </p>
+    }
+
     @if (current.warnings.length) {
       <ul class="bills__warnings" role="status" data-testid="bill-warnings">
         @for (warning of current.warnings; track warning) {
@@ -351,6 +358,11 @@
       @if (current.actions.canApprove) {
         <button class="catalog__create-btn" type="button" data-testid="approve-bill" [disabled]="isSaving()" (click)="openModal('approve')">Aprobar</button>
       }
+      @if (current.actions.canUnapprove) {
+        <button class="catalog__action-btn catalog__action-btn--delete" type="button" data-testid="unapprove-bill" (click)="openModal('unapprove')">
+          Desaprobar
+        </button>
+      }
       @if (current.actions.canDetachAppointment) {
         <button class="catalog__action-btn" type="button" (click)="openModal('detach')">Desvincular de la cita</button>
       }
@@ -441,10 +453,16 @@
           <p class="catalog__state">Preparando la revisión...</p>
         }
       } @else {
-        <h2 id="bill-modal-title">{{ kind === 'void' ? 'Anular la cuenta' : 'Desvincular de la cita' }}</h2>
+        <h2 id="bill-modal-title">
+          {{ kind === 'void' ? 'Anular la cuenta' : kind === 'unapprove' ? 'Desaprobar la cuenta' : 'Desvincular de la cita' }}
+        </h2>
         <p class="catalog-modal__hint">
           @if (kind === 'void') {
             Anular no tiene vuelta. Si la cuenta tenía número, lo conserva.
+          } @else if (kind === 'unapprove') {
+            Se revierten todos sus asientos: cada ingreso recibe una contrapartida con la fecha de hoy, las unidades vuelven
+            al inventario, los consumos de membresía se devuelven, los puntos ganados se retiran (lo ya usado queda como
+            deuda) y los canjes vuelven a «Aprobada». Después puedes corregirla y aprobarla de nuevo.
           } @else {
             Úsalo si la cita se canceló pero el servicio sí se prestó: la cuenta sigue sin cita.
           }
@@ -460,7 +478,9 @@
           }
           <div class="catalog-modal__actions">
             <button type="button" [disabled]="isSaving()" (click)="closeModal()">Cancelar</button>
-            <button type="submit" [disabled]="isSaving()">{{ kind === 'void' ? 'Anular' : 'Desvincular' }}</button>
+            <button type="submit" [disabled]="isSaving()">
+              {{ kind === 'void' ? 'Anular' : kind === 'unapprove' ? 'Desaprobar' : 'Desvincular' }}
+            </button>
           </div>
         </form>
       }

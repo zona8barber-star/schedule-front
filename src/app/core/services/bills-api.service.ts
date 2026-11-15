@@ -125,6 +125,11 @@ export class BillsApiService {
     return this.httpClient.post<BillView>(this.buildUrl(`/bills/${billId}/approve`), request);
   }
 
+  /** ADR-0020 stage 4: reverses every posting of the approval; the reason is required. */
+  unapprove(billId: string, request: { version: number; idempotencyKey: string; reason: string }) {
+    return this.httpClient.post<BillView>(this.buildUrl(`/bills/${billId}/unapprove`), request);
+  }
+
   paymentMethods() {
     return this.httpClient.get<PaymentMethodView[]>(this.buildUrl('/admin/payment-methods'));
   }

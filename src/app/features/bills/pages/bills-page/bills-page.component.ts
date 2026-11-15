@@ -32,7 +32,7 @@ import { PaginatorComponent } from '../../../../shared/components/paginator/pagi
 import { FormA11yDirective } from '../../../../shared/directives/form-a11y.directive';
 import { ModalDialogDirective } from '../../../../shared/directives/modal-dialog.directive';
 
-export const BILL_TABS = ['pending', 'Closed', 'Approved', 'Voided'] as const;
+export const BILL_TABS = ['pending', 'Closed', 'Unapproved', 'Approved', 'Voided'] as const;
 export type BillTab = (typeof BILL_TABS)[number];
 
 const DATE_TIME = bogotaDateTimeFormat('es-CO', { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' });
@@ -107,6 +107,17 @@ export class BillsPageComponent implements OnInit {
 
   onPageChange(page: number): void {
     this.navigate({ page });
+  }
+
+  /** «No hay cuentas …» for each list tab. */
+  emptyLabel(): string {
+    const labels: Record<string, string> = {
+      Closed: 'por aprobar',
+      Unapproved: 'en corrección',
+      Approved: 'aprobadas',
+      Voided: 'anuladas',
+    };
+    return labels[this.tab()] ?? '';
   }
 
   formatDateTime(value: string): string {

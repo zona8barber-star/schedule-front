@@ -21,6 +21,9 @@
     <button type="button" role="tab" [attr.aria-selected]="tab() === 'Closed'" [class.bills__tab--active]="tab() === 'Closed'" (click)="selectTab('Closed')">
       Por aprobar
     </button>
+    <button type="button" role="tab" [attr.aria-selected]="tab() === 'Unapproved'" [class.bills__tab--active]="tab() === 'Unapproved'" (click)="selectTab('Unapproved')">
+      En corrección
+    </button>
     <button type="button" role="tab" [attr.aria-selected]="tab() === 'Approved'" [class.bills__tab--active]="tab() === 'Approved'" (click)="selectTab('Approved')">
       Aprobadas
     </button>
@@ -86,7 +89,7 @@
     </form>
 
     @if (!bills().length) {
-      <p class="catalog__state">No hay cuentas {{ statusLabels[tab() === 'Closed' ? 'Closed' : tab() === 'Approved' ? 'Approved' : 'Voided'].toLowerCase() }}.</p>
+      <p class="catalog__state">No hay cuentas {{ emptyLabel() }}.</p>
     } @else {
       <div class="catalog__table-wrap">
         <table class="catalog__table">
@@ -124,7 +127,7 @@
                   }
                 </td>
                 <td class="catalog__actions">
-                  <a class="catalog__action-btn" [routerLink]="['/bills', bill.id]">{{ tab() === 'Closed' ? 'Revisar' : 'Ver' }}</a>
+                  <a class="catalog__action-btn" [routerLink]="['/bills', bill.id]">{{ tab() === 'Closed' || tab() === 'Unapproved' ? 'Revisar' : 'Ver' }}</a>
                 </td>
               </tr>
             }

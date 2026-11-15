@@ -34,7 +34,7 @@ const GUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const DATE_TIME = bogotaDateTimeFormat('es-CO', { day: 'numeric', month: 'short', year: 'numeric', hour: 'numeric', minute: '2-digit' });
 export const BILL_MAX_AMOUNT = 100_000_000;
 
-type BillModal = 'void' | 'detach' | 'approve';
+type BillModal = 'void' | 'detach' | 'approve' | 'unapprove';
 
 const EVENT_LABELS: Record<string, string> = {
   Opened: 'Abrió la cuenta',
@@ -47,6 +47,7 @@ const EVENT_LABELS: Record<string, string> = {
   Approved: 'Aprobó',
   Voided: 'Anuló',
   AppointmentDetached: 'Desvinculó la cuenta de su cita',
+  Unapproved: 'Desaprobó',
 };
 
 /**
@@ -66,6 +67,7 @@ export class BillDetailPageComponent implements OnInit {
   private readonly formBuilder = inject(FormBuilder);
   private readonly route = inject(ActivatedRoute);
   private approveKey = newIdempotencyKey();
+  private unapproveKey = newIdempotencyKey();
 
   readonly statusLabels = BILL_STATUS_LABELS;
   readonly lineTypeLabels = BILL_LINE_TYPE_LABELS;
@@ -265,6 +267,9 @@ export class BillDetailPageComponent implements OnInit {
     this.modalError.set(null);
     this.reasonForm.reset({ reason: '' });
     this.modal.set(kind);
+    if (kind === 'unapprove') {
+      this.unapproveKey = newIdempotencyKey();
+    }
     if (kind === 'approve') {
       this.approveKey = newIdempotencyKey();
       this.approveNotes.setValue('');
@@ -294,15 +299,24 @@ export class BillDetailPageComponent implements OnInit {
   async submitReason(): Promise<void> {
     const bill = this.bill();
     const kind = this.modal();
-    if (!bill || (kind !== 'void' && kind !== 'detach')) return;
+    if (!bill || (kind !== 'void' && kind !== 'detach' && kind !== 'unapprove')) return;
     if (this.reasonForm.invalid) {
       this.reasonForm.markAllAsTouched();
       return;
     }
     const reason = this.reasonForm.controls.reason.value.trim();
     const saved = await this.mutate(
-      () => (kind === 'void' ? this.api.void(bill.id, bill.version, reason) : this.api.detachAppointment(bill.id, bill.version, reason)),
-      kind === 'void' ? 'Cuenta anulada.' : 'La cuenta quedó desvinculada de su cita.',
+      () =>
+        kind === 'void'
+          ? this.api.void(bill.id, bill.version, reason)
+          : kind === 'unapprove'
+            ? this.api.unapprove(bill.id, { version: bill.version, idempotencyKey: this.unapproveKey, reason })
+            : this.api.detachAppointment(bill.id, bill.version, reason),
+      kind === 'void'
+        ? 'Cuenta anulada.'
+        : kind === 'unapprove'
+          ? 'Cuenta desaprobada: sus ingresos, consumos, puntos, canjes e inventario se revirtieron. Corrígela y apruébala de nuevo.'
+          : 'La cuenta quedó desvinculada de su cita.',
       true,
     );
     if (saved) {

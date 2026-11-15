@@ -13,6 +13,8 @@ export interface BillActionsView {
   canApprove: boolean;
   canDetachAppointment: boolean;
   canChangePaymentMethod: boolean;
+  /** ADR-0020 stage 4: bills.unapprove (critical) on an approved bill. */
+  canUnapprove?: boolean;
 }
 
 export interface BillLineView {
@@ -77,6 +79,11 @@ export interface BillView {
   lines: BillLineView[];
   warnings: string[];
   actions: BillActionsView;
+  /** ADR-0020 stage 4: approvals so far and the last unapproval. */
+  approvalCount?: number;
+  lastUnapprovedAt?: string | null;
+  lastUnapprovedByName?: string | null;
+  lastUnapprovalReason?: string | null;
 }
 
 export interface BillSummaryView {

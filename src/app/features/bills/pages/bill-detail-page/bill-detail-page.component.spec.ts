@@ -245,6 +245,36 @@ describe('BillDetailPageComponent', () => {
     expect(component.bill()?.status).toBe('Voided');
   });
 
+  it('unapproves an approved bill with a reason, reusing the key on a retry, and shows why it is being corrected', async () => {
+    await create(bill({ status: 'Approved', number: 'C-000004', actions: actions({ canEdit: false, canClose: false, canUnapprove: true }) }));
+    const element = fixture.nativeElement as HTMLElement;
+    expect(element.querySelector('[data-testid="unapprove-bill"]')).not.toBeNull();
+
+    component.openModal('unapprove');
+    component.reasonForm.setValue({ reason: 'Se cobró de más' });
+    const first = component.submitReason();
+    const failed = httpMock.expectOne(`${api}/bills/${billId}/unapprove`);
+    expect(failed.request.body).toMatchObject({ version: 7, reason: 'Se cobró de más' });
+    const key = failed.request.body.idempotencyKey;
+    failed.flush({ title: 'Error', status: 500 }, { status: 500, statusText: 'Server Error' });
+    await first;
+
+    const retry = component.submitReason();
+    const stored = httpMock.expectOne(`${api}/bills/${billId}/unapprove`);
+    expect(stored.request.body.idempotencyKey).toBe(key);
+    stored.flush(bill({
+      status: 'Unapproved', number: 'C-000004', approvalCount: 1, lastUnapprovedAt: '2026-11-16T15:00:00Z', lastUnapprovedByName: 'Ana',
+      lastUnapprovalReason: 'Se cobró de más', actions: actions({ canEdit: true, canClose: false, canApprove: true, canVoid: true }),
+    }));
+    await retry;
+    await settle();
+
+    expect(component.modal()).toBeNull();
+    expect(element.querySelector('[data-testid="bill-status"]')?.textContent).toContain('En corrección');
+    expect(element.querySelector('[data-testid="unapproval-reason"]')?.textContent).toContain('Se cobró de más');
+    expect(element.querySelector('[data-testid="approve-bill"]')).not.toBeNull();
+  });
+
   it('shows the not-found state for an id that is not a GUID, without calling the API', async () => {
     await create(bill(), 'no-existe');
 

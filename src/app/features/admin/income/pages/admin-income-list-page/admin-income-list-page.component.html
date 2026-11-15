@@ -96,6 +96,11 @@
                   <a class="income__badge" [routerLink]="['/bills', entry.billId]" title="Se gestiona desde la cuenta">
                     Cuenta {{ entry.billNumber }}
                   </a>
+                  @if (entry.reversesIncomeEntryId) {
+                    <span class="income__badge" data-testid="counter-entry" title="La cuenta se desaprobó: este valor anula el ingreso original">
+                      Contrapartida
+                    </span>
+                  }
                   @if (entry.isSelfApproved) {
                     <span class="income__badge income__badge--self" data-testid="self-approved">Autoaprobado</span>
                   }

@@ -139,10 +139,20 @@ export const LOYALTY_MOVEMENT_LABELS: Record<string, string> = {
   RedemptionHold: 'Reservado para un canje',
   RedemptionRelease: 'Liberado de un canje',
   RedemptionConsumed: 'Canje entregado (usa los puntos ya reservados)',
+  // ADR-0020 stage 4: a bill unapproved.
+  BillUnapprovalWithdrawal: 'Retiro por corrección de una cuenta',
+  RedemptionRestored: 'Reservado de nuevo para un canje al corregir una cuenta',
 };
 
 /** Movement types that add points to the wallet (shown with a plus sign). */
-export const LOYALTY_POSITIVE_MOVEMENTS = new Set(['Accrual', 'MergeTransferIn', 'AdjustmentCredit', 'RedemptionRelease', 'MembershipRelinkCredit']);
+export const LOYALTY_POSITIVE_MOVEMENTS = new Set([
+  'Accrual',
+  'MergeTransferIn',
+  'AdjustmentCredit',
+  'RedemptionRelease',
+  'MembershipRelinkCredit',
+  'RedemptionRestored',
+]);
 
 /**
  * Sign shown for a movement: '+' adds to the available points, '−' takes from them, '' changes neither (a delivery
