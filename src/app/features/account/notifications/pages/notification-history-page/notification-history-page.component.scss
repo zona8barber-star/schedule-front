@@ -1,0 +1,182 @@
+.nh {
+  display: grid;
+  gap: 1.5rem;
+  padding-bottom: 4rem;
+}
+
+.nh__hero {
+  padding: clamp(1.25rem, 3vw, 2rem);
+  border: 1px solid var(--z-hairline-dark);
+  border-radius: var(--radius-sharp);
+  background: var(--z-ink);
+  color: var(--z-text-on-dark);
+
+  h1 {
+    margin: 0 0 0.5rem;
+    font-family: var(--z-font-display);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    font-size: clamp(1.6rem, 4vw, 2.2rem);
+  }
+}
+
+.nh__subtitle {
+  margin: 0;
+  color: var(--z-muted-on-dark);
+  line-height: 1.6;
+}
+
+.nh__panel {
+  display: grid;
+  gap: 1rem;
+  min-width: 0;
+  padding: clamp(1rem, 3vw, 2rem);
+  border: 1px solid var(--z-hairline-light);
+  border-radius: var(--radius-sharp);
+  background: var(--surface-panel);
+}
+
+.nh__sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.nh__toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.nh__filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.nh__filter {
+  min-height: 44px;
+  padding: 0.5rem 1rem;
+  border: 1.5px solid var(--z-hairline-light);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--color-text);
+  font: inherit;
+  font-size: 0.88rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.nh__filter--active {
+  border-color: var(--z-brass-dk);
+  background: var(--z-bone-2);
+}
+
+.nh__link-btn {
+  min-height: 44px;
+  padding: 0.5rem 0.25rem;
+  border: 0;
+  background: transparent;
+  color: var(--z-brass-dk);
+  font: inherit;
+  font-size: 0.88rem;
+  font-weight: 700;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.nh__list {
+  display: grid;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.nh__item {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 0.85rem 1rem;
+  border: 1px solid var(--z-hairline-light);
+  border-radius: var(--radius-sharp);
+  background: var(--color-surface);
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+
+  &:hover {
+    border-color: var(--z-brass);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--z-brass);
+    outline-offset: 2px;
+  }
+}
+
+.nh__dot {
+  width: 0.55rem;
+  height: 0.55rem;
+  margin-top: 0.45rem;
+  border-radius: 999px;
+  background: transparent;
+}
+
+.nh__item--unread {
+  background: var(--z-bone-2);
+
+  .nh__dot {
+    background: var(--z-brass);
+  }
+
+  .nh__item-title {
+    font-weight: 800;
+  }
+}
+
+.nh__item-body {
+  display: grid;
+  gap: 0.2rem;
+  min-width: 0;
+}
+
+.nh__item-title {
+  font-weight: 600;
+  color: var(--color-text);
+  overflow-wrap: anywhere;
+}
+
+.nh__item-text {
+  color: var(--color-text-secondary);
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.nh__item-time,
+.nh__state {
+  font-size: 0.78rem;
+  color: var(--color-text-muted);
+}
+
+.nh__state {
+  white-space: nowrap;
+}
+
+.nh__foot {
+  margin: 0;
+
+  a {
+    color: var(--z-brass-dk);
+    font-weight: 700;
+  }
+}

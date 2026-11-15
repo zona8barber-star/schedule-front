@@ -1,10 +1,36 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } from '@angular/core';
+import { RouterLink } from '@angular/router';
+import { firstValueFrom } from 'rxjs';
+
+import { NotificationCategory, NotificationPreference } from '../../../../../core/models/notification.models';
+import { NotificationsApiService } from '../../../../../core/services/notifications-api.service';
+import { getApiErrorMessage } from '../../../../../core/utils/api-error.utils';
 
 import {
   PushNotificationService,
   PushStatus,
 } from '../../../../../core/services/push-notification.service';
 import { ToastService } from '../../../../../core/services/toast.service';
+
+/** ADR-0019 N4: tipos de aviso que el usuario puede apagar, en el orden en que se muestran. */
+export const NOTIFICATION_CATEGORY_COPY: Record<NotificationCategory, { label: string; description: string }> = {
+  appointments: {
+    label: 'Citas',
+    description: 'Reservas, confirmaciones, cambios, cancelaciones y recordatorios.',
+  },
+  memberships: {
+    label: 'Membresías',
+    description: 'Venta, activación, cada servicio que uses y el aviso de vencimiento.',
+  },
+  loyalty: {
+    label: 'Puntos',
+    description: 'Puntos ganados o retirados, canjes aprobados o rechazados y puntos por vencer.',
+  },
+  campaigns: {
+    label: 'Campañas',
+    description: 'Novedades y promociones de la barbería.',
+  },
+};
 
 interface StatusCopy {
   label: string;
@@ -15,7 +41,7 @@ interface StatusCopy {
 const STATUS_COPY: Record<PushStatus, StatusCopy> = {
   enabled: {
     label: 'Activadas en este dispositivo',
-    description: 'Te avisaremos de citas nuevas, confirmadas, modificadas o canceladas.',
+    description: 'Te avisaremos de tus citas, membresías, puntos y campañas, según los tipos que elijas abajo.',
     tone: 'ok',
   },
   disabled: {
@@ -60,18 +86,71 @@ const STATUS_COPY: Record<PushStatus, StatusCopy> = {
 
 @Component({
   selector: 'app-notification-settings-page',
+  imports: [RouterLink],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './notification-settings-page.component.html',
   styleUrl: './notification-settings-page.component.scss',
 })
-export class NotificationSettingsPageComponent {
+export class NotificationSettingsPageComponent implements OnInit {
   readonly push = inject(PushNotificationService);
   private readonly toastService = inject(ToastService);
+  private readonly notificationsApi = inject(NotificationsApiService);
+
+  readonly categoryCopy = NOTIFICATION_CATEGORY_COPY;
+  readonly preferences = signal<NotificationPreference[]>([]);
+  readonly preferencesError = signal<string | null>(null);
+  readonly isLoadingPreferences = signal(true);
+  /** Tipo que se está guardando (evita dos cambios a la vez). */
+  readonly savingCategory = signal<NotificationCategory | null>(null);
 
   readonly isDisabling = signal(false);
 
   readonly status = this.push.status;
   readonly copy = computed(() => STATUS_COPY[this.status()]);
+
+  ngOnInit(): void {
+    void this.loadPreferences();
+  }
+
+  /** Guarda al instante; si falla, el interruptor vuelve a como estaba. */
+  async togglePreference(category: NotificationCategory, input: HTMLInputElement): Promise<void> {
+    const pushEnabled = input.checked;
+    if (this.savingCategory()) {
+      input.checked = !pushEnabled;
+      return;
+    }
+
+    const previous = this.preferences();
+    const label = NOTIFICATION_CATEGORY_COPY[category].label.toLowerCase();
+    this.savingCategory.set(category);
+    this.preferences.update((items) => items.map((item) => (item.category === category ? { ...item, pushEnabled } : item)));
+
+    try {
+      const saved = await firstValueFrom(this.notificationsApi.updatePreferences({ categories: [{ category, pushEnabled }] }));
+      this.preferences.set(saved.categories.filter((item) => item.category in NOTIFICATION_CATEGORY_COPY));
+      this.toastService.success(pushEnabled ? `Recibirás los avisos de ${label}` : `Ya no recibirás avisos push de ${label}`);
+    } catch (error) {
+      this.preferences.set(previous);
+      // La señal vuelve al valor que ya estaba pintado, así que Angular no reescribe el DOM: se corrige a mano.
+      input.checked = !pushEnabled;
+      this.toastService.error(getApiErrorMessage(error, 'No pudimos guardar tu preferencia. Intenta de nuevo.'));
+    } finally {
+      this.savingCategory.set(null);
+    }
+  }
+
+  private async loadPreferences(): Promise<void> {
+    this.isLoadingPreferences.set(true);
+    this.preferencesError.set(null);
+    try {
+      const result = await firstValueFrom(this.notificationsApi.getPreferences());
+      this.preferences.set(result.categories.filter((item) => item.category in NOTIFICATION_CATEGORY_COPY));
+    } catch (error) {
+      this.preferencesError.set(getApiErrorMessage(error, 'No pudimos cargar tus preferencias. Recarga la página.'));
+    } finally {
+      this.isLoadingPreferences.set(false);
+    }
+  }
 
   async enable(): Promise<void> {
     const error = await this.push.enable();

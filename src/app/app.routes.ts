@@ -243,6 +243,11 @@ const loadNotificationSettingsPage = () =>
     './features/account/notifications/pages/notification-settings-page/notification-settings-page.component'
   ).then((module) => module.NotificationSettingsPageComponent);
 
+const loadNotificationHistoryPage = () =>
+  import(
+    './features/account/notifications/pages/notification-history-page/notification-history-page.component'
+  ).then((module) => module.NotificationHistoryPageComponent);
+
 const loadAdminNotificationsPage = () =>
   import(
     './features/admin/notifications/pages/admin-notifications-page/admin-notifications-page.component'
@@ -789,6 +794,12 @@ export const routes: Routes = [
     canActivate: [authGuard],
     loadComponent: loadNotificationSettingsPage,
     title: 'Notificaciones',
+  },
+  {
+    path: 'account/notifications/history',
+    canActivate: [authGuard],
+    loadComponent: loadNotificationHistoryPage,
+    title: 'Historial de notificaciones',
   },
   {
     path: 'media',
