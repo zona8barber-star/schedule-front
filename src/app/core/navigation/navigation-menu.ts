@@ -138,7 +138,8 @@ export const NAVIGATION_GROUPS: readonly NavGroupDefinition[] = [
         route: '/admin/customers',
         // A sold membership is opened from its customer.
         alsoActiveOn: ['/admin/memberships'],
-        access: ADMIN,
+        // ADR-0018 D4 (SONDA BUG-077): either delegated permission opens it; Admin holds every permission.
+        access: permissions(PERMISSION_CODES.loyaltyPointsAdjust, PERMISSION_CODES.membershipPaymentsConfirm),
         shortcut: { order: 80, icon: 'customers' },
       },
       {

@@ -26,6 +26,8 @@ export interface IncomeEntryView {
   updatedAt: string | null;
   /** Set when a confirmed service record created this income; it is then not editable from Ingresos. */
   serviceRecordId?: string | null;
+  /** ADR-0018 D1: the service record that created this income was self-approved by an Admin. */
+  isSelfApproved?: boolean;
 }
 
 export interface IncomeEntryCreateRequest {

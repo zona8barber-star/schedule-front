@@ -116,6 +116,24 @@ describe('AdminIncomeListPageComponent', () => {
     expect(fixture.componentInstance.total()).toBe(900000);
   });
 
+  // ADR-0018 D1 (SONDA BUG-090): an income of a service an Admin confirmed for themselves says so.
+  it('marks the income of a self-approved service as «Autoaprobado»', async () => {
+    expectIncome().flush(
+      incomePage({
+        items: [
+          { ...entries[0], serviceRecordId: 'r-1', isSelfApproved: true },
+          { ...entries[0], id: 'i-3', serviceRecordId: 'r-2', isSelfApproved: false },
+        ],
+      }),
+    );
+    await flushMicrotasks();
+    fixture.detectChanges();
+
+    const rows = fixture.nativeElement.querySelectorAll('tbody tr') as NodeListOf<HTMLTableRowElement>;
+    expect(rows[0].querySelector('[data-testid="self-approved"]')?.textContent?.trim()).toBe('Autoaprobado');
+    expect(rows[1].querySelector('[data-testid="self-approved"]')).toBeNull();
+  });
+
   it('keeps the range and the filters in the URL and goes back to the first page', async () => {
     expectIncome().flush(incomePage({ totalCount: 45 }));
     await flushMicrotasks();

@@ -80,6 +80,9 @@
               <td class="income__actions">
                 @if (entry.serviceRecordId) {
                   <span class="income__badge" title="Se gestiona desde Servicios por aprobar">Servicio confirmado</span>
+                  @if (entry.isSelfApproved) {
+                    <span class="income__badge income__badge--self" data-testid="self-approved">Autoaprobado</span>
+                  }
                 } @else {
                   <button type="button" (click)="openEdit(entry)" [disabled]="busyId() === entry.id">Editar</button>
                   <button type="button" (click)="deleteEntry(entry)" [disabled]="busyId() === entry.id">Eliminar</button>

@@ -11,7 +11,7 @@ import {
   MembershipConsumptionView,
   MembershipGiftView,
 } from '../../../../../core/models/membership.models';
-import { PERMISSION_CODES } from '../../../../../core/models/auth.models';
+import { PERMISSION_CODES, ROLE_NAMES } from '../../../../../core/models/auth.models';
 import { AdminMembershipsApiService } from '../../../../../core/services/admin-memberships-api.service';
 import { AuthService } from '../../../../../core/services/auth.service';
 import { ConfirmModalService } from '../../../../../core/services/confirm-modal.service';
@@ -70,6 +70,8 @@ export class AdminMembershipDetailPageComponent implements OnInit {
 
   /** The first income link credits the membership's points, so it needs memberships.payments.confirm (critical). */
   readonly canConfirmPayment = this.authService.hasPermission(PERMISSION_CODES.membershipPaymentsConfirm);
+  /** ADR-0018 D4: everything but linking the payment stays with administration. */
+  readonly isAdmin = this.authService.hasRole(ROLE_NAMES.admin);
   readonly loyaltyDecisionLabels: Record<string, string> = {
     Accrued: 'Acumuló sus puntos al vincular el primer ingreso',
     NotAccruedProgramDisabled: 'No acumuló: el programa estaba deshabilitado al vincular el primer ingreso',
@@ -97,7 +99,7 @@ export class AdminMembershipDetailPageComponent implements OnInit {
   /** Consumptions need an active membership that has started; an expired one still takes retroactive ones. */
   readonly canConsume = computed(() => {
     const membership = this.membership();
-    return membership?.status === 'Active' && membership.displayStatus !== 'Scheduled';
+    return this.isAdmin && membership?.status === 'Active' && membership.displayStatus !== 'Scheduled';
   });
 
   /** Purchased and gifted units, granted and still available, kept apart. */
@@ -229,7 +231,7 @@ export class AdminMembershipDetailPageComponent implements OnInit {
   }
 
   canReverse(consumption: MembershipConsumptionView): boolean {
-    return !consumption.reversal && this.membership()?.status !== 'PendingActivation';
+    return this.isAdmin && !consumption.reversal && this.membership()?.status !== 'PendingActivation';
   }
 
   partsLabel(consumption: MembershipConsumptionView): string {
@@ -251,7 +253,7 @@ export class AdminMembershipDetailPageComponent implements OnInit {
 
   /** Physical gifts are handed over once the membership is active, never on an annulled one. */
   canDeliver(gift: MembershipGiftView): boolean {
-    return gift.kind === 'Physical' && gift.status === 'PendingDelivery' && this.membership()?.status === 'Active';
+    return this.isAdmin && gift.kind === 'Physical' && gift.status === 'PendingDelivery' && this.membership()?.status === 'Active';
   }
 
   openDelivery(gift: MembershipGiftView): void {

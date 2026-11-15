@@ -244,8 +244,6 @@ export class LandingShellPageComponent implements OnInit {
     this.errorMessage.set(null);
     this.infoMessage.set(null);
 
-    this.themeService.applyBranding(null);
-
     const [landingResult, brandingResult, bannersResult, staffResult, scheduleResult, tickerItemsResult] =
       await Promise.allSettled([
         firstValueFrom(this.publicContentApiService.getLanding()),

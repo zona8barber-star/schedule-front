@@ -21,7 +21,7 @@ import { ConfirmModalService } from '../../../../../core/services/confirm-modal.
 import { StaffAppointmentsApiService } from '../../../../../core/services/staff-appointments-api.service';
 import { getApiErrorMessage } from '../../../../../core/utils/api-error.utils';
 import { formatDateTimeLocal, toUtcIsoString } from '../../../../../core/utils/availability-form.utils';
-import { addDaysToDateKey, bogotaDateTimeFormat, bogotaToday } from '../../../../../core/utils/bogota-date.utils';
+import { addDaysToDateKey, bogotaDateKey, bogotaDateTimeFormat, bogotaToday } from '../../../../../core/utils/bogota-date.utils';
 import {
   QueryValue,
   readDateParam,
@@ -394,6 +394,11 @@ export class StaffAppointmentsPageComponent implements OnInit {
   /** Services can be registered once the appointment started; registering never changes its status. */
   hasStarted(appointment: AppointmentResponse): boolean {
     return new Date(appointment.startsAtUtc).getTime() <= Date.now();
+  }
+
+/** ADR-0018 D2 (SONDA BUG-067): only an appointment of today (Bogotá) or an earlier day can be completed. */
+  canComplete(appointment: AppointmentResponse): boolean {
+    return this.canTransition(appointment) && bogotaDateKey(appointment.startsAtUtc) <= bogotaToday();
   }
 
   canTransition(appointment: AppointmentResponse): boolean {

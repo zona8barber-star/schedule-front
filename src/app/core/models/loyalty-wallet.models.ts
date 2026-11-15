@@ -127,6 +127,9 @@ export const LOYALTY_MOVEMENT_LABELS: Record<string, string> = {
   AdjustmentCredit: 'Abono manual',
   Expiration: 'Vencimiento',
   MembershipAnnulmentWithdrawal: 'Retiro por anulación de membresía',
+  // ADR-0018 D5 (SONDA BUG-104): the points of a membership follow its payment.
+  MembershipUnlinkWithdrawal: 'Retiro por desvinculación del pago de la membresía',
+  MembershipRelinkCredit: 'Devueltos al volver a vincular el pago de la membresía',
   AdjustmentDebit: 'Cargo manual',
   MergeTransferOut: 'Traspasado por fusión',
   DebtSettlement: 'Compensación de deuda',
@@ -139,7 +142,7 @@ export const LOYALTY_MOVEMENT_LABELS: Record<string, string> = {
 };
 
 /** Movement types that add points to the wallet (shown with a plus sign). */
-export const LOYALTY_POSITIVE_MOVEMENTS = new Set(['Accrual', 'MergeTransferIn', 'AdjustmentCredit', 'RedemptionRelease']);
+export const LOYALTY_POSITIVE_MOVEMENTS = new Set(['Accrual', 'MergeTransferIn', 'AdjustmentCredit', 'RedemptionRelease', 'MembershipRelinkCredit']);
 
 /**
  * Sign shown for a movement: '+' adds to the available points, '−' takes from them, '' changes neither (a delivery

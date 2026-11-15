@@ -204,6 +204,16 @@ describe('buildNavigation', () => {
     expect(menu.shortcuts.map((shortcut) => shortcut.id)).toEqual(['home', 'admin-service-records']);
   });
 
+  // ADR-0018 D4 (SONDA BUG-077): either delegated permission opens «Clientes» without the Admin role.
+  it.each([PERMISSION_CODES.loyaltyPointsAdjust, PERMISSION_CODES.membershipPaymentsConfirm])(
+    'opens «Clientes» to a custom role with %s',
+    (permission) => {
+      const menu = buildNavigation({ isAuthenticated: true, roles: ['Caja'], permissions: [permission], canRegisterServiceRecords: false });
+
+      expect(itemIdsByGroup(menu)).toEqual({ customers: ['admin-customers'] });
+    },
+  );
+
   it('ignores permissions and roles of a session that is not authenticated', () => {
     const menu = buildNavigation({ ...fullAdmin, isAuthenticated: false });
 

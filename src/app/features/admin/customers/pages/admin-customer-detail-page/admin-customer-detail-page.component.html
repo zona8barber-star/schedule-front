@@ -8,7 +8,7 @@
   } @else if (customer(); as c) {
     <header class="customer-detail__header">
       <h1>{{ c.fullName }}</h1>
-      @if (!c.mergedIntoCustomerId) {
+      @if (isAdmin && !c.mergedIntoCustomerId) {
         <button class="customer-detail__btn" type="button" (click)="open('edit')">Editar datos</button>
       }
     </header>
@@ -50,7 +50,7 @@
               }
             </dd>
           </dl>
-          @if (!c.mergedIntoCustomerId) {
+          @if (isAdmin && !c.mergedIntoCustomerId) {
             <button class="customer-detail__btn customer-detail__btn--danger" type="button" (click)="open('unlink')">
               Desvincular cuenta
             </button>
@@ -66,7 +66,9 @@
           }
         } @else {
           <p class="customer-detail__muted">Este cliente aún no tiene una cuenta de la app vinculada.</p>
-          <button class="customer-detail__btn" type="button" (click)="open('link')">Vincular cuenta</button>
+          @if (isAdmin) {
+            <button class="customer-detail__btn" type="button" (click)="open('link')">Vincular cuenta</button>
+          }
         }
       </article>
     </div>
@@ -74,7 +76,7 @@
     <article class="customer-detail__card">
       <div class="customer-detail__card-header">
         <h2>Membresías</h2>
-        @if (!c.mergedIntoCustomerId) {
+        @if (isAdmin && !c.mergedIntoCustomerId) {
           <button class="customer-detail__btn" type="button" (click)="open('sell')">Vender membresía</button>
         }
       </div>
@@ -159,7 +161,7 @@
 
     <app-admin-customer-loyalty-panel [customerId]="c.id" />
 
-    @if (!c.mergedIntoCustomerId) {
+    @if (isAdmin && !c.mergedIntoCustomerId) {
       <article class="customer-detail__card">
         <h2>Perfiles duplicados</h2>
         <p class="customer-detail__muted">

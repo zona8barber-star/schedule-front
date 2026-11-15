@@ -113,6 +113,17 @@
         </div>
       }
 
+      @if ((s.selfApprovedIncomeCount ?? 0) > 0) {
+        <div class="reports__panel" data-testid="self-approved-income">
+          <h2>Ingresos autoaprobados</h2>
+          <p class="reports__note">
+            {{ s.selfApprovedIncomeCount }} {{ s.selfApprovedIncomeCount === 1 ? 'ingreso' : 'ingresos' }} por
+            $ {{ s.selfApprovedIncomeTotal ?? 0 | number: '1.0-0' }}: servicios que confirmó un administrador que era el
+            cliente o el profesional. Ya están incluidos en los totales.
+          </p>
+        </div>
+      }
+
       <div class="reports__panel">
         <h2>Promo, normal y membresías</h2>
         <div class="reports__chart-canvas">

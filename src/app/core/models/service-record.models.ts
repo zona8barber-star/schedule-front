@@ -57,6 +57,8 @@ export interface ServiceRecordApprovalView {
   reviewNotes: string | null;
   approvedAt: string;
   approvedByName: string | null;
+  /** ADR-0018 D1: an Admin approved a service where they are the customer or the registering professional. */
+  isSelfApproved?: boolean;
   /** For a loyalty reward: the redemption it delivered and the commission the business covers (informative). */
   loyaltyRedemptionId?: string | null;
   rewardName?: string | null;

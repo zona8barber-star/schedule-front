@@ -112,6 +112,13 @@
             <span class="records__meta records__meta--small">
               Confirmado por {{ approval.approvedByName }} el {{ approval.approvedAt | bogotaDate: 'medium' }}
             </span>
+            @if (approval.isSelfApproved) {
+              <span
+                class="records__self-approved"
+                data-testid="self-approved"
+                title="Lo confirmó un administrador que es el cliente o el profesional de este servicio"
+              >Autoaprobado</span>
+            }
           }
 
           @if (record.status === 'Rejected') {

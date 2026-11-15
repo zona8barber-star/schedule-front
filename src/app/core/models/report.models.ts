@@ -40,6 +40,9 @@ export interface ReportSummaryView {
   /** Informative: commissions the business covers for rewards delivered as services. Not a payment, not in any total. */
   rewardCommissions?: ReportRewardCommissionView[] | null;
   rewardCommissionsTotal?: number;
+  /** ADR-0018 D1: income of service records an Admin approved for themselves (already inside the totals). */
+  selfApprovedIncomeTotal?: number;
+  selfApprovedIncomeCount?: number;
 }
 
 export interface ReportRewardCommissionView {

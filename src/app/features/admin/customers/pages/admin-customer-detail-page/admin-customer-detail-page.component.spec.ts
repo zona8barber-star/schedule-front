@@ -8,6 +8,8 @@ import { environment } from '../../../../../../environments/environment';
 import { CustomerDetailView } from '../../../../../core/models/customer.models';
 import { LoyaltyWalletView } from '../../../../../core/models/loyalty-wallet.models';
 import { CustomerMembershipSummaryView } from '../../../../../core/models/membership.models';
+import { PERMISSION_CODES, PermissionCode, ROLE_NAMES } from '../../../../../core/models/auth.models';
+import { AuthService } from '../../../../../core/services/auth.service';
 import { AdminCustomerDetailPageComponent } from './admin-customer-detail-page.component';
 
 describe('AdminCustomerDetailPageComponent', () => {
@@ -61,6 +63,8 @@ describe('AdminCustomerDetailPageComponent', () => {
   };
 
   let memberships: CustomerMembershipSummaryView[] = [];
+  let roles: string[] = [ROLE_NAMES.admin];
+  let permissions: PermissionCode[] = [];
 
   async function openPage(customer: CustomerDetailView): Promise<ComponentFixture<unknown>> {
     TestBed.configureTestingModule({
@@ -68,6 +72,13 @@ describe('AdminCustomerDetailPageComponent', () => {
         provideHttpClient(),
         provideHttpClientTesting(),
         provideRouter([{ path: 'admin/customers/:customerId', component: AdminCustomerDetailPageComponent }]),
+        {
+          provide: AuthService,
+          useValue: {
+            hasRole: (role: string) => roles.includes(role),
+            hasPermission: (code: PermissionCode) => permissions.includes(code),
+          },
+        },
       ],
     });
     httpMock = TestBed.inject(HttpTestingController);
@@ -116,6 +127,25 @@ describe('AdminCustomerDetailPageComponent', () => {
     harness.detectChanges();
 
     expect(harness.fixture.nativeElement.textContent).toContain('Ninguna membresía coincide con los filtros.');
+  });
+
+  // ADR-0018 D4 (SONDA BUG-077): a points adjuster sees the customer, its memberships and its points, read-only.
+  it('shows a points adjuster the customer without the actions of administration', async () => {
+    roles = [];
+    permissions = [PERMISSION_CODES.loyaltyPointsAdjust];
+    try {
+      const fixture = await openPage(linkedCustomer);
+      const text = fixture.nativeElement.textContent as string;
+
+      expect(text).toContain('Carlos Pérez');
+      expect(text).toContain('app@example.com');
+      for (const action of ['Editar datos', 'Desvincular cuenta', 'Vender membresía', 'Fusionar perfil duplicado']) {
+        expect(text).not.toContain(action);
+      }
+    } finally {
+      roles = [ROLE_NAMES.admin];
+      permissions = [];
+    }
   });
 
   it('shows the linked account, the unlink action and the history', async () => {

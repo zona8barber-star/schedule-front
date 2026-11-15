@@ -20,6 +20,8 @@ import { AdminCustomersApiService } from '../../../../../core/services/admin-cus
 import { AdminMembershipPlansApiService } from '../../../../../core/services/admin-membership-plans-api.service';
 import { AdminMembershipsApiService } from '../../../../../core/services/admin-memberships-api.service';
 import { ToastService } from '../../../../../core/services/toast.service';
+import { AuthService } from '../../../../../core/services/auth.service';
+import { ROLE_NAMES } from '../../../../../core/models/auth.models';
 import { getApiErrorMessage } from '../../../../../core/utils/api-error.utils';
 import {
   QueryValue,
@@ -80,6 +82,8 @@ export class AdminCustomerDetailPageComponent implements OnInit {
   private membershipsSequence = 0;
   private readonly router = inject(Router);
   private readonly toastService = inject(ToastService);
+  /** ADR-0018 D4: points adjusters and payment confirmers see the customer; editing it stays with administration. */
+  readonly isAdmin = inject(AuthService).hasRole(ROLE_NAMES.admin);
 
   readonly membershipStatusLabels = MEMBERSHIP_STATUS_LABELS;
   readonly memberships = signal<CustomerMembershipSummaryView[]>([]);
@@ -119,9 +123,11 @@ export class AdminCustomerDetailPageComponent implements OnInit {
       }
     });
 
-    void firstValueFrom(this.plansApi.list())
-      .then((plans) => this.plans.set(plans))
-      .catch(() => this.plans.set([]));
+    if (this.isAdmin) {
+      void firstValueFrom(this.plansApi.list())
+        .then((plans) => this.plans.set(plans))
+        .catch(() => this.plans.set([]));
+    }
   }
 
   onMembershipFilterChange(patch: Record<string, QueryValue>): void {

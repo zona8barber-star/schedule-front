@@ -79,6 +79,35 @@ describe('LandingShellPageComponent (API down)', () => {
     expect(element.querySelector('[data-testid="load-error"]')).toBeNull();
   });
 
+  // ADR-0018 D6 (SONDA BUG-055): without configured contact data or text, nothing made-up is shown.
+  async function loadWith(landing: Record<string, unknown>): Promise<HTMLElement> {
+    const element = await create();
+    content.getLanding.mockReturnValue(of(landing));
+    content.getBanners.mockReturnValue(of([]));
+    content.getBusinessSchedule.mockReturnValue(of({ days: [] }));
+    content.getTickerItems.mockReturnValue(of([]));
+    staffList.mockReturnValue(of([]));
+    element.querySelector<HTMLButtonElement>('[data-testid="load-error-retry"]')!.click();
+    await settle();
+    return element;
+  }
+
+  it('hides the address and the «Sobre nosotros» block when they are not configured', async () => {
+    const element = await loadWith({ heroTitle: 'Zona 8', address: null, aboutText: null });
+
+    expect(element.querySelector('[data-testid="hero-address"]')).toBeNull();
+    expect(element.querySelector('[data-testid="landing-about"]')).toBeNull();
+    expect(element.textContent).not.toContain('Calle 8');
+    expect(element.textContent).not.toContain('Estamos preparando');
+  });
+
+  it('shows the configured address and text', async () => {
+    const element = await loadWith({ heroTitle: 'Zona 8', address: 'Cra 10 # 20-30', aboutText: 'Barbería de barrio.' });
+
+    expect(element.querySelector('[data-testid="hero-address"]')!.textContent).toContain('Cra 10 # 20-30');
+    expect(element.querySelector('[data-testid="landing-about"]')!.textContent).toContain('Barbería de barrio.');
+  });
+
   // SONDA BUG-050: a banner whose image cannot load keeps its text, without a broken image or a gap.
   it('hides the image of a banner that fails to load and keeps its text', async () => {
     const element = await create();

@@ -187,14 +187,16 @@
                   >
                     Editar
                   </button>
-                  <button
-                    class="appt-card__btn appt-card__btn--complete"
-                    type="button"
-                    [disabled]="isAnythingBusy()"
-                    (click)="markCompleted(appointment)"
-                  >
-                    {{ isBusyFor(appointment.id, 'complete') ? 'Procesando...' : 'Completar' }}
-                  </button>
+                  @if (canComplete(appointment)) {
+                    <button
+                      class="appt-card__btn appt-card__btn--complete"
+                      type="button"
+                      [disabled]="isAnythingBusy()"
+                      (click)="markCompleted(appointment)"
+                    >
+                      {{ isBusyFor(appointment.id, 'complete') ? 'Procesando...' : 'Completar' }}
+                    </button>
+                  }
                   <button
                     class="appt-card__btn appt-card__btn--noshow"
                     type="button"

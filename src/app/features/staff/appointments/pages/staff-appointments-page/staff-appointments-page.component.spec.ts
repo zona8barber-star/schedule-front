@@ -149,6 +149,18 @@ describe('StaffAppointmentsPageComponent (service and duration)', () => {
     expect(api.markCompleted).toHaveBeenCalledTimes(1);
   });
 
+  // ADR-0018 D2 (SONDA BUG-067): «Completar» only for an appointment of today (Bogotá) or an earlier day.
+  it('offers «Completar» for today and earlier days, never for a future day', async () => {
+    await render();
+
+    expect(component.canComplete(appointment)).toBe(false); // tomorrow
+    expect(component.canComplete({ ...appointment, startsAtUtc: '2026-11-06T13:00:00Z' })).toBe(true); // today
+    expect(component.canComplete({ ...appointment, startsAtUtc: '2026-11-04T13:00:00Z' })).toBe(true); // left open
+    // 2026-11-07 00:30 UTC is still the 6th in Bogotá.
+    expect(component.canComplete({ ...appointment, startsAtUtc: '2026-11-07T00:30:00Z' })).toBe(true);
+    expect(component.canComplete({ ...appointment, status: 'Cancelled', startsAtUtc: '2026-11-06T13:00:00Z' })).toBe(false);
+  });
+
   it('requires a service to create', async () => {
     component.openCreateModal();
     await render();
@@ -326,7 +338,9 @@ describe('StaffAppointmentsPageComponent in Bogotá time, with a confirm action'
     const [pendingCard, confirmedCard] = cards();
     expect(buttonsOf(pendingCard)).toContain('Confirmar');
     expect(buttonsOf(confirmedCard)).not.toContain('Confirmar');
-    expect(buttonsOf(confirmedCard)).toContain('Completar');
+    // ADR-0018 D2 (SONDA BUG-067): both are on a future day, so neither can be completed yet.
+    expect(buttonsOf(confirmedCard)).not.toContain('Completar');
+    expect(buttonsOf(confirmedCard)).toContain('No-show');
   });
 
   it('confirms a pending appointment and reloads the agenda', async () => {

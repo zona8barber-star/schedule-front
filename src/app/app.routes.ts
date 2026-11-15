@@ -8,11 +8,6 @@ import { PERMISSION_CODES, ROLE_NAMES } from './core/models/auth.models';
 import { brandTitleResolver } from './core/services/public-branding.store';
 import { customerClaimsQueryGuard } from './features/admin/customer-claims/customer-claims-query.guard';
 
-const loadScaffoldSection = () =>
-  import('./shared/components/scaffold-section/scaffold-section.component').then(
-    (module) => module.ScaffoldSectionComponent,
-  );
-
 const loadAdminStaffListPage = () =>
   import('./features/admin/staff/pages/admin-staff-list-page/admin-staff-list-page.component').then(
     (module) => module.AdminStaffListPageComponent,
@@ -289,12 +284,10 @@ export const routes: Routes = [
     title: brandTitleResolver,
   },
   {
+    // ADR-0018 D6 (SONDA BUG-055): the provisional public area is gone; old links land on the landing.
     path: 'public',
-    loadComponent: loadScaffoldSection,
-    data: {
-      title: 'Área pública',
-      description: 'Explora la landing, los perfiles profesionales y su disponibilidad.',
-    },
+    pathMatch: 'full',
+    redirectTo: '',
   },
   {
     path: 'auth',
@@ -558,19 +551,21 @@ export const routes: Routes = [
   },
   {
     path: 'admin/customers',
-    canActivate: [authGuard, roleGuard],
+    canActivate: [authGuard, permissionGuard],
     loadComponent: loadAdminCustomersListPage,
     data: {
-      roles: [ROLE_NAMES.admin],
+      // ADR-0018 D4 (SONDA BUG-077): either delegated permission is enough; the API checks both against the database.
+      permissions: [PERMISSION_CODES.loyaltyPointsAdjust, PERMISSION_CODES.membershipPaymentsConfirm],
     },
     title: 'Clientes',
   },
   {
     path: 'admin/customers/:customerId',
-    canActivate: [authGuard, roleGuard],
+    canActivate: [authGuard, permissionGuard],
     loadComponent: loadAdminCustomerDetailPage,
     data: {
-      roles: [ROLE_NAMES.admin],
+      // ADR-0018 D4 (SONDA BUG-077): either delegated permission is enough; the API checks both against the database.
+      permissions: [PERMISSION_CODES.loyaltyPointsAdjust, PERMISSION_CODES.membershipPaymentsConfirm],
     },
     title: 'Cliente',
   },
@@ -637,10 +632,11 @@ export const routes: Routes = [
   },
   {
     path: 'admin/memberships/:membershipId',
-    canActivate: [authGuard, roleGuard],
+    canActivate: [authGuard, permissionGuard],
     loadComponent: loadAdminMembershipDetailPage,
     data: {
-      roles: [ROLE_NAMES.admin],
+      // ADR-0018 D4 (SONDA BUG-077): either delegated permission is enough; the API checks both against the database.
+      permissions: [PERMISSION_CODES.loyaltyPointsAdjust, PERMISSION_CODES.membershipPaymentsConfirm],
     },
     title: 'Membresía',
   },
