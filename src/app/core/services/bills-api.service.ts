@@ -15,6 +15,7 @@ import {
   BillRedemptionOption,
   BillSummaryView,
   BillView,
+  CashClosingView,
   PaymentMethodView,
 } from '../models/bill.models';
 import { PagedResult } from '../models/paged-result.models';
@@ -42,6 +43,8 @@ export class BillsApiService {
       from: query.from,
       to: query.to,
       q: query.q,
+      customerId: query.customerId,
+      paymentMethodId: query.paymentMethodId,
       page: query.page,
       pageSize: query.pageSize,
     });
@@ -128,6 +131,11 @@ export class BillsApiService {
   /** ADR-0020 stage 4: reverses every posting of the approval; the reason is required. */
   unapprove(billId: string, request: { version: number; idempotencyKey: string; reason: string }) {
     return this.httpClient.post<BillView>(this.buildUrl(`/bills/${billId}/unapprove`), request);
+  }
+
+  /** ADR-0020 stage 5: the cash closing (Admin), at most 30 days per query. */
+  cashClosing(from: string, to: string) {
+    return this.httpClient.get<CashClosingView>(this.buildUrl('/admin/reports/cash'), { params: toHttpParams({ from, to }) });
   }
 
   paymentMethods() {

@@ -100,6 +100,35 @@ describe('AdminInventoryPageComponent', () => {
     expect(buttons('p-wax')).toEqual(['Movimientos']);
   });
 
+  it('shows the rotation of each product: daily average, available stock and coverage days', async () => {
+    await create([PERMISSION_CODES.inventoryView]);
+    void component.loadSales('2026-11-01', '2026-11-10');
+    httpMock.expectOne((request) => request.url.endsWith('/admin/inventory/sales')).flush({
+      from: '2026-11-01',
+      to: '2026-11-10',
+      items: [
+        { productId: 'p-1', name: 'Cera mate', units: 20, revenue: 700000, cost: 400000, profit: 300000, marginPercent: 42.86,
+          unitsWithoutCost: 0, available: 5, dailyUnits: 2, coverageDays: 2.5, isLowStock: true },
+        { productId: 'p-2', name: 'Peine', units: 0, revenue: 0, cost: 0, profit: 0, marginPercent: null,
+          unitsWithoutCost: 0, available: 12, dailyUnits: null, coverageDays: null, isLowStock: false },
+      ],
+      units: 20,
+      revenue: 700000,
+      cost: 400000,
+      profit: 300000,
+      unitsWithoutCost: 0,
+    });
+    await settle();
+
+    const sold = (fixture.nativeElement as HTMLElement).querySelector('[data-sales-product="p-1"]')!;
+    expect(sold.querySelector('[data-testid="sales-daily"]')!.textContent!.trim()).toBe('2');
+    expect(sold.querySelector('[data-testid="sales-available"]')!.textContent).toContain('Stock bajo');
+    expect(sold.querySelector('[data-testid="sales-coverage"]')!.textContent!.trim()).toBe('2,5 días');
+    const unsold = (fixture.nativeElement as HTMLElement).querySelector('[data-sales-product="p-2"]')!;
+    expect(unsold.querySelector('[data-testid="sales-daily"]')!.textContent!.trim()).toBe('—');
+    expect(unsold.querySelector('[data-testid="sales-coverage"]')!.textContent!.trim()).toBe('Sin ventas');
+  });
+
   it('offers each action only with its permission', async () => {
     await create([PERMISSION_CODES.inventoryReceive]);
     expect(buttons('p-wax')).toEqual(['Entrada', 'Stock mínimo', 'Movimientos']);

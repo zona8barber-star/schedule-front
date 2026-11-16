@@ -148,3 +148,17 @@
   list-style: none;
   font-size: 0.9rem;
 }
+
+.bills__header-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.bills__filter-note {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}

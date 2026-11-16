@@ -68,6 +68,19 @@ export class AdminInventoryPageComponent implements OnInit {
 
   readonly formatCost = formatCost;
   readonly formatMargin = formatMargin;
+
+  /** Rotation figures keep up to 2 decimals, in Colombian notation. */
+  formatDecimal(value: number): string {
+    return value.toLocaleString('es-CO', { maximumFractionDigits: 2 });
+  }
+
+  /** «Sin ventas» when nothing was sold in the range (no pace to measure). */
+  coverageLabel(days: number | null): string {
+    if (days === null) {
+      return 'Sin ventas';
+    }
+    return days === 1 ? '1 día' : `${this.formatDecimal(days)} días`;
+  }
   readonly formatCop = formatCop;
   readonly maxQuantity = INVENTORY_MAX_QUANTITY;
   readonly maxUnitCost = INVENTORY_MAX_UNIT_COST;

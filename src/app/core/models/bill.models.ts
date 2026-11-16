@@ -191,6 +191,9 @@ export interface BillListQuery {
   from?: string | null;
   to?: string | null;
   q?: string | null;
+  /** ADR-0020 stage 5: the customer's profile and the profiles merged into it. */
+  customerId?: string | null;
+  paymentMethodId?: string | null;
   page?: number | null;
   pageSize?: number | null;
 }
@@ -289,3 +292,75 @@ export const BILL_EFFECT_LABELS: Record<string, string> = {
   DirectTip: 'Propina pagada directo: solo queda registrada',
   Discount: 'Descuento repartido en las líneas',
 };
+
+/** ADR-0020 stage 5 (Q23): what the customer sees of a bill; never its internal states, commissions or costs. */
+export type MyBillStatus = 'Issued' | 'UnderReview' | 'Voided';
+
+export const MY_BILL_STATUS_LABELS: Record<MyBillStatus, string> = {
+  Issued: 'Emitido',
+  UnderReview: 'En revisión',
+  Voided: 'Anulado',
+};
+
+export interface MyBillSummaryView {
+  id: string;
+  number: string;
+  status: MyBillStatus;
+  serviceDate: string;
+  closedAt: string;
+  total: number;
+  paymentMethodName: string | null;
+}
+
+export interface MyBillLineView {
+  type: BillLineType;
+  name: string;
+  quantity: number;
+  unitPrice: number;
+  amount: number;
+  isCourtesy: boolean;
+  staffName: string | null;
+  tipPaymentMode: TipPaymentMode | null;
+}
+
+export interface MyBillView {
+  id: string;
+  number: string;
+  status: MyBillStatus;
+  serviceDate: string;
+  closedAt: string;
+  customerName: string;
+  lines: MyBillLineView[];
+  subtotal: number;
+  discountTotal: number;
+  tipTotal: number;
+  directTipTotal: number;
+  total: number;
+  paymentMethodName: string | null;
+}
+
+/** ADR-0020 stage 5: what was charged, by day and payment method (closed bills; the voided ones apart). */
+export interface CashClosingMethodView {
+  paymentMethodId: string;
+  name: string;
+  billCount: number;
+  total: number;
+}
+
+export interface CashClosingDayView {
+  day: string;
+  methods: CashClosingMethodView[];
+  billCount: number;
+  total: number;
+}
+
+export interface CashClosingView {
+  from: string;
+  to: string;
+  days: CashClosingDayView[];
+  methods: CashClosingMethodView[];
+  billCount: number;
+  total: number;
+  voidedCount: number;
+  voidedTotal: number;
+}

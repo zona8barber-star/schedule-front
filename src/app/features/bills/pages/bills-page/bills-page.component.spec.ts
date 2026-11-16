@@ -137,6 +137,37 @@ describe('BillsPageComponent', () => {
     httpMock.expectNone(`${api}/bills`);
   });
 
+  it('filters any list by service dates, payment method and customer, and «Todas» lists every status', async () => {
+    await create({ tab: 'all', from: '2026-11-01', to: '2026-11-10', paymentMethodId: 'pm-1', customerId: 'c-1' });
+    const request = httpMock.expectOne((candidate) => candidate.url === `${api}/bills`);
+    expect(request.request.params.has('status')).toBe(false);
+    expect(request.request.params.get('from')).toBe('2026-11-01');
+    expect(request.request.params.get('to')).toBe('2026-11-10');
+    expect(request.request.params.get('paymentMethodId')).toBe('pm-1');
+    expect(request.request.params.get('customerId')).toBe('c-1');
+    request.flush({ items: [summary('b-1', { status: 'Voided', number: 'C-000004' })], page: 1, pageSize: 25, totalCount: 1 });
+    await settle();
+
+    const element = fixture.nativeElement as HTMLElement;
+    expect(element.querySelector('[data-bill="b-1"]')!.textContent).toContain('Anulada');
+    expect(element.querySelector('[data-testid="bill-filter-customer"]')).not.toBeNull();
+    // A professional sees only their own bills: no professional filter.
+    expect(element.querySelector('[data-testid="bill-filter-staff"]')).toBeNull();
+
+    element.querySelector<HTMLButtonElement>('[data-testid="bill-filters-clear"]')!.click();
+    expect(navigate).toHaveBeenCalledWith([], expect.objectContaining({
+      queryParams: expect.objectContaining({ customerId: null, from: null, paymentMethodId: null }),
+    }));
+  });
+
+  it('explains a range longer than 30 days instead of asking the API', async () => {
+    await create({ tab: 'Approved', from: '2026-09-01', to: '2026-11-10' });
+    httpMock.expectNone((candidate) => candidate.url === `${api}/bills`);
+    await settle();
+
+    expect((fixture.nativeElement as HTMLElement).textContent).toContain('30');
+  });
+
   it('shows the approval tray with the number, the payment method and the self-approved mark', async () => {
     await create({ tab: 'Closed' });
     const request = httpMock.expectOne((candidate) => candidate.url === `${api}/bills`);

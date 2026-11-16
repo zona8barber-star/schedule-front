@@ -77,6 +77,7 @@ describe('AdminCustomerDetailPageComponent', () => {
           useValue: {
             hasRole: (role: string) => roles.includes(role),
             hasPermission: (code: PermissionCode) => permissions.includes(code),
+            hasAnyPermission: (codes: readonly PermissionCode[]) => codes.some((code) => permissions.includes(code)),
           },
         },
       ],

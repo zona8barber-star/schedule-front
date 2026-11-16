@@ -7,9 +7,16 @@
         Al cerrarla se cobra y recibe su número; luego administración la revisa y la aprueba.
       </p>
     </div>
-    @if (canOpen()) {
-      <button class="catalog__create-btn" type="button" data-testid="new-bill" (click)="openNewBill()">Nueva cuenta</button>
-    }
+    <div class="bills__header-actions">
+      @if (canSeeOldRecords) {
+        <a class="catalog__action-btn" routerLink="/admin/service-records" [queryParams]="{ status: 'Approved' }" data-testid="old-service-records">
+          Registros anteriores
+        </a>
+      }
+      @if (canOpen()) {
+        <button class="catalog__create-btn" type="button" data-testid="new-bill" (click)="openNewBill()">Nueva cuenta</button>
+      }
+    </div>
   </header>
 
   <app-api-feedback severity="error" [message]="errorMessage()" />
@@ -29,6 +36,9 @@
     </button>
     <button type="button" role="tab" [attr.aria-selected]="tab() === 'Voided'" [class.bills__tab--active]="tab() === 'Voided'" (click)="selectTab('Voided')">
       Anuladas
+    </button>
+    <button type="button" role="tab" [attr.aria-selected]="tab() === 'all'" [class.bills__tab--active]="tab() === 'all'" (click)="selectTab('all')">
+      Todas
     </button>
   </div>
 
@@ -81,15 +91,57 @@
       }
     }
   } @else {
-    <form class="catalog__filters" role="search" (submit)="$event.preventDefault(); onSearch(searchInput.value)">
+    <form class="catalog__filters" role="search" data-testid="bill-filters" (submit)="$event.preventDefault(); onSearch(searchInput.value)">
       <label class="catalog__filter">
         <span>Buscar</span>
         <input #searchInput type="search" placeholder="Número o cliente" [value]="query()" (change)="onSearch(searchInput.value)" />
       </label>
+      <label class="catalog__filter">
+        <span>Atención desde</span>
+        <input type="date" data-testid="bill-filter-from" [value]="range()?.from ?? ''" (change)="onFromChange($any($event.target).value)" />
+      </label>
+      <label class="catalog__filter">
+        <span>Atención hasta</span>
+        <input type="date" data-testid="bill-filter-to" [value]="range()?.to ?? ''" (change)="onToChange($any($event.target).value)" />
+      </label>
+      @if (canFilterByStaff()) {
+        <label class="catalog__filter">
+          <span>Profesional</span>
+          <select data-testid="bill-filter-staff" (change)="onFilterChange({ staffProfileId: $any($event.target).value })">
+            <option value="">Todos</option>
+            @for (staff of options()?.staff ?? []; track staff.id) {
+              <option [value]="staff.id" [selected]="staff.id === staffProfileId()">{{ staff.displayName }}</option>
+            }
+          </select>
+        </label>
+      }
+      <label class="catalog__filter">
+        <span>Medio de pago</span>
+        <select data-testid="bill-filter-payment-method" (change)="onFilterChange({ paymentMethodId: $any($event.target).value })">
+          <option value="">Todos</option>
+          @for (method of options()?.paymentMethods ?? []; track method.id) {
+            <option [value]="method.id" [selected]="method.id === paymentMethodId()">{{ method.name }}</option>
+          }
+        </select>
+      </label>
     </form>
+    @if (customerId() || hasFilters()) {
+      <p class="catalog__muted bills__filter-note">
+        @if (customerId()) {
+          <span data-testid="bill-filter-customer">Solo las cuentas de un cliente (con sus perfiles fusionados).</span>
+        }
+        <button class="catalog__action-btn" type="button" data-testid="bill-filters-clear" (click)="clearFilters()">Quitar filtros</button>
+      </p>
+    }
 
     @if (!bills().length) {
-      <p class="catalog__state">No hay cuentas {{ emptyLabel() }}.</p>
+      <p class="catalog__state">
+        @if (hasFilters()) {
+          Ninguna cuenta coincide con los filtros.
+        } @else {
+          No hay cuentas {{ emptyLabel() }}.
+        }
+      </p>
     } @else {
       <div class="catalog__table-wrap">
         <table class="catalog__table">
@@ -119,7 +171,12 @@
                     <small class="catalog__muted">Profesional inactivo</small>
                   }
                 </td>
-                <td>{{ bill.serviceDate }}</td>
+                <td>
+                  {{ bill.serviceDate }}
+                  @if (tab() === 'all') {
+                    <small class="catalog__tag">{{ statusLabels[bill.status] }}</small>
+                  }
+                </td>
                 <td class="catalog__price">
                   {{ formatCop(bill.total) }}
                   @if (bill.paymentMethodName) {

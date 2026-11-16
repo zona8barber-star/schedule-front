@@ -4,24 +4,23 @@ import { Injectable, inject } from '@angular/core';
 import { RuntimeConfigService } from '../config/runtime-config.service';
 import { CustomerCreateRequest } from '../models/customer.models';
 import {
-  ServiceRecordAppointmentOption,
   ServiceRecordApproveRequest,
-  ServiceRecordCatalogItem,
   ServiceRecordCustomerDuplicate,
   ServiceRecordCustomerOption,
-  ServiceRecordEligibilityView,
   ServiceRecordOptionsView,
   ServiceRecordRedemptionOption,
   ServiceRecordRelatedView,
-  ServiceRecordRegisterRequest,
   ServiceRecordRejectRequest,
   ServiceRecordListQuery,
   ServiceRecordView,
 } from '../models/service-record.models';
-import { PageQuery, PagedResult } from '../models/paged-result.models';
+import { PagedResult } from '../models/paged-result.models';
 import { toHttpParams } from '../utils/list-query.utils';
 
-/** Services performed: the professional's registration (staff routes) and the administrative review. */
+/**
+ * Services performed before the bills: the administrative review of the records that remain and the read-only history.
+ * The professional's registration was retired by the bills (ADR-0020 stages 2 and 6).
+ */
 @Injectable({
   providedIn: 'root',
 })
@@ -29,27 +28,9 @@ export class ServiceRecordsApiService {
   private readonly httpClient = inject(HttpClient);
   private readonly runtimeConfigService = inject(RuntimeConfigService);
 
-  catalog() {
-    return this.httpClient.get<ServiceRecordCatalogItem[]>(this.buildUrl('/staff/service-records/catalog'));
-  }
-
-  eligibility() {
-    return this.httpClient.get<ServiceRecordEligibilityView>(this.buildUrl('/staff/service-records/eligibility'));
-  }
-
-  appointments() {
-    return this.httpClient.get<ServiceRecordAppointmentOption[]>(this.buildUrl('/staff/service-records/appointments'));
-  }
-
-  /** Own records, paginated: pending ones first (oldest first), then the reviewed ones, newest first. */
-  mine(query: PageQuery = {}) {
-    return this.httpClient.get<PagedResult<ServiceRecordView>>(this.buildUrl('/staff/service-records'), {
-      params: toHttpParams({ page: query.page, pageSize: query.pageSize }),
-    });
-  }
-
-  register(request: ServiceRecordRegisterRequest) {
-    return this.httpClient.post<ServiceRecordView[]>(this.buildUrl('/staff/service-records'), request);
+  /** ADR-0020 stage 6: how many records still wait for review (the tray leaves the menu when none remain). */
+  pendingCount() {
+    return this.httpClient.get<{ count: number }>(this.buildUrl('/admin/service-records/pending-count'));
   }
 
   /** Admin review list, paginated (ADR-0016 B7). */

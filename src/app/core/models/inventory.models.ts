@@ -37,6 +37,13 @@ export interface InventorySalesItemView {
   marginPercent: number | null;
   /** Units sold while the product had no registered cost: their profit is unknown. */
   unitsWithoutCost: number;
+  /** ADR-0020 stage 5, rotation: stock on hand minus what open or closed bills hold. */
+  available: number;
+  /** Net units sold per day of the range; null when nothing was sold. */
+  dailyUnits: number | null;
+  /** Days the available stock lasts at that pace; null when nothing was sold. */
+  coverageDays: number | null;
+  isLowStock: boolean;
 }
 
 export interface InventorySalesView {

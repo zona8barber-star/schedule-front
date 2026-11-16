@@ -35,6 +35,7 @@ import { ApiFeedbackComponent } from '../../../../../shared/components/api-feedb
 import { PageStateComponent } from '../../../../../shared/components/page-state/page-state.component';
 import { PaginatorComponent } from '../../../../../shared/components/paginator/paginator.component';
 import { AdminCustomerFormModalComponent } from '../../components/admin-customer-form-modal/admin-customer-form-modal.component';
+import { AdminCustomerBillsPanelComponent } from '../../components/admin-customer-bills-panel/admin-customer-bills-panel.component';
 import { AdminCustomerLoyaltyPanelComponent } from '../../components/admin-customer-loyalty-panel/admin-customer-loyalty-panel.component';
 import { AdminCustomerLinkAccountModalComponent } from '../../components/admin-customer-link-account-modal/admin-customer-link-account-modal.component';
 import { AdminCustomerMergeModalComponent } from '../../components/admin-customer-merge-modal/admin-customer-merge-modal.component';
@@ -66,6 +67,7 @@ const EVENT_LABELS: Record<CustomerEventType, string> = {
     AdminCustomerUnlinkAccountModalComponent,
     AdminCustomerMergeModalComponent,
     AdminCustomerLoyaltyPanelComponent,
+    AdminCustomerBillsPanelComponent,
     AdminMembershipSellModalComponent,
     DecimalPipe,
     PaginatorComponent,

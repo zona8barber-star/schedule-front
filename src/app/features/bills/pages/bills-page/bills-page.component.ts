@@ -12,15 +12,24 @@ import {
   BillStatus,
   BillSummaryView,
 } from '../../../../core/models/bill.models';
+import { PERMISSION_CODES } from '../../../../core/models/auth.models';
 import { newIdempotencyKey } from '../../../../core/models/loyalty-redemption.models';
 import { DEFAULT_PAGE_SIZE } from '../../../../core/models/paged-result.models';
+import { AuthService } from '../../../../core/services/auth.service';
 import { BillsApiService } from '../../../../core/services/bills-api.service';
 import { formatCop } from '../../../../core/services/money-confirmation.service';
 import { getApiErrorMessage } from '../../../../core/utils/api-error.utils';
 import { bogotaDateTimeFormat } from '../../../../core/utils/bogota-date.utils';
 import { trimmedMinLength } from '../../../../core/utils/form-validators';
 import {
+  historyRangeError,
+  rangeWithFrom,
+  rangeWithTo,
+  resolveOptionalRange,
+} from '../../../../core/utils/history-range.utils';
+import {
   QueryValue,
+  readDateParam,
   readOptionParam,
   readPageParam,
   readTextParam,
@@ -32,7 +41,7 @@ import { PaginatorComponent } from '../../../../shared/components/paginator/pagi
 import { FormA11yDirective } from '../../../../shared/directives/form-a11y.directive';
 import { ModalDialogDirective } from '../../../../shared/directives/modal-dialog.directive';
 
-export const BILL_TABS = ['pending', 'Closed', 'Unapproved', 'Approved', 'Voided'] as const;
+export const BILL_TABS = ['pending', 'Closed', 'Unapproved', 'Approved', 'Voided', 'all'] as const;
 export type BillTab = (typeof BILL_TABS)[number];
 
 const DATE_TIME = bogotaDateTimeFormat('es-CO', { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit' });
@@ -40,7 +49,8 @@ const DATE_TIME = bogotaDateTimeFormat('es-CO', { day: 'numeric', month: 'short'
 /**
  * «Cuentas» (ADR-0020): the bills to close (open ones, overdue after 7 days, and completed appointments without a bill,
  * BUG-092), the approval tray and the history. A professional sees their own bills; whoever manages, approves or voids
- * bills sees all of them. The tab, the search and the page live in the URL.
+ * bills sees all of them. Stage 5: the lists filter by service dates, professional, payment method and customer (with
+ * the profiles merged into it). The tab, the filters and the page live in the URL.
  */
 @Component({
   selector: 'app-bills-page',
@@ -50,6 +60,7 @@ const DATE_TIME = bogotaDateTimeFormat('es-CO', { day: 'numeric', month: 'short'
 })
 export class BillsPageComponent implements OnInit {
   private readonly api = inject(BillsApiService);
+  private readonly authService = inject(AuthService);
   private readonly formBuilder = inject(FormBuilder);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
@@ -70,6 +81,27 @@ export class BillsPageComponent implements OnInit {
   readonly totalCount = signal(0);
   readonly pending = signal<BillPendingView | null>(null);
   readonly bills = signal<BillSummaryView[]>([]);
+  readonly from = signal('');
+  readonly to = signal('');
+  readonly staffProfileId = signal('');
+  readonly paymentMethodId = signal('');
+  readonly customerId = signal('');
+  /** No dates by default (an old bill being corrected is never hidden); a range covers at most 30 days. */
+  readonly range = computed(() => resolveOptionalRange(this.from(), this.to()));
+  readonly rangeError = computed(() => {
+    const range = this.range();
+    return range ? historyRangeError(range.from, range.to) : null;
+  });
+  readonly hasFilters = computed(
+    () => !!(this.query() || this.from() || this.to() || this.staffProfileId() || this.paymentMethodId() || this.customerId()),
+  );
+  /** Whoever sees every bill can filter by professional; a professional only sees their own. */
+  readonly canFilterByStaff = computed(() => {
+    const options = this.options();
+    return !!options && (options.canManage || options.canApprove || options.canVoid);
+  });
+  /** ADR-0020 stage 6: the services registered before the bills, read only, for whoever reviewed them. */
+  readonly canSeeOldRecords = this.authService.hasPermission(PERMISSION_CODES.serviceRecordsApprove);
 
   readonly isOpening = signal(false);
   readonly openError = signal<string | null>(null);
@@ -101,6 +133,24 @@ export class BillsPageComponent implements OnInit {
     this.navigate({ tab: tab === 'pending' ? null : tab, page: 1, q: null });
   }
 
+  onFilterChange(patch: Record<string, QueryValue>): void {
+    this.navigate({ ...patch, page: 1 });
+  }
+
+  onFromChange(value: string): void {
+    const range = rangeWithFrom(value, this.range() ?? { from: '', to: '' });
+    this.navigate({ from: range.from, to: range.to, page: 1 });
+  }
+
+  onToChange(value: string): void {
+    const range = rangeWithTo(value, this.range() ?? { from: '', to: '' });
+    this.navigate({ from: range.from, to: range.to, page: 1 });
+  }
+
+  clearFilters(): void {
+    this.navigate({ q: null, from: null, to: null, staffProfileId: null, paymentMethodId: null, customerId: null, page: 1 });
+  }
+
   onSearch(text: string): void {
     this.navigate({ q: text.trim(), page: 1 });
   }
@@ -116,6 +166,7 @@ export class BillsPageComponent implements OnInit {
       Unapproved: 'en corrección',
       Approved: 'aprobadas',
       Voided: 'anuladas',
+      all: '',
     };
     return labels[this.tab()] ?? '';
   }
@@ -218,6 +269,11 @@ export class BillsPageComponent implements OnInit {
   private applyQuery(params: ParamMap): void {
     this.tab.set(readOptionParam(params, 'tab', BILL_TABS) || 'pending');
     this.query.set(readTextParam(params, 'q'));
+    this.from.set(readDateParam(params, 'from'));
+    this.to.set(readDateParam(params, 'to'));
+    this.staffProfileId.set(readTextParam(params, 'staffProfileId'));
+    this.paymentMethodId.set(readTextParam(params, 'paymentMethodId'));
+    this.customerId.set(readTextParam(params, 'customerId'));
     this.page.set(readPageParam(params));
   }
 
@@ -236,9 +292,25 @@ export class BillsPageComponent implements OnInit {
         if (sequence === this.loadSequence) {
           this.pending.set(pending);
         }
+      } else if (this.rangeError()) {
+        // The API would reject it too (422); explain it instead of asking.
+        this.errorMessage.set(this.rangeError());
+        this.bills.set([]);
+        this.totalCount.set(0);
       } else {
+        const range = this.range();
         const page = await firstValueFrom(
-          this.api.list({ status: tab as BillStatus, q: this.query() || null, page: this.page(), pageSize: DEFAULT_PAGE_SIZE }),
+          this.api.list({
+            status: tab === 'all' ? null : (tab as BillStatus),
+            q: this.query() || null,
+            from: range?.from ?? null,
+            to: range?.to ?? null,
+            staffProfileId: this.staffProfileId() || null,
+            paymentMethodId: this.paymentMethodId() || null,
+            customerId: this.customerId() || null,
+            page: this.page(),
+            pageSize: DEFAULT_PAGE_SIZE,
+          }),
         );
         if (sequence === this.loadSequence) {
           this.bills.set(page.items);

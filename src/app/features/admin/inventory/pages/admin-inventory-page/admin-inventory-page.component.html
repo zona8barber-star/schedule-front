@@ -146,7 +146,8 @@
     <h2>Ventas y ganancia por producto</h2>
     <p class="catalog__lead">
       De las cuentas aprobadas: unidades vendidas, lo cobrado (después de descuentos), el costo promedio de cada venta y la
-      ganancia. Hasta 30 días por consulta.
+      ganancia. La rotación muestra el promedio diario de unidades vendidas, lo disponible y para cuántos días alcanza a
+      ese ritmo. Hasta 30 días por consulta.
     </p>
     <form class="catalog__filters" (submit)="$event.preventDefault(); loadSales(salesFrom.value, salesTo.value)">
       <label class="catalog__filter">
@@ -164,7 +165,7 @@
     <app-api-feedback severity="error" [message]="salesError()" />
     @if (sales(); as report) {
       @if (!report.items.length) {
-        <p class="catalog__state">No hubo ventas de productos aprobadas entre {{ report.from }} y {{ report.to }}.</p>
+        <p class="catalog__state">No hay productos activos ni ventas aprobadas entre {{ report.from }} y {{ report.to }}.</p>
       } @else {
         <div class="catalog__table-wrap">
           <table class="catalog__table">
@@ -175,6 +176,9 @@
                 <th>Cobrado</th>
                 <th>Costo</th>
                 <th>Ganancia</th>
+                <th>Promedio diario</th>
+                <th>Disponible</th>
+                <th>Cobertura</th>
               </tr>
             </thead>
             <tbody>
@@ -191,6 +195,14 @@
                       <small class="catalog__muted">{{ row.unitsWithoutCost }} sin costo registrado</small>
                     }
                   </td>
+                  <td data-testid="sales-daily">{{ row.dailyUnits === null ? '—' : formatDecimal(row.dailyUnits) }}</td>
+                  <td data-testid="sales-available">
+                    <span [class.inventory__negative]="row.available < 0">{{ row.available }}</span>
+                    @if (row.isLowStock) {
+                      <small class="catalog__tag">Stock bajo</small>
+                    }
+                  </td>
+                  <td data-testid="sales-coverage">{{ coverageLabel(row.coverageDays) }}</td>
                 </tr>
               }
             </tbody>

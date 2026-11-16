@@ -5,10 +5,13 @@ import { ChartData, ChartOptions } from 'chart.js';
 import { BaseChartDirective } from 'ng2-charts';
 import { firstValueFrom } from 'rxjs';
 
+import { CashClosingView } from '../../../../../core/models/bill.models';
 import { ReportSummaryView } from '../../../../../core/models/report.models';
 import { AdminReportsApiService } from '../../../../../core/services/admin-reports-api.service';
+import { BillsApiService } from '../../../../../core/services/bills-api.service';
 import { getApiErrorMessage } from '../../../../../core/utils/api-error.utils';
 import { bogotaToday } from '../../../../../core/utils/bogota-date.utils';
+import { historyRangeError } from '../../../../../core/utils/history-range.utils';
 import { ApiFeedbackComponent } from '../../../../../shared/components/api-feedback/api-feedback.component';
 
 /** First day of the current Bogotá month: "today" is Bogotá's, whatever the device timezone (SONDA BUG-033). */
@@ -24,6 +27,7 @@ function bogotaMonthStart(): string {
 })
 export class AdminReportsPageComponent implements OnInit {
   private readonly api = inject(AdminReportsApiService);
+  private readonly billsApi = inject(BillsApiService);
 
   readonly from = signal(bogotaMonthStart());
   readonly to = signal(bogotaToday());
@@ -32,6 +36,12 @@ export class AdminReportsPageComponent implements OnInit {
   readonly errorMessage = signal<string | null>(null);
   /** Increases with every load; an answer whose number is no longer the latest is ignored (SONDA BUG-082). */
   private loadSequence = 0;
+
+  /** ADR-0020 stage 5: what was charged by day and payment method; at most 30 days per query. */
+  readonly cash = signal<CashClosingView | null>(null);
+  readonly cashError = signal<string | null>(null);
+  readonly isLoadingCash = signal(false);
+  private cashSequence = 0;
 
   readonly chartOptions: ChartOptions = {
     responsive: true,
@@ -78,30 +88,63 @@ export class AdminReportsPageComponent implements OnInit {
   });
 
   ngOnInit(): void {
-    void this.load();
+    this.reload();
   }
 
   onFromChange(value: string): void {
     this.from.set(value);
-    void this.load();
+    this.reload();
   }
 
   onToChange(value: string): void {
     this.to.set(value);
-    void this.load();
+    this.reload();
   }
 
   setToday(): void {
     const today = bogotaToday();
     this.from.set(today);
     this.to.set(today);
-    void this.load();
+    this.reload();
   }
 
   setThisMonth(): void {
     this.from.set(bogotaMonthStart());
     this.to.set(bogotaToday());
+    this.reload();
+  }
+
+  private reload(): void {
     void this.load();
+    void this.loadCash();
+  }
+
+  private async loadCash(): Promise<void> {
+    const sequence = ++this.cashSequence;
+    const rangeError = historyRangeError(this.from(), this.to());
+    this.cashError.set(rangeError);
+    if (rangeError) {
+      // The API would reject it too (422); the rest of the report still covers the range.
+      this.cash.set(null);
+      this.isLoadingCash.set(false);
+      return;
+    }
+    this.isLoadingCash.set(true);
+    try {
+      const cash = await firstValueFrom(this.billsApi.cashClosing(this.from(), this.to()));
+      if (sequence === this.cashSequence) {
+        this.cash.set(cash);
+      }
+    } catch (error) {
+      if (sequence === this.cashSequence) {
+        this.cash.set(null);
+        this.cashError.set(getApiErrorMessage(error));
+      }
+    } finally {
+      if (sequence === this.cashSequence) {
+        this.isLoadingCash.set(false);
+      }
+    }
   }
 
   private async load(): Promise<void> {

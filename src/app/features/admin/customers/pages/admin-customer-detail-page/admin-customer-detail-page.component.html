@@ -161,6 +161,8 @@
 
     <app-admin-customer-loyalty-panel [customerId]="c.id" />
 
+    <app-admin-customer-bills-panel [customerId]="c.id" />
+
     @if (isAdmin && !c.mergedIntoCustomerId) {
       <article class="customer-detail__card">
         <h2>Perfiles duplicados</h2>

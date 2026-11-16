@@ -67,6 +67,8 @@ export const NAVIGATION_GROUPS: readonly NavGroupDefinition[] = [
         shortcut: { order: 30, icon: 'appointments' },
       },
       { id: 'customer-memberships', label: 'Mis membresías', route: '/customer/memberships', access: CUSTOMER },
+      // ADR-0020 stage 5: the receipts of the customer's bills.
+      { id: 'customer-bills', label: 'Mis comprobantes', route: '/customer/bills', access: CUSTOMER },
       {
         id: 'customer-loyalty',
         label: 'Mis puntos',
@@ -98,17 +100,6 @@ export const NAVIGATION_GROUPS: readonly NavGroupDefinition[] = [
         access: permissions(...BILLS_ACCESS_PERMISSIONS),
         shortcut: { order: 40, icon: 'records', label: 'Cuentas' },
       },
-      {
-        // Read only since ADR-0020 (Q6): what the professional registered before the bills.
-        id: 'staff-service-records',
-        label: 'Servicios realizados',
-        route: '/staff/service-records',
-        access: {
-          kind: 'permissions',
-          permissions: [PERMISSION_CODES.serviceRecordsRegister],
-          requiresServiceRecordEligibility: true,
-        },
-      },
     ],
   },
   {
@@ -124,10 +115,16 @@ export const NAVIGATION_GROUPS: readonly NavGroupDefinition[] = [
         shortcut: { order: 50, icon: 'appointments', label: 'Citas' },
       },
       {
+        // ADR-0020 stage 6: the old tray stays only while records registered before the bills wait for review; the
+        // reviewed ones are reached from «Cuentas» → «Registros anteriores».
         id: 'admin-service-records',
         label: 'Servicios por aprobar',
         route: '/admin/service-records',
-        access: permissions(PERMISSION_CODES.serviceRecordsApprove),
+        access: {
+          kind: 'permissions',
+          permissions: [PERMISSION_CODES.serviceRecordsApprove],
+          requiresPendingServiceRecords: true,
+        },
         shortcut: { order: 60, icon: 'records', label: 'Por aprobar' },
       },
       { id: 'admin-staff', label: 'Gestión de profesionales', route: '/admin/staff', access: ADMIN },
@@ -276,7 +273,7 @@ export function canAccess(access: NavAccess, context: NavContext): boolean {
       return (
         context.isAuthenticated &&
         access.permissions.some((permission) => context.permissions.includes(permission)) &&
-        (!access.requiresServiceRecordEligibility || context.canRegisterServiceRecords)
+        (!access.requiresPendingServiceRecords || context.hasPendingServiceRecords)
       );
   }
 }

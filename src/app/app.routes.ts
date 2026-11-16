@@ -54,10 +54,15 @@ const loadAdminServiceRecordsPage = () =>
     './features/admin/service-records/pages/admin-service-records-page/admin-service-records-page.component'
   ).then((module) => module.AdminServiceRecordsPageComponent);
 
-const loadStaffServiceRecordsPage = () =>
-  import(
-    './features/staff/service-records/pages/staff-service-records-page/staff-service-records-page.component'
-  ).then((module) => module.StaffServiceRecordsPageComponent);
+const loadCustomerBillsPage = () =>
+  import('./features/customer/bills/pages/customer-bills-page/customer-bills-page.component').then(
+    (module) => module.CustomerBillsPageComponent,
+  );
+
+const loadCustomerBillDetailPage = () =>
+  import('./features/customer/bills/pages/customer-bill-detail-page/customer-bill-detail-page.component').then(
+    (module) => module.CustomerBillDetailPageComponent,
+  );
 
 const loadAdminLoyaltyRewardsPage = () =>
   import('./features/admin/loyalty/pages/admin-loyalty-rewards-page/admin-loyalty-rewards-page.component').then(
@@ -423,6 +428,25 @@ export const routes: Routes = [
     title: 'Mi membresía',
   },
   {
+    // ADR-0020 stage 5 (P8, Q23): the customer's receipts, read only.
+    path: 'customer/bills',
+    canActivate: [authGuard, roleGuard],
+    loadComponent: loadCustomerBillsPage,
+    data: {
+      roles: [ROLE_NAMES.customer],
+    },
+    title: 'Mis comprobantes',
+  },
+  {
+    path: 'customer/bills/:billId',
+    canActivate: [authGuard, roleGuard],
+    loadComponent: loadCustomerBillDetailPage,
+    data: {
+      roles: [ROLE_NAMES.customer],
+    },
+    title: 'Comprobante',
+  },
+  {
     path: 'customer/reviews',
     canActivate: [authGuard, roleGuard],
     loadComponent: loadCustomerReviewsPage,
@@ -450,14 +474,10 @@ export const routes: Routes = [
     title: 'Mi disponibilidad',
   },
   {
-    // By permission, not by role: the API checks service-records.register and the user's own professional profile.
+    // ADR-0020 stage 6: the registration of services performed was retired by the bills; an old link lands there.
     path: 'staff/service-records',
-    canActivate: [authGuard, permissionGuard],
-    loadComponent: loadStaffServiceRecordsPage,
-    data: {
-      permissions: [PERMISSION_CODES.serviceRecordsRegister],
-    },
-    title: 'Servicios realizados',
+    redirectTo: 'bills',
+    pathMatch: 'full',
   },
   {
     // ADR-0020: by permission, not by role. The API checks each action (open, close, charge, discount, manage) again;
