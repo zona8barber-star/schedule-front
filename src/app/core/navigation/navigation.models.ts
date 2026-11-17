@@ -34,8 +34,8 @@ export type NavAccess =
   | {
       readonly kind: 'permissions';
       readonly permissions: readonly PermissionCode[];
-      /** Also needs the user's own active professional profile (service-records.register). */
-      readonly requiresServiceRecordEligibility?: boolean;
+      /** ADR-0020 stage 6: shown only while records registered before the bills wait for review. */
+      readonly requiresPendingServiceRecords?: boolean;
     };
 
 export interface NavItemDefinition {
@@ -66,7 +66,7 @@ export interface NavContext {
   readonly isAuthenticated: boolean;
   readonly roles: readonly string[];
   readonly permissions: readonly string[];
-  readonly canRegisterServiceRecords: boolean;
+  readonly hasPendingServiceRecords: boolean;
 }
 
 export interface NavItem {

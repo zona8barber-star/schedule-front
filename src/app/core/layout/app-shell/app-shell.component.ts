@@ -38,6 +38,7 @@ import { NavigationFailureService } from '../../services/navigation-failure.serv
 import { InstallPromptService } from '../../services/install-prompt.service';
 import { PublicContentApiService } from '../../services/public-content-api.service';
 import { PublicBrandingStore } from '../../services/public-branding.store';
+import { ThemeService } from '../../services/theme.service';
 import { PushNotificationService } from '../../services/push-notification.service';
 import { ToastService } from '../../services/toast.service';
 import { TabHighlightStyle, computeTabHighlightStyle } from '../../utils/tab-highlight.utils';
@@ -84,6 +85,7 @@ export class AppShellComponent {
   private readonly publicContentApiService = inject(PublicContentApiService);
   /** SONDA BUG-100: name and logo configured in «Marca», with the static ones as fallback. */
   readonly brandingStore = inject(PublicBrandingStore);
+  private readonly themeService = inject(ThemeService);
   private readonly injector = inject(Injector);
 
   // Teléfono de contacto de la barbería, cargado una vez al iniciar el shell.
@@ -164,6 +166,8 @@ export class AppShellComponent {
     // con el arranque inicial (no se repite al navegar entre rutas).
     // The shell is mounted once per session: the branding is read here (and shared with the landing).
     void this.brandingStore.load().catch(() => undefined);
+    // ADR-0018 D9: the colors of «Marca» apply everywhere, the administration panel included (checked for contrast).
+    effect(() => this.themeService.applyBranding(this.brandingStore.branding()));
 
     this.publicContentApiService
       .getLanding()

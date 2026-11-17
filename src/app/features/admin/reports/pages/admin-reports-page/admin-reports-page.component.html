@@ -44,6 +44,18 @@
         <span class="reports__kpi-label">Ventas de membresías ({{ s.membershipSalesCount }})</span>
         <span class="reports__kpi-value">$ {{ s.membershipSalesIncome | number: '1.0-0' }}</span>
       </div>
+      <div class="reports__kpi" data-testid="kpi-product-sales">
+        <span class="reports__kpi-label">Ventas de productos ({{ s.productUnitsSold ?? 0 }} u.)</span>
+        <span class="reports__kpi-value">$ {{ s.productSalesIncome ?? 0 | number: '1.0-0' }}</span>
+      </div>
+      <div class="reports__kpi" data-testid="kpi-tips">
+        <span class="reports__kpi-label">Propinas cobradas ({{ s.tipsCount ?? 0 }})</span>
+        <span class="reports__kpi-value">$ {{ s.tipsIncome ?? 0 | number: '1.0-0' }}</span>
+      </div>
+      <div class="reports__kpi" data-testid="kpi-discounts">
+        <span class="reports__kpi-label">Descuentos de las cuentas</span>
+        <span class="reports__kpi-value">$ {{ s.discountsTotal ?? 0 | number: '1.0-0' }}</span>
+      </div>
       <div class="reports__kpi">
         <span class="reports__kpi-label">Para el negocio</span>
         <span class="reports__kpi-value">$ {{ s.businessIncome | number: '1.0-0' }}</span>
@@ -52,6 +64,67 @@
         <span class="reports__kpi-label">Para profesionales</span>
         <span class="reports__kpi-value">$ {{ s.professionalIncome | number: '1.0-0' }}</span>
       </div>
+    </div>
+
+    <div class="reports__panel" data-testid="cash-closing">
+      <h2>Cierre de caja</h2>
+      <p class="reports__note">
+        Lo cobrado con las cuentas cerradas, por día y medio de pago. Las cuentas anuladas se muestran aparte y no suman.
+        Las correcciones de una cuenta ya cobrada no cambian este cierre. Hasta 30 días por consulta.
+      </p>
+      <app-api-feedback severity="error" [message]="cashError()" />
+      @if (isLoadingCash()) {
+        <p class="reports__state">Cargando cierre de caja...</p>
+      } @else if (cash(); as c) {
+        @if (!c.billCount && !c.voidedCount) {
+          <p class="reports__note">No hubo cobros en el periodo.</p>
+        } @else {
+          <table class="reports__table" data-testid="cash-by-method">
+            <thead>
+              <tr><th>Medio de pago</th><th># Cuentas</th><th>Total</th></tr>
+            </thead>
+            <tbody>
+              @for (method of c.methods; track method.paymentMethodId) {
+                <tr>
+                  <td>{{ method.name }}</td>
+                  <td>{{ method.billCount }}</td>
+                  <td>$ {{ method.total | number: '1.0-0' }}</td>
+                </tr>
+              }
+              <tr class="reports__total-row">
+                <td>Total cobrado</td>
+                <td>{{ c.billCount }}</td>
+                <td>$ {{ c.total | number: '1.0-0' }}</td>
+              </tr>
+            </tbody>
+          </table>
+          <table class="reports__table" data-testid="cash-by-day">
+            <thead>
+              <tr><th>Día</th><th>Por medio de pago</th><th># Cuentas</th><th>Total</th></tr>
+            </thead>
+            <tbody>
+              @for (day of c.days; track day.day) {
+                <tr>
+                  <td>{{ day.day }}</td>
+                  <td>
+                    @for (method of day.methods; track method.paymentMethodId; let last = $last) {
+                      {{ method.name }}: $ {{ method.total | number: '1.0-0' }}{{ last ? '' : ' · ' }}
+                    }
+                  </td>
+                  <td>{{ day.billCount }}</td>
+                  <td>$ {{ day.total | number: '1.0-0' }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+          @if (c.voidedCount) {
+            <p class="reports__note" data-testid="cash-voided">
+              Anuladas: {{ c.voidedCount }} {{ c.voidedCount === 1 ? 'cuenta' : 'cuentas' }} por $ {{ c.voidedTotal | number: '1.0-0' }}
+              (no suman al cierre).
+            </p>
+          }
+        }
+      }
     </div>
 
     <div class="reports__chart">
@@ -69,7 +142,7 @@
         </div>
         <table class="reports__table">
           <thead>
-            <tr><th>Profesional</th><th>Ingresos</th><th># Cortes</th><th>Negocio</th><th>Profesional</th></tr>
+            <tr><th>Profesional</th><th>Ingresos</th><th># Cortes</th><th>Negocio</th><th>Profesional</th><th>Propinas</th></tr>
           </thead>
           <tbody>
             @for (row of s.byProfessional; track row.staffProfileId) {
@@ -79,9 +152,10 @@
                 <td>{{ row.incomeCount }}</td>
                 <td>$ {{ row.businessTotal | number: '1.0-0' }}</td>
                 <td>$ {{ row.professionalTotal | number: '1.0-0' }}</td>
+                <td>$ {{ row.tipTotal ?? 0 | number: '1.0-0' }}</td>
               </tr>
             } @empty {
-              <tr><td colspan="5">Sin ingresos en el periodo.</td></tr>
+              <tr><td colspan="6">Sin ingresos en el periodo.</td></tr>
             }
           </tbody>
         </table>
@@ -110,6 +184,17 @@
             </tbody>
           </table>
           <p class="reports__note">Total: $ {{ s.rewardCommissionsTotal ?? 0 | number: '1.0-0' }}</p>
+        </div>
+      }
+
+      @if ((s.selfApprovedIncomeCount ?? 0) > 0) {
+        <div class="reports__panel" data-testid="self-approved-income">
+          <h2>Ingresos autoaprobados</h2>
+          <p class="reports__note">
+            {{ s.selfApprovedIncomeCount }} {{ s.selfApprovedIncomeCount === 1 ? 'ingreso' : 'ingresos' }} por
+            $ {{ s.selfApprovedIncomeTotal ?? 0 | number: '1.0-0' }}: servicios o cuentas que aprobó un administrador que
+            era el cliente o el profesional. Ya están incluidos en los totales.
+          </p>
         </div>
       }
 

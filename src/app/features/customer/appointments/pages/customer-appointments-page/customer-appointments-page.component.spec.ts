@@ -127,6 +127,48 @@ describe('CustomerAppointmentsPageComponent (service and rescheduling)', () => {
     expect(note?.textContent).toContain('cancelada');
   });
 
+  describe('«Canceladas» (ADR-0018 D3, SONDA BUG-023)', () => {
+    const cancelledLongAgo: AppointmentResponse = {
+      ...booked,
+      id: 'c0000000-0000-4000-8000-000000000001',
+      status: 'Cancelled',
+      startsAtUtc: '2025-03-01T15:00:00Z',
+      endsAtUtc: '2025-03-01T15:45:00Z',
+    };
+
+    beforeEach(async () => {
+      list.mockImplementation((filters: CustomerAppointmentsListFilters) => {
+        const items =
+          filters.scope === 'Upcoming' ? [booked, legacy] : filters.scope === 'Cancelled' ? [cancelledLongAgo] : [];
+        return of({ items, page: filters.page ?? 1, pageSize: filters.pageSize ?? 20, totalCount: items.length });
+      });
+      component.setTab('cancelled');
+      await render();
+    });
+
+    it('asks for every cancelled appointment without dates and lists it in its own tab', () => {
+      const cancelledCall = list.mock.calls
+        .map(([filters]) => filters as CustomerAppointmentsListFilters)
+        .filter((filters) => filters.scope === 'Cancelled')
+        .at(-1);
+      expect(cancelledCall).toEqual({ scope: 'Cancelled', page: 1, pageSize: 25 });
+
+      const element = fixture.nativeElement as HTMLElement;
+      const tab = element.querySelector('[data-testid="tab-cancelled"]');
+      expect(tab?.textContent).toContain('Canceladas');
+      expect(tab?.className).toContain('my-appts__tab--active');
+      expect(element.querySelectorAll('[data-testid="cancelled-list"] article')).toHaveLength(1);
+      expect(TestBed.inject(Router).url).toBe('/?tab=cancelled');
+    });
+
+    it('pages the cancelled list through the URL', async () => {
+      component.onPageChange(2);
+      await render();
+      expect(TestBed.inject(Router).url).toBe('/?tab=cancelled&page=2');
+      expect(list).toHaveBeenCalledWith({ scope: 'Cancelled', page: 2, pageSize: 25 });
+    });
+  });
+
   it('keeps the tab, the history status and the page in the URL', async () => {
     component.setTab('history');
     await render();

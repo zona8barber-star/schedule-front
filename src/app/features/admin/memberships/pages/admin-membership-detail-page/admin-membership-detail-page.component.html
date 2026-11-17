@@ -19,10 +19,10 @@
         @if (canConsume()) {
           <button class="membership-detail__btn" type="button" (click)="open('consume')">Registrar consumo</button>
         }
-        @if (m.status === 'PendingActivation') {
+        @if (isAdmin && m.status === 'PendingActivation') {
           <button class="membership-detail__btn" type="button" (click)="activate()" [disabled]="isBusy()">Activar</button>
         }
-        @if (m.status !== 'Annulled') {
+        @if (isAdmin && m.status !== 'Annulled') {
           <button class="membership-detail__btn membership-detail__btn--danger" type="button" (click)="open('annul')">
             Anular
           </button>
@@ -99,7 +99,9 @@
           @if (income.isDeleted) {
             <p class="membership-detail__warning">El ingreso fue eliminado en Ingresos.</p>
           }
-          <button class="membership-detail__btn" type="button" (click)="open('unlink')">Desvincular ingreso</button>
+          @if (isAdmin) {
+            <button class="membership-detail__btn" type="button" (click)="open('unlink')">Desvincular ingreso</button>
+          }
         } @else {
           <p class="membership-detail__muted">
             Sin ingreso vinculado. Registra el pago en Ingresos como "Venta de membresía" y vincúlalo aquí.
@@ -124,7 +126,7 @@
               <dt>Acreditados</dt>
               <dd>{{ loyalty.accruedPoints }}</dd>
               @if (loyalty.withdrawnPoints) {
-                <dt>Retirados por la anulación</dt>
+                <dt>Retirados (anulación o pago desvinculado)</dt>
                 <dd>{{ loyalty.withdrawnPoints }}</dd>
               }
             </dl>
@@ -134,7 +136,7 @@
               {{ loyaltyDecisionLabels[loyalty.decision] }} ({{ loyalty.decidedAt | bogotaDate: 'medium' }}). La decisión es definitiva.
             </p>
           } @else if (!loyalty.predatesWallet) {
-            <p class="membership-detail__muted">Los puntos se acreditan una sola vez, al vincular el primer ingreso. Desvincular no los retira.</p>
+            <p class="membership-detail__muted">Los puntos se acreditan al vincular el ingreso del pago. Si se desvincula, se retiran, y vuelven al vincularlo otra vez.</p>
           }
         </article>
       }
@@ -231,7 +233,7 @@
                 <button class="membership-detail__btn membership-detail__btn--inline" type="button" (click)="openDelivery(gift)">
                   Registrar entrega
                 </button>
-              } @else if (gift.deliveryId) {
+              } @else if (isAdmin && gift.deliveryId) {
                 <button class="membership-detail__btn membership-detail__btn--inline" type="button" (click)="openDeliveryReversal(gift)">
                   Revertir entrega
                 </button>

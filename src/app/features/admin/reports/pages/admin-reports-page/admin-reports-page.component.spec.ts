@@ -24,6 +24,17 @@ describe('AdminReportsPageComponent', () => {
     membershipSalesCount: 2,
   };
 
+  const cashClosing = {
+    from: '2026-06-01',
+    to: '2026-06-02',
+    days: [],
+    methods: [{ paymentMethodId: 'pm-1', name: 'Efectivo', billCount: 2, total: 75000 }],
+    billCount: 2,
+    total: 75000,
+    voidedCount: 1,
+    voidedTotal: 30000,
+  };
+
   // The chart data is checked without rendering: jsdom has no canvas for Chart.js.
   function createComponent(): AdminReportsPageComponent {
     TestBed.configureTestingModule({
@@ -71,6 +82,27 @@ describe('AdminReportsPageComponent', () => {
 
     expect(component.summary()?.totalIncome).toBe(150000);
     expect(component.isLoading()).toBe(false);
+    httpMock.match((request) => request.url.endsWith('/admin/reports/cash')).forEach((request) => request.flush(cashClosing));
+    httpMock.verify();
+  });
+
+  it('loads the cash closing of the same range, and explains a range longer than 30 days instead of asking', async () => {
+    const component = createComponent();
+    const httpMock = TestBed.inject(HttpTestingController);
+    TestBed.tick();
+    httpMock.expectOne((request) => request.url.endsWith('/admin/reports/summary')).flush(summary);
+    const cash = httpMock.expectOne((request) => request.url.endsWith('/admin/reports/cash'));
+    expect(cash.request.params.get('from')).toBe(component.from());
+    expect(cash.request.params.get('to')).toBe(component.to());
+    cash.flush(cashClosing);
+    await new Promise<void>((resolve) => setTimeout(resolve, 0));
+    expect(component.cash()?.total).toBe(75000);
+
+    component.onFromChange('2026-01-01');
+    httpMock.expectOne((request) => request.url.endsWith('/admin/reports/summary')).flush(summary);
+    httpMock.expectNone((request) => request.url.endsWith('/admin/reports/cash'));
+    expect(component.cashError()).toContain('30 días');
+    expect(component.cash()).toBeNull();
     httpMock.verify();
   });
 });

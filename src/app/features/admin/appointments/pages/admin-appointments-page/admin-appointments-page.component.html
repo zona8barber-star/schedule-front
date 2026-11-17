@@ -197,6 +197,8 @@
                         class="ap-icon-btn ap-icon-btn--success"
                         type="button"
                         title="Marcar como completada"
+                        aria-label="Marcar como completada"
+                        [hidden]="!canComplete(apt)"
                         [disabled]="isBusyFor(apt.id, 'complete')"
                         (click)="markCompleted(apt)"
                       >
@@ -504,7 +506,8 @@
             <button
               class="ap-btn ap-btn--status-complete"
               type="button"
-              [disabled]="!canTransition(apt) || isBusyFor(apt.id, 'complete')"
+              [disabled]="!canComplete(apt) || isBusyFor(apt.id, 'complete')"
+              [attr.title]="canTransition(apt) && !canComplete(apt) ? 'Solo se completan citas de hoy o anteriores' : null"
               (click)="markCompleted(apt)"
             >
               <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>

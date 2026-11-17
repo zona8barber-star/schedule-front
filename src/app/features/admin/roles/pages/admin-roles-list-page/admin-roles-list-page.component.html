@@ -28,7 +28,17 @@
               <td>{{ role.isSystemRole ? 'Rol de sistema' : 'Personalizado' }}</td>
               <td>{{ formatPermissions(role) }}</td>
               <td class="roles__actions">
-                @if (role.isSystemRole) {
+                @if (role.isSystemRole && role.canEditPermissions) {
+                  <!-- ADR-0020 (BUG-091): only the permissions of Staff change; it is never renamed or deleted. -->
+                  <button
+                    class="roles__action-btn roles__action-btn--edit"
+                    type="button"
+                    (click)="openEdit(role)"
+                    [disabled]="busyId() === role.id"
+                  >
+                    Editar permisos
+                  </button>
+                } @else if (role.isSystemRole) {
                   <span class="roles__state">Rol de sistema</span>
                 } @else {
                   <button

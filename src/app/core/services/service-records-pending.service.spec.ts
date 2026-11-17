@@ -6,15 +6,15 @@ import { TestBed } from '@angular/core/testing';
 import { environment } from '../../../environments/environment';
 import { AuthUserResponse, PERMISSION_CODES, PermissionCode } from '../models/auth.models';
 import { AuthService } from './auth.service';
-import { ServiceRecordEligibilityService } from './service-record-eligibility.service';
+import { ServiceRecordsPendingService } from './service-records-pending.service';
 
-describe('ServiceRecordEligibilityService', () => {
+describe('ServiceRecordsPendingService', () => {
   let httpMock: HttpTestingController;
   const user = signal<AuthUserResponse | null>(null);
   let granted: PermissionCode[] = [];
-  const url = `${environment.defaultApiBaseUrl}/staff/service-records/eligibility`;
+  const url = `${environment.defaultApiBaseUrl}/admin/service-records/pending-count`;
 
-  function setup(): ServiceRecordEligibilityService {
+  function setup(): ServiceRecordsPendingService {
     TestBed.configureTestingModule({
       providers: [
         provideHttpClient(),
@@ -26,8 +26,10 @@ describe('ServiceRecordEligibilityService', () => {
       ],
     });
     httpMock = TestBed.inject(HttpTestingController);
-    return TestBed.inject(ServiceRecordEligibilityService);
+    return TestBed.inject(ServiceRecordsPendingService);
   }
+
+  const settle = () => new Promise<void>((resolve) => setTimeout(resolve, 0));
 
   afterEach(() => {
     httpMock.verify();
@@ -35,26 +37,30 @@ describe('ServiceRecordEligibilityService', () => {
     granted = [];
   });
 
-  it('asks the API once per user with the permission, whatever the role', async () => {
-    granted = [PERMISSION_CODES.serviceRecordsRegister];
+  it('asks once per reviewer and reads again after a review', async () => {
+    granted = [PERMISSION_CODES.serviceRecordsApprove];
     user.set({ id: 'u-admin', roles: ['Admin'] } as unknown as AuthUserResponse);
     const service = setup();
     TestBed.tick();
 
-    httpMock.expectOne(url).flush({ hasStaffProfile: true, staffProfileId: 'st-1', displayName: 'Admin' });
-    await new Promise<void>((resolve) => setTimeout(resolve, 0));
-    expect(service.canRegister()).toBe(true);
-
+    httpMock.expectOne(url).flush({ count: 2 });
+    await settle();
+    expect(service.hasPending()).toBe(true);
     TestBed.tick();
     httpMock.expectNone(url);
+
+    const refresh = service.refresh();
+    httpMock.expectOne(url).flush({ count: 0 });
+    await refresh;
+    expect(service.hasPending()).toBe(false);
   });
 
-  it('never asks without the permission', () => {
-    user.set({ id: 'u-customer', roles: ['Customer'] } as unknown as AuthUserResponse);
+  it('never asks without service-records.approve', () => {
+    user.set({ id: 'u-staff', roles: ['Staff'] } as unknown as AuthUserResponse);
     const service = setup();
     TestBed.tick();
 
     httpMock.expectNone(url);
-    expect(service.canRegister()).toBe(false);
+    expect(service.hasPending()).toBe(false);
   });
 });

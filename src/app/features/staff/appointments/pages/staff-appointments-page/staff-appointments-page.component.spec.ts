@@ -1,10 +1,8 @@
-import { signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
 import { of, Subject } from 'rxjs';
 
 import { AppointmentResponse, AppointmentServiceOption } from '../../../../../core/models/appointment.models';
-import { ServiceRecordEligibilityService } from '../../../../../core/services/service-record-eligibility.service';
 import { StaffAppointmentsApiService } from '../../../../../core/services/staff-appointments-api.service';
 import { setDeviceTimeZone } from '../../../../../testing/device-time-zone';
 import { StaffAppointmentsPageComponent } from './staff-appointments-page.component';
@@ -69,7 +67,6 @@ describe('StaffAppointmentsPageComponent (service and duration)', () => {
       providers: [
         provideRouter([]),
         { provide: StaffAppointmentsApiService, useValue: api },
-        { provide: ServiceRecordEligibilityService, useValue: { canRegister: signal(false) } },
       ],
     }).compileComponents();
 
@@ -147,6 +144,18 @@ describe('StaffAppointmentsPageComponent (service and duration)', () => {
     void component.markCompleted(appointment);
 
     expect(api.markCompleted).toHaveBeenCalledTimes(1);
+  });
+
+  // ADR-0018 D2 (SONDA BUG-067): «Completar» only for an appointment of today (Bogotá) or an earlier day.
+  it('offers «Completar» for today and earlier days, never for a future day', async () => {
+    await render();
+
+    expect(component.canComplete(appointment)).toBe(false); // tomorrow
+    expect(component.canComplete({ ...appointment, startsAtUtc: '2026-11-06T13:00:00Z' })).toBe(true); // today
+    expect(component.canComplete({ ...appointment, startsAtUtc: '2026-11-04T13:00:00Z' })).toBe(true); // left open
+    // 2026-11-07 00:30 UTC is still the 6th in Bogotá.
+    expect(component.canComplete({ ...appointment, startsAtUtc: '2026-11-07T00:30:00Z' })).toBe(true);
+    expect(component.canComplete({ ...appointment, status: 'Cancelled', startsAtUtc: '2026-11-06T13:00:00Z' })).toBe(false);
   });
 
   it('requires a service to create', async () => {
@@ -281,7 +290,6 @@ describe('StaffAppointmentsPageComponent in Bogotá time, with a confirm action'
       providers: [
         provideRouter([]),
         { provide: StaffAppointmentsApiService, useValue: api },
-        { provide: ServiceRecordEligibilityService, useValue: { canRegister: signal(false) } },
       ],
     }).compileComponents();
 
@@ -326,7 +334,9 @@ describe('StaffAppointmentsPageComponent in Bogotá time, with a confirm action'
     const [pendingCard, confirmedCard] = cards();
     expect(buttonsOf(pendingCard)).toContain('Confirmar');
     expect(buttonsOf(confirmedCard)).not.toContain('Confirmar');
-    expect(buttonsOf(confirmedCard)).toContain('Completar');
+    // ADR-0018 D2 (SONDA BUG-067): both are on a future day, so neither can be completed yet.
+    expect(buttonsOf(confirmedCard)).not.toContain('Completar');
+    expect(buttonsOf(confirmedCard)).toContain('No-show');
   });
 
   it('confirms a pending appointment and reloads the agenda', async () => {

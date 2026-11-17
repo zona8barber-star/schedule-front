@@ -104,6 +104,8 @@ export interface LoyaltyRedemptionView {
   isPastDeadline: boolean;
   allocations: LoyaltyRedemptionAllocationView[];
   version: number;
+  /** ADR-0018 D11: an administrator approved or delivered their own redemption. */
+  isSelfApproved?: boolean;
 }
 
 export interface LoyaltyCounterRedemptionRequest {

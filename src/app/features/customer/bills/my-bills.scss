@@ -1,0 +1,52 @@
+// «Mis recibos de caja»: the look of the other customer pages (my-memberships.scss), with the receipt statuses.
+.my-bills__status {
+  &[data-status='UnderReview'] {
+    border-color: rgba(176, 125, 30, 0.45);
+    color: #8a5a00;
+  }
+
+  &[data-status='Voided'] {
+    border-color: rgba(180, 83, 60, 0.4);
+    color: var(--color-error, #b4533c);
+  }
+}
+
+.my-bills__voided {
+  text-decoration: line-through;
+  opacity: 0.7;
+}
+
+.my-bills__row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.my-bills__totals {
+  display: grid;
+  gap: 0.35rem;
+  margin: 0;
+
+  div {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.75rem;
+  }
+
+  dt {
+    color: var(--text-muted);
+  }
+
+  dd {
+    margin: 0;
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+.my-bills__grand-total {
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--z-hairline-light);
+  font-weight: 700;
+}

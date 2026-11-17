@@ -124,7 +124,9 @@ export class AdminIncomeFormModalComponent implements OnInit {
         this.form.controls.kind.disable();
         this.onKindChange(entry.kind);
       } else {
-        this.form.patchValue({ occurredOn: this.defaultDate });
+        // ADR-0020 Q18: a new manual income is a membership sale; services come from the bills.
+        this.form.patchValue({ occurredOn: this.defaultDate, kind: 'MembershipSale' });
+        this.onKindChange('MembershipSale');
       }
     } catch (error) {
       this.errorMessage.set(getApiErrorMessage(error));

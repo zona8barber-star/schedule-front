@@ -102,3 +102,9 @@
   font-size: 0.85rem;
   color: var(--color-text-muted, #6b7280);
 }
+
+// ADR-0018 D1 (SONDA BUG-090).
+.income__badge--self {
+  border-color: var(--color-error, #b4533c);
+  color: var(--color-error, #b4533c);
+}

@@ -1,7 +1,7 @@
 <div class="ns">
   <header class="ns__hero">
     <h1>Notificaciones</h1>
-    <p class="ns__subtitle">Elige cómo quieres enterarte de tus citas.</p>
+    <p class="ns__subtitle">Elige qué avisos recibes y en qué dispositivo.</p>
   </header>
 
   <section class="ns__panel" aria-labelledby="ns-push-title">
@@ -62,4 +62,46 @@
       </p>
     }
   </section>
+
+  <section class="ns__panel" aria-labelledby="ns-types-title">
+    <div class="ns__panel-head">
+      <h2 id="ns-types-title">Qué avisos recibes</h2>
+    </div>
+
+    <p class="ns__text">
+      Apaga los tipos de aviso push que no quieras recibir. Igual los verás en la campana y en el historial. Los avisos
+      de tu cuenta y de seguridad siempre te llegan.
+    </p>
+
+    @if (isLoadingPreferences()) {
+      <p class="ns__hint">Cargando tus preferencias...</p>
+    } @else if (preferencesError()) {
+      <p class="ns__hint" role="alert">{{ preferencesError() }}</p>
+    } @else {
+      <ul class="ns__prefs">
+        @for (preference of preferences(); track preference.category) {
+          <li>
+            <label class="ns__pref-label">
+              <input
+                type="checkbox"
+                role="switch"
+                [attr.data-testid]="'pref-' + preference.category"
+                [checked]="preference.pushEnabled"
+                [disabled]="savingCategory() !== null"
+                (change)="togglePreference(preference.category, $any($event.target))"
+              />
+              <span class="ns__pref-text">
+                <strong>{{ categoryCopy[preference.category].label }}</strong>
+                <span>{{ categoryCopy[preference.category].description }}</span>
+              </span>
+            </label>
+          </li>
+        }
+      </ul>
+    }
+  </section>
+
+  <p class="ns__history">
+    <a routerLink="/account/notifications/history" data-testid="notification-history-link">Ver historial de notificaciones</a>
+  </p>
 </div>

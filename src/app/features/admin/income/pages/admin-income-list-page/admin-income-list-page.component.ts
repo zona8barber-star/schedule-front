@@ -3,7 +3,7 @@ import { DecimalPipe } from '@angular/common';
 import { Component, DestroyRef, OnInit, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute, ParamMap, Router } from '@angular/router';
+import { ActivatedRoute, ParamMap, Router, RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 
 import { IncomeEntryView, IncomeKind } from '../../../../../core/models/income.models';
@@ -38,7 +38,7 @@ import { ApiFeedbackComponent } from '../../../../../shared/components/api-feedb
 import { PaginatorComponent } from '../../../../../shared/components/paginator/paginator.component';
 import { AdminIncomeFormModalComponent } from '../../components/admin-income-form-modal/admin-income-form-modal.component';
 
-const INCOME_KINDS: readonly IncomeKind[] = ['Service', 'MembershipSale'];
+const INCOME_KINDS: readonly IncomeKind[] = ['Service', 'MembershipSale', 'ProductSale', 'Tip'];
 
 /**
  * Income history (ADR-0016 B7): a date range (the last 30 days by default, at most 30 days per query, any period),
@@ -49,7 +49,7 @@ import { SingleFlight } from '../../../../../core/utils/single-flight';
 
 @Component({
   selector: 'app-admin-income-list-page',
-  imports: [FormsModule, DecimalPipe, ApiFeedbackComponent, AdminIncomeFormModalComponent, PaginatorComponent],
+  imports: [RouterLink, FormsModule, DecimalPipe, ApiFeedbackComponent, AdminIncomeFormModalComponent, PaginatorComponent],
   templateUrl: './admin-income-list-page.component.html',
   styleUrl: './admin-income-list-page.component.scss',
 })

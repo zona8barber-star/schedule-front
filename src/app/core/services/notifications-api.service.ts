@@ -6,7 +6,10 @@ import {
   NotificationBroadcastPreviewResponse,
   NotificationBroadcastRequest,
   NotificationCampaignResponse,
+  NotificationHistoryResponse,
   NotificationInboxResponse,
+  NotificationPreferencesResponse,
+  NotificationPreferencesUpdateRequest,
   PushClientConfigResponse,
   PushSubscriptionRequest,
   PushUnsubscribeRequest,
@@ -46,6 +49,22 @@ export class NotificationsApiService {
 
   markAllNotificationsAsRead() {
     return this.httpClient.post<void>(this.buildUrl('/notifications/inbox/read-all'), {});
+  }
+
+  /** ADR-0019 N5: historial completo, paginado; con `unreadOnly` solo las sin leer. */
+  getHistory(page: number, pageSize: number, unreadOnly: boolean) {
+    return this.httpClient.get<NotificationHistoryResponse>(this.buildUrl('/notifications/history'), {
+      params: { page, pageSize, unreadOnly },
+    });
+  }
+
+  /** ADR-0019 N4: qué tipos de aviso llegan por push. */
+  getPreferences() {
+    return this.httpClient.get<NotificationPreferencesResponse>(this.buildUrl('/notifications/preferences'));
+  }
+
+  updatePreferences(request: NotificationPreferencesUpdateRequest) {
+    return this.httpClient.put<NotificationPreferencesResponse>(this.buildUrl('/notifications/preferences'), request);
   }
 
   /** BUG-110: a quién llegaría la difusión, sin enviarla. */

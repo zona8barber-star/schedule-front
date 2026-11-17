@@ -1,0 +1,276 @@
+<section class="catalog">
+  <header class="catalog__header">
+    <div>
+      <h1>Cuentas</h1>
+      <p class="catalog__lead">
+        Arma la cuenta de cada atención con sus servicios, productos, consumos de membresía, canjes, descuentos y propinas.
+        Al cerrarla se cobra y recibe su número; luego administración la revisa y la aprueba.
+      </p>
+    </div>
+    <div class="bills__header-actions">
+      @if (canSeeOldRecords) {
+        <a class="catalog__action-btn" routerLink="/admin/service-records" [queryParams]="{ status: 'Approved' }" data-testid="old-service-records">
+          Registros anteriores
+        </a>
+      }
+      @if (canOpen()) {
+        <button class="catalog__create-btn" type="button" data-testid="new-bill" (click)="openNewBill()">Nueva cuenta</button>
+      }
+    </div>
+  </header>
+
+  <app-api-feedback severity="error" [message]="errorMessage()" />
+
+  <div class="bills__tabs" role="tablist" aria-label="Cuentas por estado">
+    <button type="button" role="tab" [attr.aria-selected]="tab() === 'pending'" [class.bills__tab--active]="tab() === 'pending'" (click)="selectTab('pending')">
+      Por cerrar
+    </button>
+    <button type="button" role="tab" [attr.aria-selected]="tab() === 'Closed'" [class.bills__tab--active]="tab() === 'Closed'" (click)="selectTab('Closed')">
+      Por aprobar
+    </button>
+    <button type="button" role="tab" [attr.aria-selected]="tab() === 'Unapproved'" [class.bills__tab--active]="tab() === 'Unapproved'" (click)="selectTab('Unapproved')">
+      En corrección
+    </button>
+    <button type="button" role="tab" [attr.aria-selected]="tab() === 'Approved'" [class.bills__tab--active]="tab() === 'Approved'" (click)="selectTab('Approved')">
+      Aprobadas
+    </button>
+    <button type="button" role="tab" [attr.aria-selected]="tab() === 'Voided'" [class.bills__tab--active]="tab() === 'Voided'" (click)="selectTab('Voided')">
+      Anuladas
+    </button>
+    <button type="button" role="tab" [attr.aria-selected]="tab() === 'all'" [class.bills__tab--active]="tab() === 'all'" (click)="selectTab('all')">
+      Todas
+    </button>
+  </div>
+
+  @if (isLoading()) {
+    <p class="catalog__state">Cargando cuentas...</p>
+  } @else if (tab() === 'pending') {
+    @if (pending(); as view) {
+      @if (!view.openBills.length && !view.appointmentsWithoutBill.length) {
+        <p class="catalog__state">No hay cuentas por cerrar.</p>
+      }
+
+      @if (view.appointmentsWithoutBill.length) {
+        <h2 class="bills__subtitle">Citas completadas sin cuenta</h2>
+        <ul class="bills__list" data-testid="appointments-without-bill">
+          @for (appointment of view.appointmentsWithoutBill; track appointment.appointmentId) {
+            <li class="bills__card" [attr.data-appointment]="appointment.appointmentId">
+              <div>
+                <strong>{{ appointment.customerName }}</strong>
+                <small class="catalog__muted">
+                  {{ formatDateTime(appointment.startsAt) }} · {{ appointment.serviceName ?? 'Servicio' }} · {{ appointment.staffName }}
+                </small>
+              </div>
+              <button class="catalog__action-btn" type="button" [disabled]="isOpening()" (click)="openForAppointment(appointment.appointmentId)">
+                Abrir cuenta
+              </button>
+            </li>
+          }
+        </ul>
+      }
+
+      @if (view.openBills.length) {
+        <h2 class="bills__subtitle">Cuentas abiertas</h2>
+        <ul class="bills__list" data-testid="open-bills">
+          @for (bill of view.openBills; track bill.id) {
+            <li class="bills__card" [attr.data-bill]="bill.id">
+              <div>
+                <strong>{{ bill.customerName }}</strong>
+                @if (bill.isOverdue) {
+                  <small class="catalog__tag bills__tag--overdue">Vencida</small>
+                }
+                <small class="catalog__muted">
+                  Abierta {{ formatDateTime(bill.openedAt) }}{{ bill.staffName ? ' · ' + bill.staffName : '' }} ·
+                  {{ bill.lineCount }} {{ bill.lineCount === 1 ? 'línea' : 'líneas' }} · {{ formatCop(bill.total) }}
+                </small>
+              </div>
+              <a class="catalog__action-btn" [routerLink]="['/bills', bill.id]">Continuar</a>
+            </li>
+          }
+        </ul>
+      }
+    }
+  } @else {
+    <form class="catalog__filters" role="search" data-testid="bill-filters" (submit)="$event.preventDefault(); onSearch(searchInput.value)">
+      <label class="catalog__filter">
+        <span>Buscar</span>
+        <input #searchInput type="search" placeholder="Número o cliente" [value]="query()" (change)="onSearch(searchInput.value)" />
+      </label>
+      <label class="catalog__filter">
+        <span>Atención desde</span>
+        <input type="date" data-testid="bill-filter-from" [value]="range()?.from ?? ''" (change)="onFromChange($any($event.target).value)" />
+      </label>
+      <label class="catalog__filter">
+        <span>Atención hasta</span>
+        <input type="date" data-testid="bill-filter-to" [value]="range()?.to ?? ''" (change)="onToChange($any($event.target).value)" />
+      </label>
+      @if (canFilterByStaff()) {
+        <label class="catalog__filter">
+          <span>Profesional</span>
+          <select data-testid="bill-filter-staff" (change)="onFilterChange({ staffProfileId: $any($event.target).value })">
+            <option value="">Todos</option>
+            @for (staff of options()?.staff ?? []; track staff.id) {
+              <option [value]="staff.id" [selected]="staff.id === staffProfileId()">{{ staff.displayName }}</option>
+            }
+          </select>
+        </label>
+      }
+      <label class="catalog__filter">
+        <span>Medio de pago</span>
+        <select data-testid="bill-filter-payment-method" (change)="onFilterChange({ paymentMethodId: $any($event.target).value })">
+          <option value="">Todos</option>
+          @for (method of options()?.paymentMethods ?? []; track method.id) {
+            <option [value]="method.id" [selected]="method.id === paymentMethodId()">{{ method.name }}</option>
+          }
+        </select>
+      </label>
+    </form>
+    @if (customerId() || hasFilters()) {
+      <p class="catalog__muted bills__filter-note">
+        @if (customerId()) {
+          <span data-testid="bill-filter-customer">Solo las cuentas de un cliente (con sus perfiles fusionados).</span>
+        }
+        <button class="catalog__action-btn" type="button" data-testid="bill-filters-clear" (click)="clearFilters()">Quitar filtros</button>
+      </p>
+    }
+
+    @if (!bills().length) {
+      <p class="catalog__state">
+        @if (hasFilters()) {
+          Ninguna cuenta coincide con los filtros.
+        } @else {
+          No hay cuentas {{ emptyLabel() }}.
+        }
+      </p>
+    } @else {
+      <div class="catalog__table-wrap">
+        <table class="catalog__table">
+          <thead>
+            <tr>
+              <th>Número</th>
+              <th>Cliente</th>
+              <th>Profesional</th>
+              <th>Fecha</th>
+              <th>Total</th>
+              <th aria-label="Acciones"></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (bill of bills(); track bill.id) {
+              <tr [attr.data-bill]="bill.id">
+                <td>
+                  {{ bill.number ?? '—' }}
+                  @if (bill.isSelfApproved) {
+                    <small class="catalog__tag">Autoaprobada</small>
+                  }
+                </td>
+                <td>{{ bill.customerName }}</td>
+                <td>
+                  {{ bill.staffName ?? '—' }}
+                  @if (!bill.staffIsActive) {
+                    <small class="catalog__muted">Profesional inactivo</small>
+                  }
+                </td>
+                <td>
+                  {{ bill.serviceDate }}
+                  @if (tab() === 'all') {
+                    <small class="catalog__tag">{{ statusLabels[bill.status] }}</small>
+                  }
+                </td>
+                <td class="catalog__price">
+                  {{ formatCop(bill.total) }}
+                  @if (bill.paymentMethodName) {
+                    <small class="catalog__muted">{{ bill.paymentMethodName }}</small>
+                  }
+                </td>
+                <td class="catalog__actions">
+                  <a class="catalog__action-btn" [routerLink]="['/bills', bill.id]">{{ tab() === 'Closed' || tab() === 'Unapproved' ? 'Revisar' : 'Ver' }}</a>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+
+    <app-paginator
+      label="Paginación de las cuentas"
+      [page]="page()"
+      [pageSize]="pageSize"
+      [totalCount]="totalCount()"
+      [disabled]="isLoading()"
+      (pageChange)="onPageChange($event)"
+    />
+  }
+</section>
+
+@if (showOpen()) {
+  <div class="catalog-modal__overlay" (click)="closeOpenModal()">
+    <div
+      appModalDialog
+      (modalClose)="closeOpenModal()"
+      class="catalog-modal__card"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="open-bill-title"
+      (click)="$event.stopPropagation()"
+    >
+      <h2 id="open-bill-title">Nueva cuenta</h2>
+      <app-api-feedback severity="error" [message]="openError()" />
+      <form appFormA11y [formGroup]="openForm" (ngSubmit)="openBill()">
+        <label class="catalog-modal__field">
+          <span>Buscar cliente</span>
+          <input type="search" formControlName="search" placeholder="Nombre, celular o correo" autocomplete="off" />
+        </label>
+        <button class="catalog__action-btn" type="button" [disabled]="isSearching()" (click)="searchCustomers()">
+          {{ isSearching() ? 'Buscando...' : 'Buscar' }}
+        </button>
+
+        @if (customerResults().length) {
+          <ul class="bills__options" data-testid="customer-results">
+            @for (customer of customerResults(); track customer.id) {
+              <li>
+                <label class="bills__radio">
+                  <input type="radio" name="customer" [checked]="selectedCustomer()?.id === customer.id" (change)="chooseCustomer(customer)" />
+                  <span>{{ customer.fullName }}{{ customer.phoneHint ? ' · ' + customer.phoneHint : '' }}</span>
+                </label>
+              </li>
+            }
+          </ul>
+        }
+
+        @if (!selectedCustomer()) {
+          <label class="catalog-modal__field">
+            <span>O cliente ocasional (solo el nombre)</span>
+            <input type="text" formControlName="walkInName" maxlength="120" autocomplete="off" data-testid="walk-in-name" />
+          </label>
+          <small class="catalog-modal__hint">Una cuenta de cliente ocasional no puede usar membresías, canjes ni puntos.</small>
+        } @else {
+          <p class="catalog-modal__hint">
+            Cliente: <strong>{{ selectedCustomer()!.fullName }}</strong>
+            <button class="catalog__action-btn" type="button" (click)="chooseCustomer(null)">Cambiar</button>
+          </p>
+        }
+
+        @if (options()?.canManage) {
+          <label class="catalog-modal__field">
+            <span>Profesional de la cuenta</span>
+            <select formControlName="staffProfileId">
+              <option value="">Sin profesional (mostrador)</option>
+              @for (staff of options()!.staff; track staff.id) {
+                @if (staff.isActive) {
+                  <option [value]="staff.id">{{ staff.displayName }}</option>
+                }
+              }
+            </select>
+          </label>
+        }
+
+        <div class="catalog-modal__actions">
+          <button type="button" [disabled]="isOpening()" (click)="closeOpenModal()">Cancelar</button>
+          <button type="submit" [disabled]="isOpening()">{{ isOpening() ? 'Abriendo...' : 'Abrir cuenta' }}</button>
+        </div>
+      </form>
+    </div>
+  </div>
+}

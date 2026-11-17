@@ -1,12 +1,14 @@
 <section class="customers">
   <header class="customers__header">
     <h1>Clientes</h1>
-    <div class="customers__header-actions">
-      <button class="customers__action-btn" type="button" (click)="openFromAccount()">
-        Crear desde cuenta registrada
-      </button>
-      <button class="customers__create-btn" type="button" (click)="openCreate()">+ Nuevo cliente</button>
-    </div>
+    @if (isAdmin) {
+      <div class="customers__header-actions">
+        <button class="customers__action-btn" type="button" (click)="openFromAccount()">
+          Crear desde cuenta registrada
+        </button>
+        <button class="customers__create-btn" type="button" (click)="openCreate()">+ Nuevo cliente</button>
+      </div>
+    }
   </header>
 
   <form class="customers__search" (ngSubmit)="search()">

@@ -16,27 +16,6 @@ export const SERVICE_RECORD_OPERATION_LABELS: Record<ServiceRecordOperationType,
   LoyaltyReward: 'Recompensa de fidelización',
 };
 
-/** Same limit as the backend (`ServiceRecord.MaxServicesPerRegistration`). */
-export const SERVICE_RECORD_MAX_SERVICES = 10;
-
-/** A general service the professional can register (ADR-0016 B4). */
-export interface ServiceRecordCatalogItem {
-  id: string;
-  name: string;
-  categoryId: string;
-  categoryName: string;
-}
-
-export interface ServiceRecordRegisterRequest {
-  appointmentId: string | null;
-  /** Required without an appointment; with one, the appointment's date is used. */
-  performedOn: string | null;
-  customerName: string | null;
-  generalServiceIds: string[];
-  notes: string | null;
-  idempotencyKey: string;
-}
-
 export interface ServiceRecordApprovalView {
   operationType: ServiceRecordOperationType;
   serviceId: string;
@@ -57,6 +36,8 @@ export interface ServiceRecordApprovalView {
   reviewNotes: string | null;
   approvedAt: string;
   approvedByName: string | null;
+  /** ADR-0018 D1: an Admin approved a service where they are the customer or the registering professional. */
+  isSelfApproved?: boolean;
   /** For a loyalty reward: the redemption it delivered and the commission the business covers (informative). */
   loyaltyRedemptionId?: string | null;
   rewardName?: string | null;
@@ -185,26 +166,6 @@ export interface ServiceRecordCustomerDuplicate {
   emailHint: string | null;
   phoneHint: string | null;
   matchedOn: ('email' | 'phone')[];
-}
-
-/** Whether the current user can register services: they need an active professional profile, whatever their role. */
-export interface ServiceRecordEligibilityView {
-  hasStaffProfile: boolean;
-  staffProfileId: string | null;
-  displayName: string | null;
-}
-
-/** One of the professional's own recent, started appointments (completed included). */
-export interface ServiceRecordAppointmentOption {
-  id: string;
-  startsAt: string;
-  customerName: string;
-  status: string;
-  /** General services already registered there and not rejected; they cannot be registered again. */
-  registeredGeneralServiceIds: string[];
-  /** Service booked with the appointment, if any (ADR-0016 B3). */
-  generalServiceId: string | null;
-  generalServiceName: string | null;
 }
 
 /** Possible duplicates found through real relations; warnings only, never a block. */

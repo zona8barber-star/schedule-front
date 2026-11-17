@@ -81,6 +81,19 @@
       >
         Historial
       </button>
+
+      <button
+        class="my-appts__tab"
+        [class.my-appts__tab--active]="activeTab() === 'cancelled'"
+        type="button"
+        data-testid="tab-cancelled"
+        (click)="setTab('cancelled')"
+      >
+        Canceladas
+        @if (cancelledTotal() > 0) {
+          <span class="my-appts__tab-badge">{{ cancelledTotal() }}</span>
+        }
+      </button>
     </nav>
 
     <!-- ── Contenido del tab activo ──────────────────────────────── -->
@@ -177,6 +190,30 @@
           [page]="page()"
           [pageSize]="pageSize"
           [totalCount]="historyTotal()"
+          (pageChange)="onPageChange($event)"
+        />
+      }
+    }
+
+    @if (activeTab() === 'cancelled') {
+      <!-- ADR-0018 D3 (SONDA BUG-023): every cancellation, whatever its date. -->
+      @if (!cancelled().length) {
+        <div class="my-appts__panel">
+          <app-page-state kind="empty" message="No tienes citas canceladas." />
+        </div>
+      } @else {
+        <div class="my-appts__list" data-testid="cancelled-list">
+          @for (appt of cancelled(); track appt.id) {
+            <article class="my-appts__card">
+              <ng-container *ngTemplateOutlet="cardContent; context: { appt }"></ng-container>
+            </article>
+          }
+        </div>
+        <app-paginator
+          label="Paginación de citas canceladas"
+          [page]="page()"
+          [pageSize]="pageSize"
+          [totalCount]="cancelledTotal()"
           (pageChange)="onPageChange($event)"
         />
       }

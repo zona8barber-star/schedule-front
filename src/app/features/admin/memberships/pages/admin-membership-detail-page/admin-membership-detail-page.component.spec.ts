@@ -5,7 +5,7 @@ import { provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 
 import { environment } from '../../../../../../environments/environment';
-import { PERMISSION_CODES, PermissionCode } from '../../../../../core/models/auth.models';
+import { PERMISSION_CODES, PermissionCode, ROLE_NAMES } from '../../../../../core/models/auth.models';
 import { CustomerMembershipDetailView } from '../../../../../core/models/membership.models';
 import { AuthService } from '../../../../../core/services/auth.service';
 import { AdminMembershipDetailPageComponent } from './admin-membership-detail-page.component';
@@ -63,6 +63,7 @@ describe('AdminMembershipDetailPageComponent', () => {
   };
 
   let permissions: PermissionCode[] = [PERMISSION_CODES.membershipPaymentsConfirm];
+  let roles: string[] = [ROLE_NAMES.admin];
 
   async function flushMicrotasks(): Promise<void> {
     await new Promise<void>((resolve) => setTimeout(resolve, 0));
@@ -74,7 +75,13 @@ describe('AdminMembershipDetailPageComponent', () => {
         provideHttpClient(),
         provideHttpClientTesting(),
         provideRouter([{ path: 'admin/memberships/:membershipId', component: AdminMembershipDetailPageComponent }]),
-        { provide: AuthService, useValue: { hasPermission: (code: PermissionCode) => permissions.includes(code) } },
+        {
+          provide: AuthService,
+          useValue: {
+            hasPermission: (code: PermissionCode) => permissions.includes(code),
+            hasRole: (role: string) => roles.includes(role),
+          },
+        },
       ],
     });
     httpMock = TestBed.inject(HttpTestingController);
@@ -130,6 +137,31 @@ describe('AdminMembershipDetailPageComponent', () => {
     expect(text).toContain('Puntos del plan al vender');
     expect(text).toContain('el programa estaba deshabilitado');
     expect(text).toContain('La decisión es definitiva');
+  });
+
+  // ADR-0018 D4 (SONDA BUG-077): a custom role with memberships.payments.confirm links the payment and nothing else.
+  it('offers a payments confirmer only «Vincular ingreso», without the actions of administration', async () => {
+    roles = [];
+    const fixture = await openPage({ ...base, status: 'Active', displayStatus: 'Active' });
+    roles = [ROLE_NAMES.admin];
+    const text = fixture.nativeElement.textContent as string;
+
+    expect(text).toContain('Vincular ingreso');
+    expect(text).not.toContain('Anular');
+    expect(text).not.toContain('Activar');
+    expect(text).not.toContain('Registrar consumo');
+  });
+
+  // ADR-0018 D5 (SONDA BUG-104): the points follow the payment.
+  it('explains that unlinking the payment withdraws the points and linking it again gives them back', async () => {
+    const fixture = await openPage({
+      ...base,
+      loyalty: { pointsSnapshot: 40, predatesWallet: false, decision: null, decidedAt: null, accruedPoints: 0, withdrawnPoints: 0 },
+    });
+    const text = fixture.nativeElement.textContent as string;
+
+    expect(text).toContain('Si se desvincula, se retiran');
+    expect(text).not.toContain('Desvincular no los retira');
   });
 
   it('marks a membership sold before the wallet', async () => {

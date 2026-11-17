@@ -70,6 +70,8 @@ export interface CustomerClaimView {
   decisionNotes: string | null;
   /** Concurrency token: send it back unchanged when deciding. */
   version: number;
+  /** ADR-0018 D11: an administrator approved a claim made from their own account. */
+  isSelfApproved?: boolean;
 }
 
 /** A profile the claim may belong to, reduced to hints. Matches are suggestions, never an automatic link. */

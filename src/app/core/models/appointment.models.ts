@@ -122,7 +122,7 @@ export interface StaffAppointmentsListFilters extends PageQuery {
  * Filters of GET /customer/appointments. `Upcoming` = pending or confirmed and still in the future (soonest first);
  * `Past` = everything else (newest first).
  */
-export type CustomerAppointmentScope = 'Upcoming' | 'Past';
+export type CustomerAppointmentScope = 'Upcoming' | 'Past' | 'Cancelled';
 
 export interface CustomerAppointmentsListFilters extends PageQuery {
   scope?: CustomerAppointmentScope | null;

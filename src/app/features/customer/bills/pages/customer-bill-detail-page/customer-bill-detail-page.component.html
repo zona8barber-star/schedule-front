@@ -1,0 +1,86 @@
+<section class="my-memberships">
+  <a class="my-memberships__link" routerLink="/customer/bills">← Mis recibos de caja</a>
+
+  <app-api-feedback severity="error" [message]="errorMessage()" />
+
+  @if (isLoading()) {
+    <article class="my-memberships__panel">
+      <app-page-state kind="loading" message="Cargando recibo de caja..." />
+    </article>
+  } @else if (notFound()) {
+    <app-not-found-state
+      title="No encontramos este recibo de caja"
+      message="Es posible que el enlace esté mal escrito o que el recibo de caja no sea de tu cuenta."
+      backLink="/customer/bills"
+      backLabel="Volver a mis recibos de caja"
+    />
+  } @else if (bill(); as b) {
+    <header class="my-memberships__hero">
+      <p class="my-memberships__eyebrow">Recibo de caja</p>
+      <div class="my-memberships__card-header">
+        <h1 [class.my-bills__voided]="b.status === 'Voided'">{{ b.number }}</h1>
+        <span class="my-memberships__status my-bills__status" [attr.data-status]="b.status" data-testid="bill-status">{{ statusLabels[b.status] }}</span>
+      </div>
+      <p>{{ b.customerName }} · {{ formatDateTime(b.closedAt) }}</p>
+    </header>
+
+    @if (b.status === 'UnderReview') {
+      <p class="my-memberships__notice" data-testid="bill-under-review">
+        La barbería está revisando este recibo de caja. Estos son los valores actuales y pueden cambiar al terminar la revisión.
+      </p>
+    } @else if (b.status === 'Voided') {
+      <p class="my-memberships__notice my-memberships__notice--blocked" data-testid="bill-voided">
+        Este recibo de caja fue anulado y no tiene validez.
+      </p>
+    }
+
+    <article class="my-memberships__card">
+      <h2>Detalle</h2>
+      <ul class="my-memberships__lines" data-testid="bill-lines">
+        @for (line of items(); track $index) {
+          <li>
+            <span class="my-memberships__line-label">{{ lineLabel(line) }}{{ line.staffName ? ' · ' + line.staffName : '' }}</span>
+            <div class="my-bills__row">
+              <strong>{{ line.quantity > 1 ? line.quantity + ' × ' : '' }}{{ line.name }}</strong>
+              <span>{{ formatCop(line.amount) }}</span>
+            </div>
+          </li>
+        }
+      </ul>
+    </article>
+
+    <article class="my-memberships__card">
+      <dl class="my-bills__totals" data-testid="bill-totals">
+        <div>
+          <dt>Subtotal</dt>
+          <dd>{{ formatCop(b.subtotal) }}</dd>
+        </div>
+        @if (b.discountTotal) {
+          <div>
+            <dt>Descuentos</dt>
+            <dd>{{ formatCop(-b.discountTotal) }}</dd>
+          </div>
+        }
+        @for (tip of tips(); track $index) {
+          <div>
+            <dt>Propina{{ tipLabel(tip) ? ' (' + tipLabel(tip) + ')' : '' }}</dt>
+            <dd>{{ formatCop(tip.amount) }}</dd>
+          </div>
+        }
+        <div class="my-bills__grand-total">
+          <dt>Total pagado</dt>
+          <dd>{{ formatCop(b.total) }}</dd>
+        </div>
+        @if (b.paymentMethodName) {
+          <div>
+            <dt>Medio de pago</dt>
+            <dd>{{ b.paymentMethodName }}</dd>
+          </div>
+        }
+      </dl>
+      @if (b.directTipTotal) {
+        <p class="my-memberships__muted">La propina pagada directo al profesional no hace parte del total pagado.</p>
+      }
+    </article>
+  }
+</section>

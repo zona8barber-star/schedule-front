@@ -16,12 +16,15 @@ import {
   StaffManualAppointmentCreateRequest,
 } from '../../../../../core/models/appointment.models';
 import { DEFAULT_PAGE_SIZE } from '../../../../../core/models/paged-result.models';
-import { ServiceRecordEligibilityService } from '../../../../../core/services/service-record-eligibility.service';
+import { PERMISSION_CODES } from '../../../../../core/models/auth.models';
+import { newIdempotencyKey } from '../../../../../core/models/loyalty-redemption.models';
+import { AuthService } from '../../../../../core/services/auth.service';
+import { BillsApiService } from '../../../../../core/services/bills-api.service';
 import { ConfirmModalService } from '../../../../../core/services/confirm-modal.service';
 import { StaffAppointmentsApiService } from '../../../../../core/services/staff-appointments-api.service';
 import { getApiErrorMessage } from '../../../../../core/utils/api-error.utils';
 import { formatDateTimeLocal, toUtcIsoString } from '../../../../../core/utils/availability-form.utils';
-import { addDaysToDateKey, bogotaDateTimeFormat, bogotaToday } from '../../../../../core/utils/bogota-date.utils';
+import { addDaysToDateKey, bogotaDateKey, bogotaDateTimeFormat, bogotaToday } from '../../../../../core/utils/bogota-date.utils';
 import {
   QueryValue,
   readDateParam,
@@ -91,8 +94,15 @@ export class StaffAppointmentsPageComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly destroyRef = inject(DestroyRef);
   private loadSequence = 0;
-  /** Permission plus an active professional profile; completed appointments are registered from that page. */
-  readonly canRegisterServices = inject(ServiceRecordEligibilityService).canRegister;
+  private readonly authService = inject(AuthService);
+  private readonly billsApi = inject(BillsApiService);
+  /**
+   * ADR-0020: the bills replaced the registration of services performed. Completing an appointment opens its bill
+   * (BUG-092); an appointment that already started can open it before.
+   */
+  readonly canUseBills = computed(() =>
+    this.authService.hasAnyPermission([PERMISSION_CODES.billsOpen, PERMISSION_CODES.billsManage]),
+  );
   // Bogotá time whatever the device timezone (SONDA BUG-033).
   private readonly timeFormatter = bogotaDateTimeFormat('es-AR', { timeStyle: 'short' });
   private readonly dateTimeFormatter = bogotaDateTimeFormat('es-AR', {
@@ -396,6 +406,11 @@ export class StaffAppointmentsPageComponent implements OnInit {
     return new Date(appointment.startsAtUtc).getTime() <= Date.now();
   }
 
+/** ADR-0018 D2 (SONDA BUG-067): only an appointment of today (Bogotá) or an earlier day can be completed. */
+  canComplete(appointment: AppointmentResponse): boolean {
+    return this.canTransition(appointment) && bogotaDateKey(appointment.startsAtUtc) <= bogotaToday();
+  }
+
   canTransition(appointment: AppointmentResponse): boolean {
     return (
       appointment.status === APPOINTMENT_STATUS.pending ||
@@ -624,6 +639,17 @@ export class StaffAppointmentsPageComponent implements OnInit {
 
   private actionKey(appointmentId: string, action: string): string {
     return `${appointmentId}:${action}`;
+  }
+
+  /** Opens the bill of a started appointment (or reports that it already has one) and goes to it. */
+  async openBill(appointment: AppointmentResponse): Promise<void> {
+    this.errorMessage.set(null);
+    try {
+      const bill = await firstValueFrom(this.billsApi.open({ idempotencyKey: newIdempotencyKey(), appointmentId: appointment.id }));
+      await this.router.navigate(['/bills', bill.id]);
+    } catch (error) {
+      this.errorMessage.set(getApiErrorMessage(error));
+    }
   }
 }
 

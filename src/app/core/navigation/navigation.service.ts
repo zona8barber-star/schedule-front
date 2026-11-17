@@ -4,7 +4,7 @@ import { ActivatedRouteSnapshot, NavigationEnd, Router } from '@angular/router';
 import { filter } from 'rxjs';
 
 import { AuthService } from '../services/auth.service';
-import { ServiceRecordEligibilityService } from '../services/service-record-eligibility.service';
+import { ServiceRecordsPendingService } from '../services/service-records-pending.service';
 import { buildNavigation, normalizeNavigationPath, resolveActiveItemId } from './navigation-menu';
 import { NavContext, NavGroupId, NavItem, NavigationMenu } from './navigation.models';
 
@@ -17,7 +17,7 @@ import { NavContext, NavGroupId, NavItem, NavigationMenu } from './navigation.mo
 })
 export class NavigationService {
   private readonly authService = inject(AuthService);
-  private readonly serviceRecordEligibility = inject(ServiceRecordEligibilityService);
+  private readonly serviceRecordsPending = inject(ServiceRecordsPendingService);
   private readonly router = inject(Router);
 
   readonly currentPath = signal(normalizeNavigationPath(this.router.url));
@@ -27,7 +27,7 @@ export class NavigationService {
     isAuthenticated: this.authService.isAuthenticated(),
     roles: this.authService.roles(),
     permissions: this.authService.permissions(),
-    canRegisterServiceRecords: this.serviceRecordEligibility.canRegister(),
+    hasPendingServiceRecords: this.serviceRecordsPending.hasPending(),
   }));
 
   readonly menu = computed<NavigationMenu>(() => buildNavigation(this.context()));

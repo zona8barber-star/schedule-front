@@ -31,6 +31,32 @@ export interface NotificationInboxResponse {
   hasMore?: boolean;
 }
 
+/** ADR-0019 N5: una página del historial (más recientes primero) y el total sin leer. */
+export interface NotificationHistoryResponse {
+  items: UserNotificationItem[];
+  page: number;
+  pageSize: number;
+  totalCount: number;
+  unreadCount: number;
+}
+
+/** ADR-0019 N4: tipos de aviso que se pueden apagar (solo el push). */
+// ADR-0020 Q19: «Compras» (purchases) carries the receipts of the bills.
+export type NotificationCategory = 'appointments' | 'memberships' | 'loyalty' | 'purchases' | 'campaigns';
+
+export interface NotificationPreference {
+  category: NotificationCategory;
+  pushEnabled: boolean;
+}
+
+export interface NotificationPreferencesResponse {
+  categories: NotificationPreference[];
+}
+
+export interface NotificationPreferencesUpdateRequest {
+  categories: NotificationPreference[];
+}
+
 export type NotificationBroadcastTargetType = 'all' | 'selected' | 'filter';
 
 export interface NotificationBroadcastRequest {

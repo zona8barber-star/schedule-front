@@ -97,6 +97,13 @@
             @if (redemption.status === 'Delivered') {
               · entregado por {{ redemption.deliveredByName }} el {{ redemption.deliveredAt | bogotaDate: 'medium' }}
             }
+            @if (redemption.isSelfApproved) {
+              <span
+                class="records__self-approved"
+                data-testid="self-approved"
+                title="Lo aprobó o entregó un administrador que es el titular de estos puntos"
+              >Autoaprobado</span>
+            }
             @if (redemption.rejectionReason) {
               · rechazado: «{{ redemption.rejectionReason }}»
             }

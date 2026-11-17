@@ -13,6 +13,7 @@ import {
   ServiceRecordView,
 } from '../../../../../core/models/service-record.models';
 import { ServiceRecordsApiService } from '../../../../../core/services/service-records-api.service';
+import { ServiceRecordsPendingService } from '../../../../../core/services/service-records-pending.service';
 import { getApiErrorMessage } from '../../../../../core/utils/api-error.utils';
 import {
   QueryValue,
@@ -63,6 +64,7 @@ const STATUSES: readonly ServiceRecordStatus[] = TABS.map((tab) => tab.status);
 })
 export class AdminServiceRecordsPageComponent implements OnInit {
   private readonly api = inject(ServiceRecordsApiService);
+  private readonly pending = inject(ServiceRecordsPendingService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   private readonly destroyRef = inject(DestroyRef);
@@ -153,8 +155,10 @@ export class AdminServiceRecordsPageComponent implements OnInit {
         : `Registro de "${result.serviceName}" rechazado.`,
     );
     this.closeReview();
-    // The reviewed record leaves this tab: reload so the page and the count stay right.
+    // The reviewed record leaves this tab: reload so the page and the count stay right. ADR-0020 stage 6: the menu hides
+    // this tray once the last pending record is reviewed.
     void this.load();
+    void this.pending.refresh();
   }
 
   async onStale(): Promise<void> {

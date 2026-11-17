@@ -37,8 +37,10 @@
             aria-hidden="true"
           ></span>
           <span class="lp__kicker lp__kicker--bone">{{ isOpenNow() ? 'Abierto ahora' : 'Cerrado ahora' }}</span>
-          <span class="lp__dot lp__dot--sm" aria-hidden="true"></span>
-          <span class="lp__kicker lp__kicker--d">{{ landingContent()?.address || 'Calle 8 · 214' }}</span>
+          @if (landingContent()?.address; as address) {
+            <span class="lp__dot lp__dot--sm" aria-hidden="true"></span>
+            <span class="lp__kicker lp__kicker--d" data-testid="hero-address">{{ address }}</span>
+          }
         </div>
       </div>
 
@@ -62,7 +64,7 @@
         } @else {
           <!-- Sin mapa ni logo configurados: mostrar el logo de la app en vez de un recuadro vacío -->
           <div class="lp__ph lp__ph--logo">
-            <img class="lp__ph-logo" src="assets/images/logo.png" [alt]="branding()?.appName || 'Zona 8'" />
+            <img class="lp__ph-logo" src="assets/images/logo.png" [alt]="branding()?.appName || 'Logo de la barbería'" />
           </div>
         }
         <div class="lp__hero-badge">
@@ -105,24 +107,24 @@
     <div class="lp__wrap">
       <div class="lp__two-col">
 
-        <!-- 01 · Sobre nosotros -->
-        <div class="lp__two-col-a">
-          <div class="lp__section-head">
-            <span class="lp__num">01</span>
-            <span class="lp__kicker">Sobre nosotros</span>
+        <!-- 01 · Sobre nosotros: only with a configured text (ADR-0018 D6). -->
+        @if (landingContent()?.aboutText; as aboutText) {
+          <div class="lp__two-col-a" data-testid="landing-about">
+            <div class="lp__section-head">
+              <span class="lp__num">01</span>
+              <span class="lp__kicker">Sobre nosotros</span>
+            </div>
+            <h2 class="lp__disp lp__h2">
+              {{ landingContent()?.aboutTitle || 'Quiénes somos' }}
+            </h2>
+            <p class="lp__about-p">{{ aboutText }}</p>
           </div>
-          <h2 class="lp__disp lp__h2">
-            {{ landingContent()?.aboutTitle || 'Quiénes somos' }}
-          </h2>
-          <p class="lp__about-p">
-            {{ landingContent()?.aboutText || 'Estamos preparando el contenido público. Mientras tanto puedes revisar profesionales y disponibilidad.' }}
-          </p>
-        </div>
+        }
 
         <!-- 02 · Contacto -->
         <div class="lp__two-col-b">
           <div class="lp__section-head">
-            <span class="lp__num">02</span>
+            <span class="lp__num">{{ landingContent()?.aboutText ? '02' : '01' }}</span>
             <span class="lp__kicker">Contacto</span>
           </div>
           <h2 class="lp__disp lp__h2">Canales disponibles</h2>

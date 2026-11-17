@@ -1,0 +1,88 @@
+<div class="nh">
+  <header class="nh__hero">
+    <h1>Historial de notificaciones</h1>
+    <p class="nh__subtitle">Todos tus avisos de los últimos 90 días, los más recientes primero.</p>
+  </header>
+
+  <section class="nh__panel" aria-labelledby="nh-list-title">
+    <h2 id="nh-list-title" class="nh__sr-only">Notificaciones</h2>
+
+    <div class="nh__toolbar">
+      <div class="nh__filters" role="group" aria-label="Filtrar notificaciones">
+        <button
+          type="button"
+          class="nh__filter"
+          data-testid="history-filter-all"
+          [class.nh__filter--active]="filter() === 'all'"
+          [attr.aria-pressed]="filter() === 'all'"
+          (click)="selectFilter('all')"
+        >
+          Todas
+        </button>
+        <button
+          type="button"
+          class="nh__filter"
+          data-testid="history-filter-unread"
+          [class.nh__filter--active]="filter() === 'unread'"
+          [attr.aria-pressed]="filter() === 'unread'"
+          (click)="selectFilter('unread')"
+        >
+          Sin leer ({{ unreadCount() }})
+        </button>
+      </div>
+
+      @if (unreadCount() > 0) {
+        <button type="button" class="nh__link-btn" data-testid="history-read-all" (click)="markAllAsRead()">
+          Marcar todas como leídas
+        </button>
+      }
+    </div>
+
+    <app-api-feedback severity="error" [message]="errorMessage()" />
+
+    @if (isLoading() && !items().length) {
+      <app-page-state kind="loading" message="Cargando notificaciones..." />
+    } @else if (!items().length) {
+      <app-page-state
+        [message]="filter() === 'unread' ? 'No tienes notificaciones sin leer.' : 'No tienes notificaciones todavía.'"
+      />
+    } @else {
+      <ul class="nh__list" data-testid="history-list">
+        @for (item of items(); track item.id) {
+          <li>
+            <button
+              type="button"
+              class="nh__item"
+              data-testid="history-item"
+              [class.nh__item--unread]="!item.readAtUtc"
+              (click)="open(item)"
+            >
+              <span class="nh__dot" aria-hidden="true"></span>
+              <span class="nh__item-body">
+                <span class="nh__item-title">{{ item.title }}</span>
+                <span class="nh__item-text">{{ item.body }}</span>
+                <time class="nh__item-time" [attr.datetime]="item.createdAtUtc" [attr.title]="item.createdAtUtc | bogotaDate: 'medium'">
+                  {{ timeAgo(item.createdAtUtc) }}
+                </time>
+              </span>
+              <span class="nh__state">{{ item.readAtUtc ? 'Leída' : 'Sin leer' }}</span>
+            </button>
+          </li>
+        }
+      </ul>
+
+      <app-paginator
+        label="Paginación de notificaciones"
+        [page]="page()"
+        [pageSize]="pageSize"
+        [totalCount]="totalCount()"
+        [disabled]="isLoading()"
+        (pageChange)="onPageChange($event)"
+      />
+    }
+  </section>
+
+  <p class="nh__foot">
+    <a routerLink="/account/notifications">Ajustes de notificaciones</a>
+  </p>
+</div>

@@ -71,23 +71,13 @@ describe('AdminIncomeFormModalComponent', () => {
     httpMock.verify();
   });
 
-  it('registers service income by default, with kind, service and professional', async () => {
+  // ADR-0020 Q18: services, products and tips are charged with the bills; a new income here is a membership sale.
+  it('creates only membership sales, with no way to pick a service income', async () => {
     await open(null);
-    component.form.patchValue({ serviceId: 's-1', staffProfileId: 'st-1', amount: 25000 });
 
-    const saving = component.submit();
-    await new Promise<void>((resolve) => setTimeout(resolve, 0)); // the amount confirmation resolves first
-    const req = httpMock.expectOne(`${api}/admin/income`);
-    expect(req.request.body).toEqual({
-      kind: 'Service',
-      serviceId: 's-1',
-      staffProfileId: 'st-1',
-      amount: 25000,
-      isPromo: false,
-      occurredOn: '2026-06-10',
-    });
-    req.flush({});
-    await saving;
+    expect(component.form.controls.kind.value).toBe('MembershipSale');
+    expect(fixture.nativeElement.querySelector('input[type="radio"]')).toBeNull();
+    expect(fixture.nativeElement.querySelector('select[formcontrolname="serviceId"]')).toBeNull();
   });
 
   it('registers a membership sale without service, professional or promo', async () => {
@@ -116,17 +106,6 @@ describe('AdminIncomeFormModalComponent', () => {
     });
     req.flush(sale);
     await saving;
-  });
-
-  it('still requires a service and professional for service income', async () => {
-    await open(null);
-    component.form.patchValue({ amount: 25000 });
-
-    await component.submit();
-
-    httpMock.expectNone(`${api}/admin/income`);
-    expect(component.form.controls.serviceId.invalid).toBe(true);
-    expect(component.form.controls.staffProfileId.invalid).toBe(true);
   });
 
   it('keeps the kind of an existing entry fixed when editing', async () => {

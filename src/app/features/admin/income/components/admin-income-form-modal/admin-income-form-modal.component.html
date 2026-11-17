@@ -16,14 +16,8 @@
               <small>(el tipo no se puede cambiar)</small>
             </p>
           } @else {
-            <label>
-              <input type="radio" formControlName="kind" value="Service" (change)="onKindChange('Service')" />
-              <span>Servicio realizado</span>
-            </label>
-            <label>
-              <input type="radio" formControlName="kind" value="MembershipSale" (change)="onKindChange('MembershipSale')" />
-              <span>Venta de membresía</span>
-            </label>
+            <!-- ADR-0020 Q18: new service income is charged with a bill; only membership sales are created here. -->
+            <p class="income-modal__kind-fixed">Venta de membresía</p>
           }
         </fieldset>
 
