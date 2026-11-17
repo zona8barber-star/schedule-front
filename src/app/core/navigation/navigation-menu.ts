@@ -68,7 +68,7 @@ export const NAVIGATION_GROUPS: readonly NavGroupDefinition[] = [
       },
       { id: 'customer-memberships', label: 'Mis membresías', route: '/customer/memberships', access: CUSTOMER },
       // ADR-0020 stage 5: the receipts of the customer's bills.
-      { id: 'customer-bills', label: 'Mis comprobantes', route: '/customer/bills', access: CUSTOMER },
+      { id: 'customer-bills', label: 'Mis recibos de caja', route: '/customer/bills', access: CUSTOMER },
       {
         id: 'customer-loyalty',
         label: 'Mis puntos',

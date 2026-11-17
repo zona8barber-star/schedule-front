@@ -435,7 +435,7 @@ export const routes: Routes = [
     data: {
       roles: [ROLE_NAMES.customer],
     },
-    title: 'Mis comprobantes',
+    title: 'Mis recibos de caja',
   },
   {
     path: 'customer/bills/:billId',
@@ -444,7 +444,7 @@ export const routes: Routes = [
     data: {
       roles: [ROLE_NAMES.customer],
     },
-    title: 'Comprobante',
+    title: 'Recibo de caja',
   },
   {
     path: 'customer/reviews',

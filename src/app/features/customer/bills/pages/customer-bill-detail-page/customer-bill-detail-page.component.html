@@ -1,22 +1,22 @@
 <section class="my-memberships">
-  <a class="my-memberships__link" routerLink="/customer/bills">← Mis comprobantes</a>
+  <a class="my-memberships__link" routerLink="/customer/bills">← Mis recibos de caja</a>
 
   <app-api-feedback severity="error" [message]="errorMessage()" />
 
   @if (isLoading()) {
     <article class="my-memberships__panel">
-      <app-page-state kind="loading" message="Cargando comprobante..." />
+      <app-page-state kind="loading" message="Cargando recibo de caja..." />
     </article>
   } @else if (notFound()) {
     <app-not-found-state
-      title="No encontramos este comprobante"
-      message="Es posible que el enlace esté mal escrito o que el comprobante no sea de tu cuenta."
+      title="No encontramos este recibo de caja"
+      message="Es posible que el enlace esté mal escrito o que el recibo de caja no sea de tu cuenta."
       backLink="/customer/bills"
-      backLabel="Volver a mis comprobantes"
+      backLabel="Volver a mis recibos de caja"
     />
   } @else if (bill(); as b) {
     <header class="my-memberships__hero">
-      <p class="my-memberships__eyebrow">Comprobante</p>
+      <p class="my-memberships__eyebrow">Recibo de caja</p>
       <div class="my-memberships__card-header">
         <h1 [class.my-bills__voided]="b.status === 'Voided'">{{ b.number }}</h1>
         <span class="my-memberships__status my-bills__status" [attr.data-status]="b.status" data-testid="bill-status">{{ statusLabels[b.status] }}</span>
@@ -26,11 +26,11 @@
 
     @if (b.status === 'UnderReview') {
       <p class="my-memberships__notice" data-testid="bill-under-review">
-        La barbería está revisando este comprobante. Estos son los valores actuales y pueden cambiar al terminar la revisión.
+        La barbería está revisando este recibo de caja. Estos son los valores actuales y pueden cambiar al terminar la revisión.
       </p>
     } @else if (b.status === 'Voided') {
       <p class="my-memberships__notice my-memberships__notice--blocked" data-testid="bill-voided">
-        Este comprobante fue anulado y no tiene validez.
+        Este recibo de caja fue anulado y no tiene validez.
       </p>
     }
 

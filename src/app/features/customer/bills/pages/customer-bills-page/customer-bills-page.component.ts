@@ -17,7 +17,7 @@ import { PaginatorComponent } from '../../../../../shared/components/paginator/p
 const DATE_TIME = bogotaDateTimeFormat('es-CO', { day: 'numeric', month: 'short', year: 'numeric', hour: 'numeric', minute: '2-digit' });
 
 /**
- * «Mis comprobantes» (ADR-0020 stage 5, P8): the receipts of the signed-in customer's bills, with those of the profiles
+ * «Mis recibos de caja» (ADR-0020 stage 5, P8): the receipts of the signed-in customer's bills, with those of the profiles
  * merged into their own, newest first. Only the number, the date, the total and the payment method; a voided receipt
  * shows «Anulado» and one being corrected «En revisión» (Q23).
  */

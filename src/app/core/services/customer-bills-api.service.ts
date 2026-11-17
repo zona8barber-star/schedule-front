@@ -6,7 +6,7 @@ import { MyBillSummaryView, MyBillView } from '../models/bill.models';
 import { PageQuery, PagedResult } from '../models/paged-result.models';
 import { toHttpParams } from '../utils/list-query.utils';
 
-/** «Mis comprobantes» (ADR-0020 stage 5): read only; the server resolves the owner from the signed-in account. */
+/** «Mis recibos de caja» (ADR-0020 stage 5): read only; the server resolves the owner from the signed-in account. */
 @Injectable({
   providedIn: 'root',
 })

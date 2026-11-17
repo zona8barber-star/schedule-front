@@ -28,7 +28,7 @@ export const NOTIFICATION_CATEGORY_COPY: Record<NotificationCategory, { label: s
   },
   purchases: {
     label: 'Compras',
-    description: 'El comprobante de cada cuenta que pagas en la barbería.',
+    description: 'El recibo de caja de cada cuenta que pagas en la barbería.',
   },
   campaigns: {
     label: 'Campañas',

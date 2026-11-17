@@ -90,12 +90,12 @@ describe('CustomerBillDetailPageComponent', () => {
   it('answers a receipt of someone else like a missing one', async () => {
     const element = await render(billId, (request) => request.flush({}, { status: 404, statusText: 'Not Found' }));
 
-    expect(element.textContent).toContain('No encontramos este comprobante');
+    expect(element.textContent).toContain('No encontramos este recibo de caja');
   });
 
   it('never asks for an id that is not a GUID', async () => {
     const element = await render('abc');
 
-    expect(element.textContent).toContain('No encontramos este comprobante');
+    expect(element.textContent).toContain('No encontramos este recibo de caja');
   });
 });

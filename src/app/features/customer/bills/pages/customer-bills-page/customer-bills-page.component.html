@@ -1,22 +1,22 @@
 <section class="my-memberships">
   <header class="my-memberships__hero">
     <p class="my-memberships__eyebrow">Cuenta</p>
-    <h1>Mis comprobantes</h1>
-    <p>Consulta los comprobantes de lo que pagaste en la barbería: servicios, productos, descuentos y propinas.</p>
+    <h1>Mis recibos de caja</h1>
+    <p>Consulta los recibos de caja de lo que pagaste en la barbería: servicios, productos, descuentos y propinas.</p>
   </header>
 
   <app-api-feedback severity="error" [message]="errorMessage()" />
 
   @if (isLoading()) {
     <article class="my-memberships__panel">
-      <app-page-state kind="loading" message="Cargando comprobantes..." />
+      <app-page-state kind="loading" message="Cargando recibos de caja..." />
     </article>
   } @else if (!bills().length && !errorMessage()) {
     <article class="my-memberships__panel">
       <app-page-state
         kind="empty"
-        title="Aún no tienes comprobantes"
-        message="Cuando pagues en la barbería, tu comprobante aparecerá aquí. Si ya pagaste y no lo ves, solicita vincular tu perfil de cliente."
+        title="Aún no tienes recibos de caja"
+        message="Cuando pagues en la barbería, tu recibo de caja aparecerá aquí. Si ya pagaste y no lo ves, solicita vincular tu perfil de cliente."
       />
       <a class="my-memberships__profile-link" routerLink="/customer/customer-profile">Ir a mi perfil de cliente</a>
     </article>
@@ -48,7 +48,7 @@
       }
     </div>
     <app-paginator
-      label="Paginación de comprobantes"
+      label="Paginación de recibos de caja"
       [page]="page()"
       [pageSize]="pageSize"
       [totalCount]="totalCount()"

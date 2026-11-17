@@ -58,7 +58,7 @@ describe('CustomerBillsPageComponent', () => {
   it('explains how to see the receipts when there are none', async () => {
     const element = await render([]);
 
-    expect(element.textContent).toContain('Aún no tienes comprobantes');
+    expect(element.textContent).toContain('Aún no tienes recibos de caja');
     expect(element.querySelector('a[href="/customer/customer-profile"]')).not.toBeNull();
   });
 });

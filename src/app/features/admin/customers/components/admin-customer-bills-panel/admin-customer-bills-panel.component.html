@@ -1,7 +1,7 @@
 @if (canSeeBills) {
   <article class="loyalty-panel" data-testid="customer-bills">
     <div class="loyalty-panel__header">
-      <h2>Comprobantes</h2>
+      <h2>Recibos de caja</h2>
       @if (totalCount() > 0) {
         <a [routerLink]="['/bills']" [queryParams]="{ tab: 'all', customerId: customerId }" data-testid="customer-bills-all">
           Ver todas ({{ totalCount() }})
@@ -12,7 +12,7 @@
     <app-api-feedback severity="error" [message]="errorMessage()" />
 
     @if (isLoading()) {
-      <p class="loyalty-panel__muted">Cargando comprobantes...</p>
+      <p class="loyalty-panel__muted">Cargando recibos de caja...</p>
     } @else if (!bills().length && !errorMessage()) {
       <p class="loyalty-panel__muted">Este cliente aún no tiene cuentas.</p>
     } @else {
