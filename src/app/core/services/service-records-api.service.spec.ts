@@ -3,7 +3,6 @@ import { provideHttpClient } from '@angular/common/http';
 import { TestBed } from '@angular/core/testing';
 
 import { environment } from '../../../environments/environment';
-import { ServiceRecordView } from '../models/service-record.models';
 import { ServiceRecordsApiService } from './service-records-api.service';
 
 describe('ServiceRecordsApiService', () => {
@@ -23,27 +22,11 @@ describe('ServiceRecordsApiService', () => {
     httpMock.verify();
   });
 
-  it('registers on the staff route with the idempotency key', () => {
-    const request = {
-      appointmentId: null,
-      performedOn: '2026-11-03',
-      customerName: null,
-      generalServiceIds: ['g-1', 'g-2'],
-      notes: null,
-      idempotencyKey: 'key-1',
-    };
-    service.register(request).subscribe();
-    const req = httpMock.expectOne(`${api}/staff/service-records`);
-    expect(req.request.method).toBe('POST');
-    expect(req.request.body).toEqual(request);
-    req.flush([] as ServiceRecordView[]);
-  });
-
-  it('lists the own records one page at a time', () => {
-    service.mine({ page: 5, pageSize: 25 }).subscribe();
-    const req = httpMock.expectOne(`${api}/staff/service-records?page=5&pageSize=25`);
+  it('reads how many records still wait for review', () => {
+    service.pendingCount().subscribe();
+    const req = httpMock.expectOne(`${api}/admin/service-records/pending-count`);
     expect(req.request.method).toBe('GET');
-    req.flush({ items: [] as ServiceRecordView[], page: 5, pageSize: 25, totalCount: 105 });
+    req.flush({ count: 3 });
   });
 
   it('lists the review inbox paginated, by status and the other filters', () => {

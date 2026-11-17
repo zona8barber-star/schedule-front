@@ -8,6 +8,8 @@ import { firstValueFrom } from 'rxjs';
 import { CustomerDetailView, CustomerListItem } from '../../../../../core/models/customer.models';
 import { DEFAULT_PAGE_SIZE } from '../../../../../core/models/paged-result.models';
 import { AdminCustomersApiService } from '../../../../../core/services/admin-customers-api.service';
+import { AuthService } from '../../../../../core/services/auth.service';
+import { ROLE_NAMES } from '../../../../../core/models/auth.models';
 import { getApiErrorMessage } from '../../../../../core/utils/api-error.utils';
 import {
   QueryValue,
@@ -42,6 +44,8 @@ export class AdminCustomersListPageComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   private readonly destroyRef = inject(DestroyRef);
+  /** ADR-0018 D4: points adjusters and payment confirmers search customers; creating them stays with administration. */
+  readonly isAdmin = inject(AuthService).hasRole(ROLE_NAMES.admin);
   private loadSequence = 0;
 
   readonly isLoading = signal(true);

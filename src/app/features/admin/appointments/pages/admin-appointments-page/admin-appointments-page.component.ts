@@ -29,7 +29,7 @@ import {
 } from '../../../../../core/utils/appointment-labels.utils';
 import { getApiErrorMessage } from '../../../../../core/utils/api-error.utils';
 import { formatDateTimeLocal, toUtcIsoString } from '../../../../../core/utils/availability-form.utils';
-import { addDaysToDateKey, bogotaDateTimeFormat, bogotaToday } from '../../../../../core/utils/bogota-date.utils';
+import { addDaysToDateKey, bogotaDateKey, bogotaDateTimeFormat, bogotaToday } from '../../../../../core/utils/bogota-date.utils';
 import {
   QueryValue,
   readDateParam,
@@ -423,6 +423,11 @@ export class AdminAppointmentsPageComponent implements OnInit {
       () => this.adminAppointmentsApiService.markNoShow(appointment.id),
       'Cita marcada como no-show.',
     );
+  }
+
+/** ADR-0018 D2 (SONDA BUG-067): only an appointment of today (Bogotá) or an earlier day can be completed. */
+  canComplete(appointment: AppointmentResponse): boolean {
+    return this.canTransition(appointment) && bogotaDateKey(appointment.startsAtUtc) <= bogotaToday();
   }
 
   canTransition(appointment: AppointmentResponse): boolean {

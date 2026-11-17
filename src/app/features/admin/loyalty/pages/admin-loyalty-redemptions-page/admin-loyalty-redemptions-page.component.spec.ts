@@ -124,6 +124,17 @@ describe('AdminLoyaltyRedemptionsPageComponent', () => {
     expect(component.successMessage()).toBe('Canje aprobado.');
   });
 
+  // ADR-0018 D11: an administrator who approved or delivered their own redemption is flagged.
+  it('marks a self-approved redemption «Autoaprobado» and leaves the others unmarked', async () => {
+    await render([PERMISSION_CODES.loyaltyRedemptionsApprove]);
+    httpMock.expectOne(requestedUrl).flush(pageOf([{ ...approvedService, isSelfApproved: true }, requested]));
+    await settle();
+
+    const badges = (fixture.nativeElement as HTMLElement).querySelectorAll('[data-testid="self-approved"]');
+    expect(badges.length).toBe(1);
+    expect(badges[0].textContent?.trim()).toBe('Autoaprobado');
+  });
+
   it('requires a reason to reject and sends it', async () => {
     await render([PERMISSION_CODES.loyaltyRedemptionsApprove]);
     httpMock.expectOne(requestedUrl).flush(pageOf([requested]));

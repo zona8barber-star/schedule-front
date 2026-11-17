@@ -11,7 +11,7 @@ describe('AdminRolesListPageComponent', () => {
   let httpMock: HttpTestingController;
 
   const permissions: PermissionView[] = [
-    { id: 'perm-1', code: 'sales.register', description: 'Registrar ventas' },
+    { id: 'perm-1', code: 'inventory.view', description: 'Ver existencias, costos y ganancia de productos' },
   ];
 
   const roles: RoleView[] = [

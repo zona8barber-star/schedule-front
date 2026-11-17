@@ -1,0 +1,33 @@
+@if (canSeeBills) {
+  <article class="loyalty-panel" data-testid="customer-bills">
+    <div class="loyalty-panel__header">
+      <h2>Recibos de caja</h2>
+      @if (totalCount() > 0) {
+        <a [routerLink]="['/bills']" [queryParams]="{ tab: 'all', customerId: customerId }" data-testid="customer-bills-all">
+          Ver todas ({{ totalCount() }})
+        </a>
+      }
+    </div>
+
+    <app-api-feedback severity="error" [message]="errorMessage()" />
+
+    @if (isLoading()) {
+      <p class="loyalty-panel__muted">Cargando recibos de caja...</p>
+    } @else if (!bills().length && !errorMessage()) {
+      <p class="loyalty-panel__muted">Este cliente aún no tiene cuentas.</p>
+    } @else {
+      <ul class="loyalty-panel__list">
+        @for (bill of bills(); track bill.id) {
+          <li [attr.data-bill]="bill.id">
+            <a [routerLink]="['/bills', bill.id]">{{ bill.number ?? 'Cuenta abierta' }}</a>
+            · {{ bill.serviceDate }} · {{ formatCop(bill.total) }}
+            @if (bill.paymentMethodName) {
+              · {{ bill.paymentMethodName }}
+            }
+            · <span class="loyalty-panel__muted">{{ statusLabels[bill.status] }}</span>
+          </li>
+        }
+      </ul>
+    }
+  </article>
+}

@@ -22,35 +22,36 @@ const anonymous: NavContext = {
   isAuthenticated: false,
   roles: [],
   permissions: [],
-  canRegisterServiceRecords: false,
+  hasPendingServiceRecords: false,
 };
 
 const customer: NavContext = {
   isAuthenticated: true,
   roles: [ROLE_NAMES.customer],
   permissions: [],
-  canRegisterServiceRecords: false,
+  hasPendingServiceRecords: false,
 };
 
 const staff: NavContext = {
   isAuthenticated: true,
   roles: [ROLE_NAMES.staff],
-  permissions: [PERMISSION_CODES.serviceRecordsRegister],
-  canRegisterServiceRecords: true,
+  // Staff's defaults since ADR-0020 (Q16); service-records.register left it at stage 6.
+  permissions: [PERMISSION_CODES.billsOpen, PERMISSION_CODES.billsClose, PERMISSION_CODES.billsCharge],
+  hasPendingServiceRecords: false,
 };
 
 const fullAdmin: NavContext = {
   isAuthenticated: true,
   roles: [ROLE_NAMES.admin],
   permissions: ALL_PERMISSIONS,
-  canRegisterServiceRecords: false,
+  hasPendingServiceRecords: true,
 };
 
 const adminWhoIsAlsoProfessional: NavContext = {
   isAuthenticated: true,
   roles: [ROLE_NAMES.admin, ROLE_NAMES.staff],
   permissions: ALL_PERMISSIONS,
-  canRegisterServiceRecords: true,
+  hasPendingServiceRecords: true,
 };
 
 // A custom role with no system role: only what its permissions open.
@@ -58,7 +59,7 @@ const receptionist: NavContext = {
   isAuthenticated: true,
   roles: ['Recepción'],
   permissions: [PERMISSION_CODES.serviceRecordsApprove, PERMISSION_CODES.loyaltyRedemptionsDeliver],
-  canRegisterServiceRecords: false,
+  hasPendingServiceRecords: true,
 };
 
 function itemIdsByGroup(menu: NavigationMenu): Record<string, string[]> {
@@ -84,7 +85,7 @@ describe('buildNavigation', () => {
 
     expect(itemIdsByGroup(menu)).toEqual({
       explore: ['home', 'booking', 'staff-directory', 'product-catalog'],
-      customer: ['customer-appointments', 'customer-memberships', 'customer-loyalty', 'customer-reviews'],
+      customer: ['customer-appointments', 'customer-memberships', 'customer-bills', 'customer-loyalty', 'customer-reviews'],
     });
     expect(menu.accountItems.map((item) => item.id)).toEqual([
       'customer-profile',
@@ -104,27 +105,27 @@ describe('buildNavigation', () => {
     const menu = buildNavigation(staff);
 
     expect(itemIdsByGroup(menu)).toEqual({
-      'my-work': ['staff-appointments', 'staff-availability', 'staff-service-records'],
+      'my-work': ['staff-appointments', 'staff-availability', 'bills'],
     });
     expect(menu.accountItems.map((item) => item.id)).toEqual(['staff-profile', 'account-notifications']);
     expect(menu.layout).toBe('sidebar');
-    expect(menu.shortcuts.map((shortcut) => shortcut.id)).toEqual([
-      'home',
-      'staff-appointments',
-      'staff-service-records',
-    ]);
+    // ADR-0020: «Cuentas» takes the shortcut the registration of services had.
+    expect(menu.shortcuts.map((shortcut) => shortcut.id)).toEqual(['home', 'staff-appointments', 'bills']);
   });
 
-  it('hides "Servicios realizados" from a professional without an active professional profile', () => {
-    const menu = buildNavigation({ ...staff, canRegisterServiceRecords: false });
+  it('hides the old tray of services performed once no record waits for review (ADR-0020 stage 6)', () => {
+    const menu = buildNavigation({ ...fullAdmin, hasPendingServiceRecords: false });
 
-    expect(itemIdsByGroup(menu)['my-work']).toEqual(['staff-appointments', 'staff-availability']);
+    expect(itemIdsByGroup(menu)['operation']).toEqual(['admin-appointments', 'admin-staff']);
+    expect(menu.shortcuts.map((shortcut) => shortcut.id)).not.toContain('admin-service-records');
+    expect(allMenuItems(menu).map((item) => item.route)).not.toContain('/staff/service-records');
   });
 
   it('gives an administrator with every permission all the back-office groups, in order', () => {
     const menu = buildNavigation(fullAdmin);
 
     expect(menu.groups.map((group) => group.label)).toEqual([
+      'Mi trabajo',
       'Operación',
       'Clientes',
       'Catálogos',
@@ -134,6 +135,7 @@ describe('buildNavigation', () => {
       'Administración',
     ]);
     expect(itemIdsByGroup(menu)).toEqual({
+      'my-work': ['bills'],
       operation: ['admin-appointments', 'admin-service-records', 'admin-staff'],
       customers: ['admin-customers', 'admin-customer-claims'],
       catalogs: [
@@ -142,10 +144,11 @@ describe('buildNavigation', () => {
         'admin-services',
         'admin-product-categories',
         'admin-products',
+        'admin-inventory',
         'admin-membership-plans',
       ],
       loyalty: ['admin-loyalty-settings', 'admin-loyalty-rewards', 'admin-loyalty-redemptions'],
-      finance: ['admin-income', 'admin-expenses', 'admin-reports'],
+      finance: ['admin-income', 'admin-payment-methods', 'admin-expenses', 'admin-reports'],
       content: ['admin-landing', 'admin-banners', 'admin-ticker', 'admin-business-hours', 'admin-notifications'],
       administration: ['admin-users', 'admin-roles'],
     });
@@ -153,9 +156,9 @@ describe('buildNavigation', () => {
     expect(menu.layout).toBe('sidebar');
     expect(menu.shortcuts.map((shortcut) => shortcut.id)).toEqual([
       'home',
+      'bills',
       'admin-appointments',
       'admin-service-records',
-      'admin-customers',
     ]);
   });
 
@@ -172,24 +175,14 @@ describe('buildNavigation', () => {
       'content',
       'administration',
     ]);
-    expect(itemIdsByGroup(menu)['my-work']).toEqual([
-      'staff-appointments',
-      'staff-availability',
-      'staff-service-records',
-    ]);
+    expect(itemIdsByGroup(menu)['my-work']).toEqual(['staff-appointments', 'staff-availability', 'bills']);
     expect(menu.accountItems.map((item) => item.id)).toEqual(['staff-profile', 'account-notifications']);
     expect(menu.shortcuts.map((shortcut) => shortcut.id)).toEqual([
       'home',
       'staff-appointments',
-      'staff-service-records',
+      'bills',
       'admin-appointments',
     ]);
-  });
-
-  it('shows "Servicios realizados" to an administrator with a professional profile but without the Staff role', () => {
-    const menu = buildNavigation({ ...fullAdmin, canRegisterServiceRecords: true });
-
-    expect(itemIdsByGroup(menu)['my-work']).toEqual(['staff-service-records']);
   });
 
   it('gives a custom role only the items of its permissions and hides the empty groups', () => {
@@ -203,6 +196,16 @@ describe('buildNavigation', () => {
     expect(menu.layout).toBe('sidebar');
     expect(menu.shortcuts.map((shortcut) => shortcut.id)).toEqual(['home', 'admin-service-records']);
   });
+
+  // ADR-0018 D4 (SONDA BUG-077): either delegated permission opens «Clientes» without the Admin role.
+  it.each([PERMISSION_CODES.loyaltyPointsAdjust, PERMISSION_CODES.membershipPaymentsConfirm])(
+    'opens «Clientes» to a custom role with %s',
+    (permission) => {
+      const menu = buildNavigation({ isAuthenticated: true, roles: ['Caja'], permissions: [permission], hasPendingServiceRecords: false });
+
+      expect(itemIdsByGroup(menu)).toEqual({ customers: ['admin-customers'] });
+    },
+  );
 
   it('ignores permissions and roles of a session that is not authenticated', () => {
     const menu = buildNavigation({ ...fullAdmin, isAuthenticated: false });
@@ -224,7 +227,12 @@ describe('resolveActiveItemId', () => {
     ['/admin/expenses/fixed', 'admin-expenses'],
     ['/admin/staff/12/availability', 'admin-staff'],
     ['/admin/products', 'admin-products'],
+    ['/admin/inventory?lowStock=true', 'admin-inventory'],
+    ['/admin/inventory/6f9619ff-8b86-4d11-b42d-00c04fc964ff', 'admin-inventory'],
     ['/admin/product-categories', 'admin-product-categories'],
+    ['/bills', 'bills'],
+    ['/bills/6f9619ff-8b86-4d11-b42d-00c04fc964ff', 'bills'],
+    ['/admin/payment-methods', 'admin-payment-methods'],
     ['/staff/profile', 'staff-profile'],
     ['/staff/appointments/', 'staff-appointments'],
     ['/account/notifications#top', 'account-notifications'],
@@ -240,6 +248,7 @@ describe('resolveActiveItemId', () => {
     ['/productos', 'product-catalog'],
     ['/productos/ceras001/cera0001', 'product-catalog'],
     ['/customer/memberships/77', 'customer-memberships'],
+    ['/customer/bills/6f9619ff-8b86-4d11-b42d-00c04fc964ff', 'customer-bills'],
     ['/customer/profile', 'customer-profile'],
   ])('resolves %s for a customer', (url, expected) => {
     expect(resolveActiveItemId(customerItems, url)).toBe(expected);

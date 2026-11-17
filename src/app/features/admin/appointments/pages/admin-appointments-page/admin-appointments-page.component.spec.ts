@@ -177,6 +177,13 @@ describe('AdminAppointmentsPageComponent (service and duration)', () => {
     expect(body).toEqual(expect.objectContaining({ generalServiceId: 'g-beard', durationMinutes: 25 }));
   });
 
+  // ADR-0018 D2 (SONDA BUG-067): administration follows the same rule as the professional.
+  it('lets an appointment be completed only on its day or later', () => {
+    expect(component.canComplete(appointment)).toBe(false); // tomorrow
+    expect(component.canComplete({ ...appointment, startsAtUtc: '2026-11-06T13:00:00Z' })).toBe(true);
+    expect(component.canComplete({ ...appointment, startsAtUtc: '2026-11-01T13:00:00Z' })).toBe(true);
+  });
+
   it('asks the server for today first, soonest first, on the first page', () => {
     expect(api.list).toHaveBeenLastCalledWith(
       expect.objectContaining({ from: '2026-11-06', to: '2026-11-06', sort: 'Asc', scope: 'Agenda', page: 1, pageSize: 25 }),

@@ -116,6 +116,44 @@ describe('AdminIncomeListPageComponent', () => {
     expect(fixture.componentInstance.total()).toBe(900000);
   });
 
+  // ADR-0018 D1 (SONDA BUG-090): an income of a service an Admin confirmed for themselves says so.
+  it('marks the income of a self-approved service as «Autoaprobado»', async () => {
+    expectIncome().flush(
+      incomePage({
+        items: [
+          { ...entries[0], serviceRecordId: 'r-1', isSelfApproved: true },
+          { ...entries[0], id: 'i-3', serviceRecordId: 'r-2', isSelfApproved: false },
+        ],
+      }),
+    );
+    await flushMicrotasks();
+    fixture.detectChanges();
+
+    const rows = fixture.nativeElement.querySelectorAll('tbody tr') as NodeListOf<HTMLTableRowElement>;
+    expect(rows[0].querySelector('[data-testid="self-approved"]')?.textContent?.trim()).toBe('Autoaprobado');
+    expect(rows[1].querySelector('[data-testid="self-approved"]')).toBeNull();
+  });
+
+  // ADR-0020: bill incomes are managed from the bill; a counter-entry (unapproved bill) is marked as such.
+  it('links the incomes of a bill to it, without edit or delete, and marks its counter-entry', async () => {
+    expectIncome().flush(
+      incomePage({
+        items: [
+          { ...entries[0], billId: 'b-1', billNumber: 'C-000001' },
+          { ...entries[0], id: 'i-4', amount: -25000, billId: 'b-1', billNumber: 'C-000001', reversesIncomeEntryId: 'i-1' },
+        ],
+      }),
+    );
+    await flushMicrotasks();
+    fixture.detectChanges();
+
+    const rows = fixture.nativeElement.querySelectorAll('tbody tr') as NodeListOf<HTMLTableRowElement>;
+    expect(rows[0].textContent).toContain('Cuenta C-000001');
+    expect(rows[0].querySelector('[data-testid="counter-entry"]')).toBeNull();
+    expect(rows[1].querySelector('[data-testid="counter-entry"]')?.textContent?.trim()).toBe('Contrapartida');
+    expect(Array.from(rows).some((row) => row.textContent!.includes('Editar'))).toBe(false);
+  });
+
   it('keeps the range and the filters in the URL and goes back to the first page', async () => {
     expectIncome().flush(incomePage({ totalCount: 45 }));
     await flushMicrotasks();

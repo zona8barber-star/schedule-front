@@ -4,13 +4,19 @@ import { authGuard } from './core/guards/auth.guard';
 import { guestGuard } from './core/guards/guest.guard';
 import { permissionGuard } from './core/guards/permission.guard';
 import { roleGuard } from './core/guards/role.guard';
-import { PERMISSION_CODES, ROLE_NAMES } from './core/models/auth.models';
+import { BILLS_ACCESS_PERMISSIONS, PERMISSION_CODES, ROLE_NAMES } from './core/models/auth.models';
 import { brandTitleResolver } from './core/services/public-branding.store';
 import { customerClaimsQueryGuard } from './features/admin/customer-claims/customer-claims-query.guard';
 
-const loadScaffoldSection = () =>
-  import('./shared/components/scaffold-section/scaffold-section.component').then(
-    (module) => module.ScaffoldSectionComponent,
+const loadBillsPage = () =>
+  import('./features/bills/pages/bills-page/bills-page.component').then((module) => module.BillsPageComponent);
+
+const loadBillDetailPage = () =>
+  import('./features/bills/pages/bill-detail-page/bill-detail-page.component').then((module) => module.BillDetailPageComponent);
+
+const loadAdminPaymentMethodsPage = () =>
+  import('./features/admin/payment-methods/pages/admin-payment-methods-page/admin-payment-methods-page.component').then(
+    (module) => module.AdminPaymentMethodsPageComponent,
   );
 
 const loadAdminStaffListPage = () =>
@@ -48,10 +54,15 @@ const loadAdminServiceRecordsPage = () =>
     './features/admin/service-records/pages/admin-service-records-page/admin-service-records-page.component'
   ).then((module) => module.AdminServiceRecordsPageComponent);
 
-const loadStaffServiceRecordsPage = () =>
-  import(
-    './features/staff/service-records/pages/staff-service-records-page/staff-service-records-page.component'
-  ).then((module) => module.StaffServiceRecordsPageComponent);
+const loadCustomerBillsPage = () =>
+  import('./features/customer/bills/pages/customer-bills-page/customer-bills-page.component').then(
+    (module) => module.CustomerBillsPageComponent,
+  );
+
+const loadCustomerBillDetailPage = () =>
+  import('./features/customer/bills/pages/customer-bill-detail-page/customer-bill-detail-page.component').then(
+    (module) => module.CustomerBillDetailPageComponent,
+  );
 
 const loadAdminLoyaltyRewardsPage = () =>
   import('./features/admin/loyalty/pages/admin-loyalty-rewards-page/admin-loyalty-rewards-page.component').then(
@@ -91,6 +102,16 @@ const loadAdminProductCategoriesPage = () =>
 const loadAdminProductsPage = () =>
   import('./features/admin/product-catalog/pages/admin-products-page/admin-products-page.component').then(
     (module) => module.AdminProductsPageComponent,
+  );
+
+const loadAdminInventoryPage = () =>
+  import('./features/admin/inventory/pages/admin-inventory-page/admin-inventory-page.component').then(
+    (module) => module.AdminInventoryPageComponent,
+  );
+
+const loadAdminInventoryProductPage = () =>
+  import('./features/admin/inventory/pages/admin-inventory-product-page/admin-inventory-product-page.component').then(
+    (module) => module.AdminInventoryProductPageComponent,
   );
 
 const loadPublicProductCategoriesPage = () =>
@@ -248,6 +269,11 @@ const loadNotificationSettingsPage = () =>
     './features/account/notifications/pages/notification-settings-page/notification-settings-page.component'
   ).then((module) => module.NotificationSettingsPageComponent);
 
+const loadNotificationHistoryPage = () =>
+  import(
+    './features/account/notifications/pages/notification-history-page/notification-history-page.component'
+  ).then((module) => module.NotificationHistoryPageComponent);
+
 const loadAdminNotificationsPage = () =>
   import(
     './features/admin/notifications/pages/admin-notifications-page/admin-notifications-page.component'
@@ -289,12 +315,10 @@ export const routes: Routes = [
     title: brandTitleResolver,
   },
   {
+    // ADR-0018 D6 (SONDA BUG-055): the provisional public area is gone; old links land on the landing.
     path: 'public',
-    loadComponent: loadScaffoldSection,
-    data: {
-      title: 'Área pública',
-      description: 'Explora la landing, los perfiles profesionales y su disponibilidad.',
-    },
+    pathMatch: 'full',
+    redirectTo: '',
   },
   {
     path: 'auth',
@@ -404,6 +428,25 @@ export const routes: Routes = [
     title: 'Mi membresía',
   },
   {
+    // ADR-0020 stage 5 (P8, Q23): the customer's receipts, read only.
+    path: 'customer/bills',
+    canActivate: [authGuard, roleGuard],
+    loadComponent: loadCustomerBillsPage,
+    data: {
+      roles: [ROLE_NAMES.customer],
+    },
+    title: 'Mis recibos de caja',
+  },
+  {
+    path: 'customer/bills/:billId',
+    canActivate: [authGuard, roleGuard],
+    loadComponent: loadCustomerBillDetailPage,
+    data: {
+      roles: [ROLE_NAMES.customer],
+    },
+    title: 'Recibo de caja',
+  },
+  {
     path: 'customer/reviews',
     canActivate: [authGuard, roleGuard],
     loadComponent: loadCustomerReviewsPage,
@@ -431,14 +474,30 @@ export const routes: Routes = [
     title: 'Mi disponibilidad',
   },
   {
-    // By permission, not by role: the API checks service-records.register and the user's own professional profile.
+    // ADR-0020 stage 6: the registration of services performed was retired by the bills; an old link lands there.
     path: 'staff/service-records',
+    redirectTo: 'bills',
+    pathMatch: 'full',
+  },
+  {
+    // ADR-0020: by permission, not by role. The API checks each action (open, close, charge, discount, manage) again;
+    // approving and voiding are critical and checked against the database.
+    path: 'bills',
     canActivate: [authGuard, permissionGuard],
-    loadComponent: loadStaffServiceRecordsPage,
+    loadComponent: loadBillsPage,
     data: {
-      permissions: [PERMISSION_CODES.serviceRecordsRegister],
+      permissions: [...BILLS_ACCESS_PERMISSIONS],
     },
-    title: 'Servicios realizados',
+    title: 'Cuentas',
+  },
+  {
+    path: 'bills/:billId',
+    canActivate: [authGuard, permissionGuard],
+    loadComponent: loadBillDetailPage,
+    data: {
+      permissions: [...BILLS_ACCESS_PERMISSIONS],
+    },
+    title: 'Cuenta',
   },
   {
     path: 'staff/appointments',
@@ -557,20 +616,50 @@ export const routes: Routes = [
     title: 'Productos',
   },
   {
-    path: 'admin/customers',
+    path: 'admin/payment-methods',
     canActivate: [authGuard, roleGuard],
-    loadComponent: loadAdminCustomersListPage,
+    loadComponent: loadAdminPaymentMethodsPage,
     data: {
       roles: [ROLE_NAMES.admin],
+    },
+    title: 'Métodos de pago',
+  },
+  {
+    path: 'admin/inventory',
+    canActivate: [authGuard, permissionGuard],
+    loadComponent: loadAdminInventoryPage,
+    data: {
+      // ADR-0020: any inventory permission opens it; the API checks them against the database. Admin holds all three.
+      permissions: [PERMISSION_CODES.inventoryView, PERMISSION_CODES.inventoryReceive, PERMISSION_CODES.inventoryAdjust],
+    },
+    title: 'Inventario',
+  },
+  {
+    path: 'admin/inventory/:productId',
+    canActivate: [authGuard, permissionGuard],
+    loadComponent: loadAdminInventoryProductPage,
+    data: {
+      permissions: [PERMISSION_CODES.inventoryView, PERMISSION_CODES.inventoryReceive, PERMISSION_CODES.inventoryAdjust],
+    },
+    title: 'Movimientos de inventario',
+  },
+  {
+    path: 'admin/customers',
+    canActivate: [authGuard, permissionGuard],
+    loadComponent: loadAdminCustomersListPage,
+    data: {
+      // ADR-0018 D4 (SONDA BUG-077): either delegated permission is enough; the API checks both against the database.
+      permissions: [PERMISSION_CODES.loyaltyPointsAdjust, PERMISSION_CODES.membershipPaymentsConfirm],
     },
     title: 'Clientes',
   },
   {
     path: 'admin/customers/:customerId',
-    canActivate: [authGuard, roleGuard],
+    canActivate: [authGuard, permissionGuard],
     loadComponent: loadAdminCustomerDetailPage,
     data: {
-      roles: [ROLE_NAMES.admin],
+      // ADR-0018 D4 (SONDA BUG-077): either delegated permission is enough; the API checks both against the database.
+      permissions: [PERMISSION_CODES.loyaltyPointsAdjust, PERMISSION_CODES.membershipPaymentsConfirm],
     },
     title: 'Cliente',
   },
@@ -637,10 +726,11 @@ export const routes: Routes = [
   },
   {
     path: 'admin/memberships/:membershipId',
-    canActivate: [authGuard, roleGuard],
+    canActivate: [authGuard, permissionGuard],
     loadComponent: loadAdminMembershipDetailPage,
     data: {
-      roles: [ROLE_NAMES.admin],
+      // ADR-0018 D4 (SONDA BUG-077): either delegated permission is enough; the API checks both against the database.
+      permissions: [PERMISSION_CODES.loyaltyPointsAdjust, PERMISSION_CODES.membershipPaymentsConfirm],
     },
     title: 'Membresía',
   },
@@ -793,6 +883,12 @@ export const routes: Routes = [
     canActivate: [authGuard],
     loadComponent: loadNotificationSettingsPage,
     title: 'Notificaciones',
+  },
+  {
+    path: 'account/notifications/history',
+    canActivate: [authGuard],
+    loadComponent: loadNotificationHistoryPage,
+    title: 'Historial de notificaciones',
   },
   {
     path: 'media',

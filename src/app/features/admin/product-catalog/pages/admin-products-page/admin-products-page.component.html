@@ -15,6 +15,13 @@
 
   <app-api-feedback severity="error" [message]="errorMessage()" />
 
+  @if (lowStockCount() > 0) {
+    <p class="catalog__state" role="status" data-testid="products-low-stock">
+      {{ lowStockCount() }} {{ lowStockCount() === 1 ? 'producto tiene' : 'productos tienen' }} stock bajo.
+      <a routerLink="/admin/inventory" [queryParams]="{ lowStock: 'true' }">Ver en el inventario</a>
+    </p>
+  }
+
   <form class="catalog__filters" role="search" (submit)="$event.preventDefault(); onSearch(searchInput.value)">
     <label class="catalog__filter">
       <span>Buscar</span>

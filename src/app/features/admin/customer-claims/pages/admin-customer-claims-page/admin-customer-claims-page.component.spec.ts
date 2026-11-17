@@ -68,6 +68,25 @@ describe('AdminCustomerClaimsPageComponent (pagination and URL state)', () => {
     await open();
   });
 
+  // ADR-0018 D11: a claim an administrator approved from their own account is flagged.
+  it('marks a self-approved claim «Autoaprobado»', async () => {
+    const decided = (id: string, isSelfApproved: boolean) =>
+      ({
+        ...claim(id),
+        status: 'Approved',
+        approvedCustomerName: 'Carla',
+        decidedAt: '2026-11-15T15:00:00Z',
+        decidedByName: 'Admin',
+        isSelfApproved,
+      }) as CustomerClaimView;
+    list.mockReturnValue(of({ items: [decided('a', true), decided('b', false)], page: 1, pageSize: PAGE_SIZE, totalCount: 2 }));
+    await open();
+
+    const badges = (fixture.nativeElement as HTMLElement).querySelectorAll('[data-testid="self-approved"]');
+    expect(badges.length).toBe(1);
+    expect(badges[0].textContent?.trim()).toBe('Autoaprobado');
+  });
+
   it('asks for the first page of pending claims and shows the paginator', () => {
     expect(list).toHaveBeenLastCalledWith('Pending', { page: 1, pageSize: PAGE_SIZE });
     expect(component.totalCount()).toBe(TOTAL);

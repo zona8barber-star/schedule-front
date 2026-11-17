@@ -20,6 +20,8 @@ import { AdminCustomersApiService } from '../../../../../core/services/admin-cus
 import { AdminMembershipPlansApiService } from '../../../../../core/services/admin-membership-plans-api.service';
 import { AdminMembershipsApiService } from '../../../../../core/services/admin-memberships-api.service';
 import { ToastService } from '../../../../../core/services/toast.service';
+import { AuthService } from '../../../../../core/services/auth.service';
+import { ROLE_NAMES } from '../../../../../core/models/auth.models';
 import { getApiErrorMessage } from '../../../../../core/utils/api-error.utils';
 import {
   QueryValue,
@@ -33,6 +35,7 @@ import { ApiFeedbackComponent } from '../../../../../shared/components/api-feedb
 import { PageStateComponent } from '../../../../../shared/components/page-state/page-state.component';
 import { PaginatorComponent } from '../../../../../shared/components/paginator/paginator.component';
 import { AdminCustomerFormModalComponent } from '../../components/admin-customer-form-modal/admin-customer-form-modal.component';
+import { AdminCustomerBillsPanelComponent } from '../../components/admin-customer-bills-panel/admin-customer-bills-panel.component';
 import { AdminCustomerLoyaltyPanelComponent } from '../../components/admin-customer-loyalty-panel/admin-customer-loyalty-panel.component';
 import { AdminCustomerLinkAccountModalComponent } from '../../components/admin-customer-link-account-modal/admin-customer-link-account-modal.component';
 import { AdminCustomerMergeModalComponent } from '../../components/admin-customer-merge-modal/admin-customer-merge-modal.component';
@@ -64,6 +67,7 @@ const EVENT_LABELS: Record<CustomerEventType, string> = {
     AdminCustomerUnlinkAccountModalComponent,
     AdminCustomerMergeModalComponent,
     AdminCustomerLoyaltyPanelComponent,
+    AdminCustomerBillsPanelComponent,
     AdminMembershipSellModalComponent,
     DecimalPipe,
     PaginatorComponent,
@@ -80,6 +84,8 @@ export class AdminCustomerDetailPageComponent implements OnInit {
   private membershipsSequence = 0;
   private readonly router = inject(Router);
   private readonly toastService = inject(ToastService);
+  /** ADR-0018 D4: points adjusters and payment confirmers see the customer; editing it stays with administration. */
+  readonly isAdmin = inject(AuthService).hasRole(ROLE_NAMES.admin);
 
   readonly membershipStatusLabels = MEMBERSHIP_STATUS_LABELS;
   readonly memberships = signal<CustomerMembershipSummaryView[]>([]);
@@ -119,9 +125,11 @@ export class AdminCustomerDetailPageComponent implements OnInit {
       }
     });
 
-    void firstValueFrom(this.plansApi.list())
-      .then((plans) => this.plans.set(plans))
-      .catch(() => this.plans.set([]));
+    if (this.isAdmin) {
+      void firstValueFrom(this.plansApi.list())
+        .then((plans) => this.plans.set(plans))
+        .catch(() => this.plans.set([]));
+    }
   }
 
   onMembershipFilterChange(patch: Record<string, QueryValue>): void {

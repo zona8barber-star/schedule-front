@@ -48,14 +48,24 @@ describe('AuthService permissions', () => {
   it('mirrors the backend permission catalog', () => {
     expect(Object.values(PERMISSION_CODES).sort()).toEqual(
       [
+        'bills.approve',
+        'bills.charge',
+        'bills.close',
+        'bills.discount',
+        'bills.manage',
+        'bills.open',
+        'bills.unapprove',
+        'bills.void',
         'customers.claims.approve',
+        'inventory.adjust',
+        'inventory.receive',
+        'inventory.view',
         'loyalty.points.adjust',
         'loyalty.redemptions.approve',
         'loyalty.redemptions.deliver',
         'loyalty.rewards.manage',
         'loyalty.settings.manage',
         'memberships.payments.confirm',
-        'sales.register',
         'service-records.approve',
         'service-records.register',
       ].sort(),
@@ -100,7 +110,7 @@ describe('AuthService permissions', () => {
     const service = await loginWith({ permissions: undefined as unknown as string[] });
 
     expect(service.permissions()).toEqual([]);
-    expect(service.hasPermission(PERMISSION_CODES.salesRegister)).toBe(false);
+    expect(service.hasPermission(PERMISSION_CODES.billsOpen)).toBe(false);
   });
 
   it('drops the permissions on logout', async () => {

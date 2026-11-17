@@ -9,7 +9,7 @@ import { provideServiceWorker } from '@angular/service-worker';
 import { AuthUserResponse, PERMISSION_CODES, ROLE_NAMES } from '../../models/auth.models';
 import { NavigationService } from '../../navigation/navigation.service';
 import { AuthService } from '../../services/auth.service';
-import { ServiceRecordEligibilityService } from '../../services/service-record-eligibility.service';
+import { ServiceRecordsPendingService } from '../../services/service-records-pending.service';
 import { AppShellComponent } from './app-shell.component';
 
 @Component({ template: '<p>página</p>' })
@@ -65,7 +65,7 @@ describe('AppShellComponent navigation', () => {
   let element: HTMLElement;
   let router: Router;
   let auth: FakeAuthService;
-  let canRegister: ReturnType<typeof signal<boolean>>;
+  let hasPending: ReturnType<typeof signal<boolean>>;
 
   beforeAll(() => {
     globalThis.ResizeObserver = class {
@@ -92,7 +92,7 @@ describe('AppShellComponent navigation', () => {
 
   beforeEach(async () => {
     auth = new FakeAuthService();
-    canRegister = signal(false);
+    hasPending = signal(false);
 
     await TestBed.configureTestingModule({
       imports: [AppShellComponent],
@@ -102,7 +102,7 @@ describe('AppShellComponent navigation', () => {
         provideHttpClientTesting(),
         provideServiceWorker('ngsw-worker.js', { enabled: false }),
         { provide: AuthService, useValue: auth },
-        { provide: ServiceRecordEligibilityService, useValue: { canRegister: canRegister.asReadonly() } },
+        { provide: ServiceRecordsPendingService, useValue: { hasPending: hasPending.asReadonly() } },
       ],
     }).compileComponents();
 
@@ -149,7 +149,9 @@ describe('AppShellComponent navigation', () => {
 
     const side = sidebar()!;
     const headings = Array.from(side.querySelectorAll('.nav-menu__toggle')).map((button) => button.textContent!.trim());
+    // ADR-0020: «Cuentas» (Mi trabajo) opens with any bills permission, and Admin holds all of them.
     expect(headings).toEqual([
+      'Mi trabajo',
       'Operación',
       'Clientes',
       'Catálogos',
@@ -191,14 +193,14 @@ describe('AppShellComponent navigation', () => {
     auth.currentUser.set(
       user([ROLE_NAMES.admin, ROLE_NAMES.staff], Object.values(PERMISSION_CODES)),
     );
-    canRegister.set(true);
     await renderAt('/staff/appointments');
 
     const headings = Array.from(sidebar()!.querySelectorAll('.nav-menu__toggle')).map((button) =>
       button.textContent!.trim(),
     );
     expect(headings[0]).toBe('Mi trabajo');
-    expect(sidebar()!.querySelector('[data-nav-item="staff-service-records"]')).not.toBeNull();
+    // ADR-0020 stage 6: the old registration of services performed is gone from the menu.
+    expect(sidebar()!.querySelector('[data-nav-item="staff-service-records"]')).toBeNull();
     expect(Array.from(menuCurrentItems()).map((link) => link.getAttribute('data-nav-item'))).toEqual([
       'staff-appointments',
     ]);
@@ -206,6 +208,7 @@ describe('AppShellComponent navigation', () => {
 
   it('shows a custom role only the groups its permissions open', async () => {
     auth.currentUser.set(user(['Recepción'], [PERMISSION_CODES.serviceRecordsApprove]));
+    hasPending.set(true);
     await renderAt('/admin/income');
 
     const headings = Array.from(sidebar()!.querySelectorAll('.nav-menu__toggle')).map((button) =>
@@ -236,6 +239,7 @@ describe('AppShellComponent navigation', () => {
     expect(dropdownLinks).toEqual([
       'customer-appointments',
       'customer-memberships',
+      'customer-bills',
       'customer-loyalty',
       'customer-reviews',
     ]);
@@ -335,7 +339,7 @@ describe('AppShellComponent navigation', () => {
   });
 
   it('signs out from the account menu', async () => {
-    auth.currentUser.set(user([ROLE_NAMES.staff], [PERMISSION_CODES.serviceRecordsRegister]));
+    auth.currentUser.set(user([ROLE_NAMES.staff], [PERMISSION_CODES.billsOpen]));
     await renderAt('/staff/profile');
 
     const accountToggle = element.querySelector<HTMLButtonElement>('[data-testid="account-toggle"]')!;

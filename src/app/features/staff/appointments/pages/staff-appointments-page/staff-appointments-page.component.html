@@ -24,9 +24,9 @@
       <button class="agenda-page__btn-primary" type="button" (click)="openCreateModal()">
         + Nueva cita
       </button>
-      @if (canRegisterServices()) {
-        <!-- Completed appointments leave the agenda; their services are registered from this page. -->
-        <a class="agenda-page__btn-ghost agenda-page__link" routerLink="/staff/service-records">Servicios realizados</a>
+      @if (canUseBills()) {
+        <!-- ADR-0020: completing an appointment opens its bill; the bills to close are listed there. -->
+        <a class="agenda-page__btn-ghost agenda-page__link" routerLink="/bills">Cuentas</a>
       }
     </div>
   </div>
@@ -187,14 +187,16 @@
                   >
                     Editar
                   </button>
-                  <button
-                    class="appt-card__btn appt-card__btn--complete"
-                    type="button"
-                    [disabled]="isAnythingBusy()"
-                    (click)="markCompleted(appointment)"
-                  >
-                    {{ isBusyFor(appointment.id, 'complete') ? 'Procesando...' : 'Completar' }}
-                  </button>
+                  @if (canComplete(appointment)) {
+                    <button
+                      class="appt-card__btn appt-card__btn--complete"
+                      type="button"
+                      [disabled]="isAnythingBusy()"
+                      (click)="markCompleted(appointment)"
+                    >
+                      {{ isBusyFor(appointment.id, 'complete') ? 'Procesando...' : 'Completar' }}
+                    </button>
+                  }
                   <button
                     class="appt-card__btn appt-card__btn--noshow"
                     type="button"
@@ -211,14 +213,10 @@
                   >
                     {{ isBusyFor(appointment.id, 'delete') ? 'Eliminando...' : 'Eliminar' }}
                   </button>
-                  @if (canRegisterServices() && hasStarted(appointment)) {
-                    <a
-                      class="appt-card__btn appt-card__btn--services"
-                      routerLink="/staff/service-records"
-                      [queryParams]="{ appointmentId: appointment.id }"
-                    >
-                      Registrar servicios
-                    </a>
+                  @if (canUseBills() && hasStarted(appointment)) {
+                    <button class="appt-card__btn appt-card__btn--services" type="button" [disabled]="isAnythingBusy()" (click)="openBill(appointment)">
+                      Abrir cuenta
+                    </button>
                   }
                 </div>
               }

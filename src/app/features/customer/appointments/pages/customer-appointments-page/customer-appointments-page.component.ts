@@ -50,9 +50,9 @@ import { PullToRefreshDirective } from '../../../../../shared/directives/pull-to
 /** Ventana de calificación desde que terminó la cita: 7 días en ms */
 const REVIEW_WINDOW_MS = 7 * 24 * 60 * 60 * 1000;
 
-type AppointmentTab = 'upcoming' | 'pending-review' | 'history';
+type AppointmentTab = 'upcoming' | 'pending-review' | 'history' | 'cancelled';
 
-const TABS: readonly AppointmentTab[] = ['upcoming', 'pending-review', 'history'];
+const TABS: readonly AppointmentTab[] = ['upcoming', 'pending-review', 'history', 'cancelled'];
 const STATUSES: readonly AppointmentStatus[] = Object.values(APPOINTMENT_STATUS);
 /** Days back that can still hold an appointment to review (the window is 7 days from its end). */
 const REVIEW_LOOKBACK_DAYS = 8;
@@ -121,6 +121,9 @@ export class CustomerAppointmentsPageComponent implements OnInit {
   readonly reviewCandidates = signal<AppointmentResponse[]>([]);
   readonly history = signal<AppointmentResponse[]>([]);
   readonly historyTotal = signal(0);
+  /** ADR-0018 D3: every cancelled appointment, newest first (no date window). */
+  readonly cancelled = signal<AppointmentResponse[]>([]);
+  readonly cancelledTotal = signal(0);
   readonly page = signal(1);
   readonly pageSize = DEFAULT_PAGE_SIZE;
   readonly statuses = STATUSES;
@@ -140,10 +143,12 @@ export class CustomerAppointmentsPageComponent implements OnInit {
     () =>
       this.upcomingTotal() > 0 ||
       this.historyTotal() > 0 ||
+      this.cancelledTotal() > 0 ||
       !!this.historyStatus() ||
       !!this.historyFrom() ||
       !!this.historyTo() ||
-      this.activeTab() === 'history',
+      this.activeTab() === 'history' ||
+      this.activeTab() === 'cancelled',
   );
   readonly reviewsByAppointmentId = signal<Record<string, CustomerReviewResponse>>({});
   readonly isLoading = signal(true);
@@ -500,7 +505,7 @@ export class CustomerAppointmentsPageComponent implements OnInit {
 
     try {
       const tab = this.activeTab();
-      const [upcoming, recentPast, history] = await Promise.all([
+      const [upcoming, recentPast, cancelled, history] = await Promise.all([
         firstValueFrom(
           this.customerAppointmentsApiService.list({
             scope: 'Upcoming',
@@ -513,6 +518,14 @@ export class CustomerAppointmentsPageComponent implements OnInit {
             scope: 'Past',
             from: bogotaDateKey(new Date(Date.now() - REVIEW_LOOKBACK_DAYS * 24 * 60 * 60 * 1000)),
             pageSize: MAX_PAGE_SIZE,
+          }),
+        ),
+        // ADR-0018 D3 (SONDA BUG-023): every cancelled appointment, with no date window.
+        firstValueFrom(
+          this.customerAppointmentsApiService.list({
+            scope: 'Cancelled',
+            page: tab === 'cancelled' ? this.page() : 1,
+            pageSize: this.pageSize,
           }),
         ),
         // An invalid range (only possible by editing the URL) is explained instead of asking the API (it would 422).
@@ -543,6 +556,8 @@ export class CustomerAppointmentsPageComponent implements OnInit {
       this.reviewCandidates.set(recentPast.items);
       this.history.set(history.items);
       this.historyTotal.set(history.totalCount);
+      this.cancelled.set(cancelled.items);
+      this.cancelledTotal.set(cancelled.totalCount);
       this.reviewsByAppointmentId.set(indexReviewsByAppointmentId(reviews));
     } catch (error) {
       this.errorMessage.set(getApiErrorMessage(error));
@@ -551,6 +566,8 @@ export class CustomerAppointmentsPageComponent implements OnInit {
       this.reviewCandidates.set([]);
       this.history.set([]);
       this.historyTotal.set(0);
+      this.cancelled.set([]);
+      this.cancelledTotal.set(0);
       this.reviewsByAppointmentId.set({});
     } finally {
       this.isLoading.set(false);

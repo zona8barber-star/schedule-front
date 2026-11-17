@@ -71,7 +71,7 @@ describe('permissionGuard', () => {
   });
 
   it('redirects a user without the permission to their home page', async () => {
-    granted = [PERMISSION_CODES.salesRegister];
+    granted = [PERMISSION_CODES.inventoryView];
 
     const result = await run([PERMISSION_CODES.loyaltyPointsAdjust]);
 

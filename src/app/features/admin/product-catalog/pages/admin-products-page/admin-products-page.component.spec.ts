@@ -69,8 +69,17 @@ describe('AdminProductsPageComponent', () => {
     component = fixture.componentInstance;
     httpMock = TestBed.inject(HttpTestingController);
     fixture.detectChanges();
+    httpMock
+      .expectOne(`${api}/admin/inventory/summary`)
+      .flush({ lowStockCount: 2, negativeStockCount: 0, stockValue: 0, productsWithoutCost: 0 });
     flushLists();
     await settle();
+  });
+
+  it('alerts about the products with low stock and links to the inventory (ADR-0020 Q21)', () => {
+    const alert = (fixture.nativeElement as HTMLElement).querySelector('[data-testid="products-low-stock"]');
+    expect(alert?.textContent).toContain('2 productos tienen stock bajo.');
+    expect(alert?.querySelector('a')?.getAttribute('href')).toBe('/admin/inventory?lowStock=true');
   });
 
   afterEach(() => httpMock.verify());

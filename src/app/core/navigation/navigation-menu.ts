@@ -1,4 +1,4 @@
-import { PERMISSION_CODES, PermissionCode, ROLE_NAMES } from '../models/auth.models';
+import { BILLS_ACCESS_PERMISSIONS, PERMISSION_CODES, PermissionCode, ROLE_NAMES } from '../models/auth.models';
 import {
   NavAccess,
   NavContext,
@@ -67,6 +67,8 @@ export const NAVIGATION_GROUPS: readonly NavGroupDefinition[] = [
         shortcut: { order: 30, icon: 'appointments' },
       },
       { id: 'customer-memberships', label: 'Mis membresías', route: '/customer/memberships', access: CUSTOMER },
+      // ADR-0020 stage 5: the receipts of the customer's bills.
+      { id: 'customer-bills', label: 'Mis recibos de caja', route: '/customer/bills', access: CUSTOMER },
       {
         id: 'customer-loyalty',
         label: 'Mis puntos',
@@ -91,17 +93,12 @@ export const NAVIGATION_GROUPS: readonly NavGroupDefinition[] = [
       },
       { id: 'staff-availability', label: 'Mi disponibilidad', route: '/staff/availability', access: STAFF },
       {
-        // By permission and an active professional profile, not by role: an administrator who also works as a
-        // professional registers their services too.
-        id: 'staff-service-records',
-        label: 'Servicios realizados',
-        route: '/staff/service-records',
-        access: {
-          kind: 'permissions',
-          permissions: [PERMISSION_CODES.serviceRecordsRegister],
-          requiresServiceRecordEligibility: true,
-        },
-        shortcut: { order: 40, icon: 'records', label: 'Registrar' },
+        // ADR-0020: the bills replaced the registration of services performed. Any bills permission opens it.
+        id: 'bills',
+        label: 'Cuentas',
+        route: '/bills',
+        access: permissions(...BILLS_ACCESS_PERMISSIONS),
+        shortcut: { order: 40, icon: 'records', label: 'Cuentas' },
       },
     ],
   },
@@ -118,10 +115,16 @@ export const NAVIGATION_GROUPS: readonly NavGroupDefinition[] = [
         shortcut: { order: 50, icon: 'appointments', label: 'Citas' },
       },
       {
+        // ADR-0020 stage 6: the old tray stays only while records registered before the bills wait for review; the
+        // reviewed ones are reached from «Cuentas» → «Registros anteriores».
         id: 'admin-service-records',
         label: 'Servicios por aprobar',
         route: '/admin/service-records',
-        access: permissions(PERMISSION_CODES.serviceRecordsApprove),
+        access: {
+          kind: 'permissions',
+          permissions: [PERMISSION_CODES.serviceRecordsApprove],
+          requiresPendingServiceRecords: true,
+        },
         shortcut: { order: 60, icon: 'records', label: 'Por aprobar' },
       },
       { id: 'admin-staff', label: 'Gestión de profesionales', route: '/admin/staff', access: ADMIN },
@@ -138,7 +141,8 @@ export const NAVIGATION_GROUPS: readonly NavGroupDefinition[] = [
         route: '/admin/customers',
         // A sold membership is opened from its customer.
         alsoActiveOn: ['/admin/memberships'],
-        access: ADMIN,
+        // ADR-0018 D4 (SONDA BUG-077): either delegated permission opens it; Admin holds every permission.
+        access: permissions(PERMISSION_CODES.loyaltyPointsAdjust, PERMISSION_CODES.membershipPaymentsConfirm),
         shortcut: { order: 80, icon: 'customers' },
       },
       {
@@ -159,6 +163,17 @@ export const NAVIGATION_GROUPS: readonly NavGroupDefinition[] = [
       { id: 'admin-services', label: 'Tarifas de liquidación', route: '/admin/services', access: ADMIN },
       { id: 'admin-product-categories', label: 'Categorías de productos', route: '/admin/product-categories', access: ADMIN },
       { id: 'admin-products', label: 'Productos', route: '/admin/products', access: ADMIN },
+      {
+        id: 'admin-inventory',
+        label: 'Inventario',
+        route: '/admin/inventory',
+        // ADR-0020: any inventory permission opens it; Admin holds every permission.
+        access: permissions(
+          PERMISSION_CODES.inventoryView,
+          PERMISSION_CODES.inventoryReceive,
+          PERMISSION_CODES.inventoryAdjust,
+        ),
+      },
       { id: 'admin-membership-plans', label: 'Planes de membresía', route: '/admin/membership-plans', access: ADMIN },
     ],
   },
@@ -193,6 +208,7 @@ export const NAVIGATION_GROUPS: readonly NavGroupDefinition[] = [
     kind: 'back-office',
     items: [
       { id: 'admin-income', label: 'Ingresos', route: '/admin/income', access: ADMIN },
+      { id: 'admin-payment-methods', label: 'Métodos de pago', route: '/admin/payment-methods', access: ADMIN },
       { id: 'admin-expenses', label: 'Gastos', route: '/admin/expenses', access: ADMIN },
       { id: 'admin-reports', label: 'Reportes', route: '/admin/reports', access: ADMIN },
     ],
@@ -257,7 +273,7 @@ export function canAccess(access: NavAccess, context: NavContext): boolean {
       return (
         context.isAuthenticated &&
         access.permissions.some((permission) => context.permissions.includes(permission)) &&
-        (!access.requiresServiceRecordEligibility || context.canRegisterServiceRecords)
+        (!access.requiresPendingServiceRecords || context.hasPendingServiceRecords)
       );
   }
 }
