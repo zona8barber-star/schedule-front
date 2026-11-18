@@ -102,6 +102,10 @@ export class BookingConfirmPageComponent implements OnInit {
     const bookedAppointmentId = this.bookedAppointmentId();
     if (bookedAppointmentId) {
       await this.showBookedAppointment(bookedAppointmentId);
+    } else if (this.canSubmit()) {
+      // SONDA BUG-043: an old link (or a reload of it) for a slot this customer already booked shows that booking
+      // instead of offering to book it again.
+      await this.showOwnBookingIfAny(this.staffProfileId()!, this.startsAtUtc()!);
     }
 
     const staffProfileId = this.staffProfileId() ?? this.successAppointment()?.staffProfileId;
@@ -175,6 +179,18 @@ export class BookingConfirmPageComponent implements OnInit {
       this.successAppointment.set(await firstValueFrom(this.customerAppointmentsApiService.getById(appointmentId)));
     } catch (error) {
       this.errorMessage.set(getApiErrorMessage(error, 'No pudimos cargar tu reserva. Revísala en «Mis citas».'));
+    } finally {
+      this.isLoadingBooked.set(false);
+    }
+  }
+
+  private async showOwnBookingIfAny(staffProfileId: string, startsAtUtc: string): Promise<void> {
+    this.isLoadingBooked.set(true);
+    try {
+      const own = await this.findOwnBooking(staffProfileId, startsAtUtc);
+      if (own) {
+        this.showSuccess(own);
+      }
     } finally {
       this.isLoadingBooked.set(false);
     }

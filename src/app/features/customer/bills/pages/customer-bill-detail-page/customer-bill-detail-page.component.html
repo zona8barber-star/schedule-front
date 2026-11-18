@@ -25,11 +25,11 @@
     </header>
 
     @if (b.status === 'UnderReview') {
-      <p class="my-memberships__notice" data-testid="bill-under-review">
+      <p class="my-memberships__notice" role="status" data-testid="bill-under-review">
         La barbería está revisando este recibo de caja. Estos son los valores actuales y pueden cambiar al terminar la revisión.
       </p>
     } @else if (b.status === 'Voided') {
-      <p class="my-memberships__notice my-memberships__notice--blocked" data-testid="bill-voided">
+      <p class="my-memberships__notice my-memberships__notice--blocked" role="status" data-testid="bill-voided">
         Este recibo de caja fue anulado y no tiene validez.
       </p>
     }

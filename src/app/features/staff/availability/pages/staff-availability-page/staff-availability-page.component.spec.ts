@@ -140,6 +140,14 @@ describe('StaffAvailabilityPageComponent weekly rules and Bogotá time', () => {
       .flush([rule('r1', '09:00', '12:00'), rule('r2', '14:00', '16:00')]);
     await settle();
 
+    // SONDA BUG-037: the «×» buttons have a descriptive accessible name, not just the symbol.
+    const removeButtons = blocks().map((block) => block.querySelector<HTMLButtonElement>('.avail-page__btn-remove-block')!);
+    expect(removeButtons.map((button) => button.getAttribute('aria-label'))).toEqual([
+      'Quitar bloque 1 del sábado',
+      'Quitar bloque 2 del sábado',
+    ]);
+    expect(removeButtons[0].querySelector('[aria-hidden="true"]')?.textContent).toBe('×');
+
     blocks()[1].querySelector<HTMLButtonElement>('.avail-page__btn-remove-block')!.click();
     await settle();
     expect(blocks().length).toBe(1);

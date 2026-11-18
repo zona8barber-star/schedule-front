@@ -49,6 +49,7 @@ describe('AuthService permissions', () => {
     expect(Object.values(PERMISSION_CODES).sort()).toEqual(
       [
         'bills.approve',
+        'bills.assign-other-staff',
         'bills.charge',
         'bills.close',
         'bills.discount',
@@ -66,6 +67,7 @@ describe('AuthService permissions', () => {
         'loyalty.rewards.manage',
         'loyalty.settings.manage',
         'memberships.payments.confirm',
+        'reports.cash.view',
         'service-records.approve',
         'service-records.register',
       ].sort(),

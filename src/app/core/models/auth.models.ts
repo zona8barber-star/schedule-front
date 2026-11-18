@@ -29,6 +29,10 @@ export const PERMISSION_CODES = {
   billsApprove: 'bills.approve',
   billsUnapprove: 'bills.unapprove',
   billsVoid: 'bills.void',
+  // ADR-0021 L1: services and tips on another professional's name (Admin by default, not Staff).
+  billsAssignOtherStaff: 'bills.assign-other-staff',
+  // ADR-0021 L2: the cash closing, a permission of its own (Admin by default).
+  reportsCashView: 'reports.cash.view',
 } as const;
 
 /** Any permission that works with bills opens «Cuentas»; the API checks each action again. */

@@ -149,6 +149,8 @@ export interface BillOptionsView {
   canClose: boolean;
   canApprove: boolean;
   canVoid: boolean;
+  /** ADR-0021 L1: may put services, consumptions, redemptions and tips on another professional's name. */
+  canAssignOtherStaff?: boolean;
 }
 
 export interface BillCustomerOption {

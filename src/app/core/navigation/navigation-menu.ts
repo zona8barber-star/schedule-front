@@ -211,6 +211,13 @@ export const NAVIGATION_GROUPS: readonly NavGroupDefinition[] = [
       { id: 'admin-payment-methods', label: 'Métodos de pago', route: '/admin/payment-methods', access: ADMIN },
       { id: 'admin-expenses', label: 'Gastos', route: '/admin/expenses', access: ADMIN },
       { id: 'admin-reports', label: 'Reportes', route: '/admin/reports', access: ADMIN },
+      // ADR-0021 L2: its own permission, assignable to any role (Admin holds it by default).
+      {
+        id: 'admin-cash-closing',
+        label: 'Cierre de caja',
+        route: '/admin/cash-closing',
+        access: permissions(PERMISSION_CODES.reportsCashView),
+      },
     ],
   },
   {

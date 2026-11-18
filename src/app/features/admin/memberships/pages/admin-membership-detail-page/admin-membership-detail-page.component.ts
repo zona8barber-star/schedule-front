@@ -102,6 +102,9 @@ export class AdminMembershipDetailPageComponent implements OnInit {
     return this.isAdmin && membership?.status === 'Active' && membership.displayStatus !== 'Scheduled';
   });
 
+  /** ADR-0021 L3: a membership with a consumption that was not reversed is not annulled (the API answers 409). */
+  readonly hasLiveConsumptions = computed(() => (this.membership()?.consumptions ?? []).some((consumption) => !consumption.reversal));
+
   /** Purchased and gifted units, granted and still available, kept apart. */
   readonly totals = computed(() => {
     const lines = this.membership()?.allowances ?? [];

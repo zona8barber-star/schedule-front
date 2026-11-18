@@ -48,14 +48,17 @@ $fab-lane: 5.25rem;
   list-style: none;
 }
 
+// SONDA BUG-035 (RT1-D03): the footer links measured 14-17 px of height; inline-flex lets min-height apply.
 .site-footer__link,
 .site-footer__credit-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
   border-radius: 2px;
   text-underline-offset: 0.2em;
 }
 
 .site-footer__link {
-  display: inline-block;
   padding-block: 0.2rem;
   color: var(--z-concrete);
   text-decoration: none;

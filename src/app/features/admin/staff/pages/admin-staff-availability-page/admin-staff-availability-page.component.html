@@ -117,9 +117,10 @@
                                 type="button"
                                 [disabled]="isRulesBusy()"
                                 (click)="removeBlock(di, bi)"
-                                title="Eliminar bloque"
+                                title="Quitar bloque"
+                                [attr.aria-label]="'Quitar bloque ' + (bi + 1) + ' del ' + dayOptions[di].label.toLowerCase()"
                               >
-                                &times;
+                                <span aria-hidden="true">&times;</span>
                               </button>
                             }
                           </div>

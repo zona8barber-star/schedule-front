@@ -21,6 +21,11 @@
   --z-brass-dk: #8f6f38;
   --z-brass-dark: #8f6f38;
 
+  /* Bars of the app (header, side menu, drop-down panel and menus). ThemeService replaces them with the brand colors
+     (ADR-0021 L7, ADR-0018 D9); without a brand they keep the ink and brass of the palette. */
+  --z-bar: var(--z-ink);
+  --z-bar-accent: var(--z-brass);
+
   /* ── Typography ──────────────────────────────────────────────────────── */
   --z-font-display: 'Oswald', sans-serif;
   --z-font-body: 'Archivo', sans-serif;
