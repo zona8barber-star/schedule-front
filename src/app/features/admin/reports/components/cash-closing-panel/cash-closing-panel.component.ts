@@ -4,9 +4,9 @@ import { firstValueFrom } from 'rxjs';
 
 import { CashClosingView } from '../../../../../core/models/bill.models';
 import { BillsApiService } from '../../../../../core/services/bills-api.service';
-import { getApiErrorMessage } from '../../../../../core/utils/api-error.utils';
 import { historyRangeError } from '../../../../../core/utils/history-range.utils';
 import { ApiFeedbackComponent } from '../../../../../shared/components/api-feedback/api-feedback.component';
+import { LoadErrorComponent } from '../../../../../shared/components/load-error/load-error.component';
 
 /**
  * ADR-0020 stage 5: what was charged by day and payment method; at most 30 days per query. ADR-0021 L2: shown in
@@ -14,7 +14,7 @@ import { ApiFeedbackComponent } from '../../../../../shared/components/api-feedb
  */
 @Component({
   selector: 'app-cash-closing-panel',
-  imports: [DecimalPipe, ApiFeedbackComponent],
+  imports: [DecimalPipe, ApiFeedbackComponent, LoadErrorComponent],
   templateUrl: './cash-closing-panel.component.html',
   styleUrl: '../../pages/admin-reports-page/admin-reports-page.component.scss',
 })
@@ -29,6 +29,8 @@ export class CashClosingPanelComponent {
   readonly cash = signal<CashClosingView | null>(null);
   readonly cashError = signal<string | null>(null);
   readonly isLoadingCash = signal(false);
+  /** SONDA BUG-123: the request failed (server or network), as opposed to a range the API would refuse (cashError). */
+  readonly loadError = signal<unknown>(null);
   /** Increases with every load; an answer whose number is no longer the latest is ignored (SONDA BUG-082). */
   private cashSequence = 0;
 
@@ -38,10 +40,15 @@ export class CashClosingPanelComponent {
     });
   }
 
+  retry(): void {
+    void this.loadCash(this.from(), this.to());
+  }
+
   private async loadCash(from: string, to: string): Promise<void> {
     const sequence = ++this.cashSequence;
     const rangeError = historyRangeError(from, to);
     this.cashError.set(rangeError);
+    this.loadError.set(null);
     if (rangeError) {
       // The API would reject it too (422).
       this.cash.set(null);
@@ -57,7 +64,7 @@ export class CashClosingPanelComponent {
     } catch (error) {
       if (sequence === this.cashSequence) {
         this.cash.set(null);
-        this.cashError.set(getApiErrorMessage(error));
+        this.loadError.set(error);
       }
     } finally {
       if (sequence === this.cashSequence) {

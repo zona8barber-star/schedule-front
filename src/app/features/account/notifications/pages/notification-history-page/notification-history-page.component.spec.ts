@@ -1,6 +1,7 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router, convertToParamMap, provideRouter } from '@angular/router';
-import { BehaviorSubject, of } from 'rxjs';
+import { BehaviorSubject, of, throwError } from 'rxjs';
 
 import { NotificationHistoryResponse, UserNotificationItem } from '../../../../../core/models/notification.models';
 import { NotificationCenterService } from '../../../../../core/services/notification-center.service';
@@ -97,6 +98,37 @@ describe('NotificationHistoryPageComponent', () => {
 
     expect(center.markAllAsRead).toHaveBeenCalled();
     expect(api.getHistory).toHaveBeenCalledTimes(2);
+  });
+
+  // SONDA BUG-143: a server error is the common error state with «Reintentar», never «No tienes notificaciones todavía» nor «(0)».
+  it('shows the error state with a retry instead of an empty history when the server fails', async () => {
+    api = { getHistory: vi.fn(() => throwError(() => new HttpErrorResponse({ status: 500 }))) };
+    center = { markAsRead: vi.fn(async () => undefined), markAllAsRead: vi.fn(async () => undefined) };
+    await TestBed.configureTestingModule({
+      imports: [NotificationHistoryPageComponent],
+      providers: [
+        provideRouter([]),
+        { provide: NotificationsApiService, useValue: api },
+        { provide: NotificationCenterService, useValue: center },
+        { provide: ActivatedRoute, useValue: { queryParamMap: new BehaviorSubject(convertToParamMap({})) } },
+      ],
+    }).compileComponents();
+    fixture = TestBed.createComponent(NotificationHistoryPageComponent);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+    const element = fixture.nativeElement as HTMLElement;
+
+    expect(element.querySelector('[data-testid="load-error"]')).not.toBeNull();
+    expect(element.textContent).not.toContain('No tienes notificaciones todavía');
+    expect(element.querySelector('[data-testid="history-filter-unread"]')?.textContent?.trim()).toBe('Sin leer');
+
+    api.getHistory.mockReturnValue(of(page([item('1', null)], 1, 62)));
+    (element.querySelector('[data-testid="load-error-retry"]') as HTMLButtonElement).click();
+    await fixture.whenStable();
+    fixture.detectChanges();
+    expect(element.querySelector('[data-testid="load-error"]')).toBeNull();
+    expect(element.querySelector('[data-testid="history-filter-unread"]')?.textContent?.trim()).toBe('Sin leer (62)');
   });
 
   it('shows an empty state for each filter', async () => {

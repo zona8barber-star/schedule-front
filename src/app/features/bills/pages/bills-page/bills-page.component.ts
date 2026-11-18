@@ -37,6 +37,7 @@ import {
 } from '../../../../core/utils/list-query.utils';
 import { SingleFlight } from '../../../../core/utils/single-flight';
 import { ApiFeedbackComponent } from '../../../../shared/components/api-feedback/api-feedback.component';
+import { LoadErrorComponent } from '../../../../shared/components/load-error/load-error.component';
 import { PaginatorComponent } from '../../../../shared/components/paginator/paginator.component';
 import { FormA11yDirective } from '../../../../shared/directives/form-a11y.directive';
 import { ModalDialogDirective } from '../../../../shared/directives/modal-dialog.directive';
@@ -54,7 +55,7 @@ const DATE_TIME = bogotaDateTimeFormat('es-CO', { day: 'numeric', month: 'short'
  */
 @Component({
   selector: 'app-bills-page',
-  imports: [FormA11yDirective, ModalDialogDirective, ReactiveFormsModule, RouterLink, ApiFeedbackComponent, PaginatorComponent],
+  imports: [FormA11yDirective, ModalDialogDirective, ReactiveFormsModule, RouterLink, ApiFeedbackComponent, PaginatorComponent, LoadErrorComponent],
   templateUrl: './bills-page.component.html',
   styleUrls: ['../../../admin/service-catalog/catalog-page.scss', '../../bills.scss'],
 })
@@ -74,6 +75,8 @@ export class BillsPageComponent implements OnInit {
 
   readonly isLoading = signal(true);
   readonly errorMessage = signal<string | null>(null);
+  /** SONDA BUG-135: the list could not be loaded (API down, 500): the common error state, never just the tabs. */
+  readonly loadError = signal<unknown>(null);
   readonly options = signal<BillOptionsView | null>(null);
   readonly tab = signal<BillTab>('pending');
   readonly query = signal('');
@@ -192,8 +195,9 @@ export class BillsPageComponent implements OnInit {
 
   async searchCustomers(): Promise<void> {
     const term = this.openForm.controls.search.value.trim();
-    if (term.length < 2) {
-      this.openError.set('Escribe al menos 2 letras o números para buscar.');
+    // SONDA BUG-157: a name from 3 letters; an email or a phone only in full (the API applies the same rule).
+    if (term.length < 3) {
+      this.openError.set('Escribe al menos 3 letras del nombre, o el correo o el celular completos.');
       return;
     }
     this.isSearching.set(true);
@@ -285,6 +289,7 @@ export class BillsPageComponent implements OnInit {
     const sequence = ++this.loadSequence;
     this.isLoading.set(true);
     this.errorMessage.set(null);
+    this.loadError.set(null);
     try {
       const tab = this.tab();
       if (tab === 'pending') {
@@ -319,12 +324,16 @@ export class BillsPageComponent implements OnInit {
       }
     } catch (error) {
       if (sequence === this.loadSequence) {
-        this.errorMessage.set(getApiErrorMessage(error));
+        this.loadError.set(error);
       }
     } finally {
       if (sequence === this.loadSequence) {
         this.isLoading.set(false);
       }
     }
+  }
+
+  retryLoad(): void {
+    void this.load();
   }
 }

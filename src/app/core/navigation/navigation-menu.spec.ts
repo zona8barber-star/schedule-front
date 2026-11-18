@@ -207,6 +207,18 @@ describe('buildNavigation', () => {
     },
   );
 
+  // SONDA BUG-130: bills.unapprove alone opens «Cuentas», like the API policy BillsAccess.
+  it('opens «Cuentas» to a custom role with only bills.unapprove', () => {
+    const menu = buildNavigation({
+      isAuthenticated: true,
+      roles: ['Revisión'],
+      permissions: [PERMISSION_CODES.billsUnapprove],
+      hasPendingServiceRecords: false,
+    });
+
+    expect(itemIdsByGroup(menu)).toEqual({ 'my-work': ['bills'] });
+  });
+
   // ADR-0021 L2: the cash closing is a permission of its own, assignable to any role.
   it('opens «Cierre de caja» (and only it) to a custom role with reports.cash.view', () => {
     const menu = buildNavigation({

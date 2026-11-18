@@ -157,6 +157,8 @@ export interface BillCustomerOption {
   id: string;
   fullName: string;
   phoneHint: string | null;
+  /** SONDA BUG-157: only a hint («c•••@dominio.com»), never the email itself. */
+  emailHint?: string | null;
 }
 
 export interface BillMembershipOption {

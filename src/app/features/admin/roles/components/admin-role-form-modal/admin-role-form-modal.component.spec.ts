@@ -86,9 +86,28 @@ describe('AdminRoleFormModalComponent', () => {
     const submitPromise = fixture.componentInstance.submit();
     const req = httpMock.expectOne(`${environment.defaultApiBaseUrl}/admin/roles/role-1`);
     expect(req.request.method).toBe('PUT');
-    expect(req.request.body).toEqual({ name: 'Vendedor', permissionIds: [] });
+    expect(req.request.body).toEqual({ name: 'Vendedor', permissionIds: [], version: null });
     req.flush({ ...existingRole, permissions: [] });
 
     await submitPromise;
+  });
+
+  // SONDA BUG-161: the version read goes back with the save, so a change made meanwhile is a 409 (shown in the modal).
+  it('sends the version of the role it edits and shows the conflict when someone changed it', async () => {
+    await createFixture();
+    fixture.componentRef.setInput('role', { ...existingRole, version: '4711' });
+    fixture.componentRef.setInput('permissions', permissions);
+    fixture.detectChanges();
+
+    const submitPromise = fixture.componentInstance.submit();
+    const req = httpMock.expectOne(`${environment.defaultApiBaseUrl}/admin/roles/role-1`);
+    expect(req.request.body.version).toBe('4711');
+    req.flush(
+      { title: 'Conflicto', status: 409, detail: 'Otra persona cambió este rol mientras lo editabas. Recarga la página para ver sus permisos actuales y vuelve a guardar.' },
+      { status: 409, statusText: 'Conflict' },
+    );
+    await submitPromise;
+
+    expect(fixture.componentInstance.errorMessage()).toContain('Otra persona cambió este rol');
   });
 });

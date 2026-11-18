@@ -30,6 +30,7 @@ import {
 } from '../../../../../core/utils/list-query.utils';
 import { SingleFlight } from '../../../../../core/utils/single-flight';
 import { ApiFeedbackComponent } from '../../../../../shared/components/api-feedback/api-feedback.component';
+import { LoadErrorComponent } from '../../../../../shared/components/load-error/load-error.component';
 import { PaginatorComponent } from '../../../../../shared/components/paginator/paginator.component';
 import { FormA11yDirective } from '../../../../../shared/directives/form-a11y.directive';
 import { ModalDialogDirective } from '../../../../../shared/directives/modal-dialog.directive';
@@ -51,7 +52,7 @@ type InventoryModal = 'receipt' | 'adjust' | 'min-stock';
  */
 @Component({
   selector: 'app-admin-inventory-page',
-  imports: [FormA11yDirective, ModalDialogDirective, ReactiveFormsModule, RouterLink, ApiFeedbackComponent, PaginatorComponent],
+  imports: [FormA11yDirective, ModalDialogDirective, ReactiveFormsModule, RouterLink, ApiFeedbackComponent, PaginatorComponent, LoadErrorComponent],
   templateUrl: './admin-inventory-page.component.html',
   styleUrls: ['../../../service-catalog/catalog-page.scss', '../inventory.scss'],
 })
@@ -88,6 +89,8 @@ export class AdminInventoryPageComponent implements OnInit {
   readonly canAdjust = computed(() => this.authService.hasPermission(PERMISSION_CODES.inventoryAdjust));
 
   readonly isLoading = signal(true);
+  /** SONDA BUG-136: the list could not be loaded; the common error state, never «Todavía no hay productos». */
+  readonly loadError = signal<unknown>(null);
   readonly errorMessage = signal<string | null>(null);
   readonly successMessage = signal<string | null>(null);
   readonly items = signal<InventoryItemView[]>([]);
@@ -349,6 +352,7 @@ export class AdminInventoryPageComponent implements OnInit {
       this.isLoading.set(true);
     }
     this.errorMessage.set(null);
+    this.loadError.set(null);
     try {
       const [summary, page] = await Promise.all([
         firstValueFrom(this.api.summary()),
@@ -370,12 +374,16 @@ export class AdminInventoryPageComponent implements OnInit {
       this.totalCount.set(page.totalCount);
     } catch (error) {
       if (sequence === this.loadSequence) {
-        this.errorMessage.set(getApiErrorMessage(error));
+        this.loadError.set(error);
       }
     } finally {
       if (sequence === this.loadSequence) {
         this.isLoading.set(false);
       }
     }
+  }
+
+  retryLoad(): void {
+    void this.load();
   }
 }

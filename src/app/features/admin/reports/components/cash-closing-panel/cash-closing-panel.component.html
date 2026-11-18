@@ -7,13 +7,17 @@
     Las correcciones de una cuenta ya cobrada no cambian este cierre. Hasta 30 días por consulta.
   </p>
   <app-api-feedback severity="error" [message]="cashError()" />
-  @if (isLoadingCash()) {
+  @if (loadError()) {
+    <!-- SONDA BUG-123: the common error state with «Reintentar», never the raw title of the server. -->
+    <app-load-error subject="el cierre de caja" [error]="loadError()" [retrying]="isLoadingCash()" (retry)="retry()" />
+  } @else if (isLoadingCash()) {
     <p class="reports__state">Cargando cierre de caja...</p>
   } @else if (cash(); as c) {
     @if (!c.billCount && !c.voidedCount) {
-      <p class="reports__note">No hubo cobros en el periodo.</p>
-    } @else {
-      <table class="reports__table" data-testid="cash-by-method">
+      <p class="reports__note" data-testid="cash-empty">No hubo cobros en el periodo.</p>
+    }
+    <!-- SONDA BUG-123: an empty period still shows its totals, in $ 0. -->
+    <table class="reports__table" data-testid="cash-by-method">
         <thead>
           <tr><th>Medio de pago</th><th># Cuentas</th><th>Total</th></tr>
         </thead>
@@ -32,6 +36,7 @@
           </tr>
         </tbody>
       </table>
+    @if (c.days.length) {
       <table class="reports__table" data-testid="cash-by-day">
         <thead>
           <tr><th>Día</th><th>Por medio de pago</th><th># Cuentas</th><th>Total</th></tr>
@@ -51,12 +56,12 @@
           }
         </tbody>
       </table>
+    }
       @if (c.voidedCount) {
         <p class="reports__note" data-testid="cash-voided">
           Anuladas: {{ c.voidedCount }} {{ c.voidedCount === 1 ? 'cuenta' : 'cuentas' }} por $ {{ c.voidedTotal | number: '1.0-0' }}
           (no suman al cierre).
         </p>
       }
-    }
   }
 </div>

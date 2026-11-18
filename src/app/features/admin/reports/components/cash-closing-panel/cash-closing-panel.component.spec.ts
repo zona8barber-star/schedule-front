@@ -60,4 +60,28 @@ describe('CashClosingPanelComponent', () => {
 
     expect((fixture.nativeElement as HTMLElement).querySelector('h2')).toBeNull();
   });
+
+  // SONDA BUG-123: a 500 is the common error state (never the raw «Error interno»), and an empty period shows $ 0.
+  it('shows the error state with a retry on a server error, and the totals in $ 0 for an empty period', async () => {
+    create('2026-10-20', '2026-10-28');
+    httpMock.expectOne((request) => request.url.endsWith('/admin/reports/cash'))
+      .flush({ title: 'Error interno', status: 500 }, { status: 500, statusText: 'Server Error' });
+    await new Promise<void>((resolve) => setTimeout(resolve, 0));
+    fixture.detectChanges();
+    const element = fixture.nativeElement as HTMLElement;
+    expect(element.querySelector('[data-testid="load-error"]')).not.toBeNull();
+    expect(element.textContent).not.toContain('Error interno');
+
+    (element.querySelector('[data-testid="load-error-retry"]') as HTMLButtonElement).click();
+    httpMock.expectOne((request) => request.url.endsWith('/admin/reports/cash')).flush({
+      from: '2026-10-20', to: '2026-10-28', days: [], methods: [], billCount: 0, total: 0, voidedCount: 0, voidedTotal: 0,
+    });
+    await new Promise<void>((resolve) => setTimeout(resolve, 0));
+    fixture.detectChanges();
+    expect(element.querySelector('[data-testid="cash-empty"]')?.textContent).toContain('No hubo cobros en el periodo.');
+    const cells = Array.from(element.querySelectorAll('[data-testid="cash-by-method"] .reports__total-row td')).map((cell) => cell.textContent!.trim());
+    expect(cells).toEqual(['Total cobrado', '0', '$ 0']);
+    expect(element.querySelector('[data-testid="cash-by-day"]')).toBeNull();
+  });
+
 });

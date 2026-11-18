@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
-import { of } from 'rxjs';
+import { HttpErrorResponse } from '@angular/common/http';
+import { Observable, of, throwError } from 'rxjs';
 
 import { ServiceRecordsApiService } from '../../../../../core/services/service-records-api.service';
 import { AdminServiceRecordsPageComponent } from './admin-service-records-page.component';
@@ -73,5 +74,36 @@ describe('AdminServiceRecordsPageComponent (history windows)', () => {
     await render();
     expect(list).toHaveBeenLastCalledWith(expect.objectContaining({ status: 'Rejected', from: '2026-01-01', to: '2026-01-30' }));
     expect(component.rangeError()).toBeNull();
+  });
+});
+
+// SONDA BUG-162: a failed load showed the error next to «No hay servicios pendientes de validación».
+describe('AdminServiceRecordsPageComponent (load error)', () => {
+  it('shows only the error state with a retry', async () => {
+    const list = vi.fn((): Observable<unknown> => throwError(() => new HttpErrorResponse({ status: 500 })));
+    await TestBed.configureTestingModule({
+      imports: [AdminServiceRecordsPageComponent],
+      providers: [
+        provideRouter([]),
+        { provide: ServiceRecordsApiService, useValue: { list, options: () => of({ services: [], generalServices: [], staff: [] }) } },
+      ],
+    }).compileComponents();
+    const fixture = TestBed.createComponent(AdminServiceRecordsPageComponent);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    await new Promise<void>((resolve) => setTimeout(resolve, 0));
+    fixture.detectChanges();
+    const element = fixture.nativeElement as HTMLElement;
+
+    expect(element.querySelector('[data-testid="load-error"]')).not.toBeNull();
+    expect(element.textContent).not.toContain('No hay servicios pendientes de validación.');
+
+    list.mockReturnValue(of({ items: [], page: 1, pageSize: 25, totalCount: 0 }));
+    (element.querySelector('[data-testid="load-error-retry"]') as HTMLButtonElement).click();
+    await fixture.whenStable();
+    await new Promise<void>((resolve) => setTimeout(resolve, 0));
+    fixture.detectChanges();
+    expect(element.querySelector('[data-testid="load-error"]')).toBeNull();
+    expect(element.textContent).toContain('No hay servicios pendientes de validación.');
   });
 });

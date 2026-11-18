@@ -35,12 +35,18 @@ export const PERMISSION_CODES = {
   reportsCashView: 'reports.cash.view',
 } as const;
 
-/** Any permission that works with bills opens «Cuentas»; the API checks each action again. */
+/**
+ * Any permission that works with bills opens «Cuentas»; the API checks each action again. It mirrors the API policy
+ * BillsAccess (SONDA BUG-130: bills.unapprove was missing, so whoever held only it could not reach «Desaprobar»).
+ * bills.charge, bills.discount and bills.assign-other-staff only widen what a bill user can do, and reports.cash.view
+ * has its own page (ADR-0021 L2), as in the API.
+ */
 export const BILLS_ACCESS_PERMISSIONS = [
   PERMISSION_CODES.billsOpen,
   PERMISSION_CODES.billsClose,
   PERMISSION_CODES.billsManage,
   PERMISSION_CODES.billsApprove,
+  PERMISSION_CODES.billsUnapprove,
   PERMISSION_CODES.billsVoid,
 ] as const;
 

@@ -61,7 +61,9 @@
     </label>
   </form>
 
-  @if (isLoading()) {
+  @if (loadError()) {
+    <app-load-error subject="el inventario" [error]="loadError()" [retrying]="isLoading()" (retry)="retryLoad()" />
+  } @else if (isLoading()) {
     <p class="catalog__state">Cargando inventario...</p>
   } @else if (!items().length) {
     <p class="catalog__state">
