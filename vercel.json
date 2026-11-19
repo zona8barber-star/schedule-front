@@ -33,7 +33,7 @@
         { "key": "Strict-Transport-Security", "value": "max-age=31536000; includeSubDomains" },
         {
           "key": "Content-Security-Policy",
-          "value": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https:; frame-src https://www.google.com https://maps.google.com; worker-src 'self'; manifest-src 'self'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
+          "value": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://pub-6108255a955044a5813173ad31df2c66.r2.dev https://pub-2a8b5df345234cd9a79ab2b0cedf94b9.r2.dev https://*.zona8.app; font-src 'self' data:; connect-src 'self' https://api.zona8.app https://schedule-back-pdn.onrender.com https://schedule-back-noq9.onrender.com; frame-src https://www.google.com https://maps.google.com; worker-src 'self'; manifest-src 'self'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'"
         }
       ]
     }

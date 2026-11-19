@@ -20,6 +20,8 @@ import { trimmedMinLength, trimmedRequired } from '../../../../core/utils/form-v
 import { FormA11yDirective } from '../../../../shared/directives/form-a11y.directive';
 
 import { SingleFlight } from '../../../../core/utils/single-flight';
+import { getApiErrorMessage, isConnectivityError, statusMessage } from '../../../../core/utils/api-error.utils';
+import { HttpErrorResponse } from '@angular/common/http';
 
 @Component({
   selector: 'app-login-page',
@@ -197,8 +199,8 @@ export class LoginPageComponent {
     try {
       await firstValueFrom(this.authApiService.forgotPassword(this.forgotForm.getRawValue()));
       this.forgotSent.set(true);
-    } catch {
-      this.forgotError.set('Ocurrió un error al enviar el correo. Intenta de nuevo.');
+    } catch (error) {
+      this.forgotError.set(forgotPasswordErrorMessage(error));
     } finally {
       this.forgotLoading.set(false);
     }
@@ -266,4 +268,29 @@ function matchingPasswordsValidator(): ValidatorFn {
 
     return password === confirmPassword ? null : { passwordMismatch: true };
   };
+}
+
+/** No response at all: no network, or something in between (a blocker, a restricted network, CORS) stopped it. */
+export const FORGOT_NO_CONNECTION_MESSAGE =
+  'No pudimos comunicarnos con el servidor. Revisa tu conexión a internet; si estás conectado, puede que un bloqueador o la red en la que estás esté impidiendo la conexión.';
+export const FORGOT_SERVER_ERROR_MESSAGE = 'El servidor no pudo enviar el correo en este momento. Inténtalo de nuevo en unos minutos.';
+
+/**
+ * Launch with the own domain: «Ocurrió un error al enviar el correo» was the same for every failure. A request that
+ * never got an answer (status 0, which is also how a CORS rejection looks) is told apart from an error of the server.
+ */
+export function forgotPasswordErrorMessage(error: unknown): string {
+  if (isConnectivityError(error)) {
+    return FORGOT_NO_CONNECTION_MESSAGE;
+  }
+
+  if (error instanceof HttpErrorResponse && error.status === 429) {
+    return statusMessage(429)!;
+  }
+
+  if (error instanceof HttpErrorResponse && error.status >= 500) {
+    return FORGOT_SERVER_ERROR_MESSAGE;
+  }
+
+  return getApiErrorMessage(error, 'No pudimos enviar el correo. Inténtalo de nuevo.');
 }

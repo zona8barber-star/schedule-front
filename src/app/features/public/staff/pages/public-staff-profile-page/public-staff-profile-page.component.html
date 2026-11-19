@@ -10,6 +10,14 @@
       [retrying]="isLoading()"
       (retry)="reload()"
     />
+  } @else if (!staffProfile() && isAdmin && isGuidId()) {
+    <!-- SONDA BUG-186: the review notice of a professional deactivated later leads here; the admin gets a way on. -->
+    <app-not-found-state
+      title="Este perfil no está publicado"
+      message="El profesional está desactivado, así que su perfil público y sus reseñas no se muestran. La reseña completa está en el aviso."
+      [backLink]="'/admin/staff/' + staffProfileId() + '/edit'"
+      backLabel="Ver al profesional en Profesionales"
+    />
   } @else if (!staffProfile()) {
     <app-not-found-state
       title="No encontramos este perfil profesional"

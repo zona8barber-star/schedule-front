@@ -55,4 +55,6 @@ export interface ServiceListQuery extends PageQuery {
 export interface ServiceUsageView {
   activePlans: string[];
   activeRewards: string[];
+  /** ADR-0021 L14 (SONDA BUG-178): bills not approved yet with a line of the rate; while there is one it is not deleted. */
+  pendingBills?: string[] | null;
 }

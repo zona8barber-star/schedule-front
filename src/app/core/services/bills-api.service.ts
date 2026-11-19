@@ -18,7 +18,7 @@ import {
   CashClosingView,
   PaymentMethodView,
 } from '../models/bill.models';
-import { PagedResult } from '../models/paged-result.models';
+import { DEFAULT_PAGE_SIZE, PagedResult } from '../models/paged-result.models';
 import { toHttpParams } from '../utils/list-query.utils';
 
 /**
@@ -51,8 +51,9 @@ export class BillsApiService {
     return this.httpClient.get<PagedResult<BillSummaryView>>(this.buildUrl('/bills'), { params });
   }
 
-  pending() {
-    return this.httpClient.get<BillPendingView>(this.buildUrl('/bills/pending'));
+  /** SONDA BUG-181: the open bills come by pages. */
+  pending(page = 1, pageSize = DEFAULT_PAGE_SIZE) {
+    return this.httpClient.get<BillPendingView>(this.buildUrl('/bills/pending'), { params: toHttpParams({ page, pageSize }) });
   }
 
   pendingCount() {
@@ -116,8 +117,9 @@ export class BillsApiService {
     return this.httpClient.post<BillView>(this.buildUrl(`/bills/${billId}/void`), { version, reason });
   }
 
-  changePaymentMethod(billId: string, version: number, paymentMethodId: string) {
-    return this.httpClient.put<BillView>(this.buildUrl(`/bills/${billId}/payment-method`), { version, paymentMethodId });
+  /** ADR-0021 L11: the reason is required and audited. */
+  changePaymentMethod(billId: string, version: number, paymentMethodId: string, reason: string) {
+    return this.httpClient.put<BillView>(this.buildUrl(`/bills/${billId}/payment-method`), { version, paymentMethodId, reason });
   }
 
   approvalPreview(billId: string) {

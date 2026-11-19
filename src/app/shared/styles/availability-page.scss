@@ -865,3 +865,28 @@ fieldset {
   font-size: 0.74rem;
   color: var(--color-error, #b4533c);
 }
+
+/* ── SONDA BUG-171: touch targets of at least 44 px on phones ───────────────────────────────────────────────
+   The global 22 px rule for checkboxes shrank the day switch; the whole label is the target (44 px), the switch
+   keeps its own size, and the time fields reach 44 px too. */
+@media (max-width: 768px) {
+  .avail-page__toggle {
+    min-height: 44px;
+    min-width: 44px;
+
+    input[type='checkbox'] {
+      width: 2.75rem;
+      height: 1.5rem;
+    }
+  }
+
+  .avail-page__field input,
+  .avail-page__duration-input {
+    min-height: 44px;
+  }
+
+  .avail-page__btn-remove-block {
+    width: 44px;
+    height: 44px;
+  }
+}
