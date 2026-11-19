@@ -30,6 +30,10 @@ export const NOTIFICATION_CATEGORY_COPY: Record<NotificationCategory, { label: s
     label: 'Compras',
     description: 'El recibo de caja de cada cuenta que pagas en la barbería.',
   },
+  reviews: {
+    label: 'Reseñas',
+    description: 'Cuando un cliente califica una cita: las estrellas y su comentario.',
+  },
   campaigns: {
     label: 'Campañas',
     description: 'Novedades y promociones de la barbería.',

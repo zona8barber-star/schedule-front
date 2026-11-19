@@ -1,6 +1,6 @@
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import { catchError, map, of, switchMap, throwError } from 'rxjs';
+import { catchError, forkJoin, map, of, switchMap, throwError } from 'rxjs';
 
 import { RuntimeConfigService } from '../config/runtime-config.service';
 import {
@@ -44,7 +44,13 @@ export class CustomerAppointmentsApiService {
             return throwError(() => error);
           }
 
-          return this.list({ pageSize: MAX_PAGE_SIZE }).pipe(
+          // An API without the detail endpoint: look for it among the upcoming ones first (a booking just made is
+          // future, and the default history window does not include it, SONDA BUG-118), then in the history.
+          return forkJoin([
+            this.list({ scope: 'Upcoming', pageSize: MAX_PAGE_SIZE }),
+            this.list({ pageSize: MAX_PAGE_SIZE }),
+          ]).pipe(
+            map(([upcoming, history]) => ({ items: [...upcoming.items, ...history.items] })),
             map(
               (page) =>
                 page.items.find((appointment) => appointment.id === appointmentId) ?? null,

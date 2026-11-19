@@ -209,4 +209,36 @@ describe('AdminInventoryPageComponent', () => {
 
     expect(component.successMessage()).toBe('Stock mínimo de «Shampoo»: 4.');
   });
+
+  // SONDA BUG-136: a failed load is the common error state, never «Todavía no hay productos».
+  it('shows the error state with a retry instead of an empty catalog when the inventory cannot be loaded', async () => {
+    granted = [PERMISSION_CODES.inventoryView];
+    fixture = TestBed.createComponent(AdminInventoryPageComponent);
+    component = fixture.componentInstance;
+    httpMock = TestBed.inject(HttpTestingController);
+    fixture.detectChanges();
+    httpMock.expectOne(`${api}/admin/inventory/summary`).flush({ title: 'Error' }, { status: 500, statusText: 'Server Error' });
+    httpMock.match((candidate) => candidate.url === `${api}/admin/inventory`).forEach((request) => request.flush({ items: [], page: 1, pageSize: 25, totalCount: 0 }));
+    await settle();
+    const element = fixture.nativeElement as HTMLElement;
+
+    expect(element.querySelector('[data-testid="load-error"]')).not.toBeNull();
+    expect(element.textContent).not.toContain('Todavía no hay productos');
+
+    (element.querySelector('[data-testid="load-error-retry"]') as HTMLButtonElement).click();
+    flushLoad();
+    await settle();
+    expect(element.querySelector('[data-testid="load-error"]')).toBeNull();
+  });
+
+  // SONDA BUG-137: each row action names its product for screen readers.
+  it('names every row action after its product', async () => {
+    await create([PERMISSION_CODES.inventoryView, PERMISSION_CODES.inventoryReceive, PERMISSION_CODES.inventoryAdjust]);
+
+    const labels = Array.from(row('p-wax').querySelectorAll('.catalog__actions button, .catalog__actions a')).map((element) =>
+      element.getAttribute('aria-label'),
+    );
+    expect(labels).toEqual(['Entrada de Cera mate', 'Ajuste de Cera mate', 'Stock mínimo de Cera mate', 'Movimientos de Cera mate']);
+  });
+
 });

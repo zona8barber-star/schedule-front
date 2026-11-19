@@ -45,6 +45,9 @@ export class NotificationCenterService {
   readonly hasLoaded = this.loadedState.asReadonly();
   readonly hasMore = this.hasMoreState.asReadonly();
   readonly isLoadingMore = this.loadingMoreState.asReadonly();
+  /** SONDA BUG-148: grows every time «Marcar todas como leídas» succeeds, so an open history can refresh itself. */
+  private readonly readAllState = signal(0);
+  readonly readAllVersion = this.readAllState.asReadonly();
 
   constructor() {
     effect(() => {
@@ -190,6 +193,7 @@ export class NotificationCenterService {
 
     try {
       await firstValueFrom(this.api.markAllNotificationsAsRead());
+      this.readAllState.update((version) => version + 1);
     } catch {
       void this.refresh();
     }

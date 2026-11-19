@@ -86,6 +86,11 @@ export class SlotPickerComponent implements OnInit {
   readonly disabled = input(false);
 
   readonly slotSelected = output<PublicAvailabilitySlotResponse>();
+  /**
+   * SONDA BUG-119: the day shown, also when the picker moves by itself to the first day with free time, so the page
+   * heading follows the selected chip instead of keeping the requested day.
+   */
+  readonly dateChange = output<string>();
 
   readonly today = signal(bogotaToday());
   readonly selectedDate = signal(this.today());
@@ -137,6 +142,15 @@ export class SlotPickerComponent implements OnInit {
 
   constructor() {
     afterNextRender(() => this.scrollSelectedDayIntoView());
+
+    effect(() => {
+      const date = this.selectedDate();
+      untracked(() => {
+        if (this.initialized) {
+          this.dateChange.emit(date);
+        }
+      });
+    });
 
     // Another service (or duration) changes every free time: start over.
     effect(() => {

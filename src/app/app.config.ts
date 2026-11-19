@@ -19,6 +19,7 @@ import { environment } from '../environments/environment';
 import { RuntimeConfigService } from './core/config/runtime-config.service';
 import { authInterceptor } from './core/interceptors/auth.interceptor';
 import { loadingInterceptor } from './core/interceptors/loading.interceptor';
+import { perimeterBlockInterceptor } from './core/interceptors/perimeter-block.interceptor';
 import { toastInterceptor } from './core/interceptors/toast.interceptor';
 import { AuthService } from './core/services/auth.service';
 import { NavigationFailureService } from './core/services/navigation-failure.service';
@@ -29,7 +30,8 @@ export const appConfig: ApplicationConfig = {
     provideBrowserGlobalErrorListeners(),
     provideCharts(withDefaultRegisterables()),
     { provide: LOCALE_ID, useValue: 'es-CO' },
-    provideHttpClient(withInterceptors([authInterceptor, loadingInterceptor, toastInterceptor])),
+    // perimeterBlockInterceptor is the innermost: the toasts and the screens already see the rejected text (BUG-139).
+    provideHttpClient(withInterceptors([authInterceptor, loadingInterceptor, toastInterceptor, perimeterBlockInterceptor])),
     provideRouter(
       routes,
       withViewTransitions(),

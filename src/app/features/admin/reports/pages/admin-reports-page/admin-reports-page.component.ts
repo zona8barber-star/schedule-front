@@ -5,29 +5,26 @@ import { ChartData, ChartOptions } from 'chart.js';
 import { BaseChartDirective } from 'ng2-charts';
 import { firstValueFrom } from 'rxjs';
 
-import { CashClosingView } from '../../../../../core/models/bill.models';
 import { ReportSummaryView } from '../../../../../core/models/report.models';
 import { AdminReportsApiService } from '../../../../../core/services/admin-reports-api.service';
-import { BillsApiService } from '../../../../../core/services/bills-api.service';
 import { getApiErrorMessage } from '../../../../../core/utils/api-error.utils';
 import { bogotaToday } from '../../../../../core/utils/bogota-date.utils';
-import { historyRangeError } from '../../../../../core/utils/history-range.utils';
 import { ApiFeedbackComponent } from '../../../../../shared/components/api-feedback/api-feedback.component';
+import { CashClosingPanelComponent } from '../../components/cash-closing-panel/cash-closing-panel.component';
 
 /** First day of the current Bogotá month: "today" is Bogotá's, whatever the device timezone (SONDA BUG-033). */
-function bogotaMonthStart(): string {
+export function bogotaMonthStart(): string {
   return `${bogotaToday().slice(0, 8)}01`;
 }
 
 @Component({
   selector: 'app-admin-reports-page',
-  imports: [FormsModule, DecimalPipe, BaseChartDirective, ApiFeedbackComponent],
+  imports: [FormsModule, DecimalPipe, BaseChartDirective, ApiFeedbackComponent, CashClosingPanelComponent],
   templateUrl: './admin-reports-page.component.html',
   styleUrl: './admin-reports-page.component.scss',
 })
 export class AdminReportsPageComponent implements OnInit {
   private readonly api = inject(AdminReportsApiService);
-  private readonly billsApi = inject(BillsApiService);
 
   readonly from = signal(bogotaMonthStart());
   readonly to = signal(bogotaToday());
@@ -36,12 +33,6 @@ export class AdminReportsPageComponent implements OnInit {
   readonly errorMessage = signal<string | null>(null);
   /** Increases with every load; an answer whose number is no longer the latest is ignored (SONDA BUG-082). */
   private loadSequence = 0;
-
-  /** ADR-0020 stage 5: what was charged by day and payment method; at most 30 days per query. */
-  readonly cash = signal<CashClosingView | null>(null);
-  readonly cashError = signal<string | null>(null);
-  readonly isLoadingCash = signal(false);
-  private cashSequence = 0;
 
   readonly chartOptions: ChartOptions = {
     responsive: true,
@@ -114,37 +105,9 @@ export class AdminReportsPageComponent implements OnInit {
     this.reload();
   }
 
+  /** The cash closing panel follows from() and to() by itself (ADR-0021 L2: shared with «Cierre de caja»). */
   private reload(): void {
     void this.load();
-    void this.loadCash();
-  }
-
-  private async loadCash(): Promise<void> {
-    const sequence = ++this.cashSequence;
-    const rangeError = historyRangeError(this.from(), this.to());
-    this.cashError.set(rangeError);
-    if (rangeError) {
-      // The API would reject it too (422); the rest of the report still covers the range.
-      this.cash.set(null);
-      this.isLoadingCash.set(false);
-      return;
-    }
-    this.isLoadingCash.set(true);
-    try {
-      const cash = await firstValueFrom(this.billsApi.cashClosing(this.from(), this.to()));
-      if (sequence === this.cashSequence) {
-        this.cash.set(cash);
-      }
-    } catch (error) {
-      if (sequence === this.cashSequence) {
-        this.cash.set(null);
-        this.cashError.set(getApiErrorMessage(error));
-      }
-    } finally {
-      if (sequence === this.cashSequence) {
-        this.isLoadingCash.set(false);
-      }
-    }
   }
 
   private async load(): Promise<void> {

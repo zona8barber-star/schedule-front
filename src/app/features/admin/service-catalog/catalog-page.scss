@@ -93,7 +93,8 @@
   padding: 0.05rem 0.45rem;
   border-radius: 999px;
   background: rgba(180, 83, 60, 0.12);
-  color: var(--color-error, #b4533c);
+  // SONDA BUG-133: the error red read 3.8:1 on its tinted background; this darker red reads over 5:1 (WCAG AA).
+  color: #8f3d2a;
   font-size: 0.75rem;
   font-weight: 600;
 }

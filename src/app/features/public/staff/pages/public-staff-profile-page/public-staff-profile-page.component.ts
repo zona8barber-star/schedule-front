@@ -103,6 +103,13 @@ export class PublicStaffProfilePageComponent implements OnInit {
   readonly bookingDate = signal<string | null>(
     readDateParam(this.route.snapshot.queryParamMap.get('fecha')),
   );
+
+  /** SONDA BUG-119: the heading follows the day the picker shows (it may move to the first day with free time). */
+  onPickerDateChange(date: string): void {
+    if (date !== this.bookingDate()) {
+      this.bookingDate.set(date);
+    }
+  }
   /** General service chosen in the booking modal (ADR-0016 B3): free times depend on its duration. */
   readonly selectedServiceId = signal<string | null>(this.route.snapshot.queryParamMap.get('servicio'));
 

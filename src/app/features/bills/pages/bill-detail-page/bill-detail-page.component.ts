@@ -98,6 +98,15 @@ export class BillDetailPageComponent implements OnInit {
     (this.bill()?.lines ?? []).filter((line) => line.type === 'Product' || (line.type === 'Service' && !line.isCourtesy)),
   );
   readonly activeStaff = computed(() => (this.options()?.staff ?? []).filter((staff) => staff.isActive));
+  /** ADR-0021 L1: without bills.assign-other-staff, services and tips go only on one's own name (products are free). */
+  readonly canAssignOtherStaff = computed(() => this.options()?.canAssignOtherStaff ?? false);
+  readonly lineType = signal<BillLineType>('Service');
+  readonly lineStaffOptions = computed(() => {
+    const own = this.options()?.ownStaffProfileId ?? null;
+    return this.canAssignOtherStaff() || this.lineType() === 'Product'
+      ? this.activeStaff()
+      : this.activeStaff().filter((staff) => staff.id === own);
+  });
 
   readonly lineForm = this.formBuilder.nonNullable.group({
     type: ['Service' as BillLineType],
@@ -154,6 +163,11 @@ export class BillDetailPageComponent implements OnInit {
   onTypeChange(): void {
     this.lineError.set(null);
     const type = this.lineForm.controls.type.value;
+    this.lineType.set(type);
+    const own = this.options()?.ownStaffProfileId ?? '';
+    if (type !== 'Product' && !this.canAssignOtherStaff() && this.lineForm.controls.staffProfileId.value !== own) {
+      this.lineForm.patchValue({ staffProfileId: own });
+    }
     const bill = this.bill();
     if (!bill) return;
     if (type === 'MembershipConsumption') {
@@ -205,6 +219,16 @@ export class BillDetailPageComponent implements OnInit {
           tipPaymentMode: value.tipPaymentMode,
         });
         break;
+    }
+
+    // Lote C2 / ADR-0021 L6: every amount typed by hand is confirmed before it is saved.
+    if ((value.type === 'Discount' || value.type === 'Tip') && value.amount !== null && value.amount > 0) {
+      const confirmed = await this.moneyConfirmation.confirm({
+        action: value.type === 'Discount' ? 'Agregar el descuento' : 'Agregar la propina',
+        amount: Math.trunc(value.amount),
+        detail: value.type === 'Discount' ? value.reason.trim() || undefined : TIP_PAYMENT_MODE_LABELS[value.tipPaymentMode],
+      });
+      if (!confirmed) return;
     }
 
     const saved = await this.mutate(() => this.api.addLine(bill.id, request), `${BILL_LINE_TYPE_LABELS[value.type]} agregado a la cuenta.`);
@@ -328,6 +352,15 @@ export class BillDetailPageComponent implements OnInit {
   async approve(): Promise<void> {
     const bill = this.bill();
     if (!bill) return;
+    // ADR-0021 L6: approving posts the money of the bill, so its total is confirmed like any other amount.
+    if (bill.total > 0) {
+      const confirmed = await this.moneyConfirmation.confirm({
+        action: 'Aprobar la cuenta',
+        amount: bill.total,
+        detail: `${bill.customerName}${bill.paymentMethodName ? ' · ' + bill.paymentMethodName : ''}`,
+      });
+      if (!confirmed) return;
+    }
     const saved = await this.mutate(
       () =>
         this.api.approve(bill.id, {
@@ -418,7 +451,10 @@ export class BillDetailPageComponent implements OnInit {
       this.bill.set(bill);
       this.options.set(options);
       this.paymentMethodId.set(bill.paymentMethodId ?? '');
-      this.lineForm.patchValue({ staffProfileId: bill.staffProfileId ?? options.ownStaffProfileId ?? '' });
+      // ADR-0021 L1: without the permission the default is always one's own name.
+      this.lineForm.patchValue({
+        staffProfileId: options.canAssignOtherStaff ? (bill.staffProfileId ?? options.ownStaffProfileId ?? '') : (options.ownStaffProfileId ?? ''),
+      });
     } catch (error) {
       if ((error as { status?: number }).status === 404) {
         this.notFound.set(true);

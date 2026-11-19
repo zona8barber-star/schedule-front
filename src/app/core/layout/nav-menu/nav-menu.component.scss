@@ -107,15 +107,16 @@
 }
 
 .nav-menu__link.is-active {
-  border-left-color: var(--z-brass);
-  background: rgba(176, 138, 74, 0.16);
+  // ADR-0021 L7: the active item uses the brand accent of the bars.
+  border-left-color: var(--z-bar-accent);
+  background: color-mix(in srgb, var(--z-bar-accent) 16%, transparent);
   color: var(--z-bone);
   font-weight: 600;
 }
 
 .nav-menu__toggle:focus-visible,
 .nav-menu__link:focus-visible {
-  outline: 2px solid var(--z-brass);
+  outline: 2px solid var(--z-bar-accent);
   outline-offset: -2px;
 }
 

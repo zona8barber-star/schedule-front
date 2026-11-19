@@ -22,13 +22,20 @@
         @if (isAdmin && m.status === 'PendingActivation') {
           <button class="membership-detail__btn" type="button" (click)="activate()" [disabled]="isBusy()">Activar</button>
         }
-        @if (isAdmin && m.status !== 'Annulled') {
+        @if (isAdmin && m.status !== 'Annulled' && !hasLiveConsumptions()) {
           <button class="membership-detail__btn membership-detail__btn--danger" type="button" (click)="open('annul')">
             Anular
           </button>
         }
       </div>
     </header>
+
+    @if (isAdmin && m.status !== 'Annulled' && hasLiveConsumptions()) {
+      <p class="membership-detail__notice" role="note" data-testid="annul-blocked">
+        Esta membresía ya tiene consumos registrados, así que no se puede anular: lo ya usado se respeta. Si un consumo
+        fue un error, reviértelo primero.
+      </p>
+    }
 
     @if (m.status === 'Annulled') {
       <div class="membership-detail__notice" role="status">

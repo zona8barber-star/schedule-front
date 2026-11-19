@@ -303,13 +303,18 @@
         @if (lineForm.controls.type.value !== 'Discount') {
           <label class="catalog-modal__field">
             <span>Profesional{{ lineForm.controls.type.value === 'Product' ? ' (opcional)' : '' }}</span>
-            <select formControlName="staffProfileId">
+            <select formControlName="staffProfileId" data-testid="line-staff">
               <option value="">Sin profesional</option>
-              @for (staff of activeStaff(); track staff.id) {
+              @for (staff of lineStaffOptions(); track staff.id) {
                 <option [value]="staff.id">{{ staff.displayName }}</option>
               }
             </select>
           </label>
+          @if (!canAssignOtherStaff() && lineForm.controls.type.value !== 'Product') {
+            <small class="catalog-modal__hint" data-testid="own-staff-only">
+              {{ options()?.ownStaffProfileId ? 'Los servicios y las propinas se cargan a tu nombre.' : 'Necesitas un perfil de profesional, o el permiso para cargar a nombre de otro profesional.' }}
+            </small>
+          }
         }
 
         @if (lineForm.controls.type.value === 'Discount' || lineForm.controls.isCourtesy.value) {

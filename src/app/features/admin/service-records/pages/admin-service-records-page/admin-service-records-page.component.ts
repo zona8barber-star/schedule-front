@@ -34,6 +34,7 @@ import {
   resolveOptionalRange,
 } from '../../../../../core/utils/history-range.utils';
 import { ApiFeedbackComponent } from '../../../../../shared/components/api-feedback/api-feedback.component';
+import { LoadErrorComponent } from '../../../../../shared/components/load-error/load-error.component';
 import { PageStateComponent } from '../../../../../shared/components/page-state/page-state.component';
 import { PaginatorComponent } from '../../../../../shared/components/paginator/paginator.component';
 import { AdminServiceRecordReviewModalComponent } from '../../components/admin-service-record-review-modal/admin-service-record-review-modal.component';
@@ -55,6 +56,7 @@ const STATUSES: readonly ServiceRecordStatus[] = TABS.map((tab) => tab.status);
   imports: [BogotaDatePipe, 
     DecimalPipe,
     ApiFeedbackComponent,
+    LoadErrorComponent,
     PageStateComponent,
     PaginatorComponent,
     AdminServiceRecordReviewModalComponent,
@@ -184,9 +186,17 @@ export class AdminServiceRecordsPageComponent implements OnInit {
     });
   }
 
+  /** SONDA BUG-162: the tray could not be loaded; the common error state, never next to «No hay pendientes». */
+  readonly loadError = signal<unknown>(null);
+
+  retryLoad(): void {
+    void this.load();
+  }
+
   private async load(): Promise<void> {
     const sequence = ++this.loadSequence;
     this.errorMessage.set(null);
+    this.loadError.set(null);
     if (this.rangeError()) {
       // The API would reject it too (422); the message next to the dates explains why.
       this.records.set([]);
@@ -216,7 +226,7 @@ export class AdminServiceRecordsPageComponent implements OnInit {
       if (sequence === this.loadSequence) {
         this.records.set([]);
         this.totalCount.set(0);
-        this.errorMessage.set(getApiErrorMessage(error));
+        this.loadError.set(error);
       }
     } finally {
       if (sequence === this.loadSequence) {

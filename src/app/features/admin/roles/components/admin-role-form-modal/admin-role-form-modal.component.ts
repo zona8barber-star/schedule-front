@@ -97,7 +97,7 @@ export class AdminRoleFormModalComponent implements OnChanges {
 
     try {
       const result = this.role
-        ? await firstValueFrom(this.adminRolesApiService.update(this.role.id, payload))
+        ? await firstValueFrom(this.adminRolesApiService.update(this.role.id, { ...payload, version: this.role.version ?? null }))
         : await firstValueFrom(this.adminRolesApiService.create(payload));
       this.saved.emit(result);
     } catch (error) {

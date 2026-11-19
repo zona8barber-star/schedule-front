@@ -157,6 +157,29 @@ describe('BookingConfirmPageComponent', () => {
       expect(fixture.nativeElement.textContent).toContain('Tu cita fue creada correctamente');
       expect(fixture.nativeElement.textContent).not.toContain('Faltan datos para reservar');
       expect(confirmButton()).toBeUndefined();
+      // SONDA BUG-118: the heading no longer says «Confirmar reserva».
+      expect(fixture.nativeElement.querySelector('h1').textContent.trim()).toBe('Tu reserva');
+    });
+
+    // SONDA BUG-043 (retest c4): reloading the old URL (without appointmentId) of a slot this customer already took.
+    it('shows the booking when the old URL of a slot already taken by this customer is reloaded', async () => {
+      await open(fullParams, { list: vi.fn(() => of({ items: [appointment], page: 1, pageSize: 100, totalCount: 1 })) });
+
+      expect(list).toHaveBeenCalledWith(expect.objectContaining({ scope: 'Upcoming' }));
+      expect(create).not.toHaveBeenCalled();
+      expect(component.successAppointment()?.id).toBe('a-1');
+      expect(fixture.nativeElement.textContent).toContain('Tu cita fue creada correctamente');
+      expect(confirmButton()).toBeUndefined();
+      await new Promise<void>((resolve) => setTimeout(resolve, 0));
+      expect(TestBed.inject(Router).url).toBe('/booking/confirm?appointmentId=a-1');
+    });
+
+    it('still offers to confirm a slot this customer does not hold', async () => {
+      await open(fullParams);
+
+      expect(component.successAppointment()).toBeNull();
+      expect(confirmButton()).toBeDefined();
+      expect(fixture.nativeElement.querySelector('h1').textContent.trim()).toBe('Confirmar reserva');
     });
 
     it('shows the booking, not "no disponible", when the customer already holds that very slot', async () => {

@@ -42,7 +42,8 @@ export interface NotificationHistoryResponse {
 
 /** ADR-0019 N4: tipos de aviso que se pueden apagar (solo el push). */
 // ADR-0020 Q19: «Compras» (purchases) carries the receipts of the bills.
-export type NotificationCategory = 'appointments' | 'memberships' | 'loyalty' | 'purchases' | 'campaigns';
+// ADR-0021 L4: «Reseñas» (reviews) only reaches professionals and administrators; the API lists it only to them.
+export type NotificationCategory = 'appointments' | 'memberships' | 'loyalty' | 'purchases' | 'reviews' | 'campaigns';
 
 export interface NotificationPreference {
   category: NotificationCategory;

@@ -61,7 +61,9 @@
     </label>
   </form>
 
-  @if (isLoading()) {
+  @if (loadError()) {
+    <app-load-error subject="el inventario" [error]="loadError()" [retrying]="isLoading()" (retry)="retryLoad()" />
+  } @else if (isLoading()) {
     <p class="catalog__state">Cargando inventario...</p>
   } @else if (!items().length) {
     <p class="catalog__state">
@@ -116,15 +118,15 @@
               </td>
               <td class="catalog__actions">
                 @if (canReceive()) {
-                  <button class="catalog__action-btn" type="button" (click)="openReceipt(item)">Entrada</button>
+                  <button class="catalog__action-btn" type="button" (click)="openReceipt(item)" [attr.aria-label]="'Entrada de ' + item.name">Entrada</button>
                 }
                 @if (canAdjust()) {
-                  <button class="catalog__action-btn" type="button" (click)="openAdjust(item)">Ajuste</button>
+                  <button class="catalog__action-btn" type="button" (click)="openAdjust(item)" [attr.aria-label]="'Ajuste de ' + item.name">Ajuste</button>
                 }
                 @if (canReceive()) {
-                  <button class="catalog__action-btn" type="button" (click)="openMinStock(item)">Stock mínimo</button>
+                  <button class="catalog__action-btn" type="button" (click)="openMinStock(item)" [attr.aria-label]="'Stock mínimo de ' + item.name">Stock mínimo</button>
                 }
-                <a class="catalog__action-btn" [routerLink]="['/admin/inventory', item.productId]">Movimientos</a>
+                <a class="catalog__action-btn" [routerLink]="['/admin/inventory', item.productId]" [attr.aria-label]="'Movimientos de ' + item.name">Movimientos</a>
               </td>
             </tr>
           }

@@ -187,4 +187,32 @@ describe('BillsPageComponent', () => {
     expect(row).toContain('Profesional inactivo');
     expect(row).toContain('Revisar');
   });
+
+  // SONDA BUG-135: with the API down the page showed only the tabs; now the common error state with «Reintentar».
+  it('shows the error state with a retry when the bills cannot be loaded', async () => {
+    await create();
+    httpMock.expectOne(`${api}/bills/pending`).flush({ title: 'Error' }, { status: 500, statusText: 'Server Error' });
+    await settle();
+    const element = fixture.nativeElement as HTMLElement;
+    expect(element.querySelector('[data-testid="load-error"]')).not.toBeNull();
+
+    (element.querySelector('[data-testid="load-error-retry"]') as HTMLButtonElement).click();
+    httpMock.expectOne(`${api}/bills/pending`).flush({ openBills: [], appointmentsWithoutBill: [], count: 0 });
+    await settle();
+    expect(element.querySelector('[data-testid="load-error"]')).toBeNull();
+    expect(element.textContent).toContain('No hay cuentas por cerrar.');
+  });
+
+  // SONDA BUG-157: the search asks for a name from 3 letters, or a full email or phone.
+  it('does not search customers with fewer than 3 characters', async () => {
+    await create();
+    httpMock.expectOne(`${api}/bills/pending`).flush({ openBills: [], appointmentsWithoutBill: [], count: 0 });
+    component.openForm.controls.search.setValue('ca');
+
+    await component.searchCustomers();
+
+    httpMock.expectNone((request) => request.url.endsWith('/bills/customers'));
+    expect(component.openError()).toContain('al menos 3 letras');
+  });
+
 });

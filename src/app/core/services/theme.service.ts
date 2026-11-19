@@ -12,6 +12,18 @@ export const MIN_BRAND_CONTRAST = 4.5;
 const LIGHT_SURFACES = ['#ffffff', '#f4f2ec'] as const;
 
 /**
+ * ADR-0021 L7: the dimmest text the bars carry (steel-hi, used by the header links). A bar color that reaches 4.5:1
+ * with it also does with the lighter texts (concrete, bone).
+ */
+export const BAR_DIMMEST_TEXT = '#9aa0a6';
+
+/** Light text of the bars, the fallback accent when the secondary color does not stand out on the bar. */
+const BAR_LIGHT_TEXT = '#f4f2ec';
+
+/** WCAG 1.4.11: a non-text indicator (the active item's border) needs 3:1 against the bar. */
+export const MIN_INDICATOR_CONTRAST = 3;
+
+/**
  * The CSS custom properties the brand drives. Without a configured brand none is set, so the stylesheet palette
  * (styles/theme.scss) applies unchanged.
  */
@@ -23,6 +35,8 @@ export const BRAND_PROPERTIES = [
   '--color-secondary-hover',
   '--brand-primary',
   '--brand-accent',
+  '--z-bar',
+  '--z-bar-accent',
 ] as const;
 
 /**
@@ -59,7 +73,27 @@ export class ThemeService {
     rootStyle.setProperty('--color-secondary-hover', hover);
     rootStyle.setProperty('--brand-primary', accent);
     rootStyle.setProperty('--brand-accent', secondaryAccent);
+
+    // ADR-0021 L7: the header, side menu, drop-down panel and menus use the brand too (they kept the fixed ink).
+    const bar = readableBarColor(primary);
+    rootStyle.setProperty('--z-bar', bar);
+    rootStyle.setProperty('--z-bar-accent', barAccent(secondary, bar));
   }
+}
+
+/** The primary color for the bars: itself if their dimmest text reads on it at 4.5:1, otherwise the same hue darkened. */
+export function readableBarColor(hex: string): string {
+  let rgb = hexToRgb(hex);
+  for (let step = 0; step < 60 && contrastRatio(toHex(rgb), BAR_DIMMEST_TEXT) < MIN_BRAND_CONTRAST; step++) {
+    rgb = darken(rgb, 0.06);
+  }
+
+  return toHex(rgb);
+}
+
+/** The secondary color marks the active item when it stands out on the bar (3:1); otherwise the light text does. */
+export function barAccent(secondary: string | null, bar: string): string {
+  return secondary && contrastRatio(secondary, bar) >= MIN_INDICATOR_CONTRAST ? secondary : BAR_LIGHT_TEXT;
 }
 
 /** The color itself when it reads on every light surface (and under white text); otherwise the same hue darkened. */

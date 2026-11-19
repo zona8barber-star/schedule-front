@@ -22,7 +22,7 @@ const viewportGutterPx = 8;
   styleUrl: './notification-bell.component.scss',
   host: {
     '(document:click)': 'onDocumentClick($event)',
-    '(document:keydown.escape)': 'close()',
+    '(document:keydown.escape)': 'closeWithEscape()',
     '(window:resize)': 'close()',
   },
 })
@@ -74,6 +74,16 @@ export class NotificationBellComponent {
 
   close(): void {
     this.isOpen.set(false);
+  }
+
+  /** SONDA BUG-149: closing with «Escape» returns the focus to the bell, not to the top bar. */
+  closeWithEscape(): void {
+    if (!this.isOpen()) {
+      return;
+    }
+
+    this.close();
+    this.trigger().nativeElement.focus();
   }
 
   onDocumentClick(event: MouseEvent): void {

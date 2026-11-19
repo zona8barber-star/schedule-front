@@ -129,6 +129,8 @@
 
 .bills__add {
   display: grid;
+  // SONDA BUG-134: one column that may shrink below its content (a long product name in the select made it 1502 px).
+  grid-template-columns: minmax(0, 1fr);
   gap: 0.5rem;
   padding: 1rem;
   border: 1px dashed var(--color-border, #ccc);

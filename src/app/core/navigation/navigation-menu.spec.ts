@@ -148,7 +148,7 @@ describe('buildNavigation', () => {
         'admin-membership-plans',
       ],
       loyalty: ['admin-loyalty-settings', 'admin-loyalty-rewards', 'admin-loyalty-redemptions'],
-      finance: ['admin-income', 'admin-payment-methods', 'admin-expenses', 'admin-reports'],
+      finance: ['admin-income', 'admin-payment-methods', 'admin-expenses', 'admin-reports', 'admin-cash-closing'],
       content: ['admin-landing', 'admin-banners', 'admin-ticker', 'admin-business-hours', 'admin-notifications'],
       administration: ['admin-users', 'admin-roles'],
     });
@@ -206,6 +206,30 @@ describe('buildNavigation', () => {
       expect(itemIdsByGroup(menu)).toEqual({ customers: ['admin-customers'] });
     },
   );
+
+  // SONDA BUG-130: bills.unapprove alone opens «Cuentas», like the API policy BillsAccess.
+  it('opens «Cuentas» to a custom role with only bills.unapprove', () => {
+    const menu = buildNavigation({
+      isAuthenticated: true,
+      roles: ['Revisión'],
+      permissions: [PERMISSION_CODES.billsUnapprove],
+      hasPendingServiceRecords: false,
+    });
+
+    expect(itemIdsByGroup(menu)).toEqual({ 'my-work': ['bills'] });
+  });
+
+  // ADR-0021 L2: the cash closing is a permission of its own, assignable to any role.
+  it('opens «Cierre de caja» (and only it) to a custom role with reports.cash.view', () => {
+    const menu = buildNavigation({
+      isAuthenticated: true,
+      roles: ['Caja'],
+      permissions: [PERMISSION_CODES.reportsCashView],
+      hasPendingServiceRecords: false,
+    });
+
+    expect(itemIdsByGroup(menu)).toEqual({ finance: ['admin-cash-closing'] });
+  });
 
   it('ignores permissions and roles of a session that is not authenticated', () => {
     const menu = buildNavigation({ ...fullAdmin, isAuthenticated: false });

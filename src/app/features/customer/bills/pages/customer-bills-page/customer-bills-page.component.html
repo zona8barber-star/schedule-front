@@ -23,7 +23,7 @@
   } @else {
     <div class="my-memberships__list" data-testid="my-bills">
       @for (bill of bills(); track bill.id) {
-        <a class="my-memberships__card my-memberships__card-link" [routerLink]="['/customer/bills', bill.id]" [attr.data-bill]="bill.id">
+        <a class="my-memberships__card my-memberships__card-link" [routerLink]="['/customer/bills', bill.id]" [queryParams]="page() > 1 ? { page: page() } : null" [attr.data-bill]="bill.id">
           <div class="my-memberships__card-header">
             <h2 [class.my-bills__voided]="bill.status === 'Voided'">{{ bill.number }}</h2>
             <span class="my-memberships__status my-bills__status" [attr.data-status]="bill.status">{{ statusLabels[bill.status] }}</span>
