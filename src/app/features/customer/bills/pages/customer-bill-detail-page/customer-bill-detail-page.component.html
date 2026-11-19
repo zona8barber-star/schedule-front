@@ -1,5 +1,5 @@
 <section class="my-memberships">
-  <a class="my-memberships__link" routerLink="/customer/bills">← Mis recibos de caja</a>
+  <a class="my-memberships__link" routerLink="/customer/bills" [queryParams]="returnQueryParams" data-testid="back-to-bills">← Mis recibos de caja</a>
 
   <app-api-feedback severity="error" [message]="errorMessage()" />
 

@@ -53,7 +53,8 @@
       }
 
       @if (view.appointmentsWithoutBill.length) {
-        <h2 class="bills__subtitle">Citas completadas sin cuenta</h2>
+        <!-- ADR-0021 L8: only today's appointments; a past day can no longer be charged. -->
+        <h2 class="bills__subtitle">Citas de hoy completadas sin cuenta</h2>
         <ul class="bills__list" data-testid="appointments-without-bill">
           @for (appointment of view.appointmentsWithoutBill; track appointment.appointmentId) {
             <li class="bills__card" [attr.data-appointment]="appointment.appointmentId">

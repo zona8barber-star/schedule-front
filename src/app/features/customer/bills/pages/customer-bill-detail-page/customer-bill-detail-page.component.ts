@@ -37,6 +37,11 @@ export class CustomerBillDetailPageComponent implements OnInit {
   private readonly api = inject(CustomerBillsApiService);
 
   readonly statusLabels = MY_BILL_STATUS_LABELS;
+  /** SONDA BUG-124: the page of «Mis recibos de caja» this receipt was opened from, so «←» goes back to it. */
+  readonly returnQueryParams = (() => {
+    const page = Number(this.route.snapshot?.queryParamMap?.get('page'));
+    return Number.isInteger(page) && page > 1 ? { page } : null;
+  })();
   readonly formatCop = formatCop;
   readonly bill = signal<MyBillView | null>(null);
   readonly isLoading = signal(true);

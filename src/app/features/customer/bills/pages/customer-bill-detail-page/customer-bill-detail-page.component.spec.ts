@@ -35,14 +35,17 @@ describe('CustomerBillDetailPageComponent', () => {
     ...overrides,
   });
 
-  async function render(id: string, answer?: (request: ReturnType<HttpTestingController['expectOne']>) => void) {
+  async function render(id: string, answer?: (request: ReturnType<HttpTestingController['expectOne']>) => void, page?: string) {
     TestBed.configureTestingModule({
       imports: [CustomerBillDetailPageComponent],
       providers: [
         provideRouter([]),
         provideHttpClient(),
         provideHttpClientTesting(),
-        { provide: ActivatedRoute, useValue: { paramMap: of(convertToParamMap({ billId: id })) } },
+        {
+          provide: ActivatedRoute,
+          useValue: { paramMap: of(convertToParamMap({ billId: id })), snapshot: { queryParamMap: convertToParamMap(page ? { page } : {}) } },
+        },
       ],
     });
     httpMock = TestBed.inject(HttpTestingController);
@@ -98,4 +101,12 @@ describe('CustomerBillDetailPageComponent', () => {
 
     expect(element.textContent).toContain('No encontramos este recibo de caja');
   });
+
+  // SONDA BUG-124: «← Mis recibos de caja» goes back to the page the receipt was opened from.
+  it('goes back to the page of the list it was opened from', async () => {
+    const element = await render(billId, (request) => request.flush(receipt()), '3');
+
+    expect(element.querySelector('[data-testid="back-to-bills"]')?.getAttribute('href')).toBe('/customer/bills?page=3');
+  });
+
 });

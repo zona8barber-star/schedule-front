@@ -231,4 +231,14 @@ describe('AdminInventoryPageComponent', () => {
     expect(element.querySelector('[data-testid="load-error"]')).toBeNull();
   });
 
+  // SONDA BUG-137: each row action names its product for screen readers.
+  it('names every row action after its product', async () => {
+    await create([PERMISSION_CODES.inventoryView, PERMISSION_CODES.inventoryReceive, PERMISSION_CODES.inventoryAdjust]);
+
+    const labels = Array.from(row('p-wax').querySelectorAll('.catalog__actions button, .catalog__actions a')).map((element) =>
+      element.getAttribute('aria-label'),
+    );
+    expect(labels).toEqual(['Entrada de Cera mate', 'Ajuste de Cera mate', 'Stock mínimo de Cera mate', 'Movimientos de Cera mate']);
+  });
+
 });

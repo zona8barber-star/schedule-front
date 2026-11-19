@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, DestroyRef, OnInit, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, OnInit, effect, inject, signal, untracked } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, ParamMap, Router, RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
@@ -51,6 +51,18 @@ export class NotificationHistoryPageComponent implements OnInit {
   readonly isLoading = signal(true);
   readonly errorMessage = signal<string | null>(null);
   private readonly now = signal(Date.now());
+
+  /** SONDA BUG-148: «Marcar todas como leídas» from the bell refreshes the history that is open. */
+  private seenReadAll = this.center.readAllVersion?.() ?? 0;
+  private readonly readAllEffect = effect(() => {
+    const version = this.center.readAllVersion?.() ?? 0;
+    untracked(() => {
+      if (version > this.seenReadAll) {
+        this.seenReadAll = version;
+        void this.load();
+      }
+    });
+  });
 
   ngOnInit(): void {
     this.route.queryParamMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
@@ -126,6 +138,10 @@ export class NotificationHistoryPageComponent implements OnInit {
       this.totalCount.set(result.totalCount);
       this.unreadCount.set(result.unreadCount);
       this.loaded.set(true);
+      // SONDA BUG-144: a page past the end (?page=999) goes to the last page instead of claiming there are none.
+      if (!result.items.length && result.totalCount > 0 && this.page() > 1) {
+        this.navigate({ page: Math.max(1, Math.ceil(result.totalCount / this.pageSize)) });
+      }
     } catch (error) {
       if (sequence === this.loadSequence) {
         this.items.set([]);

@@ -1,4 +1,5 @@
 import { HttpErrorResponse } from '@angular/common/http';
+import { signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router, convertToParamMap, provideRouter } from '@angular/router';
 import { BehaviorSubject, of, throwError } from 'rxjs';
@@ -137,4 +138,45 @@ describe('NotificationHistoryPageComponent', () => {
     expect(element.textContent).toContain('No tienes notificaciones sin leer.');
     expect(element.querySelector('[data-testid="history-read-all"]')).toBeNull();
   });
+
+  // SONDA BUG-144: a page past the end goes to the last page instead of «No tienes notificaciones todavía».
+  it('goes to the last page when the requested one is past the end', async () => {
+    await create();
+    const navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+    fixture.componentInstance.page.set(5);
+    api.getHistory.mockReturnValue(of(page([], 61, 3)));
+
+    fixture.componentInstance.retryLoad();
+    await fixture.whenStable();
+
+    expect(navigate).toHaveBeenCalledWith([], expect.objectContaining({ queryParams: { page: 4 } }));
+  });
+
+  // SONDA BUG-148: «Marcar todas como leídas» from the bell refreshes the open history.
+  it('reloads when every notification is marked as read from the bell', async () => {
+    const readAllVersion = signal(0);
+    api = { getHistory: vi.fn(() => of(page([item('1', null)], 1, 1))) };
+    await TestBed.configureTestingModule({
+      imports: [NotificationHistoryPageComponent],
+      providers: [
+        provideRouter([]),
+        { provide: NotificationsApiService, useValue: api },
+        { provide: NotificationCenterService, useValue: { markAsRead: vi.fn(), markAllAsRead: vi.fn(), readAllVersion } },
+        { provide: ActivatedRoute, useValue: { queryParamMap: new BehaviorSubject(convertToParamMap({})) } },
+      ],
+    }).compileComponents();
+    fixture = TestBed.createComponent(NotificationHistoryPageComponent);
+    fixture.detectChanges();
+    await fixture.whenStable();
+    const calls = api.getHistory.mock.calls.length;
+
+    api.getHistory.mockReturnValue(of(page([item('1', '2026-11-18T10:00:00Z')], 1, 0)));
+    readAllVersion.set(1);
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    expect(api.getHistory.mock.calls.length).toBe(calls + 1);
+    expect(fixture.componentInstance.unreadCount()).toBe(0);
+  });
+
 });
