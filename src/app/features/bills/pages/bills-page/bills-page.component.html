@@ -42,8 +42,10 @@
     </button>
   </div>
 
-  @if (isLoading()) {
+  @if (isLoading() && !loadError()) {
     <p class="catalog__state">Cargando cuentas...</p>
+  } @else if (loadError()) {
+    <app-load-error subject="las cuentas" [error]="loadError()" [retrying]="isLoading()" (retry)="retryLoad()" />
   } @else if (tab() === 'pending') {
     @if (pending(); as view) {
       @if (!view.openBills.length && !view.appointmentsWithoutBill.length) {
@@ -51,7 +53,8 @@
       }
 
       @if (view.appointmentsWithoutBill.length) {
-        <h2 class="bills__subtitle">Citas completadas sin cuenta</h2>
+        <!-- ADR-0021 L8: only today's appointments; a past day can no longer be charged. -->
+        <h2 class="bills__subtitle">Citas de hoy completadas sin cuenta</h2>
         <ul class="bills__list" data-testid="appointments-without-bill">
           @for (appointment of view.appointmentsWithoutBill; track appointment.appointmentId) {
             <li class="bills__card" [attr.data-appointment]="appointment.appointmentId">
@@ -220,7 +223,7 @@
       <form appFormA11y [formGroup]="openForm" (ngSubmit)="openBill()">
         <label class="catalog-modal__field">
           <span>Buscar cliente</span>
-          <input type="search" formControlName="search" placeholder="Nombre, celular o correo" autocomplete="off" />
+          <input type="search" formControlName="search" placeholder="Nombre, celular o correo completos" autocomplete="off" />
         </label>
         <button class="catalog__action-btn" type="button" [disabled]="isSearching()" (click)="searchCustomers()">
           {{ isSearching() ? 'Buscando...' : 'Buscar' }}
@@ -232,7 +235,7 @@
               <li>
                 <label class="bills__radio">
                   <input type="radio" name="customer" [checked]="selectedCustomer()?.id === customer.id" (change)="chooseCustomer(customer)" />
-                  <span>{{ customer.fullName }}{{ customer.phoneHint ? ' · ' + customer.phoneHint : '' }}</span>
+                  <span>{{ customer.fullName }}{{ customer.phoneHint ? ' · ' + customer.phoneHint : '' }}{{ customer.emailHint ? ' · ' + customer.emailHint : '' }}</span>
                 </label>
               </li>
             }

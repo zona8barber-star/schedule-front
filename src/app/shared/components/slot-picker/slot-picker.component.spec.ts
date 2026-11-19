@@ -152,4 +152,15 @@ describe('SlotPickerComponent', () => {
 
     expect(getSlots).toHaveBeenCalledWith('staff-1', '2026-10-07', '2026-10-20', { generalServiceId: 'gs-beard' });
   });
+
+  // SONDA BUG-119: the page heading follows the day the picker moves to by itself.
+  it('tells the page the day it shows, also when it moves to the first day with free time', async () => {
+    const shown: string[] = [];
+    fixture.componentInstance.dateChange.subscribe((date) => shown.push(date));
+    fixture.componentRef.setInput('initialDate', '2026-10-07');
+    await render();
+
+    expect(shown.at(-1)).toBe('2026-10-08');
+  });
+
 });

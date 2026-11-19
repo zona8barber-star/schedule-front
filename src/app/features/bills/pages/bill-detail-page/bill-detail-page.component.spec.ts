@@ -185,6 +185,9 @@ describe('BillDetailPageComponent', () => {
 
     component.lineForm.patchValue({ type: 'Tip', amount: 5000, tipPaymentMode: 'Direct', staffProfileId: 'st-1' });
     const adding = component.addLine();
+    await settle();
+    // ADR-0021 L6: the typed amount of a tip is confirmed before it is saved.
+    expect(confirmMoney).toHaveBeenCalledWith(expect.objectContaining({ action: 'Agregar la propina', amount: 5000 }));
     const request = httpMock.expectOne(`${api}/bills/${billId}/lines`);
     expect(request.request.body).toEqual({ version: 7, type: 'Tip', staffProfileId: 'st-1', amount: 5000, tipPaymentMode: 'Direct' });
     request.flush(bill({ version: 8, directTipTotal: 5000, lines: [line('l-1'), line('l-2', { type: 'Tip', name: 'Propina', unitPrice: 5000, amount: 0, tipPaymentMode: 'Direct' })] }));
@@ -220,6 +223,9 @@ describe('BillDetailPageComponent', () => {
 
     component.togglePoints('l-1', false);
     const approving = component.approve();
+    await settle();
+    // ADR-0021 L6: approving posts the money of the bill, so its total is confirmed first.
+    expect(confirmMoney).toHaveBeenCalledWith(expect.objectContaining({ action: 'Aprobar la cuenta', amount: 30000 }));
     const request = httpMock.expectOne(`${api}/bills/${billId}/approve`);
     expect(request.request.body).toMatchObject({ version: 7, noPointsLineIds: ['l-1'], notes: null });
     request.flush(bill({ status: 'Approved', number: 'C-000003', actions: actions({ canEdit: false, canClose: false }) }));
@@ -227,6 +233,73 @@ describe('BillDetailPageComponent', () => {
 
     expect(component.modal()).toBeNull();
     expect(component.bill()?.status).toBe('Approved');
+  });
+
+  it('L6: does not add a discount nor approve when the amount confirmation is declined', async () => {
+    await create(bill({ actions: actions({ canDiscount: true }) }));
+    confirmMoney.mockResolvedValue(false);
+
+    component.lineForm.patchValue({ type: 'Discount', amount: 2000, reason: 'Cliente frecuente' });
+    await component.addLine();
+    expect(confirmMoney).toHaveBeenCalledWith(expect.objectContaining({ action: 'Agregar el descuento', amount: 2000, detail: 'Cliente frecuente' }));
+    httpMock.expectNone(`${api}/bills/${billId}/lines`);
+
+    component.bill.set(bill({ status: 'Closed', actions: actions({ canApprove: true }) }));
+    await component.approve();
+    httpMock.expectNone(`${api}/bills/${billId}/approve`);
+  });
+
+  it('L1: without the permission, services and tips only offer the own professional; products offer everyone', async () => {
+    options.staff = [
+      { id: 'st-1', displayName: 'Alex', isActive: true },
+      { id: 'st-2', displayName: 'Beto', isActive: true },
+    ];
+    try {
+      await create(bill({ staffProfileId: 'st-2' }));
+      const element = fixture.nativeElement as HTMLElement;
+      const staffOptions = () =>
+        Array.from(element.querySelectorAll('[data-testid="line-staff"] option')).map((option) => option.textContent!.trim());
+
+      expect(component.lineForm.controls.staffProfileId.value).toBe('st-1');
+      expect(staffOptions()).toEqual(['Sin profesional', 'Alex']);
+      expect(element.querySelector('[data-testid="own-staff-only"]')?.textContent).toContain('a tu nombre');
+
+      component.lineForm.controls.type.setValue('Product');
+      component.onTypeChange();
+      await settle();
+      expect(staffOptions()).toEqual(['Sin profesional', 'Alex', 'Beto']);
+
+      component.lineForm.patchValue({ staffProfileId: 'st-2' });
+      component.lineForm.controls.type.setValue('Tip');
+      component.onTypeChange();
+      await settle();
+      expect(component.lineForm.controls.staffProfileId.value).toBe('st-1');
+    } finally {
+      options.staff = [{ id: 'st-1', displayName: 'Alex', isActive: true }];
+    }
+  });
+
+  it('L1: with the permission, every active professional is offered', async () => {
+    options.staff = [
+      { id: 'st-1', displayName: 'Alex', isActive: true },
+      { id: 'st-2', displayName: 'Beto', isActive: true },
+    ];
+    options.canAssignOtherStaff = true;
+    try {
+      await create(bill({ staffProfileId: 'st-2' }));
+      const element = fixture.nativeElement as HTMLElement;
+
+      expect(component.lineForm.controls.staffProfileId.value).toBe('st-2');
+      expect(Array.from(element.querySelectorAll('[data-testid="line-staff"] option')).map((option) => option.textContent!.trim())).toEqual([
+        'Sin profesional',
+        'Alex',
+        'Beto',
+      ]);
+      expect(element.querySelector('[data-testid="own-staff-only"]')).toBeNull();
+    } finally {
+      options.staff = [{ id: 'st-1', displayName: 'Alex', isActive: true }];
+      options.canAssignOtherStaff = undefined;
+    }
   });
 
   it('voids with a reason', async () => {

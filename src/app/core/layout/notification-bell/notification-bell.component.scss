@@ -105,7 +105,11 @@
 .bell__panel-foot {
   border-top: 1px solid rgba(176, 138, 74, 0.15);
 
+  // SONDA BUG-035/153: «Ver todas» and «Ajustes de notificaciones» are 44 px touch targets.
   a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
     font-size: 0.82rem;
     font-weight: 600;
     color: var(--color-text-secondary);

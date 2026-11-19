@@ -198,11 +198,31 @@ textarea {
   max-width: 100%;
 }
 
+/* SONDA BUG-074/134/159 (lote L): a <select> is as wide as its longest option, and a flex or grid item never shrinks
+   below its content by default, so one long name widened its label, the form and the whole page (1453 px for
+   «Profesional» in Ingresos even at 1280 px). The containers of form controls may shrink, and the select takes the
+   width it is given instead of the width of its longest option (the option text is cut with an ellipsis). */
+label,
+fieldset,
+[class*='__field'],
+[class*='__filter'] {
+  min-width: 0;
+  max-width: 100%;
+}
+
+select {
+  min-width: 0;
+  text-overflow: ellipsis;
+}
+
 @media (max-width: 768px) {
   table {
     display: block;
     max-width: 100%;
     overflow-x: auto;
+    // SONDA BUG-074 (retest c4): with `anywhere` the columns of «Servicios generales» shrank to one letter per line.
+    // Inside a table that scrolls by itself, words keep their width and the table scrolls instead.
+    overflow-wrap: break-word;
   }
 }
 

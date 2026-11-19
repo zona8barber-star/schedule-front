@@ -1,4 +1,4 @@
-import { Component, OnInit, computed, inject, signal } from '@angular/core';
+import { Component, ElementRef, OnInit, computed, inject, signal, viewChild } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { firstValueFrom } from 'rxjs';
 
@@ -113,6 +113,8 @@ export class AdminNotificationsPageComponent implements OnInit {
     this.selectedCustomers.update((customers) => customers.filter((selected) => selected.id !== customer.id));
   }
 
+  private readonly sendButton = viewChild<ElementRef<HTMLButtonElement>>('sendButton');
+
   @SingleFlight()
   async submit(): Promise<void> {
     this.submitted.set(true);
@@ -214,7 +216,7 @@ export class AdminNotificationsPageComponent implements OnInit {
     }
 
     const customers = recipientCount === 1 ? '1 cliente' : `${recipientCount} clientes`;
-    return this.confirmModal.confirm({
+    const confirmed = await this.confirmModal.confirm({
       title: '¿Enviar esta notificación?',
       message: `Llegará a ${customers} (${targetSummary}). Así se verá:`,
       preview: { title: request.title, body: request.body },
@@ -222,6 +224,13 @@ export class AdminNotificationsPageComponent implements OnInit {
       danger: false,
       icon: 'bell',
     });
+    if (!confirmed) {
+      // SONDA BUG-149: the button was disabled while the recipients were counted, so the dialog could not remember it as
+      // its opener; after «Escape» or «Cancelar» the focus goes back to it, not to the top bar.
+      setTimeout(() => this.sendButton()?.nativeElement.focus(), 0);
+    }
+
+    return confirmed;
   }
 
   /** Increases with every search; results of an earlier term are dropped (same pattern as SONDA BUG-082). */

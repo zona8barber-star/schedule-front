@@ -64,7 +64,9 @@
   <app-api-feedback severity="error" [message]="errorMessage()" />
   <app-api-feedback severity="info" [message]="successMessage()" />
 
-  @if (isLoading()) {
+  @if (loadError()) {
+    <app-load-error subject="los servicios por validar" [error]="loadError()" [retrying]="isLoading()" (retry)="retryLoad()" />
+  } @else if (isLoading()) {
     <app-page-state kind="loading" message="Cargando servicios..." />
   } @else if (!records().length) {
     <app-page-state [message]="status() === 'Pending' ? 'No hay servicios pendientes de validación.' : 'No hay registros en esta lista.'" />

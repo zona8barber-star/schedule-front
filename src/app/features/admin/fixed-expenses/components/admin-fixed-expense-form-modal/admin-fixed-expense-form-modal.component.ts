@@ -4,6 +4,7 @@ import { firstValueFrom } from 'rxjs';
 
 import { FixedExpenseView } from '../../../../../core/models/fixed-expense.models';
 import { AdminFixedExpensesApiService } from '../../../../../core/services/admin-fixed-expenses-api.service';
+import { MoneyConfirmationService } from '../../../../../core/services/money-confirmation.service';
 import { getApiErrorMessage } from '../../../../../core/utils/api-error.utils';
 import { ApiFeedbackComponent } from '../../../../../shared/components/api-feedback/api-feedback.component';
 import { trimmedMinLength, trimmedRequired } from '../../../../../core/utils/form-validators';
@@ -33,6 +34,7 @@ import { SingleFlight } from '../../../../../core/utils/single-flight';
 export class AdminFixedExpenseFormModalComponent implements OnInit {
   private readonly formBuilder = inject(FormBuilder);
   private readonly api = inject(AdminFixedExpensesApiService);
+  private readonly moneyConfirmation = inject(MoneyConfirmationService);
 
   @Input() fixedExpenseId: string | null = null;
   @Output() readonly saved = new EventEmitter<FixedExpenseView>();
@@ -75,14 +77,24 @@ export class AdminFixedExpenseFormModalComponent implements OnInit {
       return;
     }
 
-    this.isSaving.set(true);
-    this.errorMessage.set(null);
-
     const rawAmount = this.form.controls.defaultAmount.value;
     const payload = {
       name: (this.form.controls.name.value ?? '').trim(),
       defaultAmount: rawAmount === null || rawAmount === undefined ? null : Math.trunc(rawAmount),
     };
+
+    // SONDA BUG-169 (ADR-0021 L6): the default amount is a money value too, so it is confirmed before saving.
+    if (payload.defaultAmount !== null) {
+      const confirmed = await this.moneyConfirmation.confirm({
+        action: this.fixedExpenseId ? 'Guardar el monto por defecto' : 'Crear el gasto fijo',
+        amount: payload.defaultAmount,
+        detail: payload.name || undefined,
+      });
+      if (!confirmed) return;
+    }
+
+    this.isSaving.set(true);
+    this.errorMessage.set(null);
 
     try {
       const result = this.fixedExpenseId

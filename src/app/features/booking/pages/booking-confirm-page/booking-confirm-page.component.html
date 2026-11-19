@@ -2,10 +2,16 @@
   <header class="booking-confirm-page__hero">
     <div>
       <p class="booking-confirm-page__eyebrow">Reserva</p>
-      <h1>Confirmar reserva</h1>
-      <p>
-        Revisa el horario seleccionado y confirma la reserva para guardarla en tu historial.
-      </p>
+      <!-- SONDA BUG-043/118: once the booking exists the page shows it, never «Confirmar reserva» again. -->
+      @if (successAppointment() || bookedAppointmentId()) {
+        <h1>Tu reserva</h1>
+        <p>Esta es la cita que reservaste. También la encuentras en «Mis citas».</p>
+      } @else {
+        <h1>Confirmar reserva</h1>
+        <p>
+          Revisa el horario seleccionado y confirma la reserva para guardarla en tu historial.
+        </p>
+      }
     </div>
   </header>
 

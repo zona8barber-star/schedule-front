@@ -1,0 +1,22 @@
+<section class="reports" data-testid="cash-closing-page">
+  <header class="reports__header">
+    <h1>Cierre de caja</h1>
+  </header>
+
+  <div class="reports__filters">
+    <label>
+      <span>Desde</span>
+      <input type="date" [max]="to()" [ngModel]="from()" (ngModelChange)="from.set($event)" />
+    </label>
+    <label>
+      <span>Hasta</span>
+      <input type="date" [ngModel]="to()" (ngModelChange)="to.set($event)" />
+    </label>
+    <div class="reports__presets">
+      <button type="button" (click)="setToday()">Hoy</button>
+      <button type="button" (click)="setThisMonth()">Este mes</button>
+    </div>
+  </div>
+
+  <app-cash-closing-panel [from]="from()" [to]="to()" [showHeading]="false" />
+</section>

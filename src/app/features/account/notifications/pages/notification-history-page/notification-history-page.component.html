@@ -27,11 +27,11 @@
           [attr.aria-pressed]="filter() === 'unread'"
           (click)="selectFilter('unread')"
         >
-          Sin leer ({{ unreadCount() }})
+          Sin leer{{ loaded() && !loadError() ? ' (' + unreadCount() + ')' : '' }}
         </button>
       </div>
 
-      @if (unreadCount() > 0) {
+      @if (unreadCount() > 0 && !loadError()) {
         <button type="button" class="nh__link-btn" data-testid="history-read-all" (click)="markAllAsRead()">
           Marcar todas como leídas
         </button>
@@ -40,7 +40,9 @@
 
     <app-api-feedback severity="error" [message]="errorMessage()" />
 
-    @if (isLoading() && !items().length) {
+    @if (loadError()) {
+      <app-load-error subject="tus notificaciones" [error]="loadError()" [retrying]="isLoading()" (retry)="retryLoad()" />
+    } @else if (isLoading() && !items().length) {
       <app-page-state kind="loading" message="Cargando notificaciones..." />
     } @else if (!items().length) {
       <app-page-state

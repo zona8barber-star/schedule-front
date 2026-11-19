@@ -152,6 +152,38 @@ describe('AdminMembershipDetailPageComponent', () => {
     expect(text).not.toContain('Registrar consumo');
   });
 
+  // ADR-0021 L3: a membership with consumptions is not annulled; the page says why instead of offering «Anular».
+  it('does not offer «Anular» while a consumption is live, and offers it again once every consumption was reversed', async () => {
+    const consumption = {
+      id: 'mc-1',
+      serviceId: 's-1',
+      serviceName: 'Corte',
+      quantity: 1,
+      serviceDate: '2026-11-10',
+      staffProfileId: null,
+      staffName: null,
+      registeredAt: '2026-11-10T15:00:00Z',
+      registeredByName: 'Admin',
+      parts: [],
+      reversal: null,
+    } as unknown as CustomerMembershipDetailView['consumptions'][number];
+    const used = await openPage({ ...base, status: 'Active', displayStatus: 'Active', consumptions: [consumption] });
+    const buttons = [...used.nativeElement.querySelectorAll('button')].map((button) => button.textContent.trim());
+
+    expect(buttons).not.toContain('Anular');
+    expect(used.nativeElement.querySelector('[data-testid="annul-blocked"]')?.textContent).toContain('ya tiene consumos registrados');
+
+    TestBed.resetTestingModule();
+    const reversed = await openPage({
+      ...base,
+      status: 'Active',
+      displayStatus: 'Active',
+      consumptions: [{ ...consumption, reversal: { performedAt: '2026-11-11T15:00:00Z', performedByName: 'Admin', reason: 'Error' } } as typeof consumption],
+    });
+    expect([...reversed.nativeElement.querySelectorAll('button')].map((button) => button.textContent.trim())).toContain('Anular');
+    expect(reversed.nativeElement.querySelector('[data-testid="annul-blocked"]')).toBeNull();
+  });
+
   // ADR-0018 D5 (SONDA BUG-104): the points follow the payment.
   it('explains that unlinking the payment withdraws the points and linking it again gives them back', async () => {
     const fixture = await openPage({

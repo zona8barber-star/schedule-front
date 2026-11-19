@@ -299,6 +299,10 @@ const loadAdminExpensesListPage = () =>
     (module) => module.AdminExpensesListPageComponent,
   );
 
+const loadAdminCashClosingPage = () =>
+  import('./features/admin/reports/pages/admin-cash-closing-page/admin-cash-closing-page.component').then(
+    (module) => module.AdminCashClosingPageComponent,
+  );
 const loadAdminReportsPage = () =>
   import('./features/admin/reports/pages/admin-reports-page/admin-reports-page.component').then(
     (module) => module.AdminReportsPageComponent,
@@ -760,6 +764,16 @@ export const routes: Routes = [
       roles: [ROLE_NAMES.admin],
     },
     title: 'Gastos fijos',
+  },
+  {
+    // ADR-0021 L2: the cash closing is a permission of its own (reports.cash.view), not only the Admin role.
+    path: 'admin/cash-closing',
+    canActivate: [authGuard, permissionGuard],
+    loadComponent: loadAdminCashClosingPage,
+    data: {
+      permissions: [PERMISSION_CODES.reportsCashView],
+    },
+    title: 'Cierre de caja',
   },
   {
     path: 'admin/reports',

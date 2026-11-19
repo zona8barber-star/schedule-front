@@ -175,7 +175,11 @@
 .nh__foot {
   margin: 0;
 
+  // SONDA BUG-153: a touch target of at least 44 px, not just the 17 px line of text.
   a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
     color: var(--z-brass-dk);
     font-weight: 700;
   }

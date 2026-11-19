@@ -275,6 +275,7 @@
             [staffProfileId]="staffProfileId()!"
             [generalServiceId]="selectedService()!.generalServiceId"
             [initialDate]="bookingDate()"
+            (dateChange)="onPickerDateChange($event)"
             (slotSelected)="selectSlot($event)"
           />
         }

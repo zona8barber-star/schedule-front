@@ -7,7 +7,8 @@
 
   &[data-status='Voided'] {
     border-color: rgba(180, 83, 60, 0.4);
-    color: var(--color-error, #b4533c);
+    // SONDA BUG-122: the error red read 4.1:1 on the bone background; this darker red reads 6:1.
+    color: #8f3d2a;
   }
 }
 

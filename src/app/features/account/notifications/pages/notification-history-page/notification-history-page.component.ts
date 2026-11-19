@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, DestroyRef, OnInit, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, OnInit, effect, inject, signal, untracked } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, ParamMap, Router, RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
@@ -6,10 +6,10 @@ import { firstValueFrom } from 'rxjs';
 import { UserNotificationItem } from '../../../../../core/models/notification.models';
 import { NotificationCenterService } from '../../../../../core/services/notification-center.service';
 import { NotificationsApiService } from '../../../../../core/services/notifications-api.service';
-import { getApiErrorMessage } from '../../../../../core/utils/api-error.utils';
 import { QueryValue, readOptionParam, readPageParam, toQueryParams } from '../../../../../core/utils/list-query.utils';
 import { formatRelativeTime } from '../../../../../core/utils/relative-time.utils';
 import { ApiFeedbackComponent } from '../../../../../shared/components/api-feedback/api-feedback.component';
+import { LoadErrorComponent } from '../../../../../shared/components/load-error/load-error.component';
 import { PageStateComponent } from '../../../../../shared/components/page-state/page-state.component';
 import { PaginatorComponent } from '../../../../../shared/components/paginator/paginator.component';
 import { BogotaDatePipe } from '../../../../../shared/pipes/bogota-date.pipe';
@@ -26,7 +26,7 @@ const FILTERS: readonly HistoryFilter[] = ['all', 'unread'];
  */
 @Component({
   selector: 'app-notification-history-page',
-  imports: [RouterLink, ApiFeedbackComponent, PageStateComponent, PaginatorComponent, BogotaDatePipe],
+  imports: [RouterLink, ApiFeedbackComponent, LoadErrorComponent, PageStateComponent, PaginatorComponent, BogotaDatePipe],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './notification-history-page.component.html',
   styleUrl: './notification-history-page.component.scss',
@@ -45,9 +45,24 @@ export class NotificationHistoryPageComponent implements OnInit {
   readonly items = signal<UserNotificationItem[]>([]);
   readonly totalCount = signal(0);
   readonly unreadCount = signal(0);
+  /** SONDA BUG-143: the history could not be loaded; never shown as «No tienes notificaciones todavía» nor «(0)». */
+  readonly loadError = signal<unknown>(null);
+  readonly loaded = signal(false);
   readonly isLoading = signal(true);
   readonly errorMessage = signal<string | null>(null);
   private readonly now = signal(Date.now());
+
+  /** SONDA BUG-148: «Marcar todas como leídas» from the bell refreshes the history that is open. */
+  private seenReadAll = this.center.readAllVersion?.() ?? 0;
+  private readonly readAllEffect = effect(() => {
+    const version = this.center.readAllVersion?.() ?? 0;
+    untracked(() => {
+      if (version > this.seenReadAll) {
+        this.seenReadAll = version;
+        void this.load();
+      }
+    });
+  });
 
   ngOnInit(): void {
     this.route.queryParamMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
@@ -102,10 +117,15 @@ export class NotificationHistoryPageComponent implements OnInit {
     });
   }
 
+  retryLoad(): void {
+    void this.load();
+  }
+
   private async load(): Promise<void> {
     const sequence = ++this.loadSequence;
     this.isLoading.set(true);
     this.errorMessage.set(null);
+    this.loadError.set(null);
 
     try {
       const result = await firstValueFrom(this.api.getHistory(this.page(), this.pageSize, this.filter() === 'unread'));
@@ -117,9 +137,15 @@ export class NotificationHistoryPageComponent implements OnInit {
       this.items.set(result.items);
       this.totalCount.set(result.totalCount);
       this.unreadCount.set(result.unreadCount);
+      this.loaded.set(true);
+      // SONDA BUG-144: a page past the end (?page=999) goes to the last page instead of claiming there are none.
+      if (!result.items.length && result.totalCount > 0 && this.page() > 1) {
+        this.navigate({ page: Math.max(1, Math.ceil(result.totalCount / this.pageSize)) });
+      }
     } catch (error) {
       if (sequence === this.loadSequence) {
-        this.errorMessage.set(getApiErrorMessage(error, 'No pudimos cargar tus notificaciones. Intenta de nuevo.'));
+        this.items.set([]);
+        this.loadError.set(error);
       }
     } finally {
       if (sequence === this.loadSequence) {
