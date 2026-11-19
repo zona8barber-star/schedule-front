@@ -117,9 +117,13 @@ export interface BillPendingAppointmentView {
 }
 
 export interface BillPendingView {
+  /** SONDA BUG-181: one page of the open bills; `openBillsTotalCount` is all of them. */
   openBills: BillSummaryView[];
   appointmentsWithoutBill: BillPendingAppointmentView[];
   count: number;
+  page?: number;
+  pageSize?: number;
+  openBillsTotalCount?: number;
 }
 
 export interface BillRateOption {

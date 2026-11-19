@@ -126,6 +126,12 @@ export class AdminServicesListPageComponent implements OnInit {
     // SONDA BUG-103: warn about the active plans and rewards that still use the rate. Without the answer, the
     // confirmation goes on without the warning (the deletion itself is not blocked).
     const usage = await firstValueFrom(this.adminServicesApiService.getUsage(service.id)).catch(() => null);
+    // ADR-0021 L14 (SONDA BUG-178): a rate on bills not approved yet is not deleted; say which ones instead of asking.
+    if (usage?.pendingBills?.length) {
+      this.errorMessage.set(pendingBillsMessage(usage.pendingBills));
+      return;
+    }
+
     const confirmed = await this.confirmModal.confirm({
       title: '¿Eliminar tarifa?',
       message: `Se eliminará "${service.name}". No aparecerá en las listas, pero se conserva para el histórico.`,
@@ -199,6 +205,15 @@ export class AdminServicesListPageComponent implements OnInit {
  * approved redemptions keep using it until they are used up; the plans cannot be sold and the rewards cannot be
  * requested again until they are edited.
  */
+const MAX_PENDING_BILLS_LISTED = 5;
+
+/** The same text as the API's 409 (ADR-0021 L14). */
+export function pendingBillsMessage(bills: string[]): string {
+  const listed = bills.slice(0, MAX_PENDING_BILLS_LISTED).join(', ');
+  const more = bills.length > MAX_PENDING_BILLS_LISTED ? ` y ${bills.length - MAX_PENDING_BILLS_LISTED} más` : '';
+  return `Esta tarifa está en cuentas que aún no se aprueban: ${listed}${more}. Apruébalas, corrígelas o anúlalas antes de eliminarla.`;
+}
+
 function usageWarning(usage: ServiceUsageView | null): string | undefined {
   if (!usage || (usage.activePlans.length === 0 && usage.activeRewards.length === 0)) return undefined;
   const parts: string[] = [];

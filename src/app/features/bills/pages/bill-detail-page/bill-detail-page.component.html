@@ -459,10 +459,21 @@
         }
       } @else {
         <h2 id="bill-modal-title">
-          {{ kind === 'void' ? 'Anular la cuenta' : kind === 'unapprove' ? 'Desaprobar la cuenta' : 'Desvincular de la cita' }}
+          {{
+            kind === 'void'
+              ? 'Anular la cuenta'
+              : kind === 'unapprove'
+                ? 'Desaprobar la cuenta'
+                : kind === 'paymentMethod'
+                  ? 'Corregir el método de pago'
+                  : 'Desvincular de la cita'
+          }}
         </h2>
         <p class="catalog-modal__hint">
-          @if (kind === 'void') {
+          @if (kind === 'paymentMethod') {
+            Pasa de «{{ bill()?.paymentMethodName }}» a «{{ paymentMethodName(paymentMethodId()) }}». El recibo y el cierre de
+            caja mostrarán el nuevo método; el total cobrado no cambia. Queda registrado quién lo cambió y por qué.
+          } @else if (kind === 'void') {
             Anular no tiene vuelta. Si la cuenta tenía número, lo conserva.
           } @else if (kind === 'unapprove') {
             Se revierten todos sus asientos: cada ingreso recibe una contrapartida con la fecha de hoy, las unidades vuelven
@@ -484,7 +495,7 @@
           <div class="catalog-modal__actions">
             <button type="button" [disabled]="isSaving()" (click)="closeModal()">Cancelar</button>
             <button type="submit" [disabled]="isSaving()">
-              {{ kind === 'void' ? 'Anular' : kind === 'unapprove' ? 'Desaprobar' : 'Desvincular' }}
+              {{ kind === 'void' ? 'Anular' : kind === 'unapprove' ? 'Desaprobar' : kind === 'paymentMethod' ? 'Corregir' : 'Desvincular' }}
             </button>
           </div>
         </form>

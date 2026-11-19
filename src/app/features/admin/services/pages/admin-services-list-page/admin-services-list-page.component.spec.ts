@@ -61,4 +61,19 @@ describe('AdminServicesListPageComponent deleting a rate', () => {
 
     expect(api.remove).toHaveBeenCalledWith('s-cut');
   });
+
+  // ADR-0021 L14 (SONDA BUG-178): a rate on bills not approved yet is not deleted; the screen says which ones.
+  it('does not offer to delete a rate on pending bills and names them', async () => {
+    usage = { activePlans: [], activeRewards: [], pendingBills: ['C-000123', 'cuenta abierta de Carla'] };
+    const { api, component, modal } = setup();
+
+    await component.deleteService(haircut);
+
+    expect(modal.state()).toBeNull();
+    expect(api.remove).not.toHaveBeenCalled();
+    expect(component.errorMessage()).toBe(
+      'Esta tarifa está en cuentas que aún no se aprueban: C-000123, cuenta abierta de Carla. Apruébalas, corrígelas o anúlalas antes de eliminarla.',
+    );
+  });
 });
+

@@ -58,4 +58,21 @@ describe('LoadErrorComponent', () => {
     expect(button.disabled).toBe(true);
     expect(button.textContent).toContain('Reintentando');
   });
+
+  // SONDA BUG-185: a permission revoked while the screen was open is not a momentary problem of the server.
+  it('says the access is gone on a 403, without «Reintentar»', async () => {
+    const element = await create(new HttpErrorResponse({ status: 403, error: { title: 'Forbidden', status: 403 } }));
+
+    expect(element.querySelector('h2')!.textContent).toBe('Ya no tienes acceso al perfil del profesional');
+    expect(element.textContent).toContain('Tu permiso para ver esto cambió');
+    expect(element.textContent).not.toContain('problema momentáneo');
+    expect(element.querySelector('[data-testid="load-error-retry"]')).toBeNull();
+  });
+
+  it('keeps the usual state for the security filter block (a 403 about a text)', async () => {
+    const element = await create(new HttpErrorResponse({ status: 403, error: { code: 'perimeter_blocked', status: 403 } }));
+
+    expect(element.querySelector('[data-testid="load-error-retry"]')).not.toBeNull();
+  });
 });
+

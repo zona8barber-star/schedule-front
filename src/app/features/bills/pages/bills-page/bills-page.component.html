@@ -91,6 +91,14 @@
             </li>
           }
         </ul>
+        <app-paginator
+          label="Paginación de las cuentas abiertas"
+          [page]="view.page ?? page()"
+          [pageSize]="pageSize"
+          [totalCount]="totalCount()"
+          [disabled]="isLoading()"
+          (pageChange)="onPageChange($event)"
+        />
       }
     }
   } @else {
@@ -221,13 +229,15 @@
       <h2 id="open-bill-title">Nueva cuenta</h2>
       <app-api-feedback severity="error" [message]="openError()" />
       <form appFormA11y [formGroup]="openForm" (ngSubmit)="openBill()">
-        <label class="catalog-modal__field">
-          <span>Buscar cliente</span>
-          <input type="search" formControlName="search" placeholder="Nombre, celular o correo completos" autocomplete="off" />
-        </label>
-        <button class="catalog__action-btn" type="button" [disabled]="isSearching()" (click)="searchCustomers()">
-          {{ isSearching() ? 'Buscando...' : 'Buscar' }}
-        </button>
+        @if (canSearchCustomers) {
+          <label class="catalog-modal__field">
+            <span>Buscar cliente</span>
+            <input type="search" formControlName="search" placeholder="Nombre, celular o correo completos" autocomplete="off" data-testid="customer-search" />
+          </label>
+          <button class="catalog__action-btn" type="button" [disabled]="isSearching()" (click)="searchCustomers()">
+            {{ isSearching() ? 'Buscando...' : 'Buscar' }}
+          </button>
+        }
 
         @if (customerResults().length) {
           <ul class="bills__options" data-testid="customer-results">
@@ -244,7 +254,7 @@
 
         @if (!selectedCustomer()) {
           <label class="catalog-modal__field">
-            <span>O cliente ocasional (solo el nombre)</span>
+            <span>{{ canSearchCustomers ? 'O cliente ocasional (solo el nombre)' : 'Cliente ocasional (solo el nombre)' }}</span>
             <input type="text" formControlName="walkInName" maxlength="120" autocomplete="off" data-testid="walk-in-name" />
           </label>
           <small class="catalog-modal__hint">Una cuenta de cliente ocasional no puede usar membresías, canjes ni puntos.</small>

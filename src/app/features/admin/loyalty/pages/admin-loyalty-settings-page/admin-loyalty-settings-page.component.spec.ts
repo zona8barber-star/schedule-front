@@ -182,7 +182,9 @@ describe('AdminLoyaltySettingsPageComponent', () => {
 
     const text = fixture.nativeElement.textContent as string;
     expect(component.errorMessage()).toContain('Ya no tienes permiso para administrar la fidelización');
-    expect(text).toContain('No pudimos cargar el historial de cambios');
+    // SONDA BUG-185: a 403 says the access is gone (no «Reintentar»), not a momentary problem of the server.
+    expect(text).toContain('Ya no tienes acceso al historial de cambios');
+    expect(fixture.nativeElement.querySelector('[data-testid="load-error-retry"]')).toBeNull();
     expect(text).not.toContain('Aún no se ha modificado la configuración.');
   });
 

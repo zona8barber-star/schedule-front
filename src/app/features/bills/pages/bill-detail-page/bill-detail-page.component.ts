@@ -34,7 +34,7 @@ const GUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const DATE_TIME = bogotaDateTimeFormat('es-CO', { day: 'numeric', month: 'short', year: 'numeric', hour: 'numeric', minute: '2-digit' });
 export const BILL_MAX_AMOUNT = 100_000_000;
 
-type BillModal = 'void' | 'detach' | 'approve' | 'unapprove';
+type BillModal = 'void' | 'detach' | 'approve' | 'unapprove' | 'paymentMethod';
 
 const EVENT_LABELS: Record<string, string> = {
   Opened: 'Abrió la cuenta',
@@ -279,12 +279,15 @@ export class BillDetailPageComponent implements OnInit {
     await this.mutate(() => this.api.close(bill.id, bill.version, methodId), 'Cuenta cerrada y cobrada.');
   }
 
-  @SingleFlight()
-  async changePaymentMethod(): Promise<void> {
+  /** ADR-0021 L11 (SONDA BUG-172): the correction asks for its reason; the receipt and the cash closing follow it. */
+  changePaymentMethod(): void {
     const bill = this.bill();
-    const methodId = this.paymentMethodId();
-    if (!bill || !methodId) return;
-    await this.mutate(() => this.api.changePaymentMethod(bill.id, bill.version, methodId), 'Método de pago actualizado.');
+    if (!bill || !this.paymentMethodId() || this.paymentMethodId() === bill.paymentMethodId) return;
+    this.openModal('paymentMethod');
+  }
+
+  paymentMethodName(id: string): string {
+    return this.options()?.paymentMethods.find((method) => method.id === id)?.name ?? '';
   }
 
   openModal(kind: BillModal): void {
@@ -323,7 +326,7 @@ export class BillDetailPageComponent implements OnInit {
   async submitReason(): Promise<void> {
     const bill = this.bill();
     const kind = this.modal();
-    if (!bill || (kind !== 'void' && kind !== 'detach' && kind !== 'unapprove')) return;
+    if (!bill || (kind !== 'void' && kind !== 'detach' && kind !== 'unapprove' && kind !== 'paymentMethod')) return;
     if (this.reasonForm.invalid) {
       this.reasonForm.markAllAsTouched();
       return;
@@ -335,12 +338,16 @@ export class BillDetailPageComponent implements OnInit {
           ? this.api.void(bill.id, bill.version, reason)
           : kind === 'unapprove'
             ? this.api.unapprove(bill.id, { version: bill.version, idempotencyKey: this.unapproveKey, reason })
-            : this.api.detachAppointment(bill.id, bill.version, reason),
+            : kind === 'paymentMethod'
+              ? this.api.changePaymentMethod(bill.id, bill.version, this.paymentMethodId(), reason)
+              : this.api.detachAppointment(bill.id, bill.version, reason),
       kind === 'void'
         ? 'Cuenta anulada.'
         : kind === 'unapprove'
           ? 'Cuenta desaprobada: sus ingresos, consumos, puntos, canjes e inventario se revirtieron. Corrígela y apruébala de nuevo.'
-          : 'La cuenta quedó desvinculada de su cita.',
+          : kind === 'paymentMethod'
+            ? 'Método de pago corregido: el recibo y el cierre de caja ya muestran el nuevo.'
+            : 'La cuenta quedó desvinculada de su cita.',
       true,
     );
     if (saved) {

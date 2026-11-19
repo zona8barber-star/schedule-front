@@ -6,6 +6,7 @@ import { BehaviorSubject } from 'rxjs';
 
 import { environment } from '../../../../../environments/environment';
 import { BillOptionsView, BillPendingView, BillSummaryView } from '../../../../core/models/bill.models';
+import { AuthService } from '../../../../core/services/auth.service';
 import { BillsPageComponent } from './bills-page.component';
 
 describe('BillsPageComponent', () => {
@@ -57,7 +58,7 @@ describe('BillsPageComponent', () => {
     fixture.detectChanges();
   }
 
-  async function create(params: Record<string, string> = {}): Promise<void> {
+  async function create(params: Record<string, string> = {}, before?: () => void): Promise<void> {
     queryParams = new BehaviorSubject(convertToParamMap(params));
     await TestBed.configureTestingModule({
       imports: [BillsPageComponent],
@@ -69,6 +70,7 @@ describe('BillsPageComponent', () => {
       ],
     }).compileComponents();
     navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true) as unknown as ReturnType<typeof vi.fn>;
+    before?.();
     fixture = TestBed.createComponent(BillsPageComponent);
     component = fixture.componentInstance;
     httpMock = TestBed.inject(HttpTestingController);
@@ -77,6 +79,9 @@ describe('BillsPageComponent', () => {
   }
 
   afterEach(() => httpMock.verify());
+
+  /** SONDA BUG-181: «Por cerrar» asks for one page of the open bills. */
+  const pendingRequest = (request: { url: string }) => request.url === `${api}/bills/pending`;
 
   it('lists the bills to close, flags the overdue ones and offers to open the bill of a completed appointment', async () => {
     await create();
@@ -87,7 +92,7 @@ describe('BillsPageComponent', () => {
       ],
       count: 3,
     };
-    httpMock.expectOne(`${api}/bills/pending`).flush(pending);
+    httpMock.expectOne(pendingRequest).flush(pending);
     await settle();
 
     const element = fixture.nativeElement as HTMLElement;
@@ -105,7 +110,7 @@ describe('BillsPageComponent', () => {
 
   it('opens a walk-in bill with its name, reusing the same key on a retry', async () => {
     await create();
-    httpMock.expectOne(`${api}/bills/pending`).flush({ openBills: [], appointmentsWithoutBill: [], count: 0 });
+    httpMock.expectOne(pendingRequest).flush({ openBills: [], appointmentsWithoutBill: [], count: 0 });
     await settle();
 
     component.openNewBill();
@@ -128,7 +133,7 @@ describe('BillsPageComponent', () => {
 
   it('asks for a customer or a walk-in name before opening', async () => {
     await create();
-    httpMock.expectOne(`${api}/bills/pending`).flush({ openBills: [], appointmentsWithoutBill: [], count: 0 });
+    httpMock.expectOne(pendingRequest).flush({ openBills: [], appointmentsWithoutBill: [], count: 0 });
     component.openNewBill();
 
     await component.openBill();
@@ -191,13 +196,13 @@ describe('BillsPageComponent', () => {
   // SONDA BUG-135: with the API down the page showed only the tabs; now the common error state with «Reintentar».
   it('shows the error state with a retry when the bills cannot be loaded', async () => {
     await create();
-    httpMock.expectOne(`${api}/bills/pending`).flush({ title: 'Error' }, { status: 500, statusText: 'Server Error' });
+    httpMock.expectOne(pendingRequest).flush({ title: 'Error' }, { status: 500, statusText: 'Server Error' });
     await settle();
     const element = fixture.nativeElement as HTMLElement;
     expect(element.querySelector('[data-testid="load-error"]')).not.toBeNull();
 
     (element.querySelector('[data-testid="load-error-retry"]') as HTMLButtonElement).click();
-    httpMock.expectOne(`${api}/bills/pending`).flush({ openBills: [], appointmentsWithoutBill: [], count: 0 });
+    httpMock.expectOne(pendingRequest).flush({ openBills: [], appointmentsWithoutBill: [], count: 0 });
     await settle();
     expect(element.querySelector('[data-testid="load-error"]')).toBeNull();
     expect(element.textContent).toContain('No hay cuentas por cerrar.');
@@ -206,7 +211,7 @@ describe('BillsPageComponent', () => {
   // SONDA BUG-157: the search asks for a name from 3 letters, or a full email or phone.
   it('does not search customers with fewer than 3 characters', async () => {
     await create();
-    httpMock.expectOne(`${api}/bills/pending`).flush({ openBills: [], appointmentsWithoutBill: [], count: 0 });
+    httpMock.expectOne(pendingRequest).flush({ openBills: [], appointmentsWithoutBill: [], count: 0 });
     component.openForm.controls.search.setValue('ca');
 
     await component.searchCustomers();
@@ -215,4 +220,53 @@ describe('BillsPageComponent', () => {
     expect(component.openError()).toContain('al menos 3 letras');
   });
 
+
+  // SONDA BUG-181: the open bills of «Por cerrar» come by pages.
+  it('asks «Por cerrar» for the page in the URL and offers the pages of the open bills', async () => {
+    await create({ page: '2' });
+    const request = httpMock.expectOne(pendingRequest);
+    expect(request.request.params.get('page')).toBe('2');
+    expect(request.request.params.get('pageSize')).toBe('25');
+    request.flush({
+      openBills: [summary('b-26')],
+      appointmentsWithoutBill: [],
+      count: 26,
+      page: 2,
+      pageSize: 25,
+      openBillsTotalCount: 26,
+    } satisfies BillPendingView);
+    await settle();
+
+    const element = fixture.nativeElement as HTMLElement;
+    expect(element.querySelector('[data-testid="open-bills"]')!.children.length).toBe(1);
+    expect(element.querySelector('app-paginator')).not.toBeNull();
+    expect(component.totalCount()).toBe(26);
+  });
+
+  // SONDA BUG-157 (ADR-0021 L15): only the Admin and bills.open search customers.
+  it('offers the customer search only to whoever opens bills', async () => {
+    await create();
+    const auth = TestBed.inject(AuthService);
+    httpMock.expectOne(pendingRequest).flush({ openBills: [], appointmentsWithoutBill: [], count: 0 });
+    expect(component.canSearchCustomers).toBe(false);
+    expect(auth.hasPermission('bills.open')).toBe(false);
+
+    component.openNewBill();
+    fixture.detectChanges();
+    const element = fixture.nativeElement as HTMLElement;
+    expect(element.querySelector('[data-testid="customer-search"]')).toBeNull();
+    expect(element.textContent).toContain('Cliente ocasional (solo el nombre)');
+  });
+
+  it('offers the customer search to whoever holds bills.open', async () => {
+    await create({}, () => vi.spyOn(TestBed.inject(AuthService), 'hasPermission').mockImplementation((code) => code === 'bills.open'));
+    httpMock.expectOne(pendingRequest).flush({ openBills: [], appointmentsWithoutBill: [], count: 0 });
+
+    component.openNewBill();
+    fixture.detectChanges();
+    const element = fixture.nativeElement as HTMLElement;
+    expect(component.canSearchCustomers).toBe(true);
+    expect(element.querySelector('[data-testid="customer-search"]')).not.toBeNull();
+    expect(element.textContent).toContain('O cliente ocasional (solo el nombre)');
+  });
 });

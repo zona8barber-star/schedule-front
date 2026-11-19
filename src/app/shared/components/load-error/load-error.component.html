@@ -14,13 +14,15 @@
   </span>
   <h2 class="load-error__title">{{ title() }}</h2>
   <p class="load-error__message">{{ message() }}</p>
-  <button
-    class="load-error__retry"
-    type="button"
-    data-testid="load-error-retry"
-    [disabled]="retrying()"
-    (click)="retry.emit()"
-  >
-    {{ retrying() ? 'Reintentando...' : 'Reintentar' }}
-  </button>
+  @if (!forbidden()) {
+    <button
+      class="load-error__retry"
+      type="button"
+      data-testid="load-error-retry"
+      [disabled]="retrying()"
+      (click)="retry.emit()"
+    >
+      {{ retrying() ? 'Reintentando...' : 'Reintentar' }}
+    </button>
+  }
 </section>
