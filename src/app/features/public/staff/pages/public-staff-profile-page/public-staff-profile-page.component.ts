@@ -20,6 +20,8 @@ import { PageStateComponent } from '../../../../../shared/components/page-state/
 import { LoadErrorComponent } from '../../../../../shared/components/load-error/load-error.component';
 import { NotFoundStateComponent } from '../../../../../shared/components/not-found-state/not-found-state.component';
 import { isGuid } from '../../../../../core/utils/route-id.utils';
+import { AuthService } from '../../../../../core/services/auth.service';
+import { ROLE_NAMES } from '../../../../../core/models/auth.models';
 import { PhotoPlaceholderComponent } from '../../../../../shared/components/photo-placeholder/photo-placeholder.component';
 import { SlotPickerComponent } from '../../../../../shared/components/slot-picker/slot-picker.component';
 import {
@@ -88,6 +90,9 @@ export class PublicStaffProfilePageComponent implements OnInit {
     this.route.snapshot.paramMap.get('staffProfileId'),
   );
   readonly staffProfile = signal<PublicStaffProfileResponse | null>(null);
+  /** SONDA BUG-186: an admin who follows a review notice of a deactivated professional is sent to their admin page. */
+  readonly isAdmin = inject(AuthService).hasRole(ROLE_NAMES.admin);
+  readonly isGuidId = computed(() => isGuid(this.staffProfileId() ?? ''));
   readonly reviewsSummary = signal<StaffReviewSummaryResponse | null>(null);
   readonly reviews = signal<PublicStaffReviewResponse[]>([]);
   readonly isLoading = signal(true);

@@ -1,8 +1,8 @@
 {
-  "apiBaseUrl": "https://api.example.com/api/v1",
+  "apiBaseUrl": "https://api.zona8.app/api/v1",
   "appName": "Barbershop",
-  "appUrl": "https://app.example.com",
-  "assetsBaseUrl": "https://app.example.com/assets",
+  "appUrl": "https://zona8.app",
+  "assetsBaseUrl": "https://zona8.app/assets",
   "environmentName": "Production",
   "vapidPublicKey": "BEmEWaWm6DlQ2ATF7SyNvRMsggRJh1eLNhSDQ41z-MwuKd0gWnObrwkcYeVA-loi1aUszaNYkuLfPg86JdK4zFU"
 }

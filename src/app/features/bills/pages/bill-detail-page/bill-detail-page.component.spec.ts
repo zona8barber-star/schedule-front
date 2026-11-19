@@ -354,4 +354,30 @@ describe('BillDetailPageComponent', () => {
     expect((fixture.nativeElement as HTMLElement).textContent).toContain('No encontramos esta cuenta');
     httpMock.expectNone(() => true);
   });
+
+  // ADR-0021 L11 (SONDA BUG-172): correcting the payment method asks for the reason and sends it.
+  it('corrects the payment method of a closed bill only with a reason', async () => {
+    await create(
+      bill({ status: 'Closed', number: 'C-000010', paymentMethodId: 'pm-1', paymentMethodName: 'Efectivo', actions: actions({ canEdit: false, canChangePaymentMethod: true }) }),
+    );
+    component.paymentMethodId.set('pm-2');
+    component.changePaymentMethod();
+    expect(component.modal()).toBe('paymentMethod');
+    fixture.detectChanges();
+    expect((fixture.nativeElement as HTMLElement).textContent).toContain('Corregir el método de pago');
+
+    await component.submitReason();
+    httpMock.expectNone(`${api}/bills/${billId}/payment-method`);
+
+    component.reasonForm.setValue({ reason: 'Pagó con tarjeta' });
+    const saving = component.submitReason();
+    const request = httpMock.expectOne(`${api}/bills/${billId}/payment-method`);
+    expect(request.request.body).toEqual({ version: 7, paymentMethodId: 'pm-2', reason: 'Pagó con tarjeta' });
+    request.flush(bill({ status: 'Closed', number: 'C-000010', paymentMethodId: 'pm-2', paymentMethodName: 'Tarjeta' }));
+    await saving;
+
+    expect(component.modal()).toBeNull();
+    expect(component.bill()?.paymentMethodName).toBe('Tarjeta');
+  });
 });
+

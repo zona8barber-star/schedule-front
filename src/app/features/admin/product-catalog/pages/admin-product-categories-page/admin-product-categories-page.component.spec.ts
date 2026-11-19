@@ -74,9 +74,9 @@ describe('AdminProductCategoriesPageComponent', () => {
   });
 
   it('builds the public catalog link from publicSiteUrl when configured', async () => {
-    await create('https://zona-8.vercel.app/');
+    await create('https://zona8.app/');
 
-    expect(component.publicCatalogUrl()).toBe('https://zona-8.vercel.app/productos');
+    expect(component.publicCatalogUrl()).toBe('https://zona8.app/productos');
   });
 
   it('creates a category with the next order, trimmed', async () => {

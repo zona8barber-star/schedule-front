@@ -12,7 +12,7 @@ import {
   BillStatus,
   BillSummaryView,
 } from '../../../../core/models/bill.models';
-import { PERMISSION_CODES } from '../../../../core/models/auth.models';
+import { PERMISSION_CODES, ROLE_NAMES } from '../../../../core/models/auth.models';
 import { newIdempotencyKey } from '../../../../core/models/loyalty-redemption.models';
 import { DEFAULT_PAGE_SIZE } from '../../../../core/models/paged-result.models';
 import { AuthService } from '../../../../core/services/auth.service';
@@ -112,6 +112,10 @@ export class BillsPageComponent implements OnInit {
   readonly customerResults = signal<BillCustomerOption[]>([]);
   readonly selectedCustomer = signal<BillCustomerOption | null>(null);
   readonly isSearching = signal(false);
+
+  /** ADR-0021 L15 (SONDA BUG-157): only the Admin and whoever opens bills (bills.open) search customers. */
+  readonly canSearchCustomers =
+    this.authService.hasRole(ROLE_NAMES.admin) || this.authService.hasPermission(PERMISSION_CODES.billsOpen);
 
   readonly canOpen = computed(() => {
     const options = this.options();
@@ -293,9 +297,10 @@ export class BillsPageComponent implements OnInit {
     try {
       const tab = this.tab();
       if (tab === 'pending') {
-        const pending = await firstValueFrom(this.api.pending());
+        const pending = await firstValueFrom(this.api.pending(this.page(), DEFAULT_PAGE_SIZE));
         if (sequence === this.loadSequence) {
           this.pending.set(pending);
+          this.totalCount.set(pending.openBillsTotalCount ?? pending.openBills.length);
         }
       } else if (this.rangeError()) {
         // The API would reject it too (422); explain it instead of asking.
