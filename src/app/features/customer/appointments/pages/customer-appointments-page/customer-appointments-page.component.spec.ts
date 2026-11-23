@@ -185,18 +185,21 @@ describe('CustomerAppointmentsPageComponent (service and rescheduling)', () => {
     expect(list).toHaveBeenLastCalledWith(expect.objectContaining({ scope: 'Past', status: 'Cancelled', page: 2 }));
   });
 
-  it('reschedules with the reserved duration', async () => {
+  // ADR-0022 P5: the API computes the times with the reserved duration and without the appointment itself.
+  it('reschedules with the times of that appointment', async () => {
     component.openReschedule(booked);
     await render();
 
-    expect(getSlots).toHaveBeenCalledWith('st-1', expect.any(String), expect.any(String), { durationMinutes: 45 });
+    expect(getSlots).toHaveBeenCalledWith('st-1', expect.any(String), expect.any(String), { rescheduleAppointmentId: 'a-1' });
   });
 
-  it('reschedules an appointment without a stored duration with its current length', async () => {
+  it('reschedules an appointment without a stored duration through the same appointment times', async () => {
     component.openReschedule(legacy);
     await render();
 
-    expect(getSlots).toHaveBeenCalledWith('st-1', expect.any(String), expect.any(String), { durationMinutes: 30 });
+    expect(getSlots).toHaveBeenCalledWith('st-1', expect.any(String), expect.any(String), {
+      rescheduleAppointmentId: 'a-legacy',
+    });
   });
 
   // SONDA BUG-063: the staff cancelled or completed the appointment while the customer was choosing a new time.

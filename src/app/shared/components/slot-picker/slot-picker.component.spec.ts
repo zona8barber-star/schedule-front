@@ -23,7 +23,7 @@ describe('SlotPickerComponent', () => {
 
     slots = tomorrowSlots;
     getSlots = vi.fn((staffProfileId: string, from: string, to: string) =>
-      of({ staffProfileId, from, to, slotDurationMinutes: 30, slots, generalServiceId: null, slotStepMinutes: 15 }),
+      of({ staffProfileId, from, to, slotDurationMinutes: 30, slots, generalServiceId: null, slotStepMinutes: 30 }),
     );
 
     await TestBed.configureTestingModule({
@@ -128,15 +128,47 @@ describe('SlotPickerComponent', () => {
     expect(emitted).toEqual([tomorrowSlots[1]]);
   });
 
-  it('asks for a plain duration when no service is given (rescheduling)', async () => {
+  it('asks for the times of the appointment being rescheduled when no service is given', async () => {
     fixture.componentRef.setInput('generalServiceId', null);
-    fixture.componentRef.setInput('durationMinutes', 45);
+    fixture.componentRef.setInput('rescheduleAppointmentId', 'appt-1');
     await render();
 
-    expect(getSlots).toHaveBeenCalledWith('staff-1', '2026-10-07', '2026-10-20', { durationMinutes: 45 });
+    expect(getSlots).toHaveBeenCalledWith('staff-1', '2026-10-07', '2026-10-20', { rescheduleAppointmentId: 'appt-1' });
   });
 
-  it('does not load anything without a service or a duration', async () => {
+  // ADR-0022: one start every service duration, resuming where an appointment ends; the picker shows them as given.
+  it('shows exactly the times the API offers, one service duration apart (45 min)', async () => {
+    slots = [
+      { startAtUtc: '2026-10-08T14:00:00Z', endAtUtc: '2026-10-08T14:45:00Z' },
+      { startAtUtc: '2026-10-08T14:45:00Z', endAtUtc: '2026-10-08T15:30:00Z' },
+      { startAtUtc: '2026-10-08T15:30:00Z', endAtUtc: '2026-10-08T16:15:00Z' },
+      { startAtUtc: '2026-10-08T16:15:00Z', endAtUtc: '2026-10-08T17:00:00Z' },
+    ];
+    await render();
+
+    const times = Array.from(
+      fixture.nativeElement.querySelectorAll('.sp__slot') as NodeListOf<HTMLElement>,
+    ).map((button) => button.textContent?.trim());
+    expect(times).toEqual(['09:00', '09:45', '10:30', '11:15']);
+  });
+
+  it('keeps the start right after an appointment instead of rounding it to a grid', async () => {
+    // 30-minute cut with an appointment 9:00-9:45: 9:45, 10:15, 10:45, 11:15.
+    slots = [
+      { startAtUtc: '2026-10-08T14:45:00Z', endAtUtc: '2026-10-08T15:15:00Z' },
+      { startAtUtc: '2026-10-08T15:15:00Z', endAtUtc: '2026-10-08T15:45:00Z' },
+      { startAtUtc: '2026-10-08T15:45:00Z', endAtUtc: '2026-10-08T16:15:00Z' },
+      { startAtUtc: '2026-10-08T16:15:00Z', endAtUtc: '2026-10-08T16:45:00Z' },
+    ];
+    await render();
+
+    const times = Array.from(
+      fixture.nativeElement.querySelectorAll('.sp__slot') as NodeListOf<HTMLElement>,
+    ).map((button) => button.textContent?.trim());
+    expect(times).toEqual(['09:45', '10:15', '10:45', '11:15']);
+  });
+
+  it('does not load anything without a service or an appointment to reschedule', async () => {
     fixture.componentRef.setInput('generalServiceId', null);
     await render();
 
