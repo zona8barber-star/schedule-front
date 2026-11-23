@@ -62,7 +62,9 @@ const timeFormatter = new Intl.DateTimeFormat('es-CO', {
  * Day + time picker for one barber: the next two weeks as buttons (days without free
  * time are disabled), a native date input for anything further, and the free times
  * of the selected day. Slots are computed for a general service the barber offers
- * (`generalServiceId`) or, when rescheduling, for a plain `durationMinutes`.
+ * (`generalServiceId`) or, when rescheduling, for the customer's own appointment
+ * (`rescheduleAppointmentId`). The API places them (ADR-0022): the picker never
+ * generates times on its own.
  */
 @Component({
   selector: 'app-slot-picker',
@@ -77,8 +79,8 @@ export class SlotPickerComponent implements OnInit {
   readonly staffProfileId = input.required<string>();
   /** General service to book (ADR-0016 B3). Takes precedence over `durationMinutes`. */
   readonly generalServiceId = input<string | null>(null);
-  /** Plain duration, used when rescheduling an existing appointment. */
-  readonly durationMinutes = input<number | null>(null);
+  /** The customer's appointment being rescheduled: its reserved duration, without itself among the occupied times. */
+  readonly rescheduleAppointmentId = input<string | null>(null);
   /** Day to open on (YYYY-MM-DD). Defaults to the first day with free time. */
   readonly initialDate = input<string | null>(null);
   /** Highlights this slot (e.g. the one the parent is about to confirm). */
@@ -133,8 +135,8 @@ export class SlotPickerComponent implements OnInit {
       return { generalServiceId };
     }
 
-    const durationMinutes = this.durationMinutes();
-    return durationMinutes && durationMinutes > 0 ? { durationMinutes } : null;
+    const rescheduleAppointmentId = this.rescheduleAppointmentId();
+    return rescheduleAppointmentId ? { rescheduleAppointmentId } : null;
   });
 
   private initialized = false;
@@ -289,7 +291,9 @@ function queryKey(query: PublicAvailabilitySlotsQuery | null): string | null {
     return null;
   }
 
-  return 'generalServiceId' in query ? `service:${query.generalServiceId}` : `duration:${query.durationMinutes}`;
+  return 'generalServiceId' in query
+    ? `service:${query.generalServiceId}`
+    : `reschedule:${query.rescheduleAppointmentId}`;
 }
 
 function capitalize(value: string): string {

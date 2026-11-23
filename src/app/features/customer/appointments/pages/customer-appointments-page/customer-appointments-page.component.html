@@ -538,7 +538,7 @@
       <div [hidden]="!!rescheduleSlot()">
         <app-slot-picker
           [staffProfileId]="appt.staffProfileId"
-          [durationMinutes]="rescheduleDurationMinutes(appt)"
+          [rescheduleAppointmentId]="appt.id"
           [initialDate]="rescheduleInitialDate(appt)"
           [disabled]="isRescheduling()"
           (slotSelected)="onRescheduleSlot($event)"

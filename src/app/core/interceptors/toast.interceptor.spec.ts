@@ -49,6 +49,13 @@ describe('toastInterceptor', () => {
     expect(toast.error).not.toHaveBeenCalled();
   });
 
+  // ADR-0022 P5: the reschedule picker loads its times from the customer appointment; same notice as the availability.
+  it('reports the reschedule times like the availability when they cannot be loaded', async () => {
+    await failGet('/customer/appointments/a-1/reschedule-slots?from=2026-11-23&to=2026-12-06', 500);
+
+    expect(toast.error).toHaveBeenCalledWith('No pudimos cargar la disponibilidad en este momento.');
+  });
+
   it('still reports when the appointments themselves cannot be loaded', async () => {
     await failGet('/admin/appointments?page=1', 500);
 

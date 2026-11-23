@@ -14,22 +14,28 @@ export class PublicAvailabilityApiService {
   private readonly httpClient = inject(HttpClient);
   private readonly runtimeConfigService = inject(RuntimeConfigService);
 
-  /** Free start times for a general service the professional offers, or for a plain duration (rescheduling). */
+  /**
+   * Free start times for a general service the professional offers, or, to reschedule, for the signed-in customer's
+   * own appointment (same grid and validation as the API, without that appointment among the occupied times).
+   */
   getSlots(staffProfileId: string, from: string, to: string, query: PublicAvailabilitySlotsQuery) {
-    let params = new HttpParams({
+    const params = new HttpParams({
       fromObject: {
         from,
         to,
       },
     });
-    params =
-      'generalServiceId' in query
-        ? params.set('generalServiceId', query.generalServiceId)
-        : params.set('durationMinutes', String(query.durationMinutes));
+
+    if ('rescheduleAppointmentId' in query) {
+      return this.httpClient.get<PublicAvailabilitySlotsResponse>(
+        this.buildUrl(`/customer/appointments/${query.rescheduleAppointmentId}/reschedule-slots`),
+        { params },
+      );
+    }
 
     return this.httpClient.get<PublicAvailabilitySlotsResponse>(
       this.buildUrl(`/public/staff/${staffProfileId}/availability/slots`),
-      { params },
+      { params: params.set('generalServiceId', query.generalServiceId) },
     );
   }
 
