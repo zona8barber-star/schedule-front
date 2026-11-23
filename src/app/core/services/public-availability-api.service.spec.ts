@@ -30,15 +30,20 @@ describe('PublicAvailabilityApiService', () => {
     expect(req.request.params.get('to')).toBe('2026-11-19');
     expect(req.request.params.get('generalServiceId')).toBe('g-cut');
     expect(req.request.params.has('durationMinutes')).toBe(false);
-    req.flush({ staffProfileId: 'st-1', from: '', to: '', slotDurationMinutes: 30, slots: [], generalServiceId: 'g-cut', slotStepMinutes: 15 });
+    req.flush({ staffProfileId: 'st-1', from: '', to: '', slotDurationMinutes: 30, slots: [], generalServiceId: 'g-cut', slotStepMinutes: 30 });
   });
 
-  it('asks for the slots of a plain duration (rescheduling)', () => {
-    service.getSlots('st-1', '2026-11-06', '2026-11-06', { durationMinutes: 45 }).subscribe();
+  // ADR-0022 P5: rescheduling asks for the customer's own appointment, so the API leaves it out of the occupied times.
+  it('asks for the reschedule slots of the customer appointment', () => {
+    service.getSlots('st-1', '2026-11-06', '2026-11-06', { rescheduleAppointmentId: 'appt-1' }).subscribe();
 
-    const req = httpMock.expectOne((candidate) => candidate.url === url);
-    expect(req.request.params.get('durationMinutes')).toBe('45');
+    const req = httpMock.expectOne(
+      (candidate) => candidate.url === `${environment.defaultApiBaseUrl}/customer/appointments/appt-1/reschedule-slots`,
+    );
+    expect(req.request.params.get('from')).toBe('2026-11-06');
+    expect(req.request.params.get('to')).toBe('2026-11-06');
+    expect(req.request.params.has('durationMinutes')).toBe(false);
     expect(req.request.params.has('generalServiceId')).toBe(false);
-    req.flush({ staffProfileId: 'st-1', from: '', to: '', slotDurationMinutes: 45, slots: [], generalServiceId: null, slotStepMinutes: 15 });
+    req.flush({ staffProfileId: 'st-1', from: '', to: '', slotDurationMinutes: 45, slots: [], generalServiceId: null, slotStepMinutes: 45 });
   });
 });

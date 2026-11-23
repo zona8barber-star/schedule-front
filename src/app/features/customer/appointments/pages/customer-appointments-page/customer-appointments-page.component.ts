@@ -36,10 +36,7 @@ import {
   rangeWithTo,
   resolveHistoryRange,
 } from '../../../../../core/utils/history-range.utils';
-import {
-  getAppointmentDurationMinutes,
-  getAppointmentServiceLabel,
-} from '../../../../../core/utils/appointment-labels.utils';
+import { getAppointmentServiceLabel } from '../../../../../core/utils/appointment-labels.utils';
 import { BOGOTA_TIME_ZONE, bogotaDateKey, bogotaToday } from '../../../../../core/utils/bogota-date.utils';
 import { ApiFeedbackComponent } from '../../../../../shared/components/api-feedback/api-feedback.component';
 import { PageStateComponent } from '../../../../../shared/components/page-state/page-state.component';
@@ -310,11 +307,6 @@ export class CustomerAppointmentsPageComponent implements OnInit {
   /** Día en que abre el selector: el de la cita actual. */
   rescheduleInitialDate(appointment: AppointmentResponse): string {
     return bogotaDateKey(appointment.startsAtUtc);
-  }
-
-  /** Rescheduling keeps the service and duration: free times are computed for that duration. */
-  rescheduleDurationMinutes(appointment: AppointmentResponse): number {
-    return getAppointmentDurationMinutes(appointment);
   }
 
   serviceLabel(appointment: AppointmentResponse): string | null {

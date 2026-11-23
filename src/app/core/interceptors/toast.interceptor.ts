@@ -155,7 +155,7 @@ function resolveErrorMessage(
       return 'No pudimos cargar el contenido principal por ahora.';
     }
 
-    if (requestPath.includes('/availability/slots')) {
+    if (requestPath.includes('/availability/slots') || requestPath.includes('/reschedule-slots')) {
       return 'No pudimos cargar la disponibilidad en este momento.';
     }
 

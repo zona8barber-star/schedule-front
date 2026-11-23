@@ -52,12 +52,18 @@ export interface PublicAvailabilitySlotsResponse {
   slotDurationMinutes: number;
   slots: PublicAvailabilitySlotResponse[];
   generalServiceId?: string | null;
-  /** Slots start every `slotStepMinutes`, so consecutive slots may overlap. */
+  /**
+   * ADR-0022: equal to `slotDurationMinutes`. It is the nominal step: after an appointment or a block the next start is
+   * when it ends, so consecutive slots never overlap but are not always exactly this far apart.
+   */
   slotStepMinutes?: number;
 }
 
-/** What the slots are computed for: a general service the professional offers, or a plain duration (rescheduling). */
-export type PublicAvailabilitySlotsQuery = { generalServiceId: string } | { durationMinutes: number };
+/**
+ * What the slots are computed for: a general service the professional offers, or the customer's own appointment
+ * being rescheduled (its reserved duration, without the appointment itself among the occupied times: ADR-0022 P5).
+ */
+export type PublicAvailabilitySlotsQuery = { generalServiceId: string } | { rescheduleAppointmentId: string };
 
 export interface AvailabilityDayOption {
   dayOfWeek: number;
